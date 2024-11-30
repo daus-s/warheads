@@ -1,0 +1,6 @@
+/target
+Cargo.lock
+
+# ignore as to not upload sensitive data to any repos, store locally with backups
+data/
+.idea/
