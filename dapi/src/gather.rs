@@ -7,7 +7,6 @@ const PREFIX: &str = "/Users/daviscarmichael/Documents/warheads/data";
 pub fn nba(season: u16, stat: NBAStatKind) -> String {
     let suffix: u16 = (season + 1) % 100;
     let filename = format!("{}/nba/{}_{:02}_{}", PREFIX, season, suffix, extension(stat));
-    dbg!(&filename);
 
     let mut file = File::open(&filename).expect(&dbg_open(
         season,
