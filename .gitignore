@@ -4,3 +4,6 @@
 
 # ignore as to not upload sensitive data to any repos, store locally with backups
 data/
+.deprecated/
+
+.DS_Store

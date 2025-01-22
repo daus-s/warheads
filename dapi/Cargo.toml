@@ -6,3 +6,6 @@ edition = "2021"
 [dependencies]
 serde = { version = "1.0.215", features = ["derive"] }
 serde_json = "1.0.133"
+stats = { path="../stats", version = "0.1.0" }
+time = { version = "0.3.37", features = ["macros", "formatting", "parsing"] }
+serde_with = "3.12.0"

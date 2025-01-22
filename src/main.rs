@@ -1,13 +1,13 @@
-use dapi::rip::{nba_json_to_csv};
+use dapi::rip::{process_nba};
 use dapi::gather::nba;
 use dapi::gather::NBAStatKind::*;
 
 fn main() {
     println!("hello, lisan al-gaib!"); //TODO: make this say hi to the user with auth/name
 
-    let formatted = nba_json_to_csv(&nba(2003, PLAYER));
+    let formatted = process_nba(&nba(2023, PLAYER));
     match formatted {
-        Ok(csv) => println!("formatted csv: \n{}", csv),
+        Ok(csv) => println!("formatted csv: \n{}", "SUCCESS"),
         Err(e) => eprintln!("error: {}", e),
     }
 }

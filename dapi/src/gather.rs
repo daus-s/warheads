@@ -6,8 +6,8 @@ use NBAStatKind::{TEAM, PLAYER, LINEUP};
 const PREFIX: &str = "/Users/daviscarmichael/Documents/warheads/data";
 pub fn nba(season: u16, stat: NBAStatKind) -> String {
     let suffix: u16 = (season + 1) % 100;
-    let filename = format!("{}/nba/{}_{:02}_{}", PREFIX, season, suffix, extension(stat));
-
+    let filename = format!("{}/nba/{}/{}_{:02}_{}", PREFIX, epath(stat), season, suffix, ext(stat));
+    dbg!(&filename);
     let mut file = File::open(&filename).expect(&dbg_open(
         season,
         stat
@@ -30,7 +30,7 @@ fn dbg_open(season: u16, stat: NBAStatKind) -> String {
     format!(
         "ERROR: could not open file for the {}-{} season viewing {} box scores",
         season,
-        season % 100,
+        (season+1) % 100,
         stat_description
     )
 }
@@ -51,13 +51,22 @@ fn dbg_write(season: u16, stat: NBAStatKind) -> String {
 }
 
 
-fn extension(stat: NBAStatKind) -> &'static str {
+fn ext(stat: NBAStatKind) -> &'static str {
     match stat {
         TEAM => "tg.json",
         PLAYER => "pg.json",
         LINEUP => panic!("lineup stats are not supported yet."),
     }
 }
+
+fn epath(stat: NBAStatKind) -> &'static str {
+    match stat {
+        TEAM => "teamgames",
+        PLAYER => "playergames",
+        LINEUP => panic!("lineup stats are not supported yet."),
+    }
+}
+
 #[derive(Copy, Clone)]
 pub enum NBAStatKind {
     TEAM,

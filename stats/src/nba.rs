@@ -1,42 +1,42 @@
+use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
+use time::{Date};
 
-struct Resource {
-    resource: String,
-
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct PlayerBoxScore {
-    season_id: String,
-    player_id: String,
+#[derive(Builder, Debug, Serialize, Deserialize)]
+pub struct PlayerBoxScore {
+    season_id: u32,
+    player_id: u64,
     player_name: String,
-    team_id: String,
+    team_id: u64,
     team_abbreviation: String,
     team_name: String,
-    game_id: String,
-    game_date: String,
+    game_id: u64,
+    game_date: Date,
     matchup: String,
-    wl: String,
-    min: String,
-    fgm: f32,
-    fga: f32,
-    fg_pct: f32,
-    fg3m: f32,
-    fg3a: f32,
-    fg3_pct: f32,
-    ftm: f32,
-    fta: f32,
-    ft_pct: f32,
-    oreb: f32,
-    dreb: f32,
-    reb: f32,
-    ast: f32,
-    stl: f32,
-    blk: f32,
-    tov: f32,
-    pf: f32,
-    pts: f32,
-    plus_minus: f32,
+    wl: GameResult,
+    min: u32,
+    fgm: u32,
+    fga: u32,
+    fg3m: u32,
+    fg3a: u32,
+    ftm: u32,
+    fta: u32,
+    oreb: u32,
+    dreb: u32,
+    reb: u32,
+    ast: u32,
+    stl: u32,
+    blk: u32,
+    tov: u32,
+    pf: u32, //personal fouls
+    pts: u32,
+    plus_minus: i32,
     fantasy_pts: f32,
-    video_available: bool,
+}
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+pub enum GameResult {
+    Win,
+    Loss,
+    Draw
 }
