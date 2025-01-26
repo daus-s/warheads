@@ -2,7 +2,7 @@ use std::fmt::Formatter;
 use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 use time::{Date};
-use crate::format::{format_matchup};
+use crate::format::{format_matchup, opponent};
 
 #[derive(Builder, Debug, Serialize, Deserialize)]
 pub struct PlayerBoxScore {
@@ -75,11 +75,22 @@ pub struct TeamBoxScore {
 
 impl std::fmt::Display for TeamBoxScore {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} - {}\n{}: {}, {}, ", format_matchup(&self.matchup, &self.team_abbreviation), self.game_date, self.team_abbreviation, match self.wl {
-            GameResult::Win => "win",
-            GameResult::Loss => "loss",
-            GameResult::Draw => panic!("nba games cannot end in a tie")
-        },  "aaaa")
+        write!(f, "{} - {}\n{} {} against {}.\npts: {}\tfg: {}/{} ({:.1}%)\t3pt: {}/{} ({:.1}%)\tft: {}/{} ({:.1}%)\nreb: {}\toff: {}\tdef: {}\nblocks: {}\t steals: {}\np. fouls: {}\t turnovers: {}\n",
+               format_matchup(&self.matchup, &self.team_abbreviation),
+               self.game_date, self.team_abbreviation,
+               match self.wl {
+                    GameResult::Win => "win",
+                    GameResult::Loss => "loss",
+                    GameResult::Draw => panic!("nba games cannot end in a tie")
+               },
+               opponent(&self.matchup, &self.team_abbreviation),
+               self.pts,
+               self.fgm, self.fga, (self.fgm as f32 * 100.0) / (self.fga as f32),
+               self.fg3m, self.fg3a, (self.fg3m as f32 * 100.0) / (self.fg3a as f32),
+               self.ftm, self.fta, (self.ftm as f32 * 100.0) / (self.fta as f32),
+               self.reb, self.oreb, self.dreb,
+               self.blk, self.stl, self.pf , self.tov
+        )
     }
 }
 
