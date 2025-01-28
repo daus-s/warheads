@@ -1,13 +1,15 @@
-
+use dotenv;
 use std::fs::File;
 use std::io::Read;
-use NBAStatKind::{TEAM, PLAYER, LINEUP};
+use once_cell::sync::Lazy;
+use stats::kind::NBAStatKind;
+use stats::kind::NBAStatKind::{Team, Player, LineUp};
 
-const PREFIX: &str = "/Users/daviscarmichael/Documents/warheads/data";
-pub fn nba(season: u16, stat: NBAStatKind) -> String {
+static PREFIX: Lazy<String> = Lazy::new(prefix);
+pub fn read_nba(season: u16, stat: NBAStatKind) -> String {
     let suffix: u16 = (season + 1) % 100;
-    let filename = format!("{}/nba/{}/{}_{:02}_{}", PREFIX, epath(stat), season, suffix, ext(stat));
-    dbg!(&filename);
+    let filename = format!("{}/nba/{}/{}_{:02}_{}", *PREFIX, epath(stat), season, suffix, ext(stat));
+
     let mut file = File::open(&filename).expect(&dbg_open(
         season,
         stat
@@ -22,9 +24,9 @@ pub fn nba(season: u16, stat: NBAStatKind) -> String {
 
 fn dbg_open(season: u16, stat: NBAStatKind) -> String {
     let stat_description = match stat {
-        TEAM => "team",
-        PLAYER => "player",
-        LINEUP => panic!("lineup stats are not supported yet."),
+        Team => "team",
+        Player => "player",
+        LineUp => panic!("lineup stats are not supported yet."),
     };
 
     format!(
@@ -37,9 +39,9 @@ fn dbg_open(season: u16, stat: NBAStatKind) -> String {
 
 fn dbg_write(season: u16, stat: NBAStatKind) -> String {
     let stat_description = match stat {
-        TEAM => "team",
-        PLAYER => "player",
-        LINEUP => panic!("lineup stats are not supported yet."),
+        Team => "team",
+        Player => "player",
+        LineUp => panic!("lineup stats are not supported yet."),
     };
 
     format!(
@@ -53,24 +55,24 @@ fn dbg_write(season: u16, stat: NBAStatKind) -> String {
 
 fn ext(stat: NBAStatKind) -> &'static str {
     match stat {
-        TEAM => "tg.json",
-        PLAYER => "pg.json",
-        LINEUP => panic!("lineup stats are not supported yet."),
+        Team => "tg.json",
+        Player => "pg.json",
+        LineUp => panic!("lineup stats are not supported yet."),
     }
 }
 
 fn epath(stat: NBAStatKind) -> &'static str {
     match stat {
-        TEAM => "teamgames",
-        PLAYER => "playergames",
-        LINEUP => panic!("lineup stats are not supported yet."),
+        Team => "teamgames",
+        Player => "playergames",
+        LineUp => panic!("lineup stats are not supported yet."),
     }
 }
 
-#[derive(Copy, Clone)]
-pub enum NBAStatKind {
-    TEAM,
-    PLAYER,
-    LINEUP //todo: develop this later
-    // this is not a priority yet.
+
+fn prefix() -> String {
+    dotenv::dotenv().ok();
+
+    dotenv::var("PREFIX").unwrap()
 }
+
