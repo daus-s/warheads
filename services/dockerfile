@@ -1,0 +1,14 @@
+# Use the official LocalStack image
+FROM localstack/localstack:latest
+
+# Set environment variables for LocalStack
+ENV DOCKER_HOST=unix:///var/run/docker.sock
+ENV SERVICES=s3
+ENV PERSISTENCE=1
+ENV DEBUG=1
+
+# Expose LocalStack's default port
+EXPOSE 4566
+
+# Mount the Docker socket for containerized AWS Lambda (if needed later)
+VOLUME ["/var/run/docker.sock:/var/run/docker.sock"]
