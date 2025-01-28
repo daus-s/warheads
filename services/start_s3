@@ -1,8 +1,10 @@
+source .env
+
 docker run -it --rm \
   --name s3-container \
   -p 9000:9000 \
   -p 9001:9001 \
   -v /Users/daviscarmichael/Documents/warheads/services/s3-bucket:/data \
-  -e MINIO_ROOT_USER=minioadmin \
-  -e MINIO_ROOT_PASSWORD=minioadmin \
+  -e MINIO_ROOT_USER=$MINIO_ROOT_USER \
+  -e MINIO_ROOT_PASSWORD=$MINIO_ROOT_PASSWORD \
   minio/minio server /data --console-address ":9001"
