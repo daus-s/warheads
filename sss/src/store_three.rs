@@ -25,7 +25,7 @@ pub async fn save_nba_game(client: Client, game: TeamBoxScore) -> Result<(), s3:
 
     let content = match serde_json::to_string(&game) {
         Ok(str) => str.as_bytes().to_vec(),
-        Err(e) => panic!("{:#?}", e),
+        Err(e) => panic!("{:#?}", e), //todo: improve this error handling
     };
 
     let byte_stream = ByteStream::from(content);
@@ -42,7 +42,7 @@ pub async fn save_nba_game(client: Client, game: TeamBoxScore) -> Result<(), s3:
     Ok(())
 }
 
-async fn list_player_games(pid: u32) -> Vec<String> {
+async fn list_player_games(pid: u32) -> Vec<u64> {
     todo!("this will return a list of all the games in which a player played")
     /*
         due to the nature of the data this function does not need to be optimized, but it really should be.
