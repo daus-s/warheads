@@ -69,7 +69,6 @@ fn epath(stat: NBAStatKind) -> &'static str {
     }
 }
 
-
 fn prefix() -> String {
     dotenv::dotenv().ok();
 

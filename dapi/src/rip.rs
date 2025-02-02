@@ -1,10 +1,12 @@
 use std::collections::{HashMap};
 use serde_json::{from_str, Value};
 use time::{Date, macros::format_description};
-use stats::nba::{GameResult, PlayerBoxScore, PlayerBoxScoreBuilder, TeamBoxScore, TeamBoxScoreBuilder};
+use stats::nba::{GameResult};
 use stats::nba::GameResult::{Draw, Loss, Win};
 use stats::kind::{NBAStatKind, NBAStatType};
 use stats::kind::NBAStatKind::{Player, LineUp, Team};
+use stats::player_box_score::{PlayerBoxScore, PlayerBoxScoreBuilder};
+use stats::team_box_score::{TeamBoxScore, TeamBoxScoreBuilder};
 //rips through the json using the header provided as per NBA apis convention/schema.
 //output the file to a (headed) csv to match the pff outputs we will be using.
 
@@ -48,6 +50,7 @@ fn fields_to_team_box_score(s: &HashMap<String, Value>) -> TeamBoxScore {
         .team_abbreviation(s.get("TEAM_ABBREVIATION").unwrap().as_str().unwrap().to_string())
         .matchup(s.get("MATCHUP").unwrap().as_str().unwrap().to_string())
         .team_id(parse_u64(s.get("TEAM_ID")))
+        .roster(Vec::new())
         .build()
         .unwrap();
 
@@ -86,6 +89,7 @@ fn fields_to_player_box_score(s: &HashMap<String, Value>) -> PlayerBoxScore {
         .player_name(string(s.get("PLAYER_NAME")))
         .player_id(parse_u64(s.get("PLAYER_ID")))
         .team_id(parse_u64(s.get("TEAM_ID")))
+        .elo(3000)
         .build()
         .unwrap();
 

@@ -1,4 +1,5 @@
-use crate::nba::{TeamBoxScore, PlayerBoxScore};
+use crate::player_box_score::PlayerBoxScore;
+use crate::team_box_score::TeamBoxScore;
 
 #[derive(Copy, Clone)]
 pub enum NBAStatKind {
@@ -10,4 +11,6 @@ pub enum NBAStatKind {
 pub enum NBAStatType {
     Player(PlayerBoxScore),
     Team(TeamBoxScore),
+    Players(Vec<PlayerBoxScore>),
+    Teams(Vec<TeamBoxScore>),
 }

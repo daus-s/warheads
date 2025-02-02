@@ -1,30 +1,53 @@
 use dapi::rip::{process_nba_games};
 use dapi::gather::read_nba;
 
-use stats::kind::NBAStatKind::*;
-use stats::kind::NBAStatType;
+use stats::kind::{NBAStatKind, NBAStatType};
 
-fn main() {
+
+use sss;
+use stats::player_box_score::PlayerBoxScore;
+use stats::team_box_score::TeamBoxScore;
+
+#[tokio::main]
+async fn main() {
     println!("hello, lisan al-gaib!"); //TODO: make this say hi to the user with auth/name
 
-    let player_games = process_nba_games((&read_nba(2023, Player)), Player).unwrap();
+    let player_games = match process_nba_games(&read_nba(2023, NBAStatKind::Player), NBAStatKind::Player) {
+        Ok(games) => games
+            .into_iter()
+            .filter_map(|x| match x {
+                NBAStatType::Player(p) => Some(p),
+                _ => None,
+            })
+            .collect::<Vec<PlayerBoxScore>>(),
+        Err(e) => unreachable!("{}", e),
+    };
 
+    let mut team_games = match process_nba_games(&read_nba(2023, NBAStatKind::Team), NBAStatKind::Team) {
+        Ok(games) => games
+            .into_iter()
+            .filter_map(|x| match x {
+                NBAStatType::Team(t) => Some(t),
+                _ => None,
+            })
+            .collect::<Vec<TeamBoxScore>>(),
+        Err(e) => unreachable!("{}", e),
+    };
 
-    for game in player_games {
-        match game {
-            NBAStatType::Player(pg) => println!("{}", pg),
-            NBAStatType::Team(_tg) => panic!("fuck you"),
+    let msg = format!("team games has {} entries", &team_games.len());
+    dbg!(msg);
+
+    for player in &player_games {
+        for team in &mut team_games {
+            if player.played_in(team.clone()) {
+                team.add_player_stats(player.clone());
+            }
         }
     }
 
+    let client = sss::client::create().await;
 
-    let team_games = process_nba_games(&read_nba(2023, Team), Team).unwrap();
-
-
-    for game in team_games {
-        match game {
-            NBAStatType::Player(_pg) =>panic!("fuck you") ,
-            NBAStatType::Team(tg) => println!("{}", tg),
-        }
+    for game in &team_games {
+        sss::store_three::save_nba_game(client.clone(), game.clone()).await.unwrap();
     }
 }

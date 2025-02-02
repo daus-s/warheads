@@ -10,3 +10,4 @@ thirtyfour = "0.35"  # Selenium WebDriver library for Rust
 tokio = { version = "1", features = ["full"] }  # Async runtime
 dapi = { path = "dapi", version = "0.1.0" }
 stats = { path = "stats", version = "0.1.0" }
+sss = { path = "sss", version = "0.1.0" }
