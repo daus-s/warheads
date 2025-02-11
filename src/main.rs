@@ -1,53 +1,31 @@
-use dapi::rip::{process_nba_games};
-use dapi::gather::read_nba;
-
-use stats::kind::{NBAStatKind, NBAStatType};
-
-
-use sss;
-use stats::player_box_score::PlayerBoxScore;
-use stats::team_box_score::TeamBoxScore;
+use std::collections::{HashMap, HashSet};
+use corrections::correction::Correction;
+use dapi::gather::ask_nba;
+use dapi::hunting::{chronicle_nba, save_nba_season};
+use stats::kind::NBAStatKind;
+use stats::stat_column::{StatColumn, StatEntry};
 
 #[tokio::main]
 async fn main() {
     println!("hello, lisan al-gaib!"); //TODO: make this say hi to the user with auth/name
 
-    let player_games = match process_nba_games(&read_nba(2023, NBAStatKind::Player), NBAStatKind::Player) {
-        Ok(games) => games
-            .into_iter()
-            .filter_map(|x| match x {
-                NBAStatType::Player(p) => Some(p),
-                _ => None,
-            })
-            .collect::<Vec<PlayerBoxScore>>(),
-        Err(e) => unreachable!("{}", e),
-    };
+    chronicle_nba().await;
 
-    let mut team_games = match process_nba_games(&read_nba(2023, NBAStatKind::Team), NBAStatKind::Team) {
-        Ok(games) => games
-            .into_iter()
-            .filter_map(|x| match x {
-                NBAStatType::Team(t) => Some(t),
-                _ => None,
-            })
-            .collect::<Vec<TeamBoxScore>>(),
-        Err(e) => unreachable!("{}", e),
-    };
+    let res = ask_nba(1969, NBAStatKind::Player).await;
 
-    let msg = format!("team games has {} entries", &team_games.len());
-    dbg!(msg);
-
-    for player in &player_games {
-        for team in &mut team_games {
-            if player.played_in(team.clone()) {
-                team.add_player_stats(player.clone());
-            }
-        }
+    match res {
+        Ok(_) => println!("stats for 1969 successfully saved."),
+        Err(e) => eprintln!("{}", e)
     }
+    //
+    // save_nba_season(1969).await;
 
-    let client = sss::client::create().await;
+    //
+    // match res {
+    //     Ok(_) => println!("nba stats were successfully corrected."),
+    //     Err(e) => eprintln!("{}", e)
+    // }
 
-    for game in &team_games {
-        sss::store_three::save_nba_game(client.clone(), game.clone()).await.unwrap();
-    }
+    println!("nba stats were is successfully saved to the library.");
+
 }

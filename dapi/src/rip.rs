@@ -1,16 +1,17 @@
 use std::collections::{HashMap};
+use std::error::Error;
 use serde_json::{from_str, Value};
 use time::{Date, macros::format_description};
 use stats::nba::{GameResult};
 use stats::nba::GameResult::{Draw, Loss, Win};
-use stats::kind::{NBAStatKind, NBAStatType};
+use stats::kind::{NBAStatKind, NBAStat};
 use stats::kind::NBAStatKind::{Player, LineUp, Team};
 use stats::player_box_score::{PlayerBoxScore, PlayerBoxScoreBuilder};
 use stats::team_box_score::{TeamBoxScore, TeamBoxScoreBuilder};
 //rips through the json using the header provided as per NBA apis convention/schema.
 //output the file to a (headed) csv to match the pff outputs we will be using.
 
-pub fn process_nba_games(json: &str, stat: NBAStatKind) -> Result<Vec<NBAStatType>, &'static str> {
+pub fn process_nba_games(json: &str, stat: NBAStatKind) -> Result<Vec<NBAStat>, &'static str> {
     let v: Value = from_str(json).unwrap();
 
     let set = get_set(&v)?;
@@ -23,6 +24,8 @@ pub fn process_nba_games(json: &str, stat: NBAStatKind) -> Result<Vec<NBAStatTyp
 }
 
 fn fields_to_team_box_score(s: &HashMap<String, Value>) -> TeamBoxScore {
+
+    dbg!("{:#?}", s);
 
     let box_score = TeamBoxScoreBuilder::default()
         .ast(parse_u32(s.get("AST")))
@@ -49,7 +52,7 @@ fn fields_to_team_box_score(s: &HashMap<String, Value>) -> TeamBoxScore {
         .game_date(parse_date(s.get("GAME_DATE")))
         .team_abbreviation(s.get("TEAM_ABBREVIATION").unwrap().as_str().unwrap().to_string())
         .matchup(s.get("MATCHUP").unwrap().as_str().unwrap().to_string())
-        .team_id(parse_u64(s.get("TEAM_ID")))
+        .team_id(parse_u64(s.get("TEAM_ID")).unwrap())
         .roster(Vec::new())
         .build()
         .unwrap();
@@ -59,6 +62,8 @@ fn fields_to_team_box_score(s: &HashMap<String, Value>) -> TeamBoxScore {
 }
 
 fn fields_to_player_box_score(s: &HashMap<String, Value>) -> PlayerBoxScore {
+
+    dbg!("{:#?}", s);
 
     let box_score = PlayerBoxScoreBuilder::default()
         .ast(parse_u32(s.get("AST")))
@@ -87,8 +92,8 @@ fn fields_to_player_box_score(s: &HashMap<String, Value>) -> PlayerBoxScore {
         .team_abbreviation(s.get("TEAM_ABBREVIATION").unwrap().as_str().unwrap().to_string())
         .matchup(string(s.get("MATCHUP")))
         .player_name(string(s.get("PLAYER_NAME")))
-        .player_id(parse_u64(s.get("PLAYER_ID")))
-        .team_id(parse_u64(s.get("TEAM_ID")))
+        .player_id(parse_u64(s.get("PLAYER_ID")).unwrap())
+        .team_id(parse_u64(s.get("TEAM_ID")).unwrap())
         .elo(3000)
         .build()
         .unwrap();
@@ -100,20 +105,77 @@ fn fields_to_player_box_score(s: &HashMap<String, Value>) -> PlayerBoxScore {
 fn string(s: Option<&Value>) -> String {
     s.unwrap().as_str().unwrap().to_string()
 }
-fn parse_u64(value: Option<&Value>) -> u64 {
-    value.unwrap().as_u64().expect(format!("could not parse {:?} as a unsigned 64-bit integer\n", value ).as_str())
+
+fn parse_u64(value: Option<&Value>) -> Option<u64> {
+    match value {
+        Some(v) => match v.as_u64() {
+            Some(x) => Some(x),
+            None => {
+                None
+            }
+        },
+        None => {
+            None
+        }
+    }
 }
 
-fn parse_u32(value: Option<&Value>) -> u32 {
-    value.unwrap().as_u64().expect(format!("could not parse {:?} as a unsigned 32-bit integer\n", value ).as_str()) as u32
+fn parse_u32(value: Option<&Value>) -> Option<u32> {
+    match value {
+        Some(v) => match v.as_u64() {
+            Some(x) => {
+                if x <= u32::MAX as u64 {
+                    Some(x as u32)
+                } else {
+                    None
+                }
+            }
+            None => {
+                None
+            }
+        },
+        None => {
+            None
+        }
+    }
 }
 
-fn parse_i32(value: Option<&Value>) -> i32 {
-    value.unwrap().as_i64().expect(format!("could not parse {:?} as a signed 32-bit integer\n", value ).as_str()) as i32
+fn parse_i32(value: Option<&Value>) -> Option<i32> {
+    match value {
+        Some(v) => match v.as_i64() {
+            Some(x) => {
+                if x >= i32::MIN as i64 && x <= i32::MAX as i64 {
+                    Some(x as i32)
+                } else {
+                    None
+                }
+            }
+            None => {
+                None
+            }
+        },
+        None => {
+            None
+        }
+    }
 }
 
-fn parse_f32(value: Option<&Value>) -> f32 {
-    value.unwrap().as_f64().expect(format!("could not parse {:?} as a 64-bit floating point number\n", value ).as_str()) as f32
+fn parse_f32(value: Option<&Value>) -> Option<f32> {
+    match value {
+        Some(v) =>
+            match v.as_f64() {
+                Some(x) => {
+
+                    Some(x as f32)
+                },
+                None => {
+                    None
+                },
+            },
+        None => {
+            None
+        }
+    }
 }
 
 fn parse_str(value: Option<&Value>) -> u64 {
@@ -121,14 +183,20 @@ fn parse_str(value: Option<&Value>) -> u64 {
 }
 
 fn parse_wl(value: Option<&Value>) -> GameResult {
-    match value.unwrap().as_str().unwrap() {
-        "W" => Win,
-        "L" => Loss,
-        "D" => Draw,
-        x => panic!(
-            "Unknown game result: {}. Acceptable results are: [\"W\", \"L\", \"D\"]",
-            x
-        ),
+    match value { // the fuck?
+        Some(wl) => match wl.as_str() {
+            Some("W") => Win,
+            Some("L") => Loss,
+            Some("D") => Draw,
+            Some(x) => panic!(
+                "Unknown game result: {}. Acceptable results are: [\"W\", \"L\", \"D\"]",
+                x
+            ),
+            None => panic!(
+                "No game result provided.",
+            ),
+        }
+        None => panic!("could not unwrap a game result from the provided serde::Value {:#?}", value)
     }
 }
 
@@ -164,7 +232,7 @@ fn headers(s: &Value) -> Result<Vec<&str>, &'static str> {
     )
 }
 
-fn rows(set: &Value ) -> Result<Vec<Value>, &'static str> {
+fn rows(set: &Value) -> Result<Vec<Value>, &'static str> {
     Ok(
         set.get("rowSet")
         .and_then(|r| r.as_array())
@@ -172,8 +240,8 @@ fn rows(set: &Value ) -> Result<Vec<Value>, &'static str> {
     )
 }
 
-fn season(rows: Vec<Value>, headers: Vec<&str>, stat: NBAStatKind) -> Vec<NBAStatType> {
-    let mut season:Vec<NBAStatType> = Vec::new();
+fn season(rows: Vec<Value>, headers: Vec<&str>, stat: NBAStatKind) -> Vec<NBAStat> {
+    let mut season:Vec<NBAStat> = Vec::new();
 
     for row in rows {
         if let Some(row_data) = row.as_array() {
@@ -183,8 +251,8 @@ fn season(rows: Vec<Value>, headers: Vec<&str>, stat: NBAStatKind) -> Vec<NBASta
                 .collect();
 
             let box_score = match stat {
-                Player => NBAStatType::Player(fields_to_player_box_score(&fields)),
-                Team => NBAStatType::Team(fields_to_team_box_score(&fields)),
+                Player => NBAStat::Player(fields_to_player_box_score(&fields)),
+                Team => NBAStat::Team(fields_to_team_box_score(&fields)),
                 LineUp => panic!("lineup stats are not yet supported.")
             };
 
@@ -194,4 +262,13 @@ fn season(rows: Vec<Value>, headers: Vec<&str>, stat: NBAStatKind) -> Vec<NBASta
     }
 
     season
+}
+
+/// food reference
+pub fn raw_extract(json: Value) -> Result<Vec<String>, Box<dyn Error>> {
+    let set = get_set(&json)?;
+
+    let rows = rows(&set)?;
+
+    Ok((&rows).iter().map(|v| v.to_string()).collect())
 }

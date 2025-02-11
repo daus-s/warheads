@@ -15,7 +15,5 @@ pub async fn create() -> Client {
 
     let url = dotenv::var("S3_URL").expect("failed to get s3 url from env\n");
 
-    dbg!(&url);
-
     create_s3_client(&url.as_str()).await
 }

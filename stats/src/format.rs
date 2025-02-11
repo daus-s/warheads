@@ -1,5 +1,7 @@
+use crate::team_box_score::TeamBoxScore;
+
 pub(crate) fn format_matchup(matchup: &String) -> String {
-    let parts:Vec<&str> = matchup.split(" ").collect();
+    let parts:Vec<&str> = matchup.split_whitespace().collect();
 
     if parts.len() != 3 {
         panic!("game name does not have three terms.")
@@ -31,7 +33,7 @@ pub(crate) fn format_matchup(matchup: &String) -> String {
 /// assert_eq!("MEM", opponent);
 /// ```
 pub(crate) fn opponent(matchup: &str, abbr: &str) -> String {
-    let parts:Vec<&str> = matchup.split(" ").collect();
+    let parts:Vec<&str> = matchup.split_whitespace().collect();
 
     if parts.len() != 3 {
         panic!("game name does not have three terms.")
@@ -43,4 +45,34 @@ pub(crate) fn opponent(matchup: &str, abbr: &str) -> String {
         _ => panic!("Could not parse the opponent; unexpected pattern.")
     }
 
+}
+
+pub(crate) fn percent(num: Option<u32>, den: Option<u32>) -> String {
+    match [num, den] {
+        [Some(n), Some(d)] => format!("({:.1}%)", (n as f32 * 100.0) / d as f32),
+        _ => "-".to_string(),
+    }
+}
+
+pub fn season_str(games: Vec<TeamBoxScore>) -> String {
+    if games.len() <= 0 {
+        panic!("no games in a season");
+    }
+
+    let det = &games[0];
+
+    det.season_str()
+}
+
+pub fn season_fmt(year: i32) -> String {
+
+    let following_suffix = (year + 1) % 100;
+
+    format!("{}-{}", year, following_suffix)
+}
+
+pub fn season_file(year: i32) -> String {
+    let following_suffix = (year + 1) % 100;
+
+    format!("{}_{}", year, following_suffix)
 }

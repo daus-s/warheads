@@ -1,13 +1,21 @@
-use dotenv;
+use std::error::Error;
+use std::fs;
+use reqwest;
 use std::fs::File;
 use std::io::Read;
+use std::str::FromStr;
 use once_cell::sync::Lazy;
+use reqwest::Client;
+use reqwest::header::*;
+use stats::format::{season_file, season_fmt};
 use stats::kind::NBAStatKind;
-use stats::kind::NBAStatKind::{Team, Player, LineUp};
+use crate::format::*;
+use crate::path_manager::filepath;
+use crate::prefix::prefix;
 
 static PREFIX: Lazy<String> = Lazy::new(prefix);
-pub fn read_nba(season: u16, stat: NBAStatKind) -> String {
-    let suffix: u16 = (season + 1) % 100;
+pub fn read_nba(season: i32, stat: NBAStatKind) -> String {
+    let suffix = (season + 1) % 100;
     let filename = format!("{}/nba/{}/{}_{:02}_{}", *PREFIX, epath(stat), season, suffix, ext(stat));
 
     let mut file = File::open(&filename).expect(&dbg_open(
@@ -19,59 +27,56 @@ pub fn read_nba(season: u16, stat: NBAStatKind) -> String {
     file.read_to_string(&mut data).expect(&dbg_write(season, stat));
 
     data
-
-}
-
-fn dbg_open(season: u16, stat: NBAStatKind) -> String {
-    let stat_description = match stat {
-        Team => "team",
-        Player => "player",
-        LineUp => panic!("lineup stats are not supported yet."),
-    };
-
-    format!(
-        "ERROR: could not open file for the {}-{} season viewing {} box scores",
-        season,
-        (season+1) % 100,
-        stat_description
-    )
-}
-
-fn dbg_write(season: u16, stat: NBAStatKind) -> String {
-    let stat_description = match stat {
-        Team => "team",
-        Player => "player",
-        LineUp => panic!("lineup stats are not supported yet."),
-    };
-
-    format!(
-        "ERROR:could not write the contents of the file for the {}-{} season viewing {} box scores",
-        season,
-        season % 100,
-        stat_description
-    )
 }
 
 
-fn ext(stat: NBAStatKind) -> &'static str {
-    match stat {
-        Team => "tg.json",
-        Player => "pg.json",
-        LineUp => panic!("lineup stats are not supported yet."),
+
+pub async fn ask_nba(year: i32, stat: NBAStatKind) -> Result<(), Box<dyn Error>> {
+
+    let client = Client::new();
+
+    let mut headers = HeaderMap::new();
+
+    headers.insert(ACCEPT, HeaderValue::from_str("*/*").unwrap());
+    headers.insert(ACCEPT_LANGUAGE, HeaderValue::from_str("en-US,en;q=0.9,de;q=0.8'").unwrap());
+    headers.insert(CACHE_CONTROL, HeaderValue::from_str("no-cache").unwrap());
+    headers.insert(CONNECTION, HeaderValue::from_str("keep-alive").unwrap());
+    headers.insert(ORIGIN, HeaderValue::from_str("https://www.nba.com").unwrap());
+    headers.insert(PRAGMA, HeaderValue::from_str("no-cache").unwrap());
+    headers.insert(REFERER, HeaderValue::from_str("https://www.nba.com/").unwrap());
+    headers.insert(HeaderName::from_str("Sec-Fetch-Dest").unwrap(), HeaderValue::from_str("empty").unwrap());
+    headers.insert(HeaderName::from_str("Sec-Fetch-Mode").unwrap(), HeaderValue::from_str("cors").unwrap());
+    headers.insert(HeaderName::from_str("Sec-Fetch-Site").unwrap(), HeaderValue::from_str("same-site").unwrap());
+    headers.insert(USER_AGENT, HeaderValue::from_str("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36").unwrap());
+    headers.insert(HeaderName::from_str("sec-ch-ua").unwrap(), HeaderValue::from_str("\"Google Chrome\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\"").unwrap());
+    headers.insert(HeaderName::from_str("sec-ch-ua-mobile").unwrap(), HeaderValue::from_str("?0").unwrap());
+    headers.insert(HeaderName::from_str("sec-ch-ua-platform").unwrap(), HeaderValue::from_str("macOS").unwrap());
+
+    let season = season_fmt(year);
+
+    let file_path = filepath(year, stat);
+
+    let url = format!("https://stats.nba.com/stats/leaguegamelog?Counter=1000&DateFrom=&DateTo=&Direction=DESC&ISTRound=&LeagueID=00&PlayerOrTeam=P&Season={season}&SeasonType=Regular%20Season&Sorter=DATE");
+
+    dbg!(&url);
+
+    let response = client
+        .get(&url)
+        .headers(headers)
+        .send()
+        .await?;
+
+    if response.status().is_success() {
+
+        let raw_json = response.text().await?;
+
+        // Save the raw JSON to a file
+        fs::write(file_path, raw_json).map_err(|e| e.into())
+
+    } else {
+
+        Err(format!("Request failed with status: {}", response.status()).into())
+
     }
+
 }
-
-fn epath(stat: NBAStatKind) -> &'static str {
-    match stat {
-        Team => "teamgames",
-        Player => "playergames",
-        LineUp => panic!("lineup stats are not supported yet."),
-    }
-}
-
-fn prefix() -> String {
-    dotenv::dotenv().ok();
-
-    dotenv::var("PREFIX").unwrap()
-}
-
