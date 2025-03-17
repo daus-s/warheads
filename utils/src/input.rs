@@ -5,7 +5,7 @@ pub fn input() -> io::Result<()> {
     let stdin = io::stdin(); // We get `Stdin` here.
     stdin.read_line(&mut user_input)?;
 
-    println!("input: {} ", user_input);
+    std::println!("input: {} ", user_input);
 
     Ok(())
 }

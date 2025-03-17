@@ -1,23 +1,36 @@
-use std::fmt::Formatter;
-use derive_builder::Builder;
-use serde::{Deserialize, Serialize};
-use time::Date;
-use crate::nba::GameResult;
+use crate::nba::{GameResult, MatchupString};
 use crate::statify::Statify;
 use crate::team_box_score::TeamBoxScore;
+use derive_builder::Builder;
+use serde::{Deserialize, Serialize};
+use std::fmt::Formatter;
+use time::Date;
 
 #[derive(Builder, Clone, Debug, Serialize, Deserialize)]
 pub struct PlayerBoxScore {
-    season_id: u32,
-    player_id: u64,
-    player_name: String,
-    team_id: u64,
+
+    //team identification
+
     team_abbreviation: String,
     team_name: String,
-    game_id: u64,
+    team_id: u64,
+
+    // game data
+
+    season_id: i32,
     game_date: Date,
-    matchup: String,
+    game_id: String,
+    matchup: MatchupString,
+
+    // player data
+
+    player_id: u64,
+    player_name: String,
+
+    // classic box score
+
     wl: GameResult,
+
     min: Option<u32>,
     fgm: Option<u32>,
     fga: Option<u32>,
@@ -34,6 +47,9 @@ pub struct PlayerBoxScore {
     tov: Option<u32>,
     pf: Option<u32>, //personal fouls
     pts: Option<u32>,
+
+    //advanced stats
+
     plus_minus: Option<i32>,
     fantasy_pts: Option<f32>,
     elo: i32, // decisions, decisions
@@ -47,17 +63,15 @@ impl std::fmt::Display for PlayerBoxScore {
 }
 
 impl PlayerBoxScore {
-    pub fn game_id(&self) -> u64 {
-        self.game_id
+    pub fn game_id(&self) -> String {
+        self.game_id.clone()
     }
 
     pub fn team(&self) -> String {
         self.team_abbreviation.clone()
     }
 
-    pub fn played_in(&self, game: TeamBoxScore) -> bool {
+    pub fn played_in(&self, game: &TeamBoxScore) -> bool {
         self.game_id == game.game_id() && self.team_abbreviation == game.team()
     }
 }
-
-

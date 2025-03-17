@@ -1,109 +1,162 @@
-use std::collections::{HashMap};
-use std::error::Error;
+use crate::gather::read_nba;
+use corrections::correction::Correction;
 use serde_json::{from_str, Value};
-use time::{Date, macros::format_description};
-use stats::nba::{GameResult};
+use stats::extract::{get_set, headers, rows};
+use stats::kind::NBAStatKind::{LineUp, Player, Team};
+use stats::kind::{NBAStat, NBAStatKind};
 use stats::nba::GameResult::{Draw, Loss, Win};
-use stats::kind::{NBAStatKind, NBAStat};
-use stats::kind::NBAStatKind::{Player, LineUp, Team};
+use stats::nba::GameResult;
 use stats::player_box_score::{PlayerBoxScore, PlayerBoxScoreBuilder};
+use stats::stat_column::StatColumn::{GAME_DATE, WL};
+use stats::stat_value::StatValue;
 use stats::team_box_score::{TeamBoxScore, TeamBoxScoreBuilder};
+use std::collections::HashMap;
+use time::{macros::format_description, Date};
 //rips through the json using the header provided as per NBA apis convention/schema.
-//output the file to a (headed) csv to match the pff outputs we will be using.
+//output the file to a (headed) csv to match the output format we will be using.
 
-pub fn process_nba_games(json: &str, stat: NBAStatKind) -> Result<Vec<NBAStat>, &'static str> {
+pub fn process_nba_games(szn: i32, stat: NBAStatKind) -> Result<Vec<NBAStat>, Vec<Correction>> {
+    let json = &read_nba(szn, stat);
+
     let v: Value = from_str(json).unwrap();
 
-    let set = get_set(&v)?;
+    let set = get_set(&v).unwrap();
 
-    let headers = headers(&set)?;
+    let headers: Vec<&str> = headers(&set).unwrap();
 
-    let rows = rows(&set)?;
+    let rows: Vec<Value> = rows(&set).unwrap();
 
-    Ok(season(rows, headers,  stat))
+    season(rows, headers, stat)
 }
 
-fn fields_to_team_box_score(s: &HashMap<String, Value>) -> TeamBoxScore {
+fn fields_to_team_box_score(s: &HashMap<String, Value>) -> Result<TeamBoxScore, Correction> {
 
-    dbg!("{:#?}", s);
+    let gameid = string(s.get("GAME_ID"));
+    let teamid = parse_u64(s.get("TEAM_ID")).unwrap();
+    let season = str_to_num(s.get("SEASON_ID")) as i32;
 
-    let box_score = TeamBoxScoreBuilder::default()
-        .ast(parse_u32(s.get("AST")))
-        .plus_minus(parse_i32(s.get("PLUS_MINUS")))
-        .season_id(parse_str(s.get("SEASON_ID")) as u32)
-        .game_id(parse_str(s.get("GAME_ID")))
-        .reb(parse_u32(s.get("REB")))
-        .min(parse_u32(s.get("MIN")))
-        .wl(parse_wl(s.get("WL")))
-        .team_name(s.get("TEAM_NAME").unwrap().as_str().unwrap().to_string())
-        .dreb(parse_u32(s.get("DREB")))
-        .oreb(parse_u32(s.get("OREB")))
-        .stl(parse_u32(s.get("STL")))
-        .blk(parse_u32(s.get("BLK")))
-        .fg3a(parse_u32(s.get("FG3A")))
-        .fg3m(parse_u32(s.get("FG3M")))
-        .fga(parse_u32(s.get("FGA")))
-        .fgm(parse_u32(s.get("FGM")))
-        .fta(parse_u32(s.get("FTA")))
-        .ftm(parse_u32(s.get("FTM")))
-        .tov(parse_u32(s.get("TOV")))
-        .pts(parse_u32(s.get("PTS")))
-        .pf(parse_u32(s.get("PF")))
-        .game_date(parse_date(s.get("GAME_DATE")))
-        .team_abbreviation(s.get("TEAM_ABBREVIATION").unwrap().as_str().unwrap().to_string())
-        .matchup(s.get("MATCHUP").unwrap().as_str().unwrap().to_string())
-        .team_id(parse_u64(s.get("TEAM_ID")).unwrap())
-        .roster(Vec::new())
-        .build()
-        .unwrap();
+    let mut correction = Correction::new(gameid.clone(), teamid, season, Team);
 
-    box_score
+
+    let wl= parse_wl(s.get("WL"));
+
+    match wl {
+        Some(_) => (),
+        None => correction.add_missing_field(WL ,StatValue::new())
+    }
+
+    let dt = parse_date(s.get("GAME_DATE"));
+
+    match dt {
+        Some(_) => (),
+        None => correction.add_missing_field(GAME_DATE, StatValue::new())
+    }
+
+    match correction.len() {
+        0 => Ok(
+            TeamBoxScoreBuilder::default()
+            .game_id(gameid.clone())
+            .season_id(season)
+            .team_id(teamid)
+            .ast(parse_u32(s.get("AST")))
+            .plus_minus(parse_i32(s.get("PLUS_MINUS")))
+            .reb(parse_u32(s.get("REB")))
+            .min(parse_u32(s.get("MIN")))
+            .wl(wl.unwrap())
+            .team_name(s.get("TEAM_NAME").unwrap().as_str().unwrap().to_string())
+            .dreb(parse_u32(s.get("DREB")))
+            .oreb(parse_u32(s.get("OREB")))
+            .stl(parse_u32(s.get("STL")))
+            .blk(parse_u32(s.get("BLK")))
+            .fg3a(parse_u32(s.get("FG3A")))
+            .fg3m(parse_u32(s.get("FG3M")))
+            .fga(parse_u32(s.get("FGA")))
+            .fgm(parse_u32(s.get("FGM")))
+            .fta(parse_u32(s.get("FTA")))
+            .ftm(parse_u32(s.get("FTM")))
+            .tov(parse_u32(s.get("TOV")))
+            .pts(parse_u32(s.get("PTS")))
+            .pf(parse_u32(s.get("PF")))
+            .game_date(dt.unwrap())
+            .team_abbreviation(s.get("TEAM_ABBREVIATION").unwrap().as_str().unwrap().to_string())
+            .matchup(stats::nba::MatchupString(s.get("MATCHUP").unwrap().as_str().unwrap().to_string()))
+            .roster(Vec::new())
+            .build().unwrap()
+        ),
+        _ => Err(correction),
+    }
 
 }
 
-fn fields_to_player_box_score(s: &HashMap<String, Value>) -> PlayerBoxScore {
 
-    dbg!("{:#?}", s);
+///
+/// fields_to_player_box_score returns a result of either a player box score or a correction.
+/// if the function returns a correction, the correction acts as a form that needs to be
+/// completed before that entry can be finalized. as such, seemingly inconsequentially,
+/// the player stats must always be ripped from file before team results.
+///
+fn fields_to_player_box_score(s: &HashMap<String, Value>) -> Result<PlayerBoxScore, Correction> {
 
-    let box_score = PlayerBoxScoreBuilder::default()
-        .ast(parse_u32(s.get("AST")))
-        .plus_minus(parse_i32(s.get("PLUS_MINUS")))
-        .season_id(parse_str(s.get("SEASON_ID")) as u32)
-        .game_id(parse_str(s.get("GAME_ID")))
-        .reb(parse_u32(s.get("REB")))
-        .min(parse_u32(s.get("MIN")))
-        .wl(parse_wl(s.get("WL")))
-        .team_name(s.get("TEAM_NAME").unwrap().as_str().unwrap().to_string())
-        .dreb(parse_u32(s.get("DREB")))
-        .oreb(parse_u32(s.get("OREB")))
-        .stl(parse_u32(s.get("STL")))
-        .blk(parse_u32(s.get("BLK")))
-        .fg3a(parse_u32(s.get("FG3A")))
-        .fg3m(parse_u32(s.get("FG3M")))
-        .fga(parse_u32(s.get("FGA")))
-        .fgm(parse_u32(s.get("FGM")))
-        .fta(parse_u32(s.get("FTA")))
-        .ftm(parse_u32(s.get("FTM")))
-        .tov(parse_u32(s.get("TOV")))
-        .pts(parse_u32(s.get("PTS")))
-        .pf(parse_u32(s.get("PF")))
-        .fantasy_pts(parse_f32(s.get("FANTASY_PTS")))
-        .game_date(parse_date(s.get("GAME_DATE")))
-        .team_abbreviation(s.get("TEAM_ABBREVIATION").unwrap().as_str().unwrap().to_string())
-        .matchup(string(s.get("MATCHUP")))
-        .player_name(string(s.get("PLAYER_NAME")))
-        .player_id(parse_u64(s.get("PLAYER_ID")).unwrap())
-        .team_id(parse_u64(s.get("TEAM_ID")).unwrap())
-        .elo(3000)
-        .build()
-        .unwrap();
+    let gameid = string(s.get("GAME_ID"));
+    let playerid = parse_u64(s.get("PLAYER_ID")).unwrap();
+    let season = str_to_num(s.get("SEASON_ID")) as i32;
 
-    box_score
+    let mut correction = Correction::new(gameid.clone(), playerid, season, Player);
+
+    let wl = parse_wl(s.get("WL"));
+
+    match wl {
+        Some(_) => (),
+        None => correction.add_missing_field(WL, StatValue::new()),
+    }
+
+    let dt = parse_date(s.get("GAME_DATE"));
+
+    match dt {
+        Some(_) => (),
+        None => correction.add_missing_field(GAME_DATE, StatValue::new())
+    }
+
+    match correction.len() {
+        0 => Ok(PlayerBoxScoreBuilder::default()
+            .ast(parse_u32(s.get("AST")))
+            .plus_minus(parse_i32(s.get("PLUS_MINUS")))
+            .season_id(season)
+            .game_id(gameid.clone())
+            .reb(parse_u32(s.get("REB")))
+            .min(parse_u32(s.get("MIN")))
+            .wl(wl.unwrap())
+            .team_name(s.get("TEAM_NAME").unwrap().as_str().unwrap().to_string())
+            .dreb(parse_u32(s.get("DREB")))
+            .oreb(parse_u32(s.get("OREB")))
+            .stl(parse_u32(s.get("STL")))
+            .blk(parse_u32(s.get("BLK")))
+            .fg3a(parse_u32(s.get("FG3A")))
+            .fg3m(parse_u32(s.get("FG3M")))
+            .fga(parse_u32(s.get("FGA")))
+            .fgm(parse_u32(s.get("FGM")))
+            .fta(parse_u32(s.get("FTA")))
+            .ftm(parse_u32(s.get("FTM")))
+            .tov(parse_u32(s.get("TOV")))
+            .pts(parse_u32(s.get("PTS")))
+            .pf(parse_u32(s.get("PF")))
+            .fantasy_pts(parse_f32(s.get("FANTASY_PTS")))
+            .game_date(dt.unwrap())
+            .team_abbreviation(s.get("TEAM_ABBREVIATION").unwrap().as_str().unwrap().to_string())
+            .matchup(stats::nba::MatchupString(string(s.get("MATCHUP"))))
+            .player_name(string(s.get("PLAYER_NAME")))
+            .player_id(playerid)
+            .team_id(parse_u64(s.get("TEAM_ID")).unwrap())
+            .elo(3000)
+            .build().unwrap()),
+        _ => Err(correction),
+    }
+
 
 }
 
 fn string(s: Option<&Value>) -> String {
-    s.unwrap().as_str().unwrap().to_string()
+    s.unwrap().to_string()
 }
 
 fn parse_u64(value: Option<&Value>) -> Option<u64> {
@@ -178,70 +231,48 @@ fn parse_f32(value: Option<&Value>) -> Option<f32> {
     }
 }
 
-fn parse_str(value: Option<&Value>) -> u64 {
+fn str_to_num(value: Option<&Value>) -> u64 {
     value.unwrap().as_str().unwrap().parse::<u64>().expect(format!("could not parse {:?} into unsigned 64-bit integer\n", value ).as_str())
 }
 
-fn parse_wl(value: Option<&Value>) -> GameResult {
+fn parse_wl(value: Option<&Value>) -> Option<GameResult> {
     match value { // the fuck?
         Some(wl) => match wl.as_str() {
-            Some("W") => Win,
-            Some("L") => Loss,
-            Some("D") => Draw,
+            Some("W") => Some(Win),
+            Some("L") => Some(Loss),
+            Some("D") => Some(Draw),
             Some(x) => panic!(
                 "Unknown game result: {}. Acceptable results are: [\"W\", \"L\", \"D\"]",
                 x
             ),
-            None => panic!(
-                "No game result provided.",
-            ),
+            None => None,
         }
         None => panic!("could not unwrap a game result from the provided serde::Value {:#?}", value)
     }
 }
 
-fn parse_date(value: Option<&Value>) -> Date {
-
-    let date_str = value.unwrap().as_str().unwrap();
+fn parse_date(value: Option<&Value>) -> Option<Date> {
 
     // Define the format for the date string
     let format = format_description!("[year]-[month]-[day]");
 
-    // Parse the string into a `Date`
-    let date = Date::parse(date_str, &format).expect("Failed to parse date");
 
-    date
+    let d = value.unwrap().as_str();
+
+    match d {
+        Some(date_str) => match Date::parse(date_str, &format) {
+            Ok(date) => Some(date), // Parse the string into a `Date`
+            Err(_) => None,
+        },
+        None => None
+    }
 }
 
-fn get_set(v: &Value) -> Result<Value, &'static str> {
-    let result_sets = v.get("resultSets")
-        .and_then(|rs| rs.as_array())
-        .ok_or_else(|| "resultSets is not an array or is missing")?;
 
-    let result_set = result_sets.get(0)
-        .ok_or_else(|| "resultSets array is empty")?;
 
-    Ok(result_set.clone())
-}
-
-fn headers(s: &Value) -> Result<Vec<&str>, &'static str> {
-    Ok(
-        s.get("headers")
-        .and_then(|h| h.as_array())
-        .ok_or_else(|| "Missing or invalid 'headers' field")?.iter().filter_map(|h| h.as_str()).collect()
-    )
-}
-
-fn rows(set: &Value) -> Result<Vec<Value>, &'static str> {
-    Ok(
-        set.get("rowSet")
-        .and_then(|r| r.as_array())
-        .ok_or_else(|| "Missing or invalid 'rowSet' field")?.clone()
-    )
-}
-
-fn season(rows: Vec<Value>, headers: Vec<&str>, stat: NBAStatKind) -> Vec<NBAStat> {
+fn season(rows: Vec<Value>, headers: Vec<&str>, stat: NBAStatKind) -> Result<Vec<NBAStat>, Vec<Correction>> {
     let mut season:Vec<NBAStat> = Vec::new();
+    let mut corrections: Vec<Correction> = Vec::new();
 
     for row in rows {
         if let Some(row_data) = row.as_array() {
@@ -250,25 +281,32 @@ fn season(rows: Vec<Value>, headers: Vec<&str>, stat: NBAStatKind) -> Vec<NBASta
                 .map(|(name, value)  |(name.to_string(), value.clone()))
                 .collect();
 
-            let box_score = match stat {
-                Player => NBAStat::Player(fields_to_player_box_score(&fields)),
-                Team => NBAStat::Team(fields_to_team_box_score(&fields)),
+            match stat {
+                Player => match fields_to_player_box_score(&fields) {
+                    Ok(box_score) => {
+                        season.push(NBAStat::Player(box_score));
+                    },
+                    Err(e) => {
+                        corrections.push(e);
+                    }
+                },
+                Team => match fields_to_team_box_score(&fields) {
+                    Ok(box_score) => {
+                        season.push(NBAStat::Team(box_score));
+                    },
+                    Err(e) => {
+                        corrections.push(e);
+                    }
+                },
                 LineUp => panic!("lineup stats are not yet supported.")
             };
-
-
-            season.push(box_score); //this means mutable reference
         }
     }
 
-    season
+    if corrections.len() == 0 {
+        Ok(season)
+    } else {
+        Err(corrections)
+    }
 }
 
-/// food reference
-pub fn raw_extract(json: Value) -> Result<Vec<String>, Box<dyn Error>> {
-    let set = get_set(&json)?;
-
-    let rows = rows(&set)?;
-
-    Ok((&rows).iter().map(|v| v.to_string()).collect())
-}

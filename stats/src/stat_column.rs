@@ -1,11 +1,12 @@
-use std::cmp::PartialEq;
-use std::fmt::{Display, Formatter};
-use serde::{Deserialize, Serialize};
-use derivative::Derivative;
 use crate::stat_column::StatColumn::*;
+use derivative::Derivative;
+use serde::{Deserialize, Serialize};
+use std::cmp::{Ordering, PartialEq};
+use std::fmt::{Display, Formatter};
 
 #[derive(Serialize, Deserialize, Derivative, Eq)]
-#[derivative(PartialEq, Hash, Clone)]
+#[derivative(PartialEq, Hash, Clone, Copy)]
+#[allow(non_camel_case_types)]
 pub enum StatColumn {
     SEASON_ID,
     PLAYER_ID,
@@ -39,6 +40,51 @@ pub enum StatColumn {
     PLUS_MINUS,
     FANTASY_PTS,
     VIDEO_AVAILABLE,
+}
+
+
+impl StatColumn {
+    pub fn to_str(&self) -> &'static str {
+        match self {
+            SEASON_ID => "season_id",
+            PLAYER_ID => "player_id",
+            PLAYER_NAME => "player_name",
+            TEAM_ID => "team_id",
+            TEAM_ABBREVIATION => "team_abbreviation",
+            TEAM_NAME => "team_name",
+            GAME_ID => "game_id",
+            GAME_DATE => "game_date",
+            MATCHUP => "matchup",
+            WL => "wl",
+            MIN => "min",
+            FGM => "fgm",
+            FGA => "fga",
+            FG_PCT => "fg_pct",
+            FG3M => "fg3m",
+            FG3A => "fg3a",
+            FG3_PCT => "fg3_pct",
+            FTM => "ftm",
+            FTA => "fta",
+            FT_PCT => "ft_pct",
+            OREB => "oreb",
+            DREB => "dreb",
+            REB => "reb",
+            AST => "ast",
+            STL => "stl",
+            BLK => "blk",
+            TOV => "tov",
+            PF => "pf",
+            PTS => "pts",
+            PLUS_MINUS => "plus_minus",
+            FANTASY_PTS => "fantasy_pts",
+            VIDEO_AVAILABLE => "video_available",
+        }
+    }
+}
+impl Display for StatColumn {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_str())
+    }
 }
 
 const COLUMNS: [StatColumn; 32] = [
@@ -80,72 +126,95 @@ pub fn column_index(stat: &StatColumn) -> Option<usize> {
     COLUMNS.iter().position(|x| x == stat)
 }
 
-impl StatColumn {
-    pub fn column_fmt(&self, s: String) -> String {
-        match self {
-            SEASON_ID => format!("\"{}\"", s),
-            PLAYER_ID => format!("{}", s),
-            PLAYER_NAME => format!("\"{}\"", s),
-            TEAM_ID => format!("{}", s),
-            TEAM_ABBREVIATION => format!("\"{}\"", s),
-            TEAM_NAME => format!("\"{}\"", s),
-            GAME_ID => format!("\"{}\"", s),
-            GAME_DATE => format!("\"{}\"", s),
-            MATCHUP => format!("\"{}\"", s),
-            WL => format!("\"{}\"", s),
-            MIN => format!("{}", s),
-            FGM => format!("{}", s),
-            FGA => format!("{}", s),
-            FG_PCT => format!("{}", s),
-            FG3M => format!("{}", s),
-            FG3A => format!("{}", s),
-            FG3_PCT => format!("{}", s),
-            FTM => format!("{}", s),
-            FTA => format!("{}", s),
-            FT_PCT => format!("{}", s),
-            OREB => format!("{}", s),
-            DREB => format!("{}", s),
-            REB => format!("{}", s),
-            AST => format!("{}", s),
-            STL => format!("{}", s),
-            BLK => format!("{}", s),
-            TOV => format!("{}", s),
-            PF => format!("{}", s),
-            PTS => format!("{}", s),
-            PLUS_MINUS => format!("{}", s),
-            FANTASY_PTS => format!("{}", s),
-            VIDEO_AVAILABLE => format!("{}", s),
-        }
+pub fn column_fmt(col: &StatColumn, s: String) -> String {
+    match col {
+        SEASON_ID => format!("\"{}\"", s),
+        PLAYER_ID => format!("{}", s),
+        PLAYER_NAME => format!("\"{}\"", s),
+        TEAM_ID => format!("{}", s),
+        TEAM_ABBREVIATION => format!("\"{}\"", s),
+        TEAM_NAME => format!("\"{}\"", s),
+        GAME_ID => format!("\"{}\"", s),
+        GAME_DATE => format!("\"{}\"", s),
+        MATCHUP => format!("\"{}\"", s),
+        WL => format!("\"{}\"", s),
+        MIN => format!("{}", s),
+        FGM => format!("{}", s),
+        FGA => format!("{}", s),
+        FG_PCT => format!("{}", s),
+        FG3M => format!("{}", s),
+        FG3A => format!("{}", s),
+        FG3_PCT => format!("{}", s),
+        FTM => format!("{}", s),
+        FTA => format!("{}", s),
+        FT_PCT => format!("{}", s),
+        OREB => format!("{}", s),
+        DREB => format!("{}", s),
+        REB => format!("{}", s),
+        AST => format!("{}", s),
+        STL => format!("{}", s),
+        BLK => format!("{}", s),
+        TOV => format!("{}", s),
+        PF => format!("{}", s),
+        PTS => format!("{}", s),
+        PLUS_MINUS => format!("{}", s),
+        FANTASY_PTS => format!("{}", s),
+        VIDEO_AVAILABLE => format!("{}", s),
     }
 }
 
-
-#[derive(Serialize, Deserialize, Eq, PartialEq, Derivative)]
-#[derivative(Hash)]
-pub struct StatEntry {
-    col: StatColumn,
-    val: String,
-}
-
-impl StatEntry {
-    pub fn new(col: StatColumn, val: String) -> StatEntry {
-        StatEntry {
-            col,
-            val
-        }
-    }
-
-    pub fn col(&self) -> StatColumn {
-        self.col.clone()
-    }
-
-    pub fn val(&self) -> String {
-        format!("{:#}", self)
+impl PartialOrd<Self> for StatColumn {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
 
-impl Display for StatEntry {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.col.column_fmt(self.val.clone()))
+impl Ord for StatColumn {
+    fn cmp(&self, other: &Self) -> Ordering {
+        let a = stat_column_ord(self);
+        let b = stat_column_ord(other);
+
+        a.cmp(&b)
+    }
+}
+fn stat_column_ord(col: &StatColumn) -> usize {
+    let ord = vec![
+        SEASON_ID,
+        PLAYER_ID,
+        PLAYER_NAME,
+        TEAM_ID,
+        TEAM_ABBREVIATION,
+        TEAM_NAME,
+        GAME_ID,
+        GAME_DATE,
+        MATCHUP,
+        WL,
+        MIN,
+        FGM,
+        FGA,
+        FG_PCT,
+        FG3M,
+        FG3A,
+        FG3_PCT,
+        FTM,
+        FTA,
+        FT_PCT,
+        OREB,
+        DREB,
+        REB,
+        AST,
+        STL,
+        BLK,
+        TOV,
+        PF,
+        PTS,
+        PLUS_MINUS,
+        FANTASY_PTS,
+        VIDEO_AVAILABLE,
+    ];
+
+    match ord.iter().position(|x| x == col) {
+        Some(i) => i,
+        None => panic!("indexed with non existent stat column"), //this is a good panic
     }
 }

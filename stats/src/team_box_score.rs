@@ -1,24 +1,37 @@
-use time::Date;
-use std::fmt::Formatter;
-use derive_builder::Builder;
-use crate::format::{format_matchup, opponent, percent, season_fmt};
-use serde::{Deserialize, Serialize};
-use crate::nba::{GameResult, Visiting};
 use crate::nba::Visiting::{Away, Home};
+use crate::nba::{GameResult, MatchupString, Visiting};
 use crate::player_box_score::PlayerBoxScore;
 use crate::statify::Statify;
+use derive_builder::Builder;
+use format::season::season_fmt;
+use serde::{Deserialize, Serialize};
+use std::fmt::Formatter;
+use time::Date;
 
 #[derive(Builder, Clone, Debug, Serialize, Deserialize)]
 pub struct TeamBoxScore {
-    roster: Vec<PlayerBoxScore>,
+
+    // team identification
+
     team_abbreviation: String,
     team_name: String,
-    game_date: Date,
-    matchup: String,
-    wl: GameResult,
     team_id: u64,
-    game_id: u64,
-    season_id: u32,
+
+    // game data
+
+    season_id: i32,
+    matchup: MatchupString,
+    game_date: Date,
+    game_id: String,
+
+    //roster
+
+    roster: Vec<PlayerBoxScore>,
+
+    // classic box score
+
+    wl: GameResult,
+
     min: Option<u32>,
     fgm: Option<u32>,
     fga: Option<u32>,
@@ -35,40 +48,68 @@ pub struct TeamBoxScore {
     tov: Option<u32>,
     pf: Option<u32>, //personal fouls
     pts: Option<u32>,
+
+
+    //advanced stats
+
     plus_minus: Option<i32>,
 }
 
 impl TeamBoxScore {
-    pub fn game_id(&self) -> u64 {
-        self.game_id
+
+    // not sure what type to return
+    pub fn game_id(&self) -> String {
+        self.game_id.clone()
     }
 
-    pub fn add_player_stats(&mut self, value: PlayerBoxScore)  {
+    pub fn add_player_stats(&mut self, value: PlayerBoxScore) {
         self.roster.push(value);
     }
 
     pub fn home_or_away(&self) -> Visiting {
         let team = &self.team_abbreviation.trim();
 
-        let matchup = self.matchup.clone();
+        let MatchupString(matchup) = self.matchup.clone();
 
         match matchup.split_whitespace().collect::<Vec<&str>>().as_slice() {
-            [home, "vs.", away] => if home == team { Home } else if away == team { Away } else { panic!("team {} is neither of the contestants {} @ {}. ", self.team_abbreviation, away, home)},
-            [away, "@", home] => if home == team { Home } else if away == team { Away } else { panic!("team {} is neither of the contestants {} @ {}. ", self.team_abbreviation, away, home)},
+            [home, "vs.", away] => {
+                if home == team {
+                    Home
+                } else if away == team {
+                    Away
+                } else {
+                    panic!(
+                        "team {} is neither of the contestants {} @ {}. ",
+                        self.team_abbreviation, away, home
+                    )
+                }
+            }
+            [away, "@", home] => {
+                if home == team {
+                    Home
+                } else if away == team {
+                    Away
+                } else {
+                    panic!(
+                        "team {} is neither of the contestants {} @ {}. ",
+                        self.team_abbreviation, away, home
+                    )
+                }
+            }
             e => panic!("could not parse game format. {:#?}", e),
         }
     }
 
     pub fn team(&self) -> String {
-
         self.team_abbreviation.clone()
-
     }
 
     pub fn season_str(&self) -> String {
+        season_fmt(self.season_id - 20000)
+    }
 
-        season_fmt((self.season_id - 20000) as i32)
-
+    pub fn elo(&self) -> i32 {
+        todo!()
     }
 }
 
@@ -91,5 +132,60 @@ impl std::fmt::Display for TeamBoxScore {
                self.blk.unwrap_f("-"), self.stl.unwrap_f("-"),
                self.pf.unwrap_f("-"), self.tov.unwrap_f("-")
         )
+    }
+}
+pub(crate) fn format_matchup(matchup: &MatchupString) -> String {
+    let MatchupString(s) = matchup;
+    let parts: Vec<&str> = s.split_whitespace().collect();
+
+    if parts.len() != 3 {
+        panic!("game name does not have three terms.")
+    }
+
+    match parts.as_slice() {
+        [home, "vs.", away] => format!("{} vs. {}", home, away.to_ascii_lowercase()),
+        [away, "@", home] => format!("{} @ {}", away, home.to_ascii_lowercase()),
+        _ => panic!("Could not reformat the game; unexpected pattern."),
+    }
+}
+
+/// Returns the opposing team's abbreviation unmodified.
+/// It will be a 3 character capitalized string, this rule can
+/// and should be used for validation.
+///
+/// # Arguments
+///
+/// * `matchup`:matchup string provided by nba.com api
+/// * `abbr`: team abbreviation (3 characters)
+///
+/// returns: String
+///
+/// # Examples
+///
+/// ```
+/// let opponent = opponent("MEM @ LAL", "LAL");
+///
+/// assert_eq!("MEM", opponent);
+/// ```
+pub(crate) fn opponent(matchup: &MatchupString, abbr: &str) -> String {
+    let MatchupString(s) = matchup;
+
+    let parts: Vec<&str> = s.split_whitespace().collect();
+
+    if parts.len() != 3 {
+        panic!("game name does not have three terms.")
+    }
+
+    match parts.as_slice() {
+        [t1, _, t2] if &abbr == t1 => t2.to_string(),
+        [t1, _, t2] if &abbr == t2 => t1.to_string(),
+        _ => panic!("Could not parse the opponent; unexpected pattern."),
+    }
+}
+
+pub(crate) fn percent(num: Option<u32>, den: Option<u32>) -> String {
+    match [num, den] {
+        [Some(n), Some(d)] => format!("({:.1}%)", (n as f32 * 100.0) / d as f32),
+        _ => "-".to_string(),
     }
 }

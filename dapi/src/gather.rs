@@ -7,24 +7,23 @@ use std::str::FromStr;
 use once_cell::sync::Lazy;
 use reqwest::Client;
 use reqwest::header::*;
-use stats::format::{season_file, season_fmt};
 use stats::kind::NBAStatKind;
-use crate::format::*;
-use crate::path_manager::filepath;
-use crate::prefix::prefix;
+use format::path_manager::data_path;
+use constants::data;
+use format::season::season_fmt;
+use format::stat_path_formatter::StatPathFormatter as SPF;
 
-static PREFIX: Lazy<String> = Lazy::new(prefix);
-pub fn read_nba(season: i32, stat: NBAStatKind) -> String {
+static DATA: Lazy<String> = Lazy::new(data);
+pub fn read_nba(season: i32, stat: impl SPF) -> String {
     let suffix = (season + 1) % 100;
-    let filename = format!("{}/nba/{}/{}_{:02}_{}", *PREFIX, epath(stat), season, suffix, ext(stat));
+    let filename = format!("{}/nba/{}/{}_{:02}_{}", *DATA, stat.epath(), season, suffix, stat.ext());
 
-    let mut file = File::open(&filename).expect(&dbg_open(
-        season,
-        stat
+    let mut file = File::open(&filename).expect(&stat.dbg_open(
+        season
     ));
     let mut data = String::new();
 
-    file.read_to_string(&mut data).expect(&dbg_write(season, stat));
+    file.read_to_string(&mut data).expect(&stat.dbg_write(season));
 
     data
 }
@@ -54,11 +53,9 @@ pub async fn ask_nba(year: i32, stat: NBAStatKind) -> Result<(), Box<dyn Error>>
 
     let season = season_fmt(year);
 
-    let file_path = filepath(year, stat);
+    let file_path = data_path(year, stat);
 
     let url = format!("https://stats.nba.com/stats/leaguegamelog?Counter=1000&DateFrom=&DateTo=&Direction=DESC&ISTRound=&LeagueID=00&PlayerOrTeam=P&Season={season}&SeasonType=Regular%20Season&Sorter=DATE");
-
-    dbg!(&url);
 
     let response = client
         .get(&url)

@@ -6,47 +6,78 @@
 */
 
 use stats::kind::{NBAStatKind, NBAStat};
+use stats::kind::NBAStat::*;
 use stats::player_box_score::PlayerBoxScore;
 use stats::team_box_score::TeamBoxScore;
-use crate::gather::read_nba;
 use crate::rip::process_nba_games;
 
 use chrono;
 use chrono::{DateTime, Datelike, Local};
 use indicatif::{ProgressBar, ProgressStyle};
-use stats::format::season_str;
 
-pub async fn save_nba_season(year: i32) {
-    let player_games = match process_nba_games(&read_nba(year, NBAStatKind::Player), NBAStatKind::Player) {
+fn player_games(year: i32) -> Vec<PlayerBoxScore> {
+    match process_nba_games(year, NBAStatKind::Player) {
         Ok(games) => games
             .into_iter()
             .filter_map(|x| match x {
-                NBAStat::Player(p) => Some(p),
+                Player(p) => Some(p),
                 _ => None,
             })
             .collect::<Vec<PlayerBoxScore>>(),
-        Err(e) => unreachable!("{}", e),
-    };
+        Err(corrections) => {
+            for mut correction in corrections {
+                correction.create(); //if this function depends on user input does this execution around it pause?
 
-    let mut team_games = match process_nba_games(&read_nba(year, NBAStatKind::Team), NBAStatKind::Team) {
+                correction.apply().expect("couldn't open file to [rw]");
+
+                // id like to make this recursive in the following case as well. essentially
+            }
+            player_games(year)
+        }
+    }
+}
+
+fn team_games(year: i32, roster: Vec<PlayerBoxScore>) -> Vec<TeamBoxScore> {
+    let mut games = match process_nba_games(year, NBAStatKind::Team) {
         Ok(games) => games
             .into_iter()
             .filter_map(|x| match x {
-                NBAStat::Team(t) => Some(t),
+                Team(t) => Some(t),
                 _ => None,
             })
             .collect::<Vec<TeamBoxScore>>(),
-        Err(e) => unreachable!("{}", e),
+        Err(corrections) => {
+            for mut correction in corrections {
+                correction.create(); // If this function depends on user input, execution will pause here
+
+                correction.apply().expect("couldn't open file to [rw]");
+
+                // Recursively retry after applying corrections
+            }
+            team_games(year, roster.clone()) // Recursive call to retry after corrections
+        }
     };
 
-    for player in &player_games {
-        for team in &mut team_games {
-            if player.played_in(team.clone()) {
+    for player in roster {
+        for team in &mut games {
+            if player.played_in(&team) {
                 team.add_player_stats(player.clone());
             }
         }
     }
 
+    games
+
+}
+pub fn load_nba_season(year: i32) -> Vec<TeamBoxScore> {
+    let player_games = player_games(year);
+
+    team_games(year, player_games)
+}
+
+pub async fn save_nba_season(year: i32) {
+
+    let team_games = load_nba_season(year);
 
     sub_save(team_games).await;
 }
@@ -69,12 +100,13 @@ async fn sub_save(games: Vec<TeamBoxScore>) {
         pb.inc(1);
     }
 
-    pb.finish_with_message(format!("saved {} season.", season_str(games)));
+    pb.finish_with_message(format!("saved {} season.", games[0].season_str()));
 }
 
-/// you can build around this function but not from it... this is the one function to start the nba into memeroy then iterate over elo.
+/// you can build around this function but not from it... this is the one function to start the nba into memory then iterate over elo.
 pub async fn chronicle_nba() {
-    let todays_date = chrono::offset::Local::now();
+    let todays_date = Local::now();
+
     let D {year, month, day} = destructure_dt(todays_date);
 
     let seasonal_depression = if month > 8 || month == 8 && day >= 14 { 1 } else { 0 };// august14th
@@ -89,7 +121,7 @@ pub async fn chronicle_nba() {
 fn destructure_dt(dt: DateTime<Local>) -> D {
     D {
         year: dt.year(),
-        month: dt.month() ,
+        month: dt.month(),
         day: dt.day(),
     }
 }
