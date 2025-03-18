@@ -4,8 +4,8 @@ use serde_json::{from_str, Value};
 use stats::extract::{get_set, headers, rows};
 use stats::kind::NBAStatKind::{LineUp, Player, Team};
 use stats::kind::{NBAStat, NBAStatKind};
-use stats::nba::GameResult::{Draw, Loss, Win};
-use stats::nba::GameResult;
+use stats::types::GameResult::{Draw, Loss, Win};
+use stats::types::GameResult;
 use stats::player_box_score::{PlayerBoxScore, PlayerBoxScoreBuilder};
 use stats::stat_column::StatColumn::{GAME_DATE, WL};
 use stats::stat_value::StatValue;
@@ -79,7 +79,7 @@ fn fields_to_team_box_score(s: &HashMap<String, Value>) -> Result<TeamBoxScore, 
             .pf(parse_u32(s.get("PF")))
             .game_date(dt.unwrap())
             .team_abbreviation(s.get("TEAM_ABBREVIATION").unwrap().as_str().unwrap().to_string())
-            .matchup(stats::nba::MatchupString(s.get("MATCHUP").unwrap().as_str().unwrap().to_string()))
+            .matchup(stats::types::MatchupString(s.get("MATCHUP").unwrap().as_str().unwrap().to_string()))
             .roster(Vec::new())
             .build().unwrap()
         ),
@@ -143,7 +143,7 @@ fn fields_to_player_box_score(s: &HashMap<String, Value>) -> Result<PlayerBoxSco
             .fantasy_pts(parse_f32(s.get("FANTASY_PTS")))
             .game_date(dt.unwrap())
             .team_abbreviation(s.get("TEAM_ABBREVIATION").unwrap().as_str().unwrap().to_string())
-            .matchup(stats::nba::MatchupString(string(s.get("MATCHUP"))))
+            .matchup(stats::types::MatchupString(string(s.get("MATCHUP"))))
             .player_name(string(s.get("PLAYER_NAME")))
             .player_id(playerid)
             .team_id(parse_u64(s.get("TEAM_ID")).unwrap())

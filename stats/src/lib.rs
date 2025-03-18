@@ -8,3 +8,6 @@ mod statify;
 pub mod team_box_score;
 
 pub mod percent;
+pub mod se;
+pub mod types;
+//trig enum

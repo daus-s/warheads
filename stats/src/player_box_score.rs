@@ -1,4 +1,4 @@
-use crate::nba::{GameResult, MatchupString};
+use crate::types::{GameResult, MatchupString};
 use crate::statify::Statify;
 use crate::team_box_score::TeamBoxScore;
 use derive_builder::Builder;

@@ -1,5 +1,5 @@
 use crate::nba::Visiting::{Away, Home};
-use crate::nba::{GameResult, MatchupString, Visiting};
+use crate::nba::{Visiting};
 use crate::player_box_score::PlayerBoxScore;
 use crate::statify::Statify;
 use derive_builder::Builder;
@@ -7,6 +7,7 @@ use format::season::season_fmt;
 use serde::{Deserialize, Serialize};
 use std::fmt::Formatter;
 use time::Date;
+use crate::types::{GameResult, MatchupString};
 
 #[derive(Builder, Clone, Debug, Serialize, Deserialize)]
 pub struct TeamBoxScore {

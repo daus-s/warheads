@@ -4,6 +4,7 @@ use dialoguer::{theme::ColorfulTheme, Input, Select};
 use std::str::FromStr;
 use serde::Serialize;
 use serde_json::{json, Value};
+use stats::se::{SerdeEnum};
 
 pub fn prompt_and_validate<T>(prompt: &str) -> Value
 where
@@ -21,12 +22,12 @@ where
     match t {
         Ok(t) =>
             match type_name::<T>() {
-                "i32" | "alloc::string::String" | "u32" | "f32" | "u64" => json!(t),
-                "chrono::naive::date::NaiveDate" => json!(prompt),
-                "stats::nba::MatchupString" => json!(t),
+                "i32" | "alloc::string::String" | "u32" | "f32" | "u64" | "stats::percent::Percent" => json!(t),
+                "chrono::naive::date::NaiveDate" => json!(t),
+                "stats::types::MatchupString" => json!(t),
                 _ => panic!("Unrecognized type: {}", type_name::<T>()), // Panic for unrecognized types
             }
-        Err(e) => json!(None::<T>),
+        Err(_) => json!(None::<T>),
     }
 }
 
@@ -35,7 +36,9 @@ fn validate_t<T>(input: &String) -> Result<(), String>
 where
     T: FromStr
 {
-    println!("{}", type_name::<T>());
+    if input == "null" {
+        return Ok(())
+    }
 
     match type_name::<T>() {
         _ => input.
@@ -45,14 +48,18 @@ where
     }
 }
 
-pub fn prompt_and_select(prompt: &str) -> Value {
-    let choices = &["W", "L", "D"];
+pub fn prompt_and_select<S>(prompt: &str) -> Value
+where
+    S: SerdeEnum,
+{
+
     let selection = Select::with_theme(&ColorfulTheme::default())
         .with_prompt(prompt)
-        .items(choices)
+        .items(&S::enumerate().iter().map(|x| x.to_string()).collect::<Vec<String>>())
         .default(0)
         .interact()
         .unwrap();
 
-    json!(choices[selection].to_string())
+    S::evaluate()[selection].clone()
+
 }

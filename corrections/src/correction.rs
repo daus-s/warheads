@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use stats::extract::nba_json_to_str;
 use stats::kind::NBAStatKind;
-use stats::stat_column::{column_fmt, column_index, StatColumn};
+use stats::stat_column::{column_index, StatColumn};
 use std::collections::HashMap;
 use std::fs::OpenOptions;
 use std::io::{BufWriter, Write};
@@ -16,7 +16,7 @@ use stats::percent::Percent;
 use stats::stat_value::StatValue;
 use tui::prompter::{prompt_and_select, prompt_and_validate};
 use serde_with::chrono;
-use stats::nba::{MatchupString};
+use stats::types::{BoolInt, GameResult, MatchupString};
 
 #[derive(Serialize, Deserialize)]
 pub struct Correction {
@@ -65,6 +65,7 @@ impl Correction {
                         println!("updating game");
                         //edit the player vector
                         *game = self.correct(game.clone());
+                        break;
                     }
                 }
 
@@ -101,15 +102,20 @@ impl Correction {
     /// so we answer true or false
     ///
     fn is_game(&self, s: String) -> bool {
+        println!("row: {}", s);
+
         let columns = columns(s);
 
         match columns.as_slice() {
             [season_id, player_id, _, _, _, _, game_id, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _] => {
+
+                println!("{}", game_id);
+
                 self.season + 20000 == season_id.replace("\"", "").parse::<i32>().unwrap()
                     && self.id == player_id.parse::<u64>().unwrap()
                     && self.gameid.parse::<u64>().unwrap() == game_id.replace("\"", "").parse::<u64>().unwrap()
             }
-            _ => false, // no way can a bad object satisfy the condition
+            _ => false, // no way can a bad object satisfy the condition, *panic!* ?
         }
     }
 
@@ -161,7 +167,7 @@ impl Correction {
                 for (&col, val) in self.corrections.iter() {
                     if let Some(i) = column_index(&col) {
 
-                        let f_str = column_fmt(&col, val.val().clone().unwrap_or_else(|| Null).to_string());
+                        let f_str = val.val().unwrap_or_else(|| Null).to_string();
 
                         cs[i] = f_str;
                     }
@@ -208,7 +214,7 @@ impl Correction {
                 // Display the column name and current value (grayed out if not confirmed)
                 println!(
                     "\x1b[90m{}: {}\x1b[0m", // ANSI escape code for gray text
-                    col, column_fmt(&col, val.val().unwrap_or_else(|| Null).to_string())
+                    col, val.val().unwrap_or_else(|| Null).to_string()
                 );
 
 
@@ -235,7 +241,7 @@ impl Correction {
                     StatColumn::PLAYER_NAME => prompt_and_validate::<String>(format!("enter {}", col).as_str()),
 
                     //classic box score
-                    StatColumn::WL => prompt_and_select("select win/loss/draw"),
+                    StatColumn::WL => prompt_and_select::<GameResult>("select win/loss/draw"),
 
                     StatColumn::MIN
                     | StatColumn::FGM
@@ -262,7 +268,7 @@ impl Correction {
 
                     // video available
 
-                    StatColumn::VIDEO_AVAILABLE => prompt_and_validate::<u64>(format!("enter {}", col).as_str()),
+                    StatColumn::VIDEO_AVAILABLE => prompt_and_select::<BoolInt>(format!("enter {}", col).as_str()),
                 };
 
                 // Lock in the value

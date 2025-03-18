@@ -48,6 +48,4 @@ impl StatValue {
     pub fn clear(&mut self) {
         self.0 = Null
     }
-
 }
-

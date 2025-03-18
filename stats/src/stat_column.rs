@@ -126,43 +126,6 @@ pub fn column_index(stat: &StatColumn) -> Option<usize> {
     COLUMNS.iter().position(|x| x == stat)
 }
 
-pub fn column_fmt(col: &StatColumn, s: String) -> String {
-    match col {
-        SEASON_ID => format!("\"{}\"", s),
-        PLAYER_ID => format!("{}", s),
-        PLAYER_NAME => format!("\"{}\"", s),
-        TEAM_ID => format!("{}", s),
-        TEAM_ABBREVIATION => format!("\"{}\"", s),
-        TEAM_NAME => format!("\"{}\"", s),
-        GAME_ID => format!("\"{}\"", s),
-        GAME_DATE => format!("\"{}\"", s),
-        MATCHUP => format!("\"{}\"", s),
-        WL => format!("\"{}\"", s),
-        MIN => format!("{}", s),
-        FGM => format!("{}", s),
-        FGA => format!("{}", s),
-        FG_PCT => format!("{}", s),
-        FG3M => format!("{}", s),
-        FG3A => format!("{}", s),
-        FG3_PCT => format!("{}", s),
-        FTM => format!("{}", s),
-        FTA => format!("{}", s),
-        FT_PCT => format!("{}", s),
-        OREB => format!("{}", s),
-        DREB => format!("{}", s),
-        REB => format!("{}", s),
-        AST => format!("{}", s),
-        STL => format!("{}", s),
-        BLK => format!("{}", s),
-        TOV => format!("{}", s),
-        PF => format!("{}", s),
-        PTS => format!("{}", s),
-        PLUS_MINUS => format!("{}", s),
-        FANTASY_PTS => format!("{}", s),
-        VIDEO_AVAILABLE => format!("{}", s),
-    }
-}
-
 impl PartialOrd<Self> for StatColumn {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))

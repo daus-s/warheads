@@ -9,7 +9,7 @@ impl FromStr for Percent {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.parse::<f32>() {
-            Ok(f) => if (f >= 0. && f <= 100.) {
+            Ok(f) => if f >= 0. && f <= 100. {
                 Ok(Percent(f))
             } else {
                 Err("percent is not in the correct bounds [0, 100].".parse().unwrap())

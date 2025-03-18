@@ -5,7 +5,7 @@
     GOOD WILL HUNTING
 */
 
-use stats::kind::{NBAStatKind, NBAStat};
+use stats::kind::{NBAStatKind};
 use stats::kind::NBAStat::*;
 use stats::player_box_score::PlayerBoxScore;
 use stats::team_box_score::TeamBoxScore;
