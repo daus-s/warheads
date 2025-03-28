@@ -7,6 +7,7 @@ use format::season::season_fmt;
 use serde::{Deserialize, Serialize};
 use std::fmt::Formatter;
 use time::Date;
+use crate::box_score::BoxScore;
 use crate::types::{GameResult, MatchupString};
 
 #[derive(Builder, Clone, Debug, Serialize, Deserialize)]
@@ -111,6 +112,22 @@ impl TeamBoxScore {
 
     pub fn elo(&self) -> i32 {
         todo!()
+    }
+
+
+}
+
+impl BoxScore for TeamBoxScore {
+    fn season(&self) -> i32 {
+        self.season_id
+    }
+
+    fn game(&self) -> String {
+        self.game_id.clone()
+    }
+
+    fn id(&self) -> u64 {
+        self.team_id
     }
 }
 

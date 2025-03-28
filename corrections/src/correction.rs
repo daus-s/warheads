@@ -1,22 +1,21 @@
-use format::path_manager::{correction_file, correction_path, data_path};
-use format::season::season_fmt;
+use chrono::NaiveDate;
+use format::language::columns;
+use format::path_manager::{correction_file, correction_path};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use stats::extract::nba_json_to_str;
+use serde_json::Value::Null;
+use serde_with::chrono;
 use stats::kind::NBAStatKind;
+use stats::percent::Percent;
 use stats::stat_column::{column_index, StatColumn};
+use stats::stat_value::StatValue;
+use stats::types::{BoolInt, GameResult, MatchupString};
 use std::collections::HashMap;
-use std::fs::OpenOptions;
-use std::io::{BufWriter, Write};
+use std::fmt::{Debug, Formatter};
+use std::io::Write;
 use std::path::Path;
 use std::{fs, io};
-use chrono::NaiveDate;
-use serde_json::Value::Null;
-use stats::percent::Percent;
-use stats::stat_value::StatValue;
 use tui::prompter::{prompt_and_select, prompt_and_validate};
-use serde_with::chrono;
-use stats::types::{BoolInt, GameResult, MatchupString};
 
 #[derive(Serialize, Deserialize)]
 pub struct Correction {
@@ -37,93 +36,28 @@ impl Correction {
             corrections: Default::default(),
         }
     }
-    ///
-    /// apply the correction to the pre-processed data from raw data source in
-    ///
-    pub fn apply(&self) -> Result<(), String> {
-        let file_string = data_path(self.season, self.kind);
 
-        let file_path = Path::new(&file_string);
+    pub(crate) fn load(filename: &str) -> Result<Correction, String> {
+        let path = Path::new(filename);
 
-        let content = fs::read_to_string(file_path); //read the file
+        // Read the file content
+        let content = fs::read_to_string(path)
+            .map_err(|e| format!("Failed to read file {}: {}", filename, e))?;
 
-        match content {
-            Ok(txt) => {
-                let parsed: Value = serde_json::from_str(&txt)
-                    .map_err(|_| format!("could not parse JSON for file {:?}.", &file_string))?;
+        // Deserialize the content into a Correction struct
+        let correction: Correction = serde_json::from_str(&content)
+            .map_err(|e| format!("Failed to deserialize file {}: {}", filename, e))?;
 
-                let mut games = nba_json_to_str(parsed).map_err(|_| {
-                    format!(
-                        "could not process nba games for the {} season",
-                        season_fmt(self.season)
-                    )
-                })?;
-
-                for game in games.iter_mut() {
-                    //find the players results
-                    if self.is_game(game.clone()) {
-                        println!("updating game");
-                        //edit the player vector
-                        *game = self.correct(game.clone());
-                        break;
-                    }
-                }
-
-                let box_scores = games.join(",");
-
-                let updates = format!("[{}]", box_scores);
-
-                let copy = partition(txt, updates);
-
-                //write over the old file
-                let file = OpenOptions::new()
-                    .write(true)
-                    .truncate(true)
-                    .open(file_path)
-                    .unwrap();
-
-                let mut writer = BufWriter::new(file);
-
-                writeln!(writer, "{}", copy).unwrap();
-
-                writer.flush().unwrap();
-
-                Ok(())
-            }
-            Err(_) => Err(format!("could not open file {}", file_string)),
-        }
+        Ok(correction)
     }
 
     ///
-    /// this function should only ever accept well formatted strings so it will panic if not passed well.
-    /// thus it does not return a result but only a boolean
     ///
-    /// more importantly this function is asked "is this the game that i correct?"
-    /// so we answer true or false
+    /// process the box score string from file and overwrite with JSON-typed corrected data
+    /// consumes the original String and returns a new String
     ///
-    fn is_game(&self, s: String) -> bool {
-        println!("row: {}", s);
-
-        let columns = columns(s);
-
-        match columns.as_slice() {
-            [season_id, player_id, _, _, _, _, game_id, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _] => {
-
-                println!("{}", game_id);
-
-                self.season + 20000 == season_id.replace("\"", "").parse::<i32>().unwrap()
-                    && self.id == player_id.parse::<u64>().unwrap()
-                    && self.gameid.parse::<u64>().unwrap() == game_id.replace("\"", "").parse::<u64>().unwrap()
-            }
-            _ => false, // no way can a bad object satisfy the condition, *panic!* ?
-        }
-    }
-
     ///
-    /// im worried about this function i might have first tried no tested for too long
-    /// mayday mayday mayday
-    ///
-    fn correct(&self, game: String) -> String {
+    pub(crate) fn correct(&self, game: String) -> String {
         let columns = columns(game.clone());
 
         match columns.as_slice() {
@@ -188,7 +122,7 @@ impl Correction {
     /// This is a private function and is called when `fn create ->` is completed.
     ///
     fn save(&self) -> io::Result<()> {
-        let path = correction_path(self.season, self.kind);
+        let path = correction_path(self.season - 20000, self.kind);
 
         let file = correction_file(self.gameid.as_str(), self.id);
 
@@ -290,22 +224,18 @@ impl Correction {
     pub fn len(&self) -> usize {
         self.corrections.len()
     }
+
+    pub fn domain(&self) -> (i32, NBAStatKind) {
+        (self.season - 20000, self.kind)
+    }
 }
 
-fn columns(s: String) -> Vec<String> {
-    let columns = s.replace("[", "");
-
-    let columns = columns.replace("]", "");
-
-    columns.split(",").map(|x| x.to_string()).collect()
-}
-
-pub fn partition(txt: String, new_data: String) -> String {
-    let beginning = "\"rowSet\":";
-
-    let end_of_start = txt.find(beginning).unwrap() + beginning.len();
-
-    let (before, _) = txt.split_at(end_of_start);
-
-    format!("{}{}{}", before, new_data, "}]}")
+impl Debug for Correction {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "szn: {}\ngame: {}\nid: {} ({})\n[.{}.]", self.season, self.gameid, self.id, match self.kind {
+            NBAStatKind::Team => "team",
+            NBAStatKind::Player => "player",
+            NBAStatKind::LineUp => "lineup",
+        }, self.corrections.len() )
+    }
 }

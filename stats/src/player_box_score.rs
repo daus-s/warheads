@@ -5,8 +5,9 @@ use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 use std::fmt::Formatter;
 use time::Date;
+use crate::box_score::BoxScore;
 
-#[derive(Builder, Clone, Debug, Serialize, Deserialize)]
+#[derive(Builder, Clone, Debug, Serialize, Deserialize, )]
 pub struct PlayerBoxScore {
 
     //team identification
@@ -63,15 +64,24 @@ impl std::fmt::Display for PlayerBoxScore {
 }
 
 impl PlayerBoxScore {
-    pub fn game_id(&self) -> String {
-        self.game_id.clone()
-    }
-
     pub fn team(&self) -> String {
         self.team_abbreviation.clone()
     }
 
     pub fn played_in(&self, game: &TeamBoxScore) -> bool {
         self.game_id == game.game_id() && self.team_abbreviation == game.team()
+    }
+}
+
+impl BoxScore for PlayerBoxScore {
+    fn season(&self) -> i32 {
+        self.season_id - 20000
+    }
+
+    fn game(&self) -> String {
+        self.game_id.clone()
+    }
+    fn id(&self) -> u64 {
+        self.player_id
     }
 }

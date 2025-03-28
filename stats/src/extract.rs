@@ -1,15 +1,18 @@
 use serde_json::Value;
-use std::error::Error;
 
-pub fn nba_json_to_str(json: Value) -> Result<Vec<String>, Box<dyn Error>> {
-    let set = get_set(&json)?;
+pub fn json_to_rows(json: Value) -> Result<Vec<String>, String> {
+    let set = get_set(&json).map_err(|s| s.to_string())?;
 
-    let rows = rows(&set)?;
+    let rows = rows(&set).map_err(|s| s.to_string())?;
 
-    Ok((&rows).iter().map(|v| v.to_string()).collect())
+    Ok((&rows)
+        .iter()
+        .map(|v| v.to_string())
+        .collect()
+    )
 }
 
-pub fn get_set(v: &Value) -> Result<Value, &'static str> {
+pub fn get_set(v: &Value) -> Result<Value, String> {
     let result_sets = v
         .get("resultSets")
         .and_then(|rs| rs.as_array())
@@ -22,19 +25,21 @@ pub fn get_set(v: &Value) -> Result<Value, &'static str> {
     Ok(result_set.clone())
 }
 
-pub fn headers(s: &Value) -> Result<Vec<&str>, &'static str> {
+pub fn headers(s: &Value) -> Result<Vec<&str>, String> {
     Ok(s.get("headers")
         .and_then(|h| h.as_array())
-        .ok_or_else(|| "Missing or invalid 'headers' field")?
+        .ok_or_else(|| "Missing or invalid 'headers' field".to_string())?
         .iter()
         .filter_map(|h| h.as_str())
-        .collect())
+        .collect()
+    )
 }
 
-pub fn rows(set: &Value) -> Result<Vec<Value>, &'static str> {
+pub fn rows(set: &Value) -> Result<Vec<Value>, String> {
     Ok(set
         .get("rowSet")
         .and_then(|r| r.as_array())
         .ok_or_else(|| "Missing or invalid 'rowSet' field")?
-        .clone())
+        .clone()
+    )
 }

@@ -10,4 +10,5 @@ pub mod team_box_score;
 pub mod percent;
 pub mod se;
 pub mod types;
-//trig enum
+pub mod id;
+pub mod box_score;

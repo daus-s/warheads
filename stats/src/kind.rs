@@ -17,8 +17,6 @@ pub enum NBAStat {
     Teams(Vec<TeamBoxScore>),
 }
 
-impl NBAStatKind {}
-
 impl StatPathFormatter for NBAStatKind {
     /// Returns the directory path associated with the `NBAStatKind`.
     ///

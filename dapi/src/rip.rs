@@ -3,18 +3,20 @@ use corrections::correction::Correction;
 use serde_json::{from_str, Value};
 use stats::extract::{get_set, headers, rows};
 use stats::kind::NBAStatKind::{LineUp, Player, Team};
-use stats::kind::{NBAStat, NBAStatKind};
-use stats::types::GameResult::{Draw, Loss, Win};
-use stats::types::GameResult;
 use stats::player_box_score::{PlayerBoxScore, PlayerBoxScoreBuilder};
 use stats::stat_column::StatColumn::{GAME_DATE, WL};
 use stats::stat_value::StatValue;
 use stats::team_box_score::{TeamBoxScore, TeamBoxScoreBuilder};
 use std::collections::HashMap;
-use time::{macros::format_description, Date};
-//rips through the json using the header provided as per NBA apis convention/schema.
-//output the file to a (headed) csv to match the output format we will be using.
-
+use stats::kind::{NBAStat, NBAStatKind};
+use crate::parse::*;
+///
+/// rips through the json using the header provided as per NBA apis convention/schema.
+/// return a Result of Ok(Vec<NBAStat>) or Err(Vec<Correction>). it is important to remember
+/// an NBAStat is a BoxScore.
+///
+/// process games will crash if the JSON is poorly shaped.
+///
 pub fn process_nba_games(szn: i32, stat: NBAStatKind) -> Result<Vec<NBAStat>, Vec<Correction>> {
     let json = &read_nba(szn, stat);
 
@@ -35,7 +37,7 @@ fn fields_to_team_box_score(s: &HashMap<String, Value>) -> Result<TeamBoxScore, 
     let teamid = parse_u64(s.get("TEAM_ID")).unwrap();
     let season = str_to_num(s.get("SEASON_ID")) as i32;
 
-    let mut correction = Correction::new(gameid.clone(), teamid, season, Team);
+    let mut correction = Correction::new(gameid.replace("\"", "").clone(), teamid, season, Team);
 
 
     let wl= parse_wl(s.get("WL"));
@@ -101,7 +103,7 @@ fn fields_to_player_box_score(s: &HashMap<String, Value>) -> Result<PlayerBoxSco
     let playerid = parse_u64(s.get("PLAYER_ID")).unwrap();
     let season = str_to_num(s.get("SEASON_ID")) as i32;
 
-    let mut correction = Correction::new(gameid.clone(), playerid, season, Player);
+    let mut correction = Correction::new(gameid.replace("\"", "").clone(), playerid, season, Player);
 
     let wl = parse_wl(s.get("WL"));
 
@@ -155,118 +157,6 @@ fn fields_to_player_box_score(s: &HashMap<String, Value>) -> Result<PlayerBoxSco
 
 }
 
-fn string(s: Option<&Value>) -> String {
-    s.unwrap().to_string()
-}
-
-fn parse_u64(value: Option<&Value>) -> Option<u64> {
-    match value {
-        Some(v) => match v.as_u64() {
-            Some(x) => Some(x),
-            None => {
-                None
-            }
-        },
-        None => {
-            None
-        }
-    }
-}
-
-fn parse_u32(value: Option<&Value>) -> Option<u32> {
-    match value {
-        Some(v) => match v.as_u64() {
-            Some(x) => {
-                if x <= u32::MAX as u64 {
-                    Some(x as u32)
-                } else {
-                    None
-                }
-            }
-            None => {
-                None
-            }
-        },
-        None => {
-            None
-        }
-    }
-}
-
-fn parse_i32(value: Option<&Value>) -> Option<i32> {
-    match value {
-        Some(v) => match v.as_i64() {
-            Some(x) => {
-                if x >= i32::MIN as i64 && x <= i32::MAX as i64 {
-                    Some(x as i32)
-                } else {
-                    None
-                }
-            }
-            None => {
-                None
-            }
-        },
-        None => {
-            None
-        }
-    }
-}
-
-fn parse_f32(value: Option<&Value>) -> Option<f32> {
-    match value {
-        Some(v) =>
-            match v.as_f64() {
-                Some(x) => {
-
-                    Some(x as f32)
-                },
-                None => {
-                    None
-                },
-            },
-        None => {
-            None
-        }
-    }
-}
-
-fn str_to_num(value: Option<&Value>) -> u64 {
-    value.unwrap().as_str().unwrap().parse::<u64>().expect(format!("could not parse {:?} into unsigned 64-bit integer\n", value ).as_str())
-}
-
-fn parse_wl(value: Option<&Value>) -> Option<GameResult> {
-    match value { // the fuck?
-        Some(wl) => match wl.as_str() {
-            Some("W") => Some(Win),
-            Some("L") => Some(Loss),
-            Some("D") => Some(Draw),
-            Some(x) => panic!(
-                "Unknown game result: {}. Acceptable results are: [\"W\", \"L\", \"D\"]",
-                x
-            ),
-            None => None,
-        }
-        None => panic!("could not unwrap a game result from the provided serde::Value {:#?}", value)
-    }
-}
-
-fn parse_date(value: Option<&Value>) -> Option<Date> {
-
-    // Define the format for the date string
-    let format = format_description!("[year]-[month]-[day]");
-
-
-    let d = value.unwrap().as_str();
-
-    match d {
-        Some(date_str) => match Date::parse(date_str, &format) {
-            Ok(date) => Some(date), // Parse the string into a `Date`
-            Err(_) => None,
-        },
-        None => None
-    }
-}
 
 
 

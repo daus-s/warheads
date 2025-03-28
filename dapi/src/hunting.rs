@@ -5,7 +5,6 @@
     GOOD WILL HUNTING
 */
 
-use stats::kind::{NBAStatKind};
 use stats::kind::NBAStat::*;
 use stats::player_box_score::PlayerBoxScore;
 use stats::team_box_score::TeamBoxScore;
@@ -14,6 +13,10 @@ use crate::rip::process_nba_games;
 use chrono;
 use chrono::{DateTime, Datelike, Local};
 use indicatif::{ProgressBar, ProgressStyle};
+use corrections::correction::Correction;
+use stats::kind::NBAStatKind;
+
+use corrections::corrector::Corrector;
 
 fn player_games(year: i32) -> Vec<PlayerBoxScore> {
     match process_nba_games(year, NBAStatKind::Player) {
@@ -24,18 +27,16 @@ fn player_games(year: i32) -> Vec<PlayerBoxScore> {
                 _ => None,
             })
             .collect::<Vec<PlayerBoxScore>>(),
-        Err(corrections) => {
-            for mut correction in corrections {
-                correction.create(); //if this function depends on user input does this execution around it pause?
+        Err(mut corrections) => {
+            corrections.iter_mut().for_each(|mut c| c.create());
 
-                correction.apply().expect("couldn't open file to [rw]");
-
-                // id like to make this recursive in the following case as well. essentially
-            }
-            player_games(year)
+            corrections.apply()
+                .map(|_| player_games(year))
+                .unwrap_or_else(|e| panic!("failed to apply corrections: {}", e))
         }
     }
 }
+
 
 fn team_games(year: i32, roster: Vec<PlayerBoxScore>) -> Vec<TeamBoxScore> {
     let mut games = match process_nba_games(year, NBAStatKind::Team) {
@@ -46,15 +47,12 @@ fn team_games(year: i32, roster: Vec<PlayerBoxScore>) -> Vec<TeamBoxScore> {
                 _ => None,
             })
             .collect::<Vec<TeamBoxScore>>(),
-        Err(corrections) => {
-            for mut correction in corrections {
-                correction.create(); // If this function depends on user input, execution will pause here
+        Err(mut corrections) => {
+            corrections.iter_mut().for_each(|mut c| c.create());
 
-                correction.apply().expect("couldn't open file to [rw]");
-
-                // Recursively retry after applying corrections
-            }
-            team_games(year, roster.clone()) // Recursive call to retry after corrections
+            corrections.apply()
+                .map(|_| team_games(year, roster.clone())) // Recursive call to retry after corrections
+                .unwrap_or_else(|e| panic!("failed to apply corrections: {}", e))
         }
     };
 
