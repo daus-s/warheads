@@ -1,23 +1,18 @@
-use chrono::NaiveDate;
 use format::language::columns;
 use format::path_manager::{correction_file, correction_path};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use serde_json::Value::Null;
 use serde_with::chrono;
 use stats::kind::NBAStatKind;
-use stats::percent::Percent;
 use stats::stat_column::{column_index, StatColumn};
 use stats::stat_value::StatValue;
-use stats::types::{BoolInt, GameResult, MatchupString};
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use std::io::Write;
 use std::path::Path;
 use std::{fs, io};
-use tui::prompter::{prompt_and_select, prompt_and_validate};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Correction {
     pub gameid: String,
     pub id: u64,
@@ -121,7 +116,7 @@ impl Correction {
     ///
     /// This is a private function and is called when `fn create ->` is completed.
     ///
-    fn save(&self) -> io::Result<()> {
+    pub fn save(&self) -> io::Result<()> {
         let path = correction_path(self.season - 20000, self.kind);
 
         let file = correction_file(self.gameid.as_str(), self.id);
@@ -134,87 +129,6 @@ impl Correction {
         fs::write(format!("{}{}", path, file), json)?;
 
         Ok(())
-    }
-
-    pub fn create(&mut self) {
-
-        let mut sorted_keys: Vec<StatColumn> = self.corrections.keys().cloned().collect();
-        sorted_keys.sort();
-
-        for col in sorted_keys {
-            if let Some(val) = self.corrections.get_mut(&col) {
-
-
-                // Display the column name and current value (grayed out if not confirmed)
-                println!(
-                    "\x1b[90m{}: {}\x1b[0m", // ANSI escape code for gray text
-                    col, val.val().unwrap_or_else(|| Null).to_string()
-                );
-
-
-                /*
-
-                this will be separated by both section and type
-
-                */
-                let value: Value = match col {
-
-                    //team identification
-                    StatColumn::TEAM_ABBREVIATION |
-                    StatColumn::TEAM_NAME => prompt_and_validate::<String>(format!("enter {}", col).as_str()),
-                    StatColumn::TEAM_ID => prompt_and_validate::<u64>(format!("enter {}", col).as_str()),
-
-                    //game data
-                    StatColumn::SEASON_ID => prompt_and_validate::<i32>(format!("enter {}", col).as_str()),
-                    StatColumn::GAME_DATE => prompt_and_validate::<NaiveDate>("Enter game date (YYYY-MM-DD)"),
-                    StatColumn::GAME_ID => prompt_and_validate::<String>(format!("enter {}", col).as_str()),
-                    StatColumn::MATCHUP => prompt_and_validate::<MatchupString>(format!("enter {}", col).as_str()),
-
-                    //player data
-                    StatColumn::PLAYER_ID => prompt_and_validate::<u64>(format!("enter {}", col).as_str()),
-                    StatColumn::PLAYER_NAME => prompt_and_validate::<String>(format!("enter {}", col).as_str()),
-
-                    //classic box score
-                    StatColumn::WL => prompt_and_select::<GameResult>("select win/loss/draw"),
-
-                    StatColumn::MIN
-                    | StatColumn::FGM
-                    | StatColumn::FGA
-                    | StatColumn::FG3M
-                    | StatColumn::FG3A
-                    | StatColumn::FTM
-                    | StatColumn::FTA
-                    | StatColumn::OREB
-                    | StatColumn::DREB
-                    | StatColumn::REB
-                    | StatColumn::AST
-                    | StatColumn::STL
-                    | StatColumn::BLK
-                    | StatColumn::TOV
-                    | StatColumn::PF
-                    | StatColumn::PTS => prompt_and_validate::<u32>(format!("enter {}", col).as_str()),
-
-                    //advanced statistics
-
-                    StatColumn::FG_PCT | StatColumn::FG3_PCT | StatColumn::FT_PCT => prompt_and_validate::<Percent>(format!("Enter {} (as a percentage, e.g., 45.6 for 45.6%)", col).as_str()),
-                    StatColumn::PLUS_MINUS => prompt_and_validate::<i32>(format!("enter {}", col).as_str()),
-                    StatColumn::FANTASY_PTS => prompt_and_validate::<f32>(format!("Enter {}", col).as_str()),
-
-                    // video available
-
-                    StatColumn::VIDEO_AVAILABLE => prompt_and_select::<BoolInt>(format!("enter {}", col).as_str()),
-                };
-
-                // Lock in the value
-                val.set(value.clone());
-
-                // Display the confirmed value
-                println!("{}: {}", &col, &value);
-            }
-        }
-        // Save corrections to a .corr file
-        self.save().expect("Failed to save corrections");
-
     }
 
     pub fn add_missing_field(&mut self, col: StatColumn, val: StatValue) {

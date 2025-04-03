@@ -4,7 +4,7 @@ use crate::team_box_score::TeamBoxScore;
 use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 use std::fmt::Formatter;
-use time::Date;
+use chrono::NaiveDate;
 use crate::box_score::BoxScore;
 
 #[derive(Builder, Clone, Debug, Serialize, Deserialize, )]
@@ -19,7 +19,7 @@ pub struct PlayerBoxScore {
     // game data
 
     season_id: i32,
-    game_date: Date,
+    game_date: NaiveDate,
     game_id: String,
     matchup: MatchupString,
 

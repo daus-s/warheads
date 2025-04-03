@@ -1,11 +1,12 @@
 use serde_json::Value;
-use time::Date;
+use chrono::NaiveDate;
+use serde_json::Value::Null;
 use time::macros::format_description;
 use stats::types::GameResult;
 use stats::types::GameResult::{Draw, Loss, Win};
 
-pub(crate) fn string(s: Option<&Value>) -> String {
-    s.unwrap().to_string()
+pub(crate) fn parse_string(s: Option<&Value>) -> String {
+    s.unwrap_or(&Null).to_string().replace("\"", "")
 }
 
 pub(crate) fn parse_u64(value: Option<&Value>) -> Option<u64> {
@@ -100,19 +101,15 @@ pub(crate) fn parse_wl(value: Option<&Value>) -> Option<GameResult> {
     }
 }
 
-pub(crate) fn parse_date(value: Option<&Value>) -> Option<Date> {
+pub(crate) fn parse_date(value: Option<&Value>) -> Option<NaiveDate> {
 
     // Define the format for the date string
     let format = format_description!("[year]-[month]-[day]");
 
+    let json_date = value.unwrap();
 
-    let d = value.unwrap().as_str();
+    let date_str = json_date.to_string().replace("\"", "");
 
-    match d {
-        Some(date_str) => match Date::parse(date_str, &format) {
-            Ok(date) => Some(date), // Parse the string into a `Date`
-            Err(_) => None,
-        },
-        None => None
-    }
+    NaiveDate::parse_from_str(&*date_str, "%Y-%m-%d").ok()
+
 }

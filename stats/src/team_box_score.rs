@@ -6,8 +6,10 @@ use derive_builder::Builder;
 use format::season::season_fmt;
 use serde::{Deserialize, Serialize};
 use std::fmt::Formatter;
-use time::Date;
+use chrono::NaiveDate;
+use format::matchup::{format_matchup, opponent};
 use crate::box_score::BoxScore;
+use crate::percent::percent;
 use crate::types::{GameResult, MatchupString};
 
 #[derive(Builder, Clone, Debug, Serialize, Deserialize)]
@@ -23,7 +25,7 @@ pub struct TeamBoxScore {
 
     season_id: i32,
     matchup: MatchupString,
-    game_date: Date,
+    game_date: NaiveDate,
     game_id: String,
 
     //roster
@@ -134,14 +136,14 @@ impl BoxScore for TeamBoxScore {
 impl std::fmt::Display for TeamBoxScore {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{} - {}\n{} {} against {}.\npts: {}\tfg: {}/{} {}\t3pt: {}/{} ({:.1}%)\tft: {}/{} ({:.1}%)\nreb: {}\toff: {}\tdef: {}\nblocks: {}\t steals: {}\nfouls: {}\t turnovers: {}\n",
-               format_matchup(&self.matchup),
+               format_matchup(self.matchup.str()),
                self.game_date, self.team_abbreviation,
                match self.wl {
                    GameResult::Win => "win",
                    GameResult::Loss => "loss",
                    GameResult::Draw => panic!("nba games cannot end in a tie")
                },
-               opponent(&self.matchup, &self.team_abbreviation),
+               opponent(self.matchup.str(), &self.team_abbreviation),
                self.pts.unwrap_f("-"),
                self.fgm.unwrap_f("-"), self.fga.unwrap_f("-"), percent(self.fgm, self.fga),
                self.fg3m.unwrap_f("-"), self.fg3a.unwrap_f("-"), percent(self.fg3m, self.fg3a),
@@ -152,58 +154,6 @@ impl std::fmt::Display for TeamBoxScore {
         )
     }
 }
-pub(crate) fn format_matchup(matchup: &MatchupString) -> String {
-    let MatchupString(s) = matchup;
-    let parts: Vec<&str> = s.split_whitespace().collect();
 
-    if parts.len() != 3 {
-        panic!("game name does not have three terms.")
-    }
 
-    match parts.as_slice() {
-        [home, "vs.", away] => format!("{} vs. {}", home, away.to_ascii_lowercase()),
-        [away, "@", home] => format!("{} @ {}", away, home.to_ascii_lowercase()),
-        _ => panic!("Could not reformat the game; unexpected pattern."),
-    }
-}
 
-/// Returns the opposing team's abbreviation unmodified.
-/// It will be a 3 character capitalized string, this rule can
-/// and should be used for validation.
-///
-/// # Arguments
-///
-/// * `matchup`:matchup string provided by nba.com api
-/// * `abbr`: team abbreviation (3 characters)
-///
-/// returns: String
-///
-/// # Examples
-///
-/// ```
-/// let opponent = opponent("MEM @ LAL", "LAL");
-///
-/// assert_eq!("MEM", opponent);
-/// ```
-pub(crate) fn opponent(matchup: &MatchupString, abbr: &str) -> String {
-    let MatchupString(s) = matchup;
-
-    let parts: Vec<&str> = s.split_whitespace().collect();
-
-    if parts.len() != 3 {
-        panic!("game name does not have three terms.")
-    }
-
-    match parts.as_slice() {
-        [t1, _, t2] if &abbr == t1 => t2.to_string(),
-        [t1, _, t2] if &abbr == t2 => t1.to_string(),
-        _ => panic!("Could not parse the opponent; unexpected pattern."),
-    }
-}
-
-pub(crate) fn percent(num: Option<u32>, den: Option<u32>) -> String {
-    match [num, den] {
-        [Some(n), Some(d)] => format!("({:.1}%)", (n as f32 * 100.0) / d as f32),
-        _ => "-".to_string(),
-    }
-}

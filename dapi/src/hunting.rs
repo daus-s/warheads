@@ -14,6 +14,7 @@ use chrono;
 use chrono::{DateTime, Datelike, Local};
 use indicatif::{ProgressBar, ProgressStyle};
 use corrections::correction::Correction;
+use corrections::correction_builder::CorrectionBuilder;
 use stats::kind::NBAStatKind;
 
 use corrections::corrector::Corrector;
@@ -27,8 +28,18 @@ fn player_games(year: i32) -> Vec<PlayerBoxScore> {
                 _ => None,
             })
             .collect::<Vec<PlayerBoxScore>>(),
-        Err(mut corrections) => {
-            corrections.iter_mut().for_each(|mut c| c.create());
+        Err(mut meta) => {
+            let corrections: Vec<Correction> = meta.into_iter().map(
+                |(corr, info)|
+                    CorrectionBuilder::new(corr, info).create()
+            ).collect();
+
+            corrections.iter().for_each(|c| {
+                let _ = c.save(); // we assume t that saving to the file is allowed and disregard
+                                  // the result. add more robust error handling here.
+            });
+
+            //create will be called from a
 
             corrections.apply()
                 .map(|_| player_games(year))
@@ -39,7 +50,7 @@ fn player_games(year: i32) -> Vec<PlayerBoxScore> {
 
 
 fn team_games(year: i32, roster: Vec<PlayerBoxScore>) -> Vec<TeamBoxScore> {
-    let mut games = match process_nba_games(year, NBAStatKind::Team) {
+    let mut games:Vec<TeamBoxScore> = match process_nba_games(year, NBAStatKind::Team) {
         Ok(games) => games
             .into_iter()
             .filter_map(|x| match x {
@@ -47,11 +58,21 @@ fn team_games(year: i32, roster: Vec<PlayerBoxScore>) -> Vec<TeamBoxScore> {
                 _ => None,
             })
             .collect::<Vec<TeamBoxScore>>(),
-        Err(mut corrections) => {
-            corrections.iter_mut().for_each(|mut c| c.create());
+        Err(mut meta) => {
+            let corrections: Vec<Correction> = meta.into_iter().map(
+                |(corr, info)|
+                    CorrectionBuilder::new(corr, info).create()
+            ).collect();
+
+            corrections.iter().for_each(|c| {
+                let _ = c.save(); // we assume t that saving to the file is allowed and disregard
+                // the result. add more robust error handling here.
+            });
+
+            //create will be called from a
 
             corrections.apply()
-                .map(|_| team_games(year, roster.clone())) // Recursive call to retry after corrections
+                .map(|_| team_games(year, roster.clone()))
                 .unwrap_or_else(|e| panic!("failed to apply corrections: {}", e))
         }
     };

@@ -1,7 +1,6 @@
 use std::str::FromStr;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{json, Value};
-use serde_json::Value::Number;
 use crate::se::SerdeEnum;
 
 /// BoolInt is an int that is either 1 or 0
@@ -65,7 +64,7 @@ impl<'de> Deserialize<'de> for MatchupString {
     {
         let s = String::deserialize(deserializer)?;
 
-        MatchupString::from_str(&s).map_err(serde::de::Error::custom)
+        s.parse::<MatchupString>().map_err(serde::de::Error::custom)
     }
 }
 
