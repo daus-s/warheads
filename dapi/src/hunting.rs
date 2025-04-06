@@ -72,8 +72,13 @@ fn team_games(year: i32, roster: Vec<PlayerBoxScore>) -> Vec<TeamBoxScore> {
             //create will be called from a
 
             corrections.apply()
-                .map(|_| team_games(year, roster.clone()))
-                .unwrap_or_else(|e| panic!("failed to apply corrections: {}", e))
+                .map(|_| {
+                    println!("successfully applied corrections. ");
+                    team_games(year, roster.clone())
+                })
+                .unwrap_or_else(|e| {
+                    panic!("failed to apply corrections: {}", e)
+                })
         }
     };
 

@@ -65,6 +65,8 @@ impl Corrector for Vec<Correction> {
             }
         }
 
+        println!("{:?}", games);
+
         Ok(())
     }
 }
