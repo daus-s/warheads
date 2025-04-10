@@ -1,23 +1,9 @@
-/*
-///
-/// apply the correction to the vec<player or team box score that will be written.
-///
-pub fn apply(&self) -> Result<(), String> {
-    for game in games.iter_mut() {
-        //find the players results
-        if self {
-            println!("updating game");
-            //edit the player vector
-            *game = self.correct(game.clone());
-            break;
-        }
-    };
-}
-*/
 use std::fs;
 use std::path::Path;
 use serde_json::Value;
+use format::language::partition;
 use format::path_manager::data_path;
+use format::season::season_fmt;
 use stats::extract::json_to_rows;
 use stats::id::Identifiable;
 use crate::correction::Correction;
@@ -37,10 +23,10 @@ impl Corrector for Vec<Correction> {
         let (season, kind) = self[0].domain();
 
         // a path understandable only in the context of this data schema
-        let path = &data_path(season, kind);
+        let path = data_path(season, kind);
 
         //open file based on season info
-        let path_to_file = Path::new(path);
+        let path_to_file = Path::new(&path);
 
         let content = fs::read_to_string(path_to_file).map_err(|_| format!("failed to read file {}", path))?;
 
@@ -51,7 +37,6 @@ impl Corrector for Vec<Correction> {
 
         for game in &mut games {
             for correction in self {
-                eprintln!("{:?}", correction);
 
                 //we should only make corrections with "affirmative consent". that is if either option responds with None we cannot compare.
                 let (Some(string_id), Some(correction_id)) = (game.identity(), correction.identity()) else {
@@ -65,8 +50,14 @@ impl Corrector for Vec<Correction> {
             }
         }
 
-        println!("{:?}", games);
+        let new_content = partition(content, format!("[{}]", games.join(",")));
 
-        Ok(())
+        match fs::write(path_to_file, new_content) {
+            Ok(_) => {
+                println!("successfully applied corrections for {} season the in the file {}", season_fmt(season) , path);
+                Ok(())
+            },
+            Err(e) => Err(format!("failed to write to file. {}:\n{}", path, e ))
+        }
     }
 }
