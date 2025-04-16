@@ -14,21 +14,32 @@ use std::{fs, io};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Correction {
+
     pub gameid: String,
-    pub id: u64,
+
     pub season: i32,
+
+    pub player_id: Option<u64>,
+
+    pub team_id: u64,
+
+    pub team_abbr: String,
+
     pub kind: NBAStatKind,
+
     pub corrections: HashMap<StatColumn, StatValue>,
 }
 
 impl Correction {
-    pub fn new(gameid: String, id: u64, season: i32, kind: NBAStatKind) -> Correction {
+    pub fn new(gameid: String, season: i32, player_id: Option<u64>, team_id: u64, team_abbr: String, kind: NBAStatKind) -> Correction {
         Correction {
             gameid,
-            id,
             season,
+            player_id,
+            team_id,
+            team_abbr,
             kind,
-            corrections: Default::default(),
+            corrections: HashMap::new(),
         }
     }
 
@@ -119,7 +130,7 @@ impl Correction {
     pub fn save(&self) -> io::Result<()> {
         let path = correction_path(self.season - 20000, self.kind);
 
-        let file = correction_file(self.gameid.as_str(), self.id);
+        let file = correction_file(self.gameid.as_str(), self.player_id.unwrap_or(self.team_id));
 
         fs::create_dir_all(&path)?;
 
@@ -146,7 +157,7 @@ impl Correction {
 
 impl Debug for Correction {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "szn: {}\ngame: {}\nid: {} ({})\n[.{}.]", self.season, self.gameid, self.id, match self.kind {
+        write!(f, "szn: {}:{}\n{}\nid: {} ({})\n[.{}.]", self.season, self.gameid, self.team_abbr ,self.player_id.unwrap_or(self.team_id), match self.kind {
             NBAStatKind::Team => "team",
             NBAStatKind::Player => "player",
             NBAStatKind::LineUp => "lineup",

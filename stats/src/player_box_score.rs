@@ -78,10 +78,18 @@ impl BoxScore for PlayerBoxScore {
         self.season_id - 20000
     }
 
-    fn game(&self) -> String {
+    fn game_id(&self) -> String {
         self.game_id.clone()
     }
-    fn id(&self) -> u64 {
-        self.player_id
+    fn player_id(&self) -> Option<u64> {
+        Some(self.player_id)
+    }
+
+    fn team_id(&self) -> u64 {
+        self.team_id
+    }
+
+    fn team_abbr(&self) -> String {
+        self.team_abbreviation.clone()
     }
 }

@@ -40,17 +40,20 @@ fn fields_to_team_box_score(s: &HashMap<String, Value>) -> Result<TeamBoxScore, 
     let gameid = parse_string(s.get("GAME_ID"));
     let teamid = parse_u64(s.get("TEAM_ID")).unwrap();
     let season = str_to_num(s.get("SEASON_ID")) as i32;
+    let team_abbr = parse_string(s.get("TEAM_ABBREVIATION"));
+
 
     let mut correction = Correction::new(
         gameid.replace("\"", ""),
-        teamid,
         season,
+        None,
+        teamid,
+        team_abbr,
         Team
     );
 
     // Handle optional fields
     let required_fields = [
-        ("TEAM_ABBREVIATION", TEAM_ABBREVIATION),
         ("TEAM_NAME", TEAM_NAME),
         ("TEAM_ID", TEAM_ID),
         ("GAME_DATE", GAME_DATE),
@@ -132,16 +135,20 @@ fn fields_to_player_box_score(s: &HashMap<String, Value>) -> Result<PlayerBoxSco
     let gameid = parse_string(s.get("GAME_ID"));
     let playerid = parse_u64(s.get("PLAYER_ID")).unwrap();
     let season = str_to_num(s.get("SEASON_ID")) as i32;
+    let teamid = parse_u64(s.get("TEAM_ID")).unwrap();
+    let team_abbr = parse_string(s.get("TEAM_ABBREVIATION"));
+
 
     let mut correction = Correction::new(
-        gameid.replace("\"", "").clone(),
-        playerid,
+        gameid.replace("\"", ""),
         season,
-        Player
+        None,
+        teamid,
+        team_abbr,
+        Team
     );
 
     let required_fields = [
-        ("TEAM_ABBREVIATION", TEAM_ABBREVIATION),
         ("TEAM_NAME", TEAM_NAME),
         ("TEAM_ID", TEAM_ID),
         ("GAME_DATE", GAME_DATE),
