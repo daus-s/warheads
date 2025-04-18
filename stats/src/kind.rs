@@ -1,7 +1,9 @@
+use std::fmt::{Display, Formatter};
 use crate::player_box_score::PlayerBoxScore;
 use crate::team_box_score::TeamBoxScore;
 use format::stat_path_formatter::StatPathFormatter;
 use serde::{Deserialize, Serialize};
+use crate::box_score::BoxScore;
 
 #[derive(Copy, Clone, Serialize, Deserialize)]
 pub enum NBAStatKind {
@@ -10,23 +12,16 @@ pub enum NBAStatKind {
     LineUp, //todo: develop this later-this is not a priority yet but may be very useful for elo and win-sharing.
 }
 
-pub enum NBAStat {
-    Player(PlayerBoxScore),
-    Team(TeamBoxScore),
-    Players(Vec<PlayerBoxScore>),
-    Teams(Vec<TeamBoxScore>),
-}
-
 impl StatPathFormatter for NBAStatKind {
     /// Returns the directory path associated with the `NBAStatKind`.
     ///
     /// # Returns
     /// A string slice (`&'static str`) representing the directory path.
-    fn epath(&self) -> &'static str {
+    fn path_specifier(&self) -> &'static str {
         match self {
             NBAStatKind::Team => "teamgames",
             NBAStatKind::Player => "playergames",
-            NBAStatKind::LineUp => panic!("lineup stats are not supported yet."),
+            NBAStatKind::LineUp => todo!("lineup stats are not supported yet."),
         }
     }
 
@@ -41,6 +36,10 @@ impl StatPathFormatter for NBAStatKind {
             NBAStatKind::LineUp => panic!("lineup stats are not supported yet."),
         }
     }
+}
+
+impl NBAStatKind {
+
 
     /// Generates an error message for file opening failures.
     ///
@@ -49,7 +48,7 @@ impl StatPathFormatter for NBAStatKind {
     ///
     /// # Returns
     /// A formatted error message string.
-    fn dbg_open(&self, season: i32) -> String {
+    pub fn dbg_open(&self, season: i32) -> String {
         let stat_description = match self {
             NBAStatKind::Team => "team",
             NBAStatKind::Player => "player",
@@ -71,7 +70,7 @@ impl StatPathFormatter for NBAStatKind {
     ///
     /// # Returns
     /// A formatted error message string.
-    fn dbg_write(&self, season: i32) -> String {
+    pub fn dbg_write(&self, season: i32) -> String {
         let stat_description = match self {
             NBAStatKind::Team => "team",
             NBAStatKind::Player => "player",
@@ -84,5 +83,29 @@ impl StatPathFormatter for NBAStatKind {
             season % 100,
             stat_description
         )
+    }
+}
+
+impl Display for NBAStatKind {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", match self {
+            NBAStatKind::Team => "team",
+            NBAStatKind::Player => "player",
+            NBAStatKind::LineUp => "lineup",
+        })
+    }
+}
+
+pub enum NBAStat {
+    Player(PlayerBoxScore),
+    Team(TeamBoxScore),
+}
+
+impl NBAStat {
+    pub fn to_box_score(&self) -> &dyn BoxScore {
+        match self {
+            NBAStat::Player(p) => p,
+            NBAStat::Team(t) => t,
+        }
     }
 }

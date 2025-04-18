@@ -13,3 +13,4 @@ pub mod types;
 pub mod id;
 pub mod box_score;
 pub mod game_info;
+pub mod season_type;

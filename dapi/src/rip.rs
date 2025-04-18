@@ -1,4 +1,4 @@
-use crate::gather::read_nba;
+use crate::gather::read_nba_file;
 use corrections::correction::Correction;
 use serde_json::{from_str, Value};
 use stats::extract::{get_set, headers, rows};
@@ -8,11 +8,39 @@ use stats::stat_column::StatColumn::{GAME_DATE, MATCHUP, PLAYER_NAME, TEAM_ABBRE
 use stats::stat_value::StatValue;
 use stats::team_box_score::{TeamBoxScore, TeamBoxScoreBuilder};
 use std::collections::HashMap;
+use corrections::correction_builder::CorrectionBuilder;
+use corrections::corrector::Corrector;
 use stats::game_info::GameInfo;
 use stats::kind::{NBAStat, NBAStatKind};
 use crate::parse::*;
 use serde_json::Value::Null;
+use stats::season_type::SeasonPeriod;
 use stats::types::MatchupString;
+
+pub(crate) fn fetch_and_process_nba_games(year: i32, stat: NBAStatKind, period: SeasonPeriod) -> Vec<NBAStat> {
+    match process_nba_games(year, stat, period) {
+
+        Ok(games) => games,
+
+        /// handle corrections, maybe use something other than `result` in the future
+
+        Err(mut corrections_meta) => {
+            let corrections: Vec<Correction> = corrections_meta.into_iter().map(
+                |(corr, info)|
+                    CorrectionBuilder::new(corr, info).create()
+            ).collect();
+
+            corrections.iter().for_each(|c| {
+                let _ = c.save(); // we assume t that saving to the file is allowed and disregard
+                // the result. todo: add more robust error handling here.
+            });
+
+            corrections.apply()
+                .map(|_| fetch_and_process_nba_games(year, stat, period))
+                .unwrap_or_else(|e| panic!("failed to apply corrections: {}", e))
+        }
+    }
+}
 
 ///
 /// rips through the json using the header provided as per NBA apis convention/schema.
@@ -21,8 +49,9 @@ use stats::types::MatchupString;
 ///
 /// process games will crash if the JSON is poorly shaped.
 ///
-pub fn process_nba_games(szn: i32, stat: NBAStatKind) -> Result<Vec<NBAStat>, Vec<(Correction, GameInfo)>> {
-    let json = &read_nba(szn, stat);
+
+fn process_nba_games(year: i32, stat: NBAStatKind, period: SeasonPeriod) -> Result<Vec<NBAStat>, Vec<(Correction, GameInfo)>> {
+    let json = &read_nba_file(year, stat);
 
     let v: Value = from_str(json).unwrap();
 
@@ -32,10 +61,50 @@ pub fn process_nba_games(szn: i32, stat: NBAStatKind) -> Result<Vec<NBAStat>, Ve
 
     let rows: Vec<Value> = rows(&set).unwrap();
 
-    season(rows, headers, stat)
+    season(rows, headers, stat, period)
 }
 
-fn fields_to_team_box_score(s: &HashMap<String, Value>) -> Result<TeamBoxScore, (Correction, GameInfo)> {
+fn season(rows: Vec<Value>, headers: Vec<&str>, stat: NBAStatKind, period: SeasonPeriod) -> Result<Vec<NBAStat>, Vec<(Correction, GameInfo)>> {
+    let mut season:Vec<NBAStat> = Vec::new();
+    let mut corrections: Vec<(Correction, GameInfo)> = Vec::new();
+
+    for row in rows {
+        if let Some(row_data) = row.as_array() {
+            let fields: HashMap<String, Value> = headers.iter()
+                .zip(row_data.iter())
+                .map(|(name, value)  |(name.to_string(), value.clone()))
+                .collect();
+
+            match stat {
+                Player => match fields_to_player_box_score(&fields, period) {
+                    Ok(box_score) => {
+                        season.push(NBAStat::Player(box_score));
+                    },
+                    Err(e) => {
+                        corrections.push(e);
+                    }
+                },
+                Team => match fields_to_team_box_score(&fields, period) {
+                    Ok(box_score) => {
+                        season.push(NBAStat::Team(box_score));
+                    },
+                    Err(e) => {
+                        corrections.push(e);
+                    }
+                },
+                LineUp => panic!("lineup stats are not yet supported.")
+            };
+        }
+    }
+
+    if corrections.len() == 0 {
+        Ok(season)
+    } else {
+        Err(corrections)
+    }
+}
+
+fn fields_to_team_box_score(s: &HashMap<String, Value>, period: SeasonPeriod) -> Result<TeamBoxScore, (Correction, GameInfo)> {
 
     let gameid = parse_string(s.get("GAME_ID"));
     let teamid = parse_u64(s.get("TEAM_ID")).unwrap();
@@ -49,7 +118,8 @@ fn fields_to_team_box_score(s: &HashMap<String, Value>) -> Result<TeamBoxScore, 
         None,
         teamid,
         team_abbr,
-        Team
+        Team,
+        period,
     );
 
     // Handle optional fields
@@ -129,7 +199,7 @@ fn fields_to_team_box_score(s: &HashMap<String, Value>) -> Result<TeamBoxScore, 
 /// completed before that entry can be finalized. as such, seemingly inconsequentially,
 /// the player stats must always be ripped from file before team results.
 ///
-fn fields_to_player_box_score(s: &HashMap<String, Value>) -> Result<PlayerBoxScore, (Correction, GameInfo)> {
+fn fields_to_player_box_score(s: &HashMap<String, Value>,  period: SeasonPeriod) -> Result<PlayerBoxScore, (Correction, GameInfo)> {
 
     //if it fails to parse the identifier then it will crash
     let gameid = parse_string(s.get("GAME_ID"));
@@ -145,7 +215,8 @@ fn fields_to_player_box_score(s: &HashMap<String, Value>) -> Result<PlayerBoxSco
         None,
         teamid,
         team_abbr,
-        Team
+        Team,
+        period
     );
 
     let required_fields = [
@@ -214,44 +285,3 @@ fn fields_to_player_box_score(s: &HashMap<String, Value>) -> Result<PlayerBoxSco
         .build().unwrap()
     )
 }
-
-fn season(rows: Vec<Value>, headers: Vec<&str>, stat: NBAStatKind) -> Result<Vec<NBAStat>, Vec<(Correction, GameInfo)>> {
-    let mut season:Vec<NBAStat> = Vec::new();
-    let mut corrections: Vec<(Correction, GameInfo)> = Vec::new();
-
-    for row in rows {
-        if let Some(row_data) = row.as_array() {
-            let fields: HashMap<String, Value> = headers.iter()
-                .zip(row_data.iter())
-                .map(|(name, value)  |(name.to_string(), value.clone()))
-                .collect();
-
-            match stat {
-                Player => match fields_to_player_box_score(&fields) {
-                    Ok(box_score) => {
-                        season.push(NBAStat::Player(box_score));
-                    },
-                    Err(e) => {
-                        corrections.push(e);
-                    }
-                },
-                Team => match fields_to_team_box_score(&fields) {
-                    Ok(box_score) => {
-                        season.push(NBAStat::Team(box_score));
-                    },
-                    Err(e) => {
-                        corrections.push(e);
-                    }
-                },
-                LineUp => panic!("lineup stats are not yet supported.")
-            };
-        }
-    }
-
-    if corrections.len() == 0 {
-        Ok(season)
-    } else {
-        Err(corrections)
-    }
-}
-

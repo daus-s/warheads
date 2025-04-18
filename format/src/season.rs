@@ -1,11 +1,11 @@
 pub fn season_fmt(year: i32) -> String {
     let following_suffix = (year + 1) % 100;
 
-    format!("{}-{}", year, following_suffix)
+    format!("{}-{:02}", year, following_suffix)
 }
 
 pub fn season_file(year: i32) -> String {
     let following_suffix = (year + 1) % 100;
 
-    format!("{}_{}", year, following_suffix)
+    format!("{}_{:02}", year, following_suffix)
 }

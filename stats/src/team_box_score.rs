@@ -104,7 +104,7 @@ impl TeamBoxScore {
         }
     }
 
-    pub fn team(&self) -> String {
+    pub fn team_abbr(&self) -> String {
         self.team_abbreviation.clone()
     }
 

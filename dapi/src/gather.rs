@@ -1,5 +1,5 @@
 use std::error::Error;
-use std::fs;
+use std::{fs, io};
 use reqwest;
 use std::fs::File;
 use std::io::Read;
@@ -7,30 +7,37 @@ use std::str::FromStr;
 use once_cell::sync::Lazy;
 use reqwest::Client;
 use reqwest::header::*;
-use stats::kind::NBAStatKind;
+use stats::kind::{NBAStat, NBAStatKind};
 use format::path_manager::data_path;
 use constants::data;
+use corrections::correction::Correction;
+use corrections::correction_builder::CorrectionBuilder;
+use corrections::corrector::Corrector;
 use format::season::season_fmt;
 use format::stat_path_formatter::StatPathFormatter as SPF;
+use stats::game_info::GameInfo;
+use stats::kind::NBAStat::{Player, Team};
+use stats::player_box_score::PlayerBoxScore;
+use stats::season_type::{minimum_spanning_era, SeasonPeriod};
+use stats::team_box_score::TeamBoxScore;
+use crate::rip::{fetch_and_process_nba_games};
 
 static DATA: Lazy<String> = Lazy::new(data);
-pub fn read_nba(season: i32, stat: impl SPF) -> String {
+pub fn read_nba_file(season: i32, stat: NBAStatKind) -> String {
     let suffix = (season + 1) % 100;
-    let filename = format!("{}/nba/{}/{}_{:02}_{}", *DATA, stat.epath(), season, suffix, stat.ext());
+    let filename = format!("{}/nba/{}/{}_{:02}_{}", *DATA, stat.path_specifier(), season, suffix, stat.ext());
 
-    let mut file = File::open(&filename).expect(&stat.dbg_open(
-        season
-    ));
+    let mut file = File::open(&filename).expect(&*stat.dbg_open(season));
     let mut data = String::new();
 
-    file.read_to_string(&mut data).expect(&stat.dbg_write(season));
+    file.read_to_string(&mut data).expect(&*stat.dbg_write(season));
 
     data
 }
 
 
 
-pub async fn ask_nba(year: i32, stat: NBAStatKind) -> Result<(), Box<dyn Error>> {
+pub async fn ask_nba(year: i32, stat_kind: NBAStatKind, period: SeasonPeriod) -> Result<String, Box<dyn Error>> {
 
     let client = Client::new();
 
@@ -53,9 +60,16 @@ pub async fn ask_nba(year: i32, stat: NBAStatKind) -> Result<(), Box<dyn Error>>
 
     let season = season_fmt(year);
 
-    let file_path = data_path(year, stat);
-
-    let url = format!("https://stats.nba.com/stats/leaguegamelog?Counter=1000&DateFrom=&DateTo=&Direction=DESC&ISTRound=&LeagueID=00&PlayerOrTeam=P&Season={season}&SeasonType=Regular%20Season&Sorter=DATE");
+    // if more url-encoded characters are needed you can use `urlencoding` crate
+    let url = format!("\
+        https://stats.nba.com/stats/leaguegamelog?Counter=1000&DateFrom=&DateTo=&\
+        Direction=DESC&ISTRound=&\
+        LeagueID=00&\
+        PlayerOrTeam=P&\
+        Season={season}&\
+        SeasonType={period}&\
+        Sorter=DATE"
+    );
 
     let response = client
         .get(&url)
@@ -65,15 +79,73 @@ pub async fn ask_nba(year: i32, stat: NBAStatKind) -> Result<(), Box<dyn Error>>
 
     if response.status().is_success() {
 
-        let raw_json = response.text().await?;
-
-        // Save the raw JSON to a file
-        fs::write(file_path, raw_json).map_err(|e| e.into())
+        Ok(response.text().await?)
 
     } else {
 
-        Err(format!("Request failed with status: {}", response.status()).into())
+        Err(format!("❌ request failed with status: {}\nurl: {}", response.status(), &url).into())
 
     }
 
 }
+
+pub(crate) fn write_games(year: i32, stat_kind: NBAStatKind, period: SeasonPeriod, raw_json: &str) -> io::Result<()> {
+
+    let file_path = data_path(year, stat_kind, period);
+
+    if let Some(parent) = file_path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+
+    fs::write(file_path, raw_json)
+
+}
+
+
+
+pub(crate) fn player_games(year: i32) -> Vec<PlayerBoxScore> {
+
+    let minimum_spanning_era = minimum_spanning_era(year);
+
+    minimum_spanning_era
+        .iter()
+        .flat_map(|period| {
+            fetch_and_process_nba_games(year, NBAStatKind::Player, *period)
+                .into_iter()
+                .filter_map(|stat| match stat {
+                    Player(p) => Some(p),
+                    _ => None,
+                })
+    }).collect()
+
+}
+
+
+pub(crate) fn team_games(year: i32, roster: Vec<PlayerBoxScore>) -> Vec<TeamBoxScore> {
+
+    let minimum_spanning_era = minimum_spanning_era(year);
+
+    let mut games: Vec<TeamBoxScore> = minimum_spanning_era
+        .iter()
+        .flat_map(|period| {
+            fetch_and_process_nba_games(year, NBAStatKind::Player, *period)
+                .into_iter()
+                .filter_map(|stat| match stat {
+                    Team(t) => Some(t),
+                    _ => None,
+                })
+        }).collect();
+
+
+    for player in roster {
+        for team in &mut games {
+            if player.played_in(&team) {
+                team.add_player_stats(player.clone());
+            }
+        }
+    }
+
+    games.clone()
+
+}
+

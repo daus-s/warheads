@@ -11,6 +11,7 @@ use std::fmt::{Debug, Formatter};
 use std::io::Write;
 use std::path::Path;
 use std::{fs, io};
+use stats::season_type::SeasonPeriod;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Correction {
@@ -27,17 +28,20 @@ pub struct Correction {
 
     pub kind: NBAStatKind,
 
+    pub period: SeasonPeriod,
+
     pub corrections: HashMap<StatColumn, StatValue>,
 }
 
 impl Correction {
-    pub fn new(game_id: String, season: i32, player_id: Option<u64>, team_id: u64, team_abbr: String, kind: NBAStatKind) -> Correction {
+    pub fn new(game_id: String, season: i32, player_id: Option<u64>, team_id: u64, team_abbr: String, kind: NBAStatKind, period: SeasonPeriod) -> Correction {
         Correction {
             game_id,
             season,
             player_id,
             team_id,
             team_abbr,
+            period,
             kind,
             corrections: HashMap::new(),
         }
@@ -150,8 +154,8 @@ impl Correction {
         self.corrections.len()
     }
 
-    pub fn domain(&self) -> (i32, NBAStatKind) {
-        (self.season - 20000, self.kind)
+    pub fn domain(&self) -> (i32, NBAStatKind, SeasonPeriod) {
+        (self.season - 20000, self.kind, self.period)
     }
 }
 

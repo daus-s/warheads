@@ -20,15 +20,15 @@ impl Corrector for Vec<Correction> {
             return Ok(())
         }
 
-        let (season, kind) = self[0].domain();
+        let (season, kind, period) = self[0].domain();
 
         // a path understandable only in the context of this data schema
-        let path = data_path(season, kind);
+        let path = data_path(season, kind, period);
 
         //open file based on season info
         let path_to_file = Path::new(&path);
 
-        let content = fs::read_to_string(path_to_file).map_err(|_| format!("failed to read file {}", path))?;
+        let content = fs::read_to_string(path_to_file).map_err(|_| format!("failed to read file {:?}", path))?;
 
         let parsed: Value = serde_json::from_str(&content)
             .map_err(|_| "failed to parse JSON from file")?;
@@ -54,10 +54,10 @@ impl Corrector for Vec<Correction> {
 
         match fs::write(path_to_file, new_content) {
             Ok(_) => {
-                println!("successfully applied corrections for {} season the in the file {}", season_fmt(season) , path);
+                println!("successfully applied corrections for {} season the in the file {:?}", season_fmt(season) , path);
                 Ok(())
             },
-            Err(e) => Err(format!("failed to write to file. {}:\n{}", path, e ))
+            Err(e) => Err(format!("failed to write to file. {:?}:\n{}", path, e ))
         }
     }
 }

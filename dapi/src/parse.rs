@@ -1,5 +1,5 @@
 use serde_json::Value;
-use chrono::NaiveDate;
+use chrono::{DateTime, Datelike, Local, NaiveDate};
 use serde_json::Value::Null;
 use time::macros::format_description;
 use stats::types::GameResult;
@@ -112,4 +112,18 @@ pub(crate) fn parse_date(value: Option<&Value>) -> Option<NaiveDate> {
 
     NaiveDate::parse_from_str(&*date_str, "%Y-%m-%d").ok()
 
+}
+
+pub(crate) fn destructure_dt(dt: DateTime<Local>) -> DT {
+    DT {
+        year: dt.year(),
+        month: dt.month(),
+        day: dt.day(),
+    }
+}
+
+pub(crate) struct DT {
+    pub year: i32,
+    pub month: u32,
+    pub day: u32,
 }

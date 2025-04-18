@@ -69,7 +69,7 @@ impl PlayerBoxScore {
     }
 
     pub fn played_in(&self, game: &TeamBoxScore) -> bool {
-        self.game_id == game.game_id() && self.team_abbreviation == game.team()
+        self.game_id == game.game_id() && self.team_abbreviation == game.team_abbr()
     }
 }
 

@@ -1,6 +1,10 @@
 use std::fmt::{Display, Formatter};
+use format::stat_path_formatter::StatPathFormatter;
+use serde::{Deserialize, Serialize};
 
-pub enum SeasonType {
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub enum SeasonPeriod {
     PreSeason,
     RegularSeason,
     PostSeason,
@@ -9,17 +13,50 @@ pub enum SeasonType {
     AllStarGame //ignore
 }
 
-impl Display for SeasonType {
+impl Display for SeasonPeriod {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let s: &str = match self {
-            SeasonType::PreSeason => "Pre%20Season",
-            SeasonType::RegularSeason => "Regular%20Season",
-            SeasonType::PostSeason => "Playoffs",
-            SeasonType::PlayIn => "PlayIn",
-            SeasonType::NBACup => "IST", //in season tournament
-            SeasonType::AllStarGame => "All%20Star",
+            SeasonPeriod::PreSeason => "Pre%20Season",
+            SeasonPeriod::RegularSeason => "Regular%20Season",
+            SeasonPeriod::PostSeason => "Playoffs",
+            SeasonPeriod::PlayIn => "PlayIn",
+            SeasonPeriod::NBACup => "IST", //in season tournament
+            SeasonPeriod::AllStarGame => "All%20Star",
         };
 
         write!(f, "{}", s)
     }
+}
+
+impl StatPathFormatter for SeasonPeriod {
+    fn path_specifier(&self) -> &'static str {
+        match self {
+            SeasonPeriod::PreSeason => "preseason",
+            SeasonPeriod::RegularSeason => "regularseason",
+            SeasonPeriod::PostSeason => "playoffs",
+            SeasonPeriod::PlayIn => "playin",
+            SeasonPeriod::NBACup => "nbacup",
+            SeasonPeriod::AllStarGame => "asg",
+        }
+    }
+
+    fn ext(&self) -> &'static str { //doesn't append anything to the filename, games are the same regardless of season (mostly)
+        "" //todo maybe cook here
+    }
+}
+
+pub fn minimum_spanning_era(year: i32) -> Vec<SeasonPeriod> {
+
+    let mut minimum_spanning_era = vec![
+        SeasonPeriod::PreSeason,
+        SeasonPeriod::RegularSeason,
+    ];
+
+    if year >= 2020 {
+        minimum_spanning_era.push(SeasonPeriod::PlayIn);
+    }
+
+    minimum_spanning_era.push(SeasonPeriod::PostSeason);
+
+    minimum_spanning_era
 }
