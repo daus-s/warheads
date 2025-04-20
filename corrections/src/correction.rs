@@ -1,17 +1,19 @@
 use format::language::columns;
 use format::path_manager::{correction_file, correction_path};
+
 use serde::{Deserialize, Serialize};
 use serde_json::Value::Null;
-use serde_with::chrono;
-use stats::kind::NBAStatKind;
+
+use stats::nba_kind::NBAStatKind;
+use stats::season_type::SeasonPeriod;
 use stats::stat_column::{column_index, StatColumn};
 use stats::stat_value::StatValue;
+
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
-use std::io::Write;
+
 use std::path::Path;
 use std::{fs, io};
-use stats::season_type::SeasonPeriod;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Correction {
@@ -31,6 +33,7 @@ pub struct Correction {
     pub period: SeasonPeriod,
 
     pub corrections: HashMap<StatColumn, StatValue>,
+
 }
 
 impl Correction {

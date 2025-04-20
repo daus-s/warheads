@@ -1,30 +1,31 @@
 use crate::gather::read_nba_file;
+use crate::parse::*;
 use corrections::correction::Correction;
-use serde_json::{from_str, Value};
-use stats::extract::{get_set, headers, rows};
-use stats::kind::NBAStatKind::{LineUp, Player, Team};
-use stats::player_box_score::{PlayerBoxScore, PlayerBoxScoreBuilder};
-use stats::stat_column::StatColumn::{GAME_DATE, MATCHUP, PLAYER_NAME, TEAM_ABBREVIATION, TEAM_ID, TEAM_NAME, WL};
-use stats::stat_value::StatValue;
-use stats::team_box_score::{TeamBoxScore, TeamBoxScoreBuilder};
-use std::collections::HashMap;
 use corrections::correction_builder::CorrectionBuilder;
 use corrections::corrector::Corrector;
-use stats::game_info::GameInfo;
-use stats::kind::{NBAStat, NBAStatKind};
-use crate::parse::*;
 use serde_json::Value::Null;
+use serde_json::{from_str, Value};
+use stats::extract::{get_set, headers, rows};
+use stats::game_info::GameInfo;
+use stats::nba_kind::NBAStatKind::{LineUp, Player, Team};
+use stats::nba_kind::NBAStatKind;
+use stats::nba_stat::NBAStat;
+use stats::player_box_score::{PlayerBoxScore, PlayerBoxScoreBuilder};
 use stats::season_type::SeasonPeriod;
+use stats::stat_column::StatColumn::{GAME_DATE, MATCHUP, PLAYER_NAME, TEAM_ID, TEAM_NAME, WL};
+use stats::stat_value::StatValue;
+use stats::team_box_score::{TeamBoxScore, TeamBoxScoreBuilder};
 use stats::types::MatchupString;
+use std::collections::HashMap;
 
 pub(crate) fn fetch_and_process_nba_games(year: i32, stat: NBAStatKind, period: SeasonPeriod) -> Vec<NBAStat> {
     match process_nba_games(year, stat, period) {
 
         Ok(games) => games,
 
-        /// handle corrections, maybe use something other than `result` in the future
+        // handle corrections, maybe use something other than `result` in the future
 
-        Err(mut corrections_meta) => {
+        Err(corrections_meta) => {
             let corrections: Vec<Correction> = corrections_meta.into_iter().map(
                 |(corr, info)|
                     CorrectionBuilder::new(corr, info).create()

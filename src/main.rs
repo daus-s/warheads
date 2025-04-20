@@ -1,8 +1,4 @@
-use corrections::correction_loader::load_corrections;
-use corrections::corrector::Corrector;
-use dapi::hunting::{observe_nba};
-use stats;
-use stats::kind::NBAStatKind::Player;
+use dapi::hunting::{chronicle_nba, observe_nba};
 
 #[tokio::main]
 async fn main() {
@@ -10,4 +6,5 @@ async fn main() {
 
     observe_nba().await;
 
+    chronicle_nba().await;
 }

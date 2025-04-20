@@ -1,5 +1,5 @@
-use crate::nba::Visiting::{Away, Home};
-use crate::nba::{Visiting};
+use crate::visiting::Visiting::{Away, Home};
+use crate::visiting::{Visiting};
 use crate::player_box_score::PlayerBoxScore;
 use crate::statify::Statify;
 use derive_builder::Builder;

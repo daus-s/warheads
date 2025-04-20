@@ -1,13 +1,8 @@
+use crate::correction::Correction;
+use format::path_manager::correction_path;
+use stats::nba_kind::NBAStatKind;
 use std::fs;
 use std::fs::DirEntry;
-use std::path::PathBuf;
-use stats::kind::NBAStatKind;
-use constants::corrections;
-use once_cell::sync::Lazy;
-use format::path_manager::correction_path;
-use crate::correction::Correction;
-
-static CORRECTIONS: Lazy<String> = Lazy::new(corrections);
 
 pub fn load_corrections(szn: i32, kind: NBAStatKind) -> Result<Vec<Correction>, String> {
 

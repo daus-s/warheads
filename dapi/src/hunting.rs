@@ -5,14 +5,13 @@
     GOOD WILL HUNTING
 */
 
-use stats::kind::NBAStat::*;
 use stats::team_box_score::TeamBoxScore;
 
 use chrono;
 use chrono::Local;
 use format::path_manager::data_path;
 use format::season::season_fmt;
-use stats::kind::NBAStatKind;
+use stats::nba_kind::NBAStatKind;
 use stats::season_type::SeasonPeriod;
 use crate::gather::{ask_nba, player_games, team_games, write_games};
 use crate::parse::{destructure_dt, DT};
@@ -101,7 +100,7 @@ async fn fetch_and_save_nba_stats(year: i32, stat: NBAStatKind, period: SeasonPe
     let file_path = || data_path(year, stat, period);
 
      match ask_nba(year, stat, period).await {
-         Ok(response_data) => match write_games(year, stat, period, &response_data) {
+         Ok(response_data) => match write_games(file_path(),  &response_data) {
              Ok(_) => {
                  println!("✅ successfully saved nba stats for {} season at file: {:?}",
                           season_fmt(year),

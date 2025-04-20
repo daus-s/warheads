@@ -1,26 +1,22 @@
-use std::error::Error;
-use std::{fs, io};
-use reqwest;
-use std::fs::File;
-use std::io::Read;
-use std::str::FromStr;
-use once_cell::sync::Lazy;
-use reqwest::Client;
-use reqwest::header::*;
-use stats::kind::{NBAStat, NBAStatKind};
-use format::path_manager::data_path;
+use crate::rip::fetch_and_process_nba_games;
 use constants::data;
-use corrections::correction::Correction;
-use corrections::correction_builder::CorrectionBuilder;
-use corrections::corrector::Corrector;
 use format::season::season_fmt;
 use format::stat_path_formatter::StatPathFormatter as SPF;
-use stats::game_info::GameInfo;
-use stats::kind::NBAStat::{Player, Team};
+use once_cell::sync::Lazy;
+use reqwest;
+use reqwest::header::*;
+use reqwest::Client;
+use stats::nba_stat::NBAStat::{Player, Team};
+use stats::nba_kind::NBAStatKind;
 use stats::player_box_score::PlayerBoxScore;
 use stats::season_type::{minimum_spanning_era, SeasonPeriod};
 use stats::team_box_score::TeamBoxScore;
-use crate::rip::{fetch_and_process_nba_games};
+use std::error::Error;
+use std::fs::File;
+use std::io::Read;
+use std::path::PathBuf;
+use std::str::FromStr;
+use std::{fs, io};
 
 static DATA: Lazy<String> = Lazy::new(data);
 pub fn read_nba_file(season: i32, stat: NBAStatKind) -> String {
@@ -65,7 +61,7 @@ pub async fn ask_nba(year: i32, stat_kind: NBAStatKind, period: SeasonPeriod) ->
         https://stats.nba.com/stats/leaguegamelog?Counter=1000&DateFrom=&DateTo=&\
         Direction=DESC&ISTRound=&\
         LeagueID=00&\
-        PlayerOrTeam=P&\
+        PlayerOrTeam={stat_kind}&\
         Season={season}&\
         SeasonType={period}&\
         Sorter=DATE"
@@ -89,11 +85,10 @@ pub async fn ask_nba(year: i32, stat_kind: NBAStatKind, period: SeasonPeriod) ->
 
 }
 
-pub(crate) fn write_games(year: i32, stat_kind: NBAStatKind, period: SeasonPeriod, raw_json: &str) -> io::Result<()> {
-
-    let file_path = data_path(year, stat_kind, period);
+pub(crate) fn write_games(file_path: PathBuf, raw_json: &str) -> io::Result<()> {
 
     if let Some(parent) = file_path.parent() {
+        //this creates the directory from the ground up.
         fs::create_dir_all(parent)?;
     }
 

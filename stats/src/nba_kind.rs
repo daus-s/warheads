@@ -1,15 +1,23 @@
 use std::fmt::{Display, Formatter};
-use crate::player_box_score::PlayerBoxScore;
-use crate::team_box_score::TeamBoxScore;
 use format::stat_path_formatter::StatPathFormatter;
 use serde::{Deserialize, Serialize};
-use crate::box_score::BoxScore;
-
 #[derive(Copy, Clone, Serialize, Deserialize)]
 pub enum NBAStatKind {
     Team,
     Player,
     LineUp, //todo: develop this later-this is not a priority yet but may be very useful for elo and win-sharing.
+}
+///
+/// **display**
+///
+impl Display for NBAStatKind {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", match self {
+            NBAStatKind::Team => "T",
+            NBAStatKind::Player => "P",
+            NBAStatKind::LineUp => panic!("lineup url formatting is not supported"),
+        })
+    }
 }
 
 impl StatPathFormatter for NBAStatKind {
@@ -86,26 +94,3 @@ impl NBAStatKind {
     }
 }
 
-impl Display for NBAStatKind {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", match self {
-            NBAStatKind::Team => "team",
-            NBAStatKind::Player => "player",
-            NBAStatKind::LineUp => "lineup",
-        })
-    }
-}
-
-pub enum NBAStat {
-    Player(PlayerBoxScore),
-    Team(TeamBoxScore),
-}
-
-impl NBAStat {
-    pub fn to_box_score(&self) -> &dyn BoxScore {
-        match self {
-            NBAStat::Player(p) => p,
-            NBAStat::Team(t) => t,
-        }
-    }
-}

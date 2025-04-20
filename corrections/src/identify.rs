@@ -1,5 +1,5 @@
 use stats::id::{Identifiable, Identity};
-use stats::kind::NBAStatKind;
+use stats::nba_kind::NBAStatKind;
 use crate::correction::Correction;
 
 impl Identifiable for Correction {

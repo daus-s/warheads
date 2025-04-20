@@ -1,7 +1,6 @@
-use serde_json::Value;
 use chrono::{DateTime, Datelike, Local, NaiveDate};
+use serde_json::Value;
 use serde_json::Value::Null;
-use time::macros::format_description;
 use stats::types::GameResult;
 use stats::types::GameResult::{Draw, Loss, Win};
 
@@ -102,9 +101,6 @@ pub(crate) fn parse_wl(value: Option<&Value>) -> Option<GameResult> {
 }
 
 pub(crate) fn parse_date(value: Option<&Value>) -> Option<NaiveDate> {
-
-    // Define the format for the date string
-    let format = format_description!("[year]-[month]-[day]");
 
     let json_date = value.unwrap();
 

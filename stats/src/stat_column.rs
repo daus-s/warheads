@@ -1,6 +1,7 @@
 use crate::stat_column::StatColumn::*;
 use derivative::Derivative;
 use serde::{Deserialize, Serialize};
+#[allow(unused_imports)]                                   // Required for #[derivative(PartialEq)]
 use std::cmp::{Ordering, PartialEq};
 use std::fmt::{Display, Formatter};
 
@@ -178,6 +179,10 @@ fn stat_column_ord(col: &StatColumn) -> usize {
 
     match ord.iter().position(|x| x == col) {
         Some(i) => i,
-        None => panic!("indexed with non existent stat column"), //this is a good panic
+        None => panic!("indexed with non existent stat column"), /* this is a good panic because
+                                                                 // if u call a bad index what do
+                                                                 // you even mean its not real bro
+                                                                 // most goated comment notation
+                                                                 */
     }
 }

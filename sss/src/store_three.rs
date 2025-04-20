@@ -1,7 +1,7 @@
 use aws_sdk_s3 as s3;
 use aws_sdk_s3::Client;
 use aws_sdk_s3::primitives::ByteStream;
-use stats::nba::Visiting;
+use stats::visiting::Visiting;
 use stats::team_box_score::TeamBoxScore;
 
 /// saves a game object to the file history/{gameid} if home and
