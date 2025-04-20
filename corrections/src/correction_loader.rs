@@ -5,7 +5,6 @@ use std::fs;
 use std::fs::DirEntry;
 
 pub fn load_corrections(szn: i32, kind: NBAStatKind) -> Result<Vec<Correction>, String> {
-
     let c_path = correction_path(szn, kind);
 
     let files = fs::read_dir(&c_path)
@@ -14,7 +13,9 @@ pub fn load_corrections(szn: i32, kind: NBAStatKind) -> Result<Vec<Correction>, 
     load_corrections_from_file(files)
 }
 
-fn load_corrections_from_file(files: impl Iterator<Item = Result<DirEntry, std::io::Error>>) -> Result<Vec<Correction>, String> {
+fn load_corrections_from_file(
+    files: impl Iterator<Item = Result<DirEntry, std::io::Error>>,
+) -> Result<Vec<Correction>, String> {
     files
         .map(|file_result| {
             let path = file_result.map_err(|e| format!("File error: {}", e))?;

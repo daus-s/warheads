@@ -5,11 +5,7 @@ pub fn json_to_rows(json: Value) -> Result<Vec<String>, String> {
 
     let rows = rows(&set).map_err(|s| s.to_string())?;
 
-    Ok((&rows)
-        .iter()
-        .map(|v| v.to_string())
-        .collect()
-    )
+    Ok((&rows).iter().map(|v| v.to_string()).collect())
 }
 
 pub fn get_set(v: &Value) -> Result<Value, String> {
@@ -31,8 +27,7 @@ pub fn headers(s: &Value) -> Result<Vec<&str>, String> {
         .ok_or_else(|| "Missing or invalid 'headers' field".to_string())?
         .iter()
         .filter_map(|h| h.as_str())
-        .collect()
-    )
+        .collect())
 }
 
 pub fn rows(set: &Value) -> Result<Vec<Value>, String> {
@@ -40,6 +35,5 @@ pub fn rows(set: &Value) -> Result<Vec<Value>, String> {
         .get("rowSet")
         .and_then(|r| r.as_array())
         .ok_or_else(|| "Missing or invalid 'rowSet' field")?
-        .clone()
-    )
+        .clone())
 }

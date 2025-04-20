@@ -17,7 +17,6 @@ use std::{fs, io};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Correction {
-
     pub game_id: String,
 
     pub season: i32,
@@ -33,11 +32,18 @@ pub struct Correction {
     pub period: SeasonPeriod,
 
     pub corrections: HashMap<StatColumn, StatValue>,
-
 }
 
 impl Correction {
-    pub fn new(game_id: String, season: i32, player_id: Option<u64>, team_id: u64, team_abbr: String, kind: NBAStatKind, period: SeasonPeriod) -> Correction {
+    pub fn new(
+        game_id: String,
+        season: i32,
+        player_id: Option<u64>,
+        team_id: u64,
+        team_abbr: String,
+        kind: NBAStatKind,
+        period: SeasonPeriod,
+    ) -> Correction {
         Correction {
             game_id,
             season,
@@ -113,7 +119,6 @@ impl Correction {
 
                 for (&col, val) in self.corrections.iter() {
                     if let Some(i) = column_index(&col) {
-
                         let f_str = val.val().unwrap_or_else(|| Null).to_string();
 
                         cs[i] = f_str;
@@ -137,7 +142,10 @@ impl Correction {
     pub fn save(&self) -> io::Result<()> {
         let path = correction_path(self.season - 20000, self.kind);
 
-        let file = correction_file(self.game_id.as_str(), self.player_id.unwrap_or(self.team_id));
+        let file = correction_file(
+            self.game_id.as_str(),
+            self.player_id.unwrap_or(self.team_id),
+        );
 
         fs::create_dir_all(&path)?;
 
@@ -164,10 +172,19 @@ impl Correction {
 
 impl Debug for Correction {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "szn: {}:{}\n{}\nid: {} ({})\n[.{}.]", self.season, self.game_id, self.team_abbr, self.player_id.unwrap_or(self.team_id), match self.kind {
-            NBAStatKind::Team => "team",
-            NBAStatKind::Player => "player",
-            NBAStatKind::LineUp => "lineup",
-        }, self.corrections.len() )
+        write!(
+            f,
+            "szn: {}:{}\n{}\nid: {} ({})\n[.{}.]",
+            self.season,
+            self.game_id,
+            self.team_abbr,
+            self.player_id.unwrap_or(self.team_id),
+            match self.kind {
+                NBAStatKind::Team => "team",
+                NBAStatKind::Player => "player",
+                NBAStatKind::LineUp => "lineup",
+            },
+            self.corrections.len()
+        )
     }
 }

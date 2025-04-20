@@ -1,7 +1,7 @@
 use crate::stat_column::StatColumn::*;
 use derivative::Derivative;
 use serde::{Deserialize, Serialize};
-#[allow(unused_imports)]                                   // Required for #[derivative(PartialEq)]
+#[allow(unused_imports)] // Required for #[derivative(PartialEq)]
 use std::cmp::{Ordering, PartialEq};
 use std::fmt::{Display, Formatter};
 
@@ -42,7 +42,6 @@ pub enum StatColumn {
     FANTASY_PTS,
     VIDEO_AVAILABLE,
 }
-
 
 impl StatColumn {
     pub fn to_str(&self) -> &'static str {
@@ -183,6 +182,6 @@ fn stat_column_ord(col: &StatColumn) -> usize {
                                                                  // if u call a bad index what do
                                                                  // you even mean its not real bro
                                                                  // most goated comment notation
-                                                                 */
+                                                                  */
     }
 }

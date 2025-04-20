@@ -1,39 +1,34 @@
-use crate::visiting::Visiting::{Away, Home};
-use crate::visiting::{Visiting};
+use crate::box_score::BoxScore;
+use crate::percent::percent;
 use crate::player_box_score::PlayerBoxScore;
 use crate::statify::Statify;
+use crate::types::{GameResult, MatchupString};
+use crate::visiting::Visiting;
+use crate::visiting::Visiting::{Away, Home};
+use chrono::NaiveDate;
 use derive_builder::Builder;
+use format::matchup::{format_matchup, opponent};
 use format::season::season_fmt;
 use serde::{Deserialize, Serialize};
 use std::fmt::Formatter;
-use chrono::NaiveDate;
-use format::matchup::{format_matchup, opponent};
-use crate::box_score::BoxScore;
-use crate::percent::percent;
-use crate::types::{GameResult, MatchupString};
 
 #[derive(Builder, Clone, Debug, Serialize, Deserialize)]
 pub struct TeamBoxScore {
-
     // team identification
-
     team_abbreviation: String,
     team_name: String,
     team_id: u64,
 
     // game data
-
     season_id: i32,
     matchup: MatchupString,
     game_date: NaiveDate,
     game_id: String,
 
     //roster
-
     roster: Vec<PlayerBoxScore>,
 
     // classic box score
-
     wl: GameResult,
 
     min: Option<u32>,
@@ -53,14 +48,11 @@ pub struct TeamBoxScore {
     pf: Option<u32>, //personal fouls
     pts: Option<u32>,
 
-
     //advanced stats
-
     plus_minus: Option<i32>,
 }
 
 impl TeamBoxScore {
-
     // not sure what type to return
     pub fn game_id(&self) -> String {
         self.game_id.clone()
@@ -115,8 +107,6 @@ impl TeamBoxScore {
     pub fn elo(&self) -> i32 {
         todo!()
     }
-
-
 }
 
 impl BoxScore for TeamBoxScore {
@@ -162,6 +152,3 @@ impl std::fmt::Display for TeamBoxScore {
         )
     }
 }
-
-
-

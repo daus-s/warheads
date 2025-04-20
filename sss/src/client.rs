@@ -1,6 +1,6 @@
-use dotenv;
 use aws_config::BehaviorVersion;
 use aws_sdk_s3::Client;
+use dotenv;
 async fn create_s3_client(endpoint: &str) -> Client {
     let config = aws_config::defaults(BehaviorVersion::latest())
         .endpoint_url(endpoint) // Use your local endpoint

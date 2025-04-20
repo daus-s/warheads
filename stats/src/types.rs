@@ -1,12 +1,12 @@
-use std::str::FromStr;
+use crate::se::SerdeEnum;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{json, Value};
-use crate::se::SerdeEnum;
+use std::str::FromStr;
 
 /// BoolInt is an int that is either 1 or 0
 /// to represent a boolean value
 
-pub struct BoolInt (u8);
+pub struct BoolInt(u8);
 
 impl BoolInt {
     // Constructor that validates the input
@@ -37,7 +37,7 @@ impl SerdeEnum for BoolInt {
 /// enforced by its `fn parse() -> Self`
 /// when loaded from String (or str)
 #[derive(Clone, Debug)]
-pub struct MatchupString (pub String);
+pub struct MatchupString(pub String);
 
 impl MatchupString {
     // todo: implement the functions from player and team box score
@@ -51,7 +51,7 @@ impl MatchupString {
 impl Serialize for MatchupString {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: Serializer
+        S: Serializer,
     {
         serializer.serialize_str(&self.0)
     }
@@ -60,7 +60,7 @@ impl Serialize for MatchupString {
 impl<'de> Deserialize<'de> for MatchupString {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: Deserializer<'de>
+        D: Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
 
@@ -81,7 +81,6 @@ impl FromStr for MatchupString {
     }
 }
 
-
 ///
 /// GameResult is an enum that implements SerdeEnum
 /// as well as functions for `to_str` and `from_str`
@@ -101,9 +100,7 @@ impl FromStr for GameResult {
             "W" => Ok(GameResult::Win),
             "L" => Ok(GameResult::Loss),
             "D" => Ok(GameResult::Draw),
-            _ => Err(
-                format!("could not parse a game result from string: {}", s)
-            )
+            _ => Err(format!("could not parse a game result from string: {}", s)),
         }
     }
 }
@@ -117,7 +114,6 @@ impl SerdeEnum for GameResult {
 
     fn evaluate() -> Vec<Value> {
         vec![json!("W"), json!("L"), json!("D")]
-
     }
 }
 
@@ -130,4 +126,3 @@ impl GameResult {
         }
     }
 }
-

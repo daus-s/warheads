@@ -1,5 +1,5 @@
-use format::language::columns;
 use crate::box_score::BoxScore;
+use format::language::columns;
 
 pub trait Identifiable {
     fn identity(&self) -> Option<Identity>;
@@ -51,14 +51,8 @@ impl Identifiable for String {
         let columns = columns(self.clone());
 
         match columns.as_slice() {
-            [
-            season_id, player_id, _player_name, team_id, team_abbr,
-            _team_name, game_id, _game_date, _matchup, _wl, _min,
-            _fgm, _fga, _fg_pct, _fg3m, _fg3a, _fg3_pct,
-            _ftm, _fta, _ft_pct, _oreb, _dreb, _reb,
-            _ast, _stl, _blk, _tov, _pf, _pts,
-            _plus_minus, _fantasy_pts, _video_available
-            ] => {
+            [season_id, player_id, _player_name, team_id, team_abbr, _team_name, game_id, _game_date, _matchup, _wl, _min, _fgm, _fga, _fg_pct, _fg3m, _fg3a, _fg3_pct, _ftm, _fta, _ft_pct, _oreb, _dreb, _reb, _ast, _stl, _blk, _tov, _pf, _pts, _plus_minus, _fantasy_pts, _video_available] =>
+            {
                 let szn = season_id.replace('"', "").parse::<i32>().ok()? - 20000;
 
                 let pid = player_id.parse::<u64>().ok()?;
@@ -74,20 +68,14 @@ impl Identifiable for String {
                     team_abbr: team_abbr.to_string(),
                     game_id: gid,
                 })
-            },
-            [
-            season_id, team_id, team_abbr, _team_name, game_id,
-            _game_date, _matchup, _wl, _min, _fgm, _fga,
-            _fg_pct, _fg3m, _fg3a, _fg3_pct, _ftm, _fta,
-            _ft_pct, _oreb, _dreb, _reb, _ast, _stl,
-            _blk, _tov, _pf, _pts, _plus_minus, _video_available
-            ] => {
+            }
+            [season_id, team_id, team_abbr, _team_name, game_id, _game_date, _matchup, _wl, _min, _fgm, _fga, _fg_pct, _fg3m, _fg3a, _fg3_pct, _ftm, _fta, _ft_pct, _oreb, _dreb, _reb, _ast, _stl, _blk, _tov, _pf, _pts, _plus_minus, _video_available] =>
+            {
                 let szn = season_id.replace('\"', "").parse::<i32>().ok()?;
 
                 let tid = team_id.replace('\"', "").parse::<u64>().ok()?;
 
                 let gid = game_id.replace('\"', "");
-
 
                 Some(Identity {
                     szn,
@@ -96,23 +84,20 @@ impl Identifiable for String {
                     team_abbr: team_abbr.to_string(),
                     game_id: gid,
                 })
-            },
-            _ => None
+            }
+            _ => None,
         }
     }
 }
 
 impl<T: BoxScore> Identifiable for T {
     fn identity(&self) -> Option<Identity> {
-        Some(
-            Identity{
-                szn: self.season(),
-                player_id: self.player_id(),
-                game_id: self.game_id().parse().unwrap(),
-                team_abbr: self.team_abbr(),
-                team_id: self.team_id(),
-            }
-        )
+        Some(Identity {
+            szn: self.season(),
+            player_id: self.player_id(),
+            game_id: self.game_id().parse().unwrap(),
+            team_abbr: self.team_abbr(),
+            team_id: self.team_id(),
+        })
     }
 }
-

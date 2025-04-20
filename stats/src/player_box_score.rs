@@ -1,35 +1,30 @@
-use crate::types::{GameResult, MatchupString};
+use crate::box_score::BoxScore;
 use crate::statify::Statify;
 use crate::team_box_score::TeamBoxScore;
+use crate::types::{GameResult, MatchupString};
+use chrono::NaiveDate;
 use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 use std::fmt::Formatter;
-use chrono::NaiveDate;
-use crate::box_score::BoxScore;
 
-#[derive(Builder, Clone, Debug, Serialize, Deserialize, )]
+#[derive(Builder, Clone, Debug, Serialize, Deserialize)]
 pub struct PlayerBoxScore {
-
     //team identification
-
     team_abbreviation: String,
     team_name: String,
     team_id: u64,
 
     // game data
-
     season_id: i32,
     game_date: NaiveDate,
     game_id: String,
     matchup: MatchupString,
 
     // player data
-
     player_id: u64,
     player_name: String,
 
     // classic box score
-
     wl: GameResult,
 
     min: Option<u32>,
@@ -50,7 +45,6 @@ pub struct PlayerBoxScore {
     pts: Option<u32>,
 
     //advanced stats
-
     plus_minus: Option<i32>,
     fantasy_pts: Option<f32>,
     elo: i32, // decisions, decisions

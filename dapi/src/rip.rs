@@ -7,8 +7,8 @@ use serde_json::Value::Null;
 use serde_json::{from_str, Value};
 use stats::extract::{get_set, headers, rows};
 use stats::game_info::GameInfo;
-use stats::nba_kind::NBAStatKind::{LineUp, Player, Team};
 use stats::nba_kind::NBAStatKind;
+use stats::nba_kind::NBAStatKind::{LineUp, Player, Team};
 use stats::nba_stat::NBAStat;
 use stats::player_box_score::{PlayerBoxScore, PlayerBoxScoreBuilder};
 use stats::season_type::SeasonPeriod;
@@ -18,25 +18,28 @@ use stats::team_box_score::{TeamBoxScore, TeamBoxScoreBuilder};
 use stats::types::MatchupString;
 use std::collections::HashMap;
 
-pub(crate) fn fetch_and_process_nba_games(year: i32, stat: NBAStatKind, period: SeasonPeriod) -> Vec<NBAStat> {
+pub(crate) fn fetch_and_process_nba_games(
+    year: i32,
+    stat: NBAStatKind,
+    period: SeasonPeriod,
+) -> Vec<NBAStat> {
     match process_nba_games(year, stat, period) {
-
         Ok(games) => games,
 
         // handle corrections, maybe use something other than `result` in the future
-
         Err(corrections_meta) => {
-            let corrections: Vec<Correction> = corrections_meta.into_iter().map(
-                |(corr, info)|
-                    CorrectionBuilder::new(corr, info).create()
-            ).collect();
+            let corrections: Vec<Correction> = corrections_meta
+                .into_iter()
+                .map(|(corr, info)| CorrectionBuilder::new(corr, info).create())
+                .collect();
 
             corrections.iter().for_each(|c| {
                 let _ = c.save(); // we assume t that saving to the file is allowed and disregard
-                // the result. todo: add more robust error handling here.
+                                  // the result. todo: add more robust error handling here.
             });
 
-            corrections.apply()
+            corrections
+                .apply()
                 .map(|_| fetch_and_process_nba_games(year, stat, period))
                 .unwrap_or_else(|e| panic!("failed to apply corrections: {}", e))
         }
@@ -51,7 +54,11 @@ pub(crate) fn fetch_and_process_nba_games(year: i32, stat: NBAStatKind, period: 
 /// process games will crash if the JSON is poorly shaped.
 ///
 
-fn process_nba_games(year: i32, stat: NBAStatKind, period: SeasonPeriod) -> Result<Vec<NBAStat>, Vec<(Correction, GameInfo)>> {
+fn process_nba_games(
+    year: i32,
+    stat: NBAStatKind,
+    period: SeasonPeriod,
+) -> Result<Vec<NBAStat>, Vec<(Correction, GameInfo)>> {
     let json = &read_nba_file(year, stat);
 
     let v: Value = from_str(json).unwrap();
@@ -65,22 +72,28 @@ fn process_nba_games(year: i32, stat: NBAStatKind, period: SeasonPeriod) -> Resu
     season(rows, headers, stat, period)
 }
 
-fn season(rows: Vec<Value>, headers: Vec<&str>, stat: NBAStatKind, period: SeasonPeriod) -> Result<Vec<NBAStat>, Vec<(Correction, GameInfo)>> {
-    let mut season:Vec<NBAStat> = Vec::new();
+fn season(
+    rows: Vec<Value>,
+    headers: Vec<&str>,
+    stat: NBAStatKind,
+    period: SeasonPeriod,
+) -> Result<Vec<NBAStat>, Vec<(Correction, GameInfo)>> {
+    let mut season: Vec<NBAStat> = Vec::new();
     let mut corrections: Vec<(Correction, GameInfo)> = Vec::new();
 
     for row in rows {
         if let Some(row_data) = row.as_array() {
-            let fields: HashMap<String, Value> = headers.iter()
+            let fields: HashMap<String, Value> = headers
+                .iter()
                 .zip(row_data.iter())
-                .map(|(name, value)  |(name.to_string(), value.clone()))
+                .map(|(name, value)| (name.to_string(), value.clone()))
                 .collect();
 
             match stat {
                 Player => match fields_to_player_box_score(&fields, period) {
                     Ok(box_score) => {
                         season.push(NBAStat::Player(box_score));
-                    },
+                    }
                     Err(e) => {
                         corrections.push(e);
                     }
@@ -88,12 +101,12 @@ fn season(rows: Vec<Value>, headers: Vec<&str>, stat: NBAStatKind, period: Seaso
                 Team => match fields_to_team_box_score(&fields, period) {
                     Ok(box_score) => {
                         season.push(NBAStat::Team(box_score));
-                    },
+                    }
                     Err(e) => {
                         corrections.push(e);
                     }
                 },
-                LineUp => panic!("lineup stats are not yet supported.")
+                LineUp => panic!("lineup stats are not yet supported."),
             };
         }
     }
@@ -105,13 +118,14 @@ fn season(rows: Vec<Value>, headers: Vec<&str>, stat: NBAStatKind, period: Seaso
     }
 }
 
-fn fields_to_team_box_score(s: &HashMap<String, Value>, period: SeasonPeriod) -> Result<TeamBoxScore, (Correction, GameInfo)> {
-
+fn fields_to_team_box_score(
+    s: &HashMap<String, Value>,
+    period: SeasonPeriod,
+) -> Result<TeamBoxScore, (Correction, GameInfo)> {
     let gameid = parse_string(s.get("GAME_ID"));
     let teamid = parse_u64(s.get("TEAM_ID")).unwrap();
     let season = str_to_num(s.get("SEASON_ID")) as i32;
     let team_abbr = parse_string(s.get("TEAM_ABBREVIATION"));
-
 
     let mut correction = Correction::new(
         gameid.replace("\"", ""),
@@ -136,29 +150,35 @@ fn fields_to_team_box_score(s: &HashMap<String, Value>, period: SeasonPeriod) ->
     let mut missing_fields = Vec::new();
     for (field_name, field_type) in required_fields {
         match field_type {
-
-            _ => if s.get(field_name).is_none() || s.get(field_name) == Some(&Null) {
-                correction.add_missing_field(field_type, StatValue::new());
-                missing_fields.push(field_name);
-            },
+            _ => {
+                if s.get(field_name).is_none() || s.get(field_name) == Some(&Null) {
+                    correction.add_missing_field(field_type, StatValue::new());
+                    missing_fields.push(field_name);
+                }
+            }
         }
     }
 
     // Return error if any corrections needed
     if !correction.corrections.is_empty() {
-        let matchup_string: MatchupString = parse_string(s.get("MATCHUP")).parse::<MatchupString>().map_err(|e| {
+        let matchup_string: MatchupString = parse_string(s.get("MATCHUP"))
+            .parse::<MatchupString>()
+            .map_err(|e| {
                 eprintln!("Matchup parse error: {}", e);
                 correction.add_missing_field(MATCHUP, StatValue::new());
             })
-        .unwrap_or(MatchupString("invalid matchup".to_string()));
+            .unwrap_or(MatchupString("invalid matchup".to_string()));
 
-        return Err((correction, GameInfo::new(
-            matchup_string,
-            parse_date(s.get("GAME_DATE")).unwrap_or_default(),
-            Some(parse_string(s.get("PLAYER_NAME"))),
-            parse_string(s.get("TEAM_NAME")),
-            parse_string(s.get("TEAM_ABBREVIATION"))
-        )));
+        return Err((
+            correction,
+            GameInfo::new(
+                matchup_string,
+                parse_date(s.get("GAME_DATE")).unwrap_or_default(),
+                Some(parse_string(s.get("PLAYER_NAME"))),
+                parse_string(s.get("TEAM_NAME")),
+                parse_string(s.get("TEAM_ABBREVIATION")),
+            ),
+        ));
     }
 
     // Build TeamBoxScore if no corrections needed
@@ -193,22 +213,22 @@ fn fields_to_team_box_score(s: &HashMap<String, Value>, period: SeasonPeriod) ->
         .unwrap())
 }
 
-
 ///
 /// fields_to_player_box_score returns a result of either a player box score or a correction.
 /// if the function returns a correction, the correction acts as a form that needs to be
 /// completed before that entry can be finalized. as such, seemingly inconsequentially,
 /// the player stats must always be ripped from file before team results.
 ///
-fn fields_to_player_box_score(s: &HashMap<String, Value>,  period: SeasonPeriod) -> Result<PlayerBoxScore, (Correction, GameInfo)> {
-
+fn fields_to_player_box_score(
+    s: &HashMap<String, Value>,
+    period: SeasonPeriod,
+) -> Result<PlayerBoxScore, (Correction, GameInfo)> {
     //if it fails to parse the identifier then it will crash
     let gameid = parse_string(s.get("GAME_ID"));
     let playerid = parse_u64(s.get("PLAYER_ID")).unwrap();
     let season = str_to_num(s.get("SEASON_ID")) as i32;
     let teamid = parse_u64(s.get("TEAM_ID")).unwrap();
     let team_abbr = parse_string(s.get("TEAM_ABBREVIATION"));
-
 
     let mut correction = Correction::new(
         gameid.replace("\"", ""),
@@ -217,7 +237,7 @@ fn fields_to_player_box_score(s: &HashMap<String, Value>,  period: SeasonPeriod)
         teamid,
         team_abbr,
         Team,
-        period
+        period,
     );
 
     let required_fields = [
@@ -238,19 +258,24 @@ fn fields_to_player_box_score(s: &HashMap<String, Value>,  period: SeasonPeriod)
     }
 
     if !correction.corrections.is_empty() {
-        let matchup_string: MatchupString = parse_string(s.get("MATCHUP")).parse::<MatchupString>().map_err(|e| {
-            eprintln!("Matchup parse error: {}", e);
-            correction.add_missing_field(MATCHUP, StatValue::new());
-        })
+        let matchup_string: MatchupString = parse_string(s.get("MATCHUP"))
+            .parse::<MatchupString>()
+            .map_err(|e| {
+                eprintln!("Matchup parse error: {}", e);
+                correction.add_missing_field(MATCHUP, StatValue::new());
+            })
             .unwrap_or(MatchupString("invalid matchup".to_string()));
 
-        return Err((correction, GameInfo::new(
-            matchup_string,
-            parse_date(s.get("GAME_DATE")).unwrap_or_default(),
-            Some(parse_string(s.get("PLAYER_NAME"))),
-            parse_string(s.get("TEAM_ABBREVIATION")),
-            parse_string(s.get("TEAM_NAME"))
-        )));
+        return Err((
+            correction,
+            GameInfo::new(
+                matchup_string,
+                parse_date(s.get("GAME_DATE")).unwrap_or_default(),
+                Some(parse_string(s.get("PLAYER_NAME"))),
+                parse_string(s.get("TEAM_ABBREVIATION")),
+                parse_string(s.get("TEAM_NAME")),
+            ),
+        ));
     }
 
     Ok(PlayerBoxScoreBuilder::default()
@@ -283,6 +308,6 @@ fn fields_to_player_box_score(s: &HashMap<String, Value>,  period: SeasonPeriod)
         .player_id(playerid)
         .team_id(parse_u64(s.get("TEAM_ID")).unwrap())
         .elo(3000)
-        .build().unwrap()
-    )
+        .build()
+        .unwrap())
 }

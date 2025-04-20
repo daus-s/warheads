@@ -44,7 +44,6 @@ pub fn opponent(matchup: String, abbr: &str) -> String {
     }
 }
 
-
 pub fn display_matchup(matchup: String, abbr: String) -> Result<String, String> {
     let parts: Vec<&str> = matchup.split_whitespace().collect();
 

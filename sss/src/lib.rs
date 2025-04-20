@@ -1,2 +1,2 @@
-pub mod store_three;
 pub mod client;
+pub mod store_three;

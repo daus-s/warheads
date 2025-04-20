@@ -1,6 +1,6 @@
-use std::fmt::{Display, Formatter};
 use format::stat_path_formatter::StatPathFormatter;
 use serde::{Deserialize, Serialize};
+use std::fmt::{Display, Formatter};
 #[derive(Copy, Clone, Serialize, Deserialize)]
 pub enum NBAStatKind {
     Team,
@@ -12,11 +12,15 @@ pub enum NBAStatKind {
 ///
 impl Display for NBAStatKind {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", match self {
-            NBAStatKind::Team => "T",
-            NBAStatKind::Player => "P",
-            NBAStatKind::LineUp => panic!("lineup url formatting is not supported"),
-        })
+        write!(
+            f,
+            "{}",
+            match self {
+                NBAStatKind::Team => "T",
+                NBAStatKind::Player => "P",
+                NBAStatKind::LineUp => panic!("lineup url formatting is not supported"),
+            }
+        )
     }
 }
 
@@ -47,8 +51,6 @@ impl StatPathFormatter for NBAStatKind {
 }
 
 impl NBAStatKind {
-
-
     /// Generates an error message for file opening failures.
     ///
     /// # Arguments
@@ -93,4 +95,3 @@ impl NBAStatKind {
         )
     }
 }
-

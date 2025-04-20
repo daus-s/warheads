@@ -1,7 +1,7 @@
-use std::fmt::{Display, Formatter};
+use crate::types::MatchupString;
 use chrono::NaiveDate;
 use format::matchup::display_matchup;
-use crate::types::MatchupString;
+use std::fmt::{Display, Formatter};
 
 pub struct GameInfo {
     matchup: MatchupString,
@@ -14,7 +14,13 @@ pub struct GameInfo {
 }
 
 impl GameInfo {
-    pub fn new(matchup: MatchupString, date: NaiveDate, name: Option<String>, tm: String, team: String) -> Self {
+    pub fn new(
+        matchup: MatchupString,
+        date: NaiveDate,
+        name: Option<String>,
+        tm: String,
+        team: String,
+    ) -> Self {
         GameInfo {
             matchup,
             date,
@@ -27,11 +33,19 @@ impl GameInfo {
 
 impl Display for GameInfo {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let matchup = display_matchup(self.matchup.str(), self.tm.to_string()).unwrap_or("-".to_string());
+        let matchup =
+            display_matchup(self.matchup.str(), self.tm.to_string()).unwrap_or("-".to_string());
         // matching on name's existence is the same as checking Player vs. Team box score
         match self.name {
-            Some(_) => write!(f, "{} - {}\n{}\n{}", matchup, self.date, self.team.to_string(), self.name.clone().unwrap().to_string()),
-            None => write!(f, "{} - {}\n{}", matchup, self.date, self.team.to_string())
+            Some(_) => write!(
+                f,
+                "{} - {}\n{}\n{}",
+                matchup,
+                self.date,
+                self.team.to_string(),
+                self.name.clone().unwrap().to_string()
+            ),
+            None => write!(f, "{} - {}\n{}", matchup, self.date, self.team.to_string()),
         }
     }
 }

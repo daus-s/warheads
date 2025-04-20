@@ -12,13 +12,9 @@ pub(crate) fn parse_u64(value: Option<&Value>) -> Option<u64> {
     match value {
         Some(v) => match v.as_u64() {
             Some(x) => Some(x),
-            None => {
-                None
-            }
+            None => None,
         },
-        None => {
-            None
-        }
+        None => None,
     }
 }
 
@@ -32,13 +28,9 @@ pub(crate) fn parse_u32(value: Option<&Value>) -> Option<u32> {
                     None
                 }
             }
-            None => {
-                None
-            }
+            None => None,
         },
-        None => {
-            None
-        }
+        None => None,
     }
 }
 
@@ -52,40 +44,34 @@ pub(crate) fn parse_i32(value: Option<&Value>) -> Option<i32> {
                     None
                 }
             }
-            None => {
-                None
-            }
+            None => None,
         },
-        None => {
-            None
-        }
+        None => None,
     }
 }
 
 pub(crate) fn parse_f32(value: Option<&Value>) -> Option<f32> {
     match value {
-        Some(v) =>
-            match v.as_f64() {
-                Some(x) => {
-
-                    Some(x as f32)
-                },
-                None => {
-                    None
-                },
-            },
-        None => {
-            None
-        }
+        Some(v) => match v.as_f64() {
+            Some(x) => Some(x as f32),
+            None => None,
+        },
+        None => None,
     }
 }
 
 pub(crate) fn str_to_num(value: Option<&Value>) -> u64 {
-    value.unwrap().as_str().unwrap().parse::<u64>().expect(format!("could not parse {:?} into unsigned 64-bit integer\n", value ).as_str())
+    value
+        .unwrap()
+        .as_str()
+        .unwrap()
+        .parse::<u64>()
+        .expect(format!("could not parse {:?} into unsigned 64-bit integer\n", value).as_str())
 }
 
 pub(crate) fn parse_wl(value: Option<&Value>) -> Option<GameResult> {
-    match value { // the fuck?
+    match value {
+        // the fuck?
         Some(wl) => match wl.as_str() {
             Some("W") => Some(Win),
             Some("L") => Some(Loss),
@@ -95,19 +81,20 @@ pub(crate) fn parse_wl(value: Option<&Value>) -> Option<GameResult> {
                 x
             ),
             None => None,
-        }
-        None => panic!("could not unwrap a game result from the provided serde::Value {:#?}", value)
+        },
+        None => panic!(
+            "could not unwrap a game result from the provided serde::Value {:#?}",
+            value
+        ),
     }
 }
 
 pub(crate) fn parse_date(value: Option<&Value>) -> Option<NaiveDate> {
-
     let json_date = value.unwrap();
 
     let date_str = json_date.to_string().replace("\"", "");
 
     NaiveDate::parse_from_str(&*date_str, "%Y-%m-%d").ok()
-
 }
 
 pub(crate) fn destructure_dt(dt: DateTime<Local>) -> DT {

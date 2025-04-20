@@ -12,28 +12,24 @@ use serde_json::Value::Null;
 ///
 #[derive(Serialize, Deserialize, Eq, PartialEq, Derivative, Clone)]
 #[derivative(Hash)]
-pub struct StatValue (Value);
+pub struct StatValue(Value);
 
 impl StatValue {
     pub fn new() -> StatValue {
-        StatValue( Null )
+        StatValue(Null)
     }
     pub fn with_value(val: Value) -> StatValue {
-        StatValue(
-            val
-        )
+        StatValue(val)
     }
 
     pub fn val(&self) -> Option<Value> {
         match &self.0 {
             Null => None,
-            Value::Bool(_)   |
-            Value::Number(_) |
-            Value::String(_) |
-            Value::Array(_)  |
-            Value::Object(_) => {
-                Some(self.0.clone())
-            },
+            Value::Bool(_)
+            | Value::Number(_)
+            | Value::String(_)
+            | Value::Array(_)
+            | Value::Object(_) => Some(self.0.clone()),
         }
     }
 
