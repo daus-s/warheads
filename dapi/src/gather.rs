@@ -19,22 +19,13 @@ use std::str::FromStr;
 use std::{fs, io};
 
 static DATA: Lazy<String> = Lazy::new(data);
-pub fn read_nba_file(season: i32, stat: NBAStatKind) -> String {
-    let suffix = (season + 1) % 100;
-    let filename = format!(
-        "{}/nba/{}/{}_{:02}_{}",
-        *DATA,
-        stat.path_specifier(),
-        season,
-        suffix,
-        stat.ext()
-    );
+pub fn read_nba_file(file_path: PathBuf) -> String {
 
-    let mut file = File::open(&filename).expect(&*stat.dbg_open(season));
+    let mut file = File::open(&file_path).expect(format!("Failed to open {}", file_path.display()).as_str());
+
     let mut data = String::new();
 
-    file.read_to_string(&mut data)
-        .expect(&*stat.dbg_write(season));
+    file.read_to_string(&mut data).expect(format!("Failed to read {}", file_path.display()).as_str());
 
     data
 }

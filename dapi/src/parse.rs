@@ -1,6 +1,7 @@
 use chrono::{DateTime, Datelike, Local, NaiveDate};
 use serde_json::Value;
 use serde_json::Value::Null;
+use stats::extract::{get_result_set, headers, rows};
 use stats::types::GameResult;
 use stats::types::GameResult::{Draw, Loss, Win};
 
@@ -109,4 +110,15 @@ pub(crate) struct DT {
     pub year: i32,
     pub month: u32,
     pub day: u32,
+}
+
+
+pub fn parse_season(value: Value) -> (Vec<Value>, Vec<String>) {
+    let set = get_result_set(&value).unwrap_or_else(|err| panic!("{}", err));
+
+    let headers: Vec<String> = headers(&set).unwrap();
+
+    let rows: Vec<Value> = rows(&set).unwrap();
+
+    (rows, headers)
 }

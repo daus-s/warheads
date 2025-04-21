@@ -5,7 +5,7 @@ use corrections::correction_builder::CorrectionBuilder;
 use corrections::corrector::Corrector;
 use serde_json::Value::Null;
 use serde_json::{from_str, Value};
-use stats::extract::{get_set, headers, rows};
+use stats::extract::{get_result_set, headers, rows};
 use stats::game_info::GameInfo;
 use stats::nba_kind::NBAStatKind;
 use stats::nba_kind::NBAStatKind::{LineUp, Player, Team};
@@ -17,6 +17,7 @@ use stats::stat_value::StatValue;
 use stats::team_box_score::{TeamBoxScore, TeamBoxScoreBuilder};
 use stats::types::MatchupString;
 use std::collections::HashMap;
+use format::path_manager::data_path;
 
 pub(crate) fn fetch_and_process_nba_games(
     year: i32,
@@ -59,22 +60,18 @@ fn process_nba_games(
     stat: NBAStatKind,
     period: SeasonPeriod,
 ) -> Result<Vec<NBAStat>, Vec<(Correction, GameInfo)>> {
-    let json = &read_nba_file(year, stat);
+    let file_path = data_path(year, stat, period);
 
-    let v: Value = from_str(json).unwrap();
+    let json = &read_nba_file(file_path);
 
-    let set = get_set(&v).unwrap();
-
-    let headers: Vec<&str> = headers(&set).unwrap();
-
-    let rows: Vec<Value> = rows(&set).unwrap();
+    let (rows, headers) = parse_season(from_str(json).unwrap());
 
     season(rows, headers, stat, period)
 }
 
 fn season(
     rows: Vec<Value>,
-    headers: Vec<&str>,
+    headers: Vec<String>,
     stat: NBAStatKind,
     period: SeasonPeriod,
 ) -> Result<Vec<NBAStat>, Vec<(Correction, GameInfo)>> {

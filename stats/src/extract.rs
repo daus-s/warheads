@@ -1,14 +1,14 @@
 use serde_json::Value;
 
 pub fn json_to_rows(json: Value) -> Result<Vec<String>, String> {
-    let set = get_set(&json).map_err(|s| s.to_string())?;
+    let set = get_result_set(&json).map_err(|s| s.to_string())?;
 
     let rows = rows(&set).map_err(|s| s.to_string())?;
 
     Ok((&rows).iter().map(|v| v.to_string()).collect())
 }
 
-pub fn get_set(v: &Value) -> Result<Value, String> {
+pub fn get_result_set(v: &Value) -> Result<Value, String> {
     let result_sets = v
         .get("resultSets")
         .and_then(|rs| rs.as_array())
@@ -21,12 +21,12 @@ pub fn get_set(v: &Value) -> Result<Value, String> {
     Ok(result_set.clone())
 }
 
-pub fn headers(s: &Value) -> Result<Vec<&str>, String> {
+pub fn headers(s: &Value) -> Result<Vec<String>, String> {
     Ok(s.get("headers")
         .and_then(|h| h.as_array())
         .ok_or_else(|| "Missing or invalid 'headers' field".to_string())?
         .iter()
-        .filter_map(|h| h.as_str())
+        .filter_map(|h| Option::from(h.to_string()))
         .collect())
 }
 
