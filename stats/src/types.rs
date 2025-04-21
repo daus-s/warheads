@@ -126,3 +126,16 @@ impl GameResult {
         }
     }
 }
+
+
+impl SerdeEnum for bool {
+    type Item = bool;
+
+    fn enumerate() -> Vec<Self::Item> {
+        vec![true, false]
+    }
+
+    fn evaluate() -> Vec<Value> {
+        vec![json!(true), json!(false)]
+    }
+}

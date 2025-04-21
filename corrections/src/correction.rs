@@ -31,6 +31,8 @@ pub struct Correction {
 
     pub period: SeasonPeriod,
 
+    pub delete: bool,
+
     pub corrections: HashMap<StatColumn, StatValue>,
 }
 
@@ -52,6 +54,7 @@ impl Correction {
             team_abbr,
             period,
             kind,
+            delete: false,
             corrections: HashMap::new(),
         }
     }
