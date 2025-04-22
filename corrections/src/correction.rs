@@ -171,6 +171,10 @@ impl Correction {
     pub fn domain(&self) -> (i32, NBAStatKind, SeasonPeriod) {
         (self.season - 20000, self.kind, self.period)
     }
+
+    pub fn set_delete(&mut self, delete: bool) {
+        self.delete = delete
+    }
 }
 
 impl Debug for Correction {
