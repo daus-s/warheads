@@ -31,6 +31,8 @@ pub struct Correction {
 
     pub period: SeasonPeriod,
 
+    pub delete: bool,
+
     pub corrections: HashMap<StatColumn, StatValue>,
 }
 
@@ -52,6 +54,7 @@ impl Correction {
             team_abbr,
             period,
             kind,
+            delete: false,
             corrections: HashMap::new(),
         }
     }
@@ -167,6 +170,10 @@ impl Correction {
 
     pub fn domain(&self) -> (i32, NBAStatKind, SeasonPeriod) {
         (self.season - 20000, self.kind, self.period)
+    }
+
+    pub fn set_delete(&mut self, delete: bool) {
+        self.delete = delete
     }
 }
 

@@ -26,6 +26,13 @@ impl CorrectionBuilder {
 
         println!("{}", game_info);
 
+        let delete = prompt_and_select::<bool>("should this entry be deleted? (uncommon)");
+
+        corrections.set_delete(match delete {
+            Value::Bool(b) => b,
+            _ => unreachable!("cant get anything but a bool out of prompt_and_select::<bool>"),
+        });
+
         for col in sorted_keys {
             if let Some(val) = corrections.corrections.get_mut(&col) {
                 // Display the column name and current value (grayed out if not confirmed) //id like this to update after the new value is completed is that possible
@@ -114,9 +121,7 @@ impl CorrectionBuilder {
                 val.set(value.clone());
 
                 // Display the confirmed value
-                print!("\x1B[1A"); // Move cursor up one line
-                print!("\x1B[2K"); // Clear the line
-                val.set(value.clone());
+                print!("\x1B[1A\x1B[2K"); // Move cursor up and clear line
                 println!("{}: {}", col, value); // New value
             }
         }
