@@ -47,7 +47,11 @@ impl StatPathFormatter for SeasonPeriod {
 }
 
 pub fn minimum_spanning_era(year: i32) -> Vec<SeasonPeriod> {
-    let mut minimum_spanning_era = vec![SeasonPeriod::PreSeason, SeasonPeriod::RegularSeason];
+    let mut minimum_spanning_era= if year >= 2003 {
+        vec![SeasonPeriod::PreSeason, SeasonPeriod::RegularSeason]
+    } else {
+        vec![SeasonPeriod::RegularSeason]
+    };
 
     if year >= 2020 {
         minimum_spanning_era.push(SeasonPeriod::PlayIn);

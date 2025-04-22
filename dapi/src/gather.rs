@@ -1,8 +1,5 @@
 use crate::rip::fetch_and_process_nba_games;
-use constants::data;
 use format::season::season_fmt;
-use format::stat_path_formatter::StatPathFormatter as SPF;
-use once_cell::sync::Lazy;
 use reqwest;
 use reqwest::header::*;
 use reqwest::Client;
@@ -18,16 +15,15 @@ use std::path::PathBuf;
 use std::str::FromStr;
 use std::{fs, io};
 
-static DATA: Lazy<String> = Lazy::new(data);
 pub fn read_nba_file(file_path: PathBuf) -> String {
 
     let mut file = File::open(&file_path).expect(format!("Failed to open {}", file_path.display()).as_str());
 
-    let mut data = String::new();
+    let mut contents = String::new();
 
-    file.read_to_string(&mut data).expect(format!("Failed to read {}", file_path.display()).as_str());
+    file.read_to_string(&mut contents).expect(format!("Failed to read {}", file_path.display()).as_str());
 
-    data
+    contents
 }
 
 pub async fn ask_nba(
@@ -143,7 +139,7 @@ pub(crate) fn team_games(year: i32, roster: Vec<PlayerBoxScore>) -> Vec<TeamBoxS
     let mut games: Vec<TeamBoxScore> = minimum_spanning_era
         .iter()
         .flat_map(|period| {
-            fetch_and_process_nba_games(year, NBAStatKind::Player, *period)
+            fetch_and_process_nba_games(year, NBAStatKind::Team, *period)
                 .into_iter()
                 .filter_map(|stat| match stat {
                     Team(t) => Some(t),

@@ -3,9 +3,9 @@ use crate::parse::*;
 use corrections::correction::Correction;
 use corrections::correction_builder::CorrectionBuilder;
 use corrections::corrector::Corrector;
+use format::path_manager::data_path;
 use serde_json::Value::Null;
 use serde_json::{from_str, Value};
-use stats::extract::{get_result_set, headers, rows};
 use stats::game_info::GameInfo;
 use stats::nba_kind::NBAStatKind;
 use stats::nba_kind::NBAStatKind::{LineUp, Player, Team};
@@ -17,7 +17,6 @@ use stats::stat_value::StatValue;
 use stats::team_box_score::{TeamBoxScore, TeamBoxScoreBuilder};
 use stats::types::MatchupString;
 use std::collections::HashMap;
-use format::path_manager::data_path;
 
 pub(crate) fn fetch_and_process_nba_games(
     year: i32,
@@ -83,7 +82,7 @@ fn season(
             let fields: HashMap<String, Value> = headers
                 .iter()
                 .zip(row_data.iter())
-                .map(|(name, value)| (name.to_string(), value.clone()))
+                .map(|(name, value)| (name.to_string().replace('\"', ""), value.clone()))
                 .collect();
 
             match stat {
@@ -220,9 +219,10 @@ fn fields_to_player_box_score(
     s: &HashMap<String, Value>,
     period: SeasonPeriod,
 ) -> Result<PlayerBoxScore, (Correction, GameInfo)> {
+
     //if it fails to parse the identifier then it will crash
     let gameid = parse_string(s.get("GAME_ID"));
-    let playerid = parse_u64(s.get("PLAYER_ID")).unwrap();
+    let playerid = parse_u64(s.get("PLAYER_ID")).expect("failed to get the player_id from the row. ");
     let season = str_to_num(s.get("SEASON_ID")) as i32;
     let teamid = parse_u64(s.get("TEAM_ID")).unwrap();
     let team_abbr = parse_string(s.get("TEAM_ABBREVIATION"));
