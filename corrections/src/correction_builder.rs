@@ -6,7 +6,7 @@ use stats::game_info::GameInfo;
 use stats::percent::Percent;
 use stats::stat_column::StatColumn;
 use stats::types::{BoolInt, GameResult, MatchupString};
-use tui::prompter::{prompt_and_select, prompt_and_validate};
+use tui::prompter::{prompt_and_delete, prompt_and_select, prompt_and_validate};
 
 pub struct CorrectionBuilder(Correction, GameInfo);
 
@@ -26,12 +26,15 @@ impl CorrectionBuilder {
 
         println!("{}", game_info);
 
-        let delete = prompt_and_select::<bool>("should this entry be deleted? (uncommon)");
+        let confirmation = &game_info.confirmation_string();
 
-        corrections.set_delete(match delete {
-            Value::Bool(b) => b,
-            _ => unreachable!("cant get anything but a bool out of prompt_and_select::<bool>"),
-        });
+        let delete = prompt_and_delete(confirmation);
+
+        corrections.set_delete(delete);
+
+        if delete {
+            return corrections.clone(); //if we are deleting we don't need any values for the corrections
+        }
 
         for col in sorted_keys {
             if let Some(val) = corrections.corrections.get_mut(&col) {
@@ -121,7 +124,7 @@ impl CorrectionBuilder {
                 val.set(value.clone());
 
                 // Display the confirmed value
-                print!("\x1B[1A\x1B[2K"); // Move cursor up and clear line
+                print!("\x1B[2A\x1B[0J");  // Move up 2 lines and clear from cursor to end
                 println!("{}: {}", col, value); // New value
             }
         }

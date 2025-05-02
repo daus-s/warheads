@@ -1,0 +1,32 @@
+use std::fs;
+use format::language::partition;
+use format::path_manager::data_path;
+use format::season::season_fmt;
+use stats::nba_kind::NBAStatKind;
+use stats::season_type::SeasonPeriod;
+
+type Domain = (i32, NBAStatKind, SeasonPeriod);
+
+pub(crate) fn write_to_data_file(domain: Domain, corrected_data: Vec<String>) -> Result<(), String> {
+
+    let (year,kind,period) = domain;
+
+    let data_path = data_path(year, kind, period);
+
+    let content = fs::read_to_string(&data_path)
+        .map_err(|_| format!("failed to read file {:?}", data_path))?;
+    
+    let new_content = partition(content, format!("[{}]", corrected_data.join(",")));
+
+    match fs::write(&data_path, new_content) {
+        Ok(_) => {
+            println!(
+                "successfully applied corrections for {} season the in the file {:?}",
+                season_fmt(year),
+                data_path
+            );
+            Ok(())
+        }
+        Err(e) => Err(format!("failed to write to file. {:?}:\n{}", data_path, e)),
+    }
+}

@@ -29,6 +29,13 @@ impl GameInfo {
             team,
         }
     }
+
+    pub fn confirmation_string(&self) -> String {
+        match &self.name {
+            Some(n) => n.clone(),
+            None => self.team.clone(),
+        }
+    }
 }
 
 impl Display for GameInfo {

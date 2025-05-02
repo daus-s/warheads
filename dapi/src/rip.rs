@@ -221,19 +221,19 @@ fn fields_to_player_box_score(
 ) -> Result<PlayerBoxScore, (Correction, GameInfo)> {
 
     //if it fails to parse the identifier then it will crash
-    let gameid = parse_string(s.get("GAME_ID"));
-    let playerid = parse_u64(s.get("PLAYER_ID")).expect("failed to get the player_id from the row. ");
+    let game_id = parse_string(s.get("GAME_ID"));
+    let player_id = parse_u64(s.get("PLAYER_ID")).expect("failed to get the player_id from the row. ");
     let season = str_to_num(s.get("SEASON_ID")) as i32;
-    let teamid = parse_u64(s.get("TEAM_ID")).unwrap();
+    let team_id = parse_u64(s.get("TEAM_ID")).unwrap();
     let team_abbr = parse_string(s.get("TEAM_ABBREVIATION"));
 
     let mut correction = Correction::new(
-        gameid.replace("\"", ""),
+        game_id.replace("\"", ""),
         season,
-        None,
-        teamid,
+        Some(player_id),
+        team_id,
         team_abbr,
-        Team,
+        Player,
         period,
     );
 
@@ -279,7 +279,7 @@ fn fields_to_player_box_score(
         .ast(parse_u32(s.get("AST")))
         .plus_minus(parse_i32(s.get("PLUS_MINUS")))
         .season_id(season)
-        .game_id(gameid.clone())
+        .game_id(game_id.clone())
         .reb(parse_u32(s.get("REB")))
         .min(parse_u32(s.get("MIN")))
         .wl(parse_wl(s.get("WL")).unwrap())
@@ -302,7 +302,7 @@ fn fields_to_player_box_score(
         .team_abbreviation(parse_string(s.get("TEAM_ABBREVIATION")))
         .matchup(MatchupString(parse_string(s.get("MATCHUP"))))
         .player_name(parse_string(s.get("PLAYER_NAME")))
-        .player_id(playerid)
+        .player_id(player_id)
         .team_id(parse_u64(s.get("TEAM_ID")).unwrap())
         .elo(3000)
         .build()

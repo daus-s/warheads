@@ -1,4 +1,4 @@
-pub fn columns(s: String) -> Vec<String> {
+pub fn columns(s: &str) -> Vec<String> {
     let columns = s.replace("[", "");
 
     let columns = columns.replace("]", "");

@@ -1,9 +1,42 @@
+use std::collections::HashMap;
+use std::fs;
 use serde_json::Value;
+use format::path_manager::data_path;
+use crate::id::{Identifiable, Identity};
+use crate::nba_kind::NBAStatKind;
+use crate::season_type::SeasonPeriod;
 
-pub fn json_to_rows(json: Value) -> Result<Vec<String>, String> {
-    let set = get_result_set(&json).map_err(|s| s.to_string())?;
+type Domain = (i32, NBAStatKind, SeasonPeriod);
+pub fn json_to_hashmap(domain: Domain) -> Result<HashMap<Identity, String>, String> {
 
-    let rows = rows(&set).map_err(|s| s.to_string())?;
+    let (year, kind, period) = domain;
+
+    let path = data_path(year, kind, period);
+
+    let content = fs::read_to_string(&path)
+        .map_err(|_| format!("failed to read file {:?}", path))?;
+
+    let json: Value = serde_json::from_str(&content)
+        .map_err(|e| format!("failed to parse JSON from file: {}", e))?;
+
+    let set = get_result_set(&json)
+        .map_err(|e| format!("failed to get result set: {}", e))?;
+
+    let rows = rows(&set)
+        .map_err(|e| format!("failed to get rows: {}", e))?;
+
+    Ok((&rows).iter().map(|v| (v.identity(), v.to_string())).collect())
+
+}
+
+pub fn json_to_rows(content: &str) -> Result<Vec<String>, String> {
+
+    let json: Value =
+        serde_json::from_str(&content).map_err(|_| "failed to parse JSON from file")?;
+
+    let set = get_result_set(&json).map_err(|e| e.to_string())?;
+
+    let rows = rows(&set).map_err(|e| e.to_string())?;
 
     Ok((&rows).iter().map(|v| v.to_string()).collect())
 }

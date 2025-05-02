@@ -79,8 +79,8 @@ impl Correction {
     /// consumes the original String and returns a new String
     ///
     ///
-    pub(crate) fn correct(&self, game: String) -> String {
-        let columns = columns(game.clone());
+    pub(crate) fn correct(&self, game: &str) -> String {
+        let columns = columns(game);
 
         match columns.as_slice() {
             [season_id, player_id, player_name, team_id, team_abbreviation, team_name, game_id, game_date, matchup, wl, min, fgm, fga, fg_pct, fg3m, fg3a, fg3_pct, ftm, fta, ft_pct, oreb, dreb, reb, ast, stl, blk, tov, pf, pts, plus_minus, fantasy_pts, video_available] =>

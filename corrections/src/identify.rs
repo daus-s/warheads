@@ -3,22 +3,22 @@ use stats::id::{Identifiable, Identity};
 use stats::nba_kind::NBAStatKind;
 
 impl Identifiable for Correction {
-    fn identity(&self) -> Option<Identity> {
+    fn identity(&self) -> Identity {
         // eprintln!("parsing gameid as u64: {}", match self.gameid.replace("\"", "").parse::<u64>() {
         //     Ok(_) => "success",
         //     Err(_) => "failure"
         // });
 
         match self.kind {
-            NBAStatKind::Team => Some(Identity {
-                szn: self.season,
+            NBAStatKind::Team => Identity {
+                year: self.season,
                 game_id: self.game_id.replace("\"", ""),
                 player_id: None,
                 team_id: self.team_id,
                 team_abbr: self.team_abbr.clone(),
-            }),
-            NBAStatKind::Player => Some(Identity {
-                szn: self.season,
+            },
+            NBAStatKind::Player => Identity {
+                year: self.season,
                 game_id: self.game_id.replace("\"", "").parse().unwrap(),
                 player_id: Some(
                     self.player_id
@@ -26,7 +26,7 @@ impl Identifiable for Correction {
                 ),
                 team_id: self.team_id,
                 team_abbr: self.team_abbr.clone(),
-            }),
+            },
             NBAStatKind::LineUp => todo!("lineup stats not yet implemented"),
         }
     }

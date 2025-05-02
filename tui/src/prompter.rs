@@ -5,6 +5,7 @@ use stats::se::SerdeEnum;
 use std::any::type_name;
 use std::fmt::Debug;
 use std::str::FromStr;
+use dialoguer::console::{style, Term};
 
 pub fn prompt_and_validate<T>(prompt: &str) -> Value
 where
@@ -65,4 +66,51 @@ where
         .unwrap();
 
     S::evaluate()[selection].clone()
+}
+
+pub fn prompt_and_delete(comparator: &str) -> bool
+{
+    let term = Term::stderr();
+
+    let should_delete = Select::with_theme(&ColorfulTheme::default())
+        .with_prompt("Should this entry be deleted? (uncommon)")
+        .items(&["No", "Yes"])
+        .default(0)
+        .interact()
+        .unwrap() == 1; // 1 is "Yes"
+
+    if !should_delete {
+        return false;
+    }
+
+
+    // prompt and validate that the newly typed thing is the comparator.
+    // repeat until correct or canceled
+    loop {
+        println!(
+            "{} Type '{}' to confirm deletion or press ESC to cancel",
+            style("WARNING:").red().bold(),
+            style(comparator).yellow().bold()
+        );
+
+
+        match Input::<String>::new()
+            .with_prompt("Confirmation")
+            .interact_text()
+        {
+            Ok(input) if input == comparator => {
+
+                return true
+            },
+            Ok(_) => {
+                println!("{} Incorrect input. Try again or press ESC to cancel.",
+                         style("Error:").red());
+            },
+            Err(_) => {
+                // User pressed ESC or had input error
+
+                return prompt_and_delete(comparator)
+            }
+        }
+    }
 }
