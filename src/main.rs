@@ -1,4 +1,4 @@
-use dapi::hunting::{chronicle_nba, observe_nba};
+use warheads::dapi::hunting::{chronicle_nba, observe_nba};
 
 #[tokio::main]
 async fn main() {
