@@ -26,11 +26,11 @@ pub fn format_matchup(matchup: String) -> String {
 /// # Examples
 ///
 /// ```
-/// let opponent = opponent("MEM @ LAL", "LAL");
+/// let opponent = warheads::format::matchup::opponent("MEM @ LAL", "LAL");
 ///
 /// assert_eq!("MEM", opponent);
 /// ```
-pub fn opponent(matchup: String, abbr: &str) -> String {
+pub fn opponent(matchup: &str, abbr: &str) -> String {
     let parts: Vec<&str> = matchup.split_whitespace().collect();
 
     if parts.len() != 3 {

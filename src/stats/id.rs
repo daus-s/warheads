@@ -48,7 +48,7 @@ pub struct Identity {
 ///
 impl Identifiable for String {
     fn identity(&self) -> Identity {
-        let columns = columns(self);
+        let mut columns = columns(self);
 
         match columns.as_slice() {
             [season_id, player_id, _player_name, team_id, team_abbr, _team_name, game_id, _game_date, _matchup, _wl, _min, _fgm, _fga, _fg_pct, _fg3m, _fg3a, _fg3_pct, _ftm, _fta, _ft_pct, _oreb, _dreb, _reb, _ast, _stl, _blk, _tov, _pf, _pts, _plus_minus, _fantasy_pts, _video_available] =>

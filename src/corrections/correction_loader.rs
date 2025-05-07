@@ -1,11 +1,12 @@
 use crate::corrections::correction::Correction;
-use crate::format::path_manager::correction_path;
+use crate::format::path_manager::nba_correction_dir;
 use crate::stats::nba_kind::NBAStatKind;
 use std::fs;
 use std::fs::DirEntry;
+use crate::stats::season_type::SeasonPeriod;
 
-pub fn load_corrections(szn: i32, kind: NBAStatKind) -> Result<Vec<Correction>, String> {
-    let c_path = correction_path(szn, kind);
+pub fn load_corrections(szn: i32, kind: NBAStatKind, period: SeasonPeriod) -> Result<Vec<Correction>, String> {
+    let c_path = nba_correction_dir(szn, kind, period);
 
     let files = fs::read_dir(&c_path)
         .map_err(|e| format!("failed to read directory {}: {}", &c_path, e))?;

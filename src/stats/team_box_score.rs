@@ -134,14 +134,14 @@ impl BoxScore for TeamBoxScore {
 impl std::fmt::Display for TeamBoxScore {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{} - {}\n{} {} against {}.\npts: {}\tfg: {}/{} {}\t3pt: {}/{} ({:.1}%)\tft: {}/{} ({:.1}%)\nreb: {}\toff: {}\tdef: {}\nblocks: {}\t steals: {}\nfouls: {}\t turnovers: {}\n",
-               format_matchup(self.matchup.str()),
+               format_matchup(self.matchup.string()),
                self.game_date, self.team_abbreviation,
                match self.wl {
                    GameResult::Win => "win",
                    GameResult::Loss => "loss",
                    GameResult::Draw => panic!("nba games cannot end in a tie")
                },
-               opponent(self.matchup.str(), &self.team_abbreviation),
+               opponent(self.matchup.string().as_str(), &self.team_abbreviation),
                self.pts.unwrap_f("-"),
                self.fgm.unwrap_f("-"), self.fga.unwrap_f("-"), percent(self.fgm, self.fga),
                self.fg3m.unwrap_f("-"), self.fg3a.unwrap_f("-"), percent(self.fg3m, self.fg3a),

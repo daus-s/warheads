@@ -1,9 +1,8 @@
 pub fn columns(s: &str) -> Vec<String> {
-    let columns = s.replace("[", "");
-
-    let columns = columns.replace("]", "");
-
-    columns.split(",").map(|x| x.to_string()).collect()
+    s.replace(['[', ']'], "")
+     .split(",")
+     .map(|x| x.to_string())
+     .collect()
 }
 
 pub fn partition(txt: String, new_data: String) -> String {

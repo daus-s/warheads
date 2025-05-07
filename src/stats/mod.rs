@@ -14,3 +14,4 @@ pub mod percent;
 pub mod se;
 pub mod season_type;
 pub mod types;
+mod tests;

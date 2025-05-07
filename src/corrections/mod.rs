@@ -5,3 +5,5 @@ mod corrections_serde;
 pub mod corrector;
 mod identify;
 mod overwrite;
+mod tests;
+

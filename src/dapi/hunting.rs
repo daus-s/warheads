@@ -126,21 +126,21 @@ async fn fetch_and_save_nba_stats(
         Ok(response_data) => match write_games(file_path(), &response_data) {
             Ok(_) => {
                 println!(
-                    "✅ successfully saved nba stats for {} season at file: {:?}",
+                    "✅\tsuccessfully saved nba stats for {} season at file: {:?}",
                     season_fmt(year),
                     file_path()
                 );
                 Ok(())
             }
             Err(e) => Err(format!(
-                "❌ error saving nba stats for {} season at file {:?}: {}",
+                "❌\terror saving nba stats for {} season at file {:?}: {}",
                 season_fmt(year),
                 file_path(),
                 e
             )),
         },
         Err(e) => Err(format!(
-            "❌ failed to fetch {} stats for {} season: {:?}",
+            "❌\tfailed to fetch {} stats for {} season: {:?}",
             year, stat, e
         )),
     }

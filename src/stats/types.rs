@@ -24,12 +24,22 @@ impl BoolInt {
 impl SerdeEnum for BoolInt {
     type Item = u64;
 
-    fn enumerate() -> Vec<Self::Item> {
+    fn items() -> Vec<Self::Item> {
         vec![0, 1]
     }
 
-    fn evaluate() -> Vec<Value> {
+    fn values() -> Vec<Value> {
         vec![json!(0), json!(1)]
+    }
+
+    fn evaluate(&self) -> Value {
+        debug_assert!(
+            self.0 == 0 || self.0 == 1,
+            "BoolInt can only be 0 or 1, got {}",
+            self.0
+        );
+
+        json!(self.0)
     }
 }
 
@@ -43,7 +53,7 @@ impl MatchupString {
     // todo: implement the functions from player and team box score
     // todo: for matchup string (from s3)
 
-    pub fn str(&self) -> String {
+    pub fn string(&self) -> String {
         self.0.to_string()
     }
 }
@@ -108,12 +118,20 @@ impl FromStr for GameResult {
 impl SerdeEnum for GameResult {
     type Item = &'static str;
 
-    fn enumerate() -> Vec<Self::Item> {
+    fn items() -> Vec<Self::Item> {
         vec!["W", "L", "D"]
     }
 
-    fn evaluate() -> Vec<Value> {
+    fn values() -> Vec<Value> {
         vec![json!("W"), json!("L"), json!("D")]
+    }
+
+    fn evaluate(&self) -> Value {
+        match self {
+            GameResult::Win => json!("W"),
+            GameResult::Loss => json!("L"),
+            GameResult::Draw => json!("D"),
+        }
     }
 }
 
@@ -131,11 +149,15 @@ impl GameResult {
 impl SerdeEnum for bool {
     type Item = bool;
 
-    fn enumerate() -> Vec<Self::Item> {
+    fn items() -> Vec<Self::Item> {
         vec![true, false]
     }
 
-    fn evaluate() -> Vec<Value> {
+    fn values() -> Vec<Value> {
         vec![json!(true), json!(false)]
+    }
+
+    fn evaluate(&self) -> Value {
+        json!(self)
     }
 }

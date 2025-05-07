@@ -44,7 +44,7 @@ pub enum StatColumn {
 }
 
 impl StatColumn {
-    pub fn to_str(&self) -> &'static str {
+    pub fn column_name(&self) -> &'static str {
         match self {
             SEASON_ID => "season_id",
             PLAYER_ID => "player_id",
@@ -83,11 +83,11 @@ impl StatColumn {
 }
 impl Display for StatColumn {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.to_str())
+        write!(f, "{}", self.column_name())
     }
 }
 
-const COLUMNS: [StatColumn; 32] = [
+const PLAYER_COLUMNS: [StatColumn; 32] = [
     SEASON_ID,
     PLAYER_ID,
     PLAYER_NAME,
@@ -122,8 +122,8 @@ const COLUMNS: [StatColumn; 32] = [
     VIDEO_AVAILABLE,
 ];
 
-pub fn column_index(stat: &StatColumn) -> Option<usize> {
-    COLUMNS.iter().position(|x| x == stat)
+pub fn player_column_index(stat: &StatColumn) -> Option<usize> {
+    PLAYER_COLUMNS.iter().position(|x| x == stat)
 }
 
 impl PartialOrd<Self> for StatColumn {
@@ -134,54 +134,12 @@ impl PartialOrd<Self> for StatColumn {
 
 impl Ord for StatColumn {
     fn cmp(&self, other: &Self) -> Ordering {
-        let a = stat_column_ord(self);
-        let b = stat_column_ord(other);
+        let a = player_column_index(self).unwrap();
+                       /* this is a good panic because if u call a bad index
+                          what do you even mean its not real bro
+                        */
+        let b = player_column_index(other).unwrap();
 
         a.cmp(&b)
-    }
-}
-fn stat_column_ord(col: &StatColumn) -> usize {
-    let ord = vec![
-        SEASON_ID,
-        PLAYER_ID,
-        PLAYER_NAME,
-        TEAM_ID,
-        TEAM_ABBREVIATION,
-        TEAM_NAME,
-        GAME_ID,
-        GAME_DATE,
-        MATCHUP,
-        WL,
-        MIN,
-        FGM,
-        FGA,
-        FG_PCT,
-        FG3M,
-        FG3A,
-        FG3_PCT,
-        FTM,
-        FTA,
-        FT_PCT,
-        OREB,
-        DREB,
-        REB,
-        AST,
-        STL,
-        BLK,
-        TOV,
-        PF,
-        PTS,
-        PLUS_MINUS,
-        FANTASY_PTS,
-        VIDEO_AVAILABLE,
-    ];
-
-    match ord.iter().position(|x| x == col) {
-        Some(i) => i,
-        None => panic!("indexed with non existent stat column"), /* this is a good panic because
-                                                                 // if u call a bad index what do
-                                                                 // you even mean its not real bro
-                                                                 // most goated comment notation
-                                                                  */
     }
 }

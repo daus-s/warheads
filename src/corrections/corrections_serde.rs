@@ -14,7 +14,7 @@ where
     let mut map: HashMap<String, Value> = HashMap::new();
     for (key, value) in cs.clone() {
         map.insert(
-            key.to_str().to_string(),
+            key.column_name().to_string(),
             value.val().unwrap_or_else(|| Null),
         );
     }

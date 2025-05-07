@@ -56,7 +56,7 @@ where
     let selection = Select::with_theme(&ColorfulTheme::default())
         .with_prompt(prompt)
         .items(
-            &S::enumerate()
+            &S::items()
                 .iter()
                 .map(|x| x.to_string())
                 .collect::<Vec<String>>(),
@@ -65,7 +65,7 @@ where
         .interact()
         .unwrap();
 
-    S::evaluate()[selection].clone()
+    S::values()[selection].clone()
 }
 
 pub fn prompt_and_delete(comparator: &str) -> bool

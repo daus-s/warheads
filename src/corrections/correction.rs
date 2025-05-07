@@ -1,12 +1,12 @@
 use crate::format::language::columns;
-use crate::format::path_manager::{correction_file, correction_path};
+use crate::format::path_manager::{nba_correction_dir, nba_correction_file};
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value::Null;
 
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::season_type::SeasonPeriod;
-use crate::stats::stat_column::{column_index, StatColumn};
+use crate::stats::stat_column::{player_column_index, StatColumn};
 use crate::stats::stat_value::StatValue;
 
 use std::collections::HashMap;
@@ -14,8 +14,9 @@ use std::fmt::{Debug, Formatter};
 
 use std::path::Path;
 use std::{fs, io};
+use crate::stats::nba_kind::NBAStatKind::{Player, Team};
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Eq, PartialEq)]
 pub struct Correction {
     pub game_id: String,
 
@@ -80,59 +81,44 @@ impl Correction {
     ///
     ///
     pub fn correct(&self, game: &str) -> String {
-        let columns = columns(game);
+        let mut columns = columns(game);
 
-        match columns.as_slice() {
-            [season_id, player_id, player_name, team_id, team_abbreviation, team_name, game_id, game_date, matchup, wl, min, fgm, fga, fg_pct, fg3m, fg3a, fg3_pct, ftm, fta, ft_pct, oreb, dreb, reb, ast, stl, blk, tov, pf, pts, plus_minus, fantasy_pts, video_available] =>
-            {
-                let mut cs: Vec<String> = vec![
-                    season_id.to_string(),
-                    player_id.to_string(),
-                    player_name.to_string(),
-                    team_id.to_string(),
-                    team_abbreviation.to_string(),
-                    team_name.to_string(),
-                    game_id.to_string(),
-                    game_date.to_string(),
-                    matchup.to_string(),
-                    wl.to_string(),
-                    min.to_string(),
-                    fgm.to_string(),
-                    fga.to_string(),
-                    fg_pct.to_string(),
-                    fg3m.to_string(),
-                    fg3a.to_string(),
-                    fg3_pct.to_string(),
-                    ftm.to_string(),
-                    fta.to_string(),
-                    ft_pct.to_string(),
-                    oreb.to_string(),
-                    dreb.to_string(),
-                    reb.to_string(),
-                    ast.to_string(),
-                    stl.to_string(),
-                    blk.to_string(),
-                    tov.to_string(),
-                    pf.to_string(),
-                    pts.to_string(),
-                    plus_minus.to_string(),
-                    fantasy_pts.to_string(),
-                    video_available.to_string(),
-                ];
+        fn apply_corrections(
+            cs: &mut Vec<String>,
+            corrections: &HashMap<StatColumn, StatValue>,
+            column_index_fn: fn(&StatColumn) -> Option<usize>,
+        ) -> Option<String> {
 
-                for (&col, val) in self.corrections.iter() {
-                    if let Some(i) = column_index(&col) {
-                        let f_str = val.val().unwrap_or_else(|| Null).to_string();
-
-                        cs[i] = f_str;
-                    }
+            for (&col, val) in corrections {
+                if let Some(i) = column_index_fn(&col) {
+                    cs[i] = val.val().unwrap_or_else(|| Null).to_string();
                 }
-
-                format!("[{:#}]", cs.join(","))
             }
+
+            Some(format!("[{}]", cs.join(",")))
+        }
+
+        match (columns.as_slice(), self.kind) {
+            (
+                [season_id, player_id, player_name, team_id,
+                 team_abbreviation, team_name, game_id, game_date,
+                 matchup, wl, min, fgm, fga, fg_pct,
+                 fg3m, fg3a, fg3_pct, ftm, fta, ft_pct,
+                 oreb, dreb, reb, ast, stl, blk,
+                 tov, pf, pts, plus_minus, fantasy_pts,
+                 video_available],
+                Player
+            ) => apply_corrections(&mut columns, &self.corrections, player_column_index).unwrap(),
+
+            (
+                [season_id, team_id, team_abbreviation, team_name, game_id, game_date, matchup, wl,
+                 min, fgm, fga, fg_pct, fg3m, fg3a, fg3_pct, ftm, fta, ft_pct, oreb, dreb, reb, ast,
+                 stl, blk, tov, pf, pts, plus_minus, video_available],
+                Team
+            ) => apply_corrections(&mut columns, &self.corrections, player_column_index).unwrap(),
             _ => {
                 eprintln!("columns string was not formatted correctly");
-                "".to_string()
+                String::new()
             }
         }
     }
@@ -143,9 +129,12 @@ impl Correction {
     /// This is a private function and is called when `fn create ->` is completed.
     ///
     pub fn save(&self) -> io::Result<()> {
-        let path = correction_path(self.season - 20000, self.kind);
+        let path = nba_correction_dir(self.season - 20000, self.kind, self.period);
 
-        let file = correction_file(
+        let file = nba_correction_file(
+            self.season - 20000,
+            self.kind,
+            self.period,
             self.game_id.as_str(),
             self.player_id.unwrap_or(self.team_id),
         );
@@ -195,3 +184,5 @@ impl Debug for Correction {
         )
     }
 }
+
+

@@ -2,7 +2,7 @@ use crate::format::stat_path_formatter::StatPathFormatter;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Eq)]
 #[serde(rename_all = "PascalCase")]
 pub enum SeasonPeriod {
     PreSeason,

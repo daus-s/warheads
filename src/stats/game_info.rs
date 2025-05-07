@@ -41,7 +41,7 @@ impl GameInfo {
 impl Display for GameInfo {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let matchup =
-            display_matchup(self.matchup.str(), self.tm.to_string()).unwrap_or("-".to_string());
+            display_matchup(self.matchup.string(), self.tm.to_string()).unwrap_or("-".to_string());
         // matching on name's existence is the same as checking Player vs. Team box score
         match self.name {
             Some(_) => write!(
