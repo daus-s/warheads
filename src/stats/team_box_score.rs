@@ -1,7 +1,7 @@
 use crate::stats::box_score::BoxScore;
 use crate::stats::percent::percent;
 use crate::stats::player_box_score::PlayerBoxScore;
-use crate::stats::statify::Statify;
+use crate::stats::statify::SafetyValve;
 use crate::stats::types::{GameResult, MatchupString};
 use crate::stats::visiting::Visiting;
 use crate::stats::visiting::Visiting::{Away, Home};

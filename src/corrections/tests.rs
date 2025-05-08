@@ -139,7 +139,7 @@ mod tests {
 
         correction.corrections.insert(StatColumn::OREB, StatValue::with_value(json!(10)));
 
-        assert_eq!(correction.correct(data), r#"["20024",23,"Tested McNutsack",151,"LOL","Los Orleans Losers","123","0024-03-31","LOL vs. DOT","W",0,0,0,0,0,0,0,0,0,10,0,0,0,0,0,0,0,0,0,0,0,0]"#)
+        assert_eq!(correction.correct(data), r#"["20024",23,"Tested McNutsack",151,"LOL","Los Orleans Losers","123","0024-03-31","LOL vs. DOT","W",0,0,0,0,0,0,0,0,0,0,10,0,0,0,0,0,0,0,0,0,0,0]"#)
     }
 
     #[test]
@@ -236,7 +236,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction.corrections.insert(StatColumn::PF, StatValue::with_value(json!(-10)));
+        correction.corrections.insert(StatColumn::PLUS_MINUS, StatValue::with_value(json!(-10)));
 
         assert_eq!(correction.correct(data), r#"["20024",23,"Tested McNutsack",151,"LOL","Los Orleans Losers","123","0024-03-31","LOL vs. DOT","W",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-10,0,0]"#)
     }
@@ -247,7 +247,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction.corrections.insert(StatColumn::PF, StatValue::with_value(json!(10)));
+        correction.corrections.insert(StatColumn::PLUS_MINUS, StatValue::with_value(json!(10)));
 
         assert_eq!(correction.correct(data), r#"["20024",23,"Tested McNutsack",151,"LOL","Los Orleans Losers","123","0024-03-31","LOL vs. DOT","W",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10,0,0]"#)
     }

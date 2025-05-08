@@ -1,5 +1,5 @@
 use crate::stats::box_score::BoxScore;
-use crate::stats::statify::Statify;
+use crate::stats::statify::SafetyValve;
 use crate::stats::team_box_score::TeamBoxScore;
 use crate::stats::types::{GameResult, MatchupString};
 use chrono::NaiveDate;

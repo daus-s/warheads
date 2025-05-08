@@ -15,6 +15,7 @@ use std::fmt::{Debug, Formatter};
 use std::path::Path;
 use std::{fs, io};
 use crate::stats::nba_kind::NBAStatKind::{Player, Team};
+use crate::stats::statify::StatPair;
 
 #[derive(Serialize, Deserialize, Clone, Eq, PartialEq)]
 pub struct Correction {
@@ -91,7 +92,7 @@ impl Correction {
 
             for (&col, val) in corrections {
                 if let Some(i) = column_index_fn(&col) {
-                    cs[i] = val.val().unwrap_or_else(|| Null).to_string();
+                    cs[i] = format!("{}", StatPair(col, val.clone()));
                 }
             }
 
@@ -115,7 +116,7 @@ impl Correction {
                  min, fgm, fga, fg_pct, fg3m, fg3a, fg3_pct, ftm, fta, ft_pct, oreb, dreb, reb, ast,
                  stl, blk, tov, pf, pts, plus_minus, video_available],
                 Team
-            ) => apply_corrections(&mut columns, &self.corrections, player_column_index).unwrap(),
+            ) => apply_corrections(&mut columns, &self.corrections, player_column_index).unwrap(), // todo:  create team_column_index
             _ => {
                 eprintln!("columns string was not formatted correctly");
                 String::new()

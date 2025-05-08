@@ -1,7 +1,9 @@
+use std::fmt::{Display, Formatter};
 use derivative::Derivative;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use serde_json::Value::Null;
+use crate::stats::stat_column::StatColumn;
 
 ///
 /// StatValue
@@ -15,10 +17,10 @@ use serde_json::Value::Null;
 pub struct StatValue(Value);
 
 impl StatValue {
-    pub fn new() -> StatValue {
+    pub fn new() -> Self {
         StatValue(Null)
     }
-    pub fn with_value(val: Value) -> StatValue {
+    pub fn with_value(val: Value) -> Self {
         StatValue(val)
     }
 
@@ -43,5 +45,11 @@ impl StatValue {
 
     pub fn clear(&mut self) {
         self.0 = Null
+    }
+}
+
+impl Display for StatValue {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
