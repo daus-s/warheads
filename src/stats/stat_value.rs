@@ -3,7 +3,6 @@ use derivative::Derivative;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use serde_json::Value::Null;
-use crate::stats::stat_column::StatColumn;
 
 ///
 /// StatValue
@@ -20,7 +19,7 @@ impl StatValue {
     pub fn new() -> Self {
         StatValue(Null)
     }
-    pub fn with_value(val: Value) -> Self {
+    pub fn from_value(val: Value) -> Self {
         StatValue(val)
     }
 

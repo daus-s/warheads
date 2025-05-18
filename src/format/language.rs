@@ -1,16 +1,31 @@
-pub fn columns(s: &str) -> Vec<String> {
-    s.replace(['[', ']'], "")
-     .split(",")
-     .map(|x| x.to_string())
-     .collect()
+pub trait Columnizable {
+    fn columns(&self) -> Vec<String>;
 }
 
-pub fn partition(txt: String, new_data: String) -> String {
-    let beginning = "\"rowSet\":";
+impl Columnizable for String {
+    fn columns(&self) -> Vec<String> {
+        self.replace(['[', ']'], "")
+            .split(",")
+            .map(|x| x.to_string().trim().into())
+            .collect()
+    }
+}
 
-    let end_of_start = txt.find(beginning).unwrap() + beginning.len();
+pub fn partition(txt: String, list: Vec<String>) -> String {
+    let new_data = format!("[\n        {}\n      ]\n", list.join(",\n        "));
 
-    let (before, _) = txt.split_at(end_of_start);
+    let beginning = "\"rowSet\": ";
 
-    format!("{}{}{}", before, new_data, "}]}")
+    let end_of_start = txt.find(beginning).unwrap() + beginning.len(); /* Ex.
+
+                                                                                 "rowSet:["
+                                                                                         ^
+                                                                                         Starting from and including [
+                                                                                */
+
+    let (prefix, _) = txt.split_at(end_of_start);
+
+    let suffix = "    }\n  ]\n}\n";
+
+    format!("{}{}{}", prefix, new_data, suffix)
 }

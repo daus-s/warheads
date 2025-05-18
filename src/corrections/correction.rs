@@ -1,4 +1,4 @@
-use crate::format::language::columns;
+use crate::format::language::{Columnizable};
 use crate::format::path_manager::{nba_correction_dir, nba_correction_file};
 
 use serde::{Deserialize, Serialize};
@@ -47,7 +47,7 @@ impl Correction {
         team_abbr: String,
         kind: NBAStatKind,
         period: SeasonPeriod,
-    ) -> Correction {
+    ) -> Self {
         Correction {
             game_id,
             season,
@@ -81,8 +81,8 @@ impl Correction {
     /// consumes the original String and returns a new String
     ///
     ///
-    pub fn correct(&self, game: &str) -> String {
-        let mut columns = columns(game);
+    pub fn correct(&self, game: String) -> String {
+        let mut columns = game.columns();
 
         fn apply_corrections(
             cs: &mut Vec<String>,
@@ -96,7 +96,7 @@ impl Correction {
                 }
             }
 
-            Some(format!("[{}]", cs.join(",")))
+            Some(format!("[\n          {}\n        ]", cs.join(",\n          ")))
         }
 
         match (columns.as_slice(), self.kind) {
@@ -119,7 +119,8 @@ impl Correction {
             ) => apply_corrections(&mut columns, &self.corrections, player_column_index).unwrap(), // todo:  create team_column_index
             _ => {
                 eprintln!("columns string was not formatted correctly");
-                String::new()
+
+                game.to_string()
             }
         }
     }
@@ -171,7 +172,7 @@ impl Debug for Correction {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "szn: {}:{}\n{}\nid: {} ({})\n[.{}.]",
+            "szn: {}:{}\n{}-{} ({})\n{}",
             self.season,
             self.game_id,
             self.team_abbr,
@@ -181,7 +182,11 @@ impl Debug for Correction {
                 NBAStatKind::Player => "player",
                 NBAStatKind::LineUp => "lineup",
             },
-            self.corrections.len()
+            match self.delete {
+                true => "del".to_string(),
+                false => format!("[.{}.]", self.corrections.len()),
+
+            }
         )
     }
 }

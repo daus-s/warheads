@@ -1,7 +1,7 @@
 use chrono::{DateTime, Datelike, Local, NaiveDate};
 use serde_json::Value;
 use serde_json::Value::Null;
-use crate::stats::extract::{get_result_set, headers, rows};
+use crate::format::extract::{get_result_set, headers, get_rows};
 use crate::stats::types::GameResult;
 use crate::stats::types::GameResult::{Draw, Loss, Win};
 
@@ -118,7 +118,7 @@ pub fn parse_season(value: Value) -> (Vec<Value>, Vec<String>) {
 
     let headers: Vec<String> = headers(&set).unwrap();
 
-    let rows: Vec<Value> = rows(&set).unwrap();
+    let rows: Vec<Value> = get_rows(&set).unwrap();
 
     (rows, headers)
 }

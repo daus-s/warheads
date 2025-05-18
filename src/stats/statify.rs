@@ -21,18 +21,24 @@ pub struct StatPair(pub StatColumn, pub StatValue);
 
 impl Display for StatPair {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-
         match self.0 {
             StatColumn::FG_PCT  |
             StatColumn::FG3_PCT |
-            StatColumn::FT_PCT  =>
-                write!(f, "{:.6}", self.1.value().as_f64().unwrap()),
-
-            StatColumn::FANTASY_PTS =>
-                write!(f, "{:.1}", self.1.value().as_f64().unwrap()),
-
-            _ =>
-                write!(f, "{}", self.1),
+            StatColumn::FT_PCT  => {
+                match self.1.value().as_f64() {
+                    Some(n) => write!(f, "{:.6}", n),
+                    None => write!(f, "null"),
+                }
+            },
+            StatColumn::FANTASY_PTS => {
+                match self.1.value().as_f64() {
+                    Some(n) => write!(f, "{:.1}", n),
+                    None => write!(f, "null"),
+                }
+            },
+            _ => {
+                write!(f, "{}", self.1)
+            },
         }
     }
 }

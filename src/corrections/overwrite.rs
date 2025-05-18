@@ -16,7 +16,7 @@ pub fn write_to_data_file(domain: Domain, corrected_data: Vec<String>) -> Result
     let content = fs::read_to_string(&data_path)
         .map_err(|_| format!("failed to read file {:?}", data_path))?;
     
-    let new_content = partition(content, format!("[{}]", corrected_data.join(",")));
+    let new_content = partition(content, corrected_data);
 
     match fs::write(&data_path, new_content) {
         Ok(_) => {

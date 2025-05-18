@@ -1,7 +1,8 @@
+use std::fmt::{Debug, Formatter};
 use serde_json::Value;
 use serde_json::Value::{Number};
 use crate::stats::box_score::BoxScore;
-use crate::format::language::columns;
+use crate::format::language::{Columnizable};
 
 pub trait Identifiable {
     fn identity(&self) -> Identity;
@@ -34,6 +35,15 @@ pub struct Identity {
     pub game_id: String,
 }
 
+impl Debug for Identity {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self.player_id {
+            Some(id) => write!(f, "player_id: {}\nteam: {}\nteam_id: {}\nyear: {}\ngame: {}", id, self.team_abbr, self.team_id, self.year, self.game_id),
+            None => write!(f, "team: {}\nteam_id: {}\nyear: {}\ngame: {}", self.team_abbr, self.team_id, self.year, self.game_id)
+        }
+    }
+}
+
 ///
 ///     player_game schema:
 ///         ["SEASON_ID","PLAYER_ID","PLAYER_NAME","TEAM_ID","TEAM_ABBREVIATION","TEAM_NAME",
@@ -48,7 +58,7 @@ pub struct Identity {
 ///
 impl Identifiable for String {
     fn identity(&self) -> Identity {
-        let mut columns = columns(self);
+        let mut columns = self.columns();
 
         match columns.as_slice() {
             [season_id, player_id, _player_name, team_id, team_abbr, _team_name, game_id, _game_date, _matchup, _wl, _min, _fgm, _fga, _fg_pct, _fg3m, _fg3a, _fg3_pct, _ftm, _fta, _ft_pct, _oreb, _dreb, _reb, _ast, _stl, _blk, _tov, _pf, _pts, _plus_minus, _fantasy_pts, _video_available] =>
@@ -110,7 +120,7 @@ impl<T: BoxScore> Identifiable for T {
 
 impl Identifiable for Value {
     fn identity(&self) -> Identity {
-        eprintln!("raw identity data: {:?}", self);
+        // eprintln!("raw identity data: {:?}", self);
 
         match self.as_array().unwrap().as_slice() {
             //player game case
