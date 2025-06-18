@@ -1,12 +1,13 @@
+use pretty_assertions::assert_eq;
+use serde_json::Value::Number;
+use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
-use serde_json::{json, Value};
-use serde_json::Value::Number;
 use warheads::corrections::correction::Correction;
 use warheads::corrections::correction_loader::load_corrections;
 use warheads::corrections::corrector::Corrector;
-use warheads::format::extract::{json_to_hashmap};
+use warheads::dapi::extract::json_to_hashmap;
 use warheads::format::language::{partition, Columnizable};
 use warheads::format::path_manager::nba_correction_dir;
 use warheads::stats::id::Identifiable;
@@ -15,15 +16,13 @@ use warheads::stats::nba_kind::NBAStatKind::Player;
 use warheads::stats::se::SerdeEnum;
 use warheads::stats::season_type::SeasonPeriod;
 use warheads::stats::season_type::SeasonPeriod::RegularSeason;
-use warheads::stats::stat_column::{player_column_index, StatColumn};
 use warheads::stats::stat_column::StatColumn::*;
+use warheads::stats::stat_column::{player_column_index, StatColumn};
 use warheads::stats::stat_value::StatValue;
 use warheads::stats::types::GameResult::{Loss, Win};
-use pretty_assertions::{assert_eq};
 
 #[test]
 pub fn test_load_correction() {
-
     let year = 1959;
     let season = year + 20000;
     let kind = Player;
@@ -31,11 +30,12 @@ pub fn test_load_correction() {
 
     let mut expected_corrections = expected_corrections(season, kind, period);
 
-    let mut actual_corrections = load_corrections(year, kind, period)
-        .unwrap_or_else(|e| panic!(
+    let mut actual_corrections = load_corrections(year, kind, period).unwrap_or_else(|e| {
+        panic!(
             "Failed to load corrections from: {}\n{e}",
             nba_correction_dir(year, kind, period)
-        ));
+        )
+    });
 
     expected_corrections.sort_by_key(|c| (c.game_id.clone(), c.player_id));
     actual_corrections.sort_by_key(|c| (c.game_id.clone(), c.player_id));
@@ -208,7 +208,7 @@ fn expected_corrections(season: i32, kind: NBAStatKind, period: SeasonPeriod) ->
 
                 cs
             },
-        }
+        },
     ]
 }
 
@@ -224,9 +224,7 @@ fn test_apply_corrections() {
             kind: Player,
             period: SeasonPeriod::RegularSeason,
             delete: false,
-            corrections:  HashMap::from([
-                (FG3M, StatValue::from_value(json!(2))),
-            ]),
+            corrections: HashMap::from([(FG3M, StatValue::from_value(json!(2)))]),
         },
         Correction {
             game_id: "12345678".to_string(),
@@ -237,7 +235,7 @@ fn test_apply_corrections() {
             kind: Player,
             period: SeasonPeriod::RegularSeason,
             delete: false,
-            corrections:  HashMap::from([
+            corrections: HashMap::from([
                 (FGM, StatValue::from_value(json!(6))),
                 (FG3M, StatValue::from_value(json!(3))),
             ]),
@@ -251,9 +249,7 @@ fn test_apply_corrections() {
             kind: Player,
             period: SeasonPeriod::RegularSeason,
             delete: false,
-            corrections:  HashMap::from([
-                (FG_PCT, StatValue::from_value(json!( 3f32 / 7f32))),
-            ]),
+            corrections: HashMap::from([(FG_PCT, StatValue::from_value(json!(3f32 / 7f32)))]),
         },
         Correction {
             game_id: "11235813".to_string(),
@@ -264,7 +260,7 @@ fn test_apply_corrections() {
             kind: Player,
             period: SeasonPeriod::RegularSeason,
             delete: true,
-            corrections:  HashMap::new(),
+            corrections: HashMap::new(),
         },
     ];
 
@@ -273,29 +269,28 @@ fn test_apply_corrections() {
     let value = serde_json::from_str(&contents)
         .unwrap_or_else(|e| panic!("failed to parse JSON from test file wtf: {e}"));
 
-
-    let mut games_by_id = json_to_hashmap(&value)
-        .unwrap_or_else(|e|
-            panic!("failed to create hashmap of identity -> string \n\
-                    from the file `tests/data/data.json`: {e}"));
+    let mut games_by_id = json_to_hashmap(&value).unwrap_or_else(|e| {
+        panic!(
+            "failed to create hashmap of identity -> string \n\
+                    from the file `tests/data/data.json`: {e}"
+        )
+    });
 
     // let game_list = get_rows_from_file(PathBuf::from("tests/data/data.json"))?;
 
     let mut to_remove = Vec::new();
 
     for correction in corrections {
-
         let id = correction.identity();
 
         if let Some(game) = games_by_id.get(&id) {
             if correction.delete {
                 to_remove.push(id.clone());
             } else {
-                games_by_id.insert(id, correction.correct(game.clone()));
+                games_by_id.insert(id, correction.correct_string(game.clone()));
             }
         }
     }
-
 
     for deletion in to_remove {
         games_by_id.remove(&deletion);
@@ -303,7 +298,7 @@ fn test_apply_corrections() {
 
     // dbg!(&games_by_id);
 
-    let mut games= games_by_id.into_values().collect::<Vec<String>>();
+    let mut games = games_by_id.into_values().collect::<Vec<String>>();
 
     games.sort();
 
@@ -318,7 +313,6 @@ fn test_apply_corrections() {
     eprintln!("Corrected ==========================================================================\n{}\n====================================================================================", &corrected);
 
     // eprintln!("Expected ===========================================================================\n{}\n====================================================================================", &expected);
-
 
     // eprintln!("corrected chars: {}\nexpected chars: {}", corrected.len(), expected.len());
     //
@@ -350,7 +344,6 @@ fn test_apply_corrections() {
 
 fn bad_data() -> String {
     fs::read_to_string("tests/data/readable_data.json").unwrap()
-
 }
 
 fn expected_file() -> String {

@@ -1,11 +1,13 @@
+use crate::stats::team_box_score::TeamBoxScore;
+use crate::stats::visiting::Visiting;
+use crate::stats::box_score::BoxScore;
+
 use aws_sdk_s3 as s3;
 use aws_sdk_s3::primitives::ByteStream;
 use aws_sdk_s3::Client;
-use crate::stats::team_box_score::TeamBoxScore;
-use crate::stats::visiting::Visiting;
 
-/// saves a game object to the file history/{gameid} if home and
-/// history/{gameid}a if away as json per 0.1.0
+/// saves a game object to the file `history/{gameid}` if home and
+/// `history/{gameid}a` if away as json per 0.1.0
 /// returns a result measuring the success of the operation
 ///
 /// params:

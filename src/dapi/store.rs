@@ -1,6 +1,6 @@
 use crate::dapi::hunting::load_nba_season_from_file;
-use indicatif::{ProgressBar, ProgressStyle};
 use crate::stats::team_box_score::TeamBoxScore;
+use indicatif::{ProgressBar, ProgressStyle};
 
 pub async fn save_nba_season(year: i32) {
     let team_games = load_nba_season_from_file(year);

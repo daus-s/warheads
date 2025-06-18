@@ -1,9 +1,9 @@
+use crate::stats::stat_column::StatColumn;
+use crate::stats::stat_value::StatValue;
 #[allow(unused_imports)]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 use serde_json::Value::Null;
-use crate::stats::stat_column::StatColumn;
-use crate::stats::stat_value::StatValue;
 use std::collections::HashMap;
 
 #[allow(dead_code)] // required for serialize
@@ -14,7 +14,7 @@ where
     let mut map: HashMap<String, Value> = HashMap::new();
     for (key, value) in cs.clone() {
         map.insert(
-            key.column_name().to_string(),
+         format!("{}", key),
             value.val().unwrap_or_else(|| Null),
         );
     }

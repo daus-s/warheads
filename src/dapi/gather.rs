@@ -1,13 +1,14 @@
 use crate::dapi::rip::fetch_and_process_nba_games;
 use crate::format::season::season_fmt;
-use reqwest;
-use reqwest::header::*;
-use reqwest::Client;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::nba_stat::NBAStat::{Player, Team};
 use crate::stats::player_box_score::PlayerBoxScore;
-use crate::stats::season_type::{minimum_spanning_era, SeasonPeriod};
+use crate::stats::season_type::minimum_spanning_era;
 use crate::stats::team_box_score::TeamBoxScore;
+use crate::types::SeasonId;
+use reqwest;
+use reqwest::header::*;
+use reqwest::Client;
 use std::error::Error;
 use std::fs::File;
 use std::io::Read;
@@ -16,20 +17,20 @@ use std::str::FromStr;
 use std::{fs, io};
 
 pub fn read_nba_file(file_path: PathBuf) -> String {
-
-    let mut file = File::open(&file_path).expect(format!("Failed to open {}", file_path.display()).as_str());
+    let mut file =
+        File::open(&file_path).expect(format!("Failed to open {}", file_path.display()).as_str());
 
     let mut contents = String::new();
 
-    file.read_to_string(&mut contents).expect(format!("Failed to read {}", file_path.display()).as_str());
+    file.read_to_string(&mut contents)
+        .expect(format!("Failed to read {}", file_path.display()).as_str());
 
     contents
 }
 
 pub async fn ask_nba(
-    year: i32,
+    season: SeasonId,
     stat_kind: NBAStatKind,
-    period: SeasonPeriod,
 ) -> Result<String, Box<dyn Error>> {
     let client = Client::new();
 
@@ -80,7 +81,9 @@ pub async fn ask_nba(
         HeaderValue::from_str("macOS").unwrap(),
     );
 
-    let season = season_fmt(year);
+    let season_param = season_fmt(season);
+
+    let period = season.period();
 
     // if more url-encoded characters are needed you can use `urlencoding` crate
     let url = format!(
@@ -89,7 +92,7 @@ pub async fn ask_nba(
         Direction=DESC&ISTRound=&\
         LeagueID=00&\
         PlayerOrTeam={stat_kind}&\
-        Season={season}&\
+        Season={season_param}&\
         SeasonType={period}&\
         Sorter=DATE"
     );
@@ -122,8 +125,8 @@ pub fn player_games(year: i32) -> Vec<PlayerBoxScore> {
 
     minimum_spanning_era
         .iter()
-        .flat_map(|period| {
-            fetch_and_process_nba_games(year, NBAStatKind::Player, *period)
+        .flat_map(|&season| {
+            fetch_and_process_nba_games(season, NBAStatKind::Player)
                 .into_iter()
                 .filter_map(|stat| match stat {
                     Player(p) => Some(p),
@@ -138,8 +141,8 @@ pub fn team_games(year: i32, roster: Vec<PlayerBoxScore>) -> Vec<TeamBoxScore> {
 
     let mut games: Vec<TeamBoxScore> = minimum_spanning_era
         .iter()
-        .flat_map(|period| {
-            fetch_and_process_nba_games(year, NBAStatKind::Team, *period)
+        .flat_map(|&season| {
+            fetch_and_process_nba_games(season, NBAStatKind::Team)
                 .into_iter()
                 .filter_map(|stat| match stat {
                     Team(t) => Some(t),

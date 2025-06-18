@@ -7,9 +7,6 @@
 
 use crate::stats::team_box_score::TeamBoxScore;
 
-
-use chrono;
-use chrono::Local;
 use crate::dapi::gather::{ask_nba, player_games, team_games, write_games};
 use crate::dapi::parse::{destructure_dt, DT};
 use crate::dapi::store::save_nba_season;
@@ -17,6 +14,9 @@ use crate::format::path_manager::nba_data_path;
 use crate::format::season::season_fmt;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::season_type::SeasonPeriod;
+use chrono;
+use chrono::Local;
+use crate::types::SeasonId;
 
 pub fn load_nba_season_from_file(year: i32) -> Vec<TeamBoxScore> {
     let player_games = player_games(year);
@@ -63,52 +63,52 @@ pub async fn observe_nba() {
     for year in begin..curr_year + seasonal_depression {
         if year >= 2003 {
             if let Err(error_message) =
-                fetch_and_save_nba_stats(year, NBAStatKind::Player, SeasonPeriod::PreSeason).await
+                fetch_and_save_nba_stats(SeasonId::from((year, SeasonPeriod::PreSeason)), NBAStatKind::Player).await
             {
                 eprintln!("{}", error_message);
             }
 
             if let Err(error_message) =
-                fetch_and_save_nba_stats(year, NBAStatKind::Team, SeasonPeriod::PreSeason).await
+                fetch_and_save_nba_stats(SeasonId::from((year, SeasonPeriod::PreSeason)), NBAStatKind::Team).await
             {
                 eprintln!("{}", error_message);
             }
         }
 
         if let Err(error_message) =
-            fetch_and_save_nba_stats(year, NBAStatKind::Player, SeasonPeriod::RegularSeason).await
+            fetch_and_save_nba_stats(SeasonId::from((year, SeasonPeriod::RegularSeason)), NBAStatKind::Player).await
         {
             eprintln!("{}", error_message);
         }
 
         if let Err(error_message) =
-            fetch_and_save_nba_stats(year, NBAStatKind::Team, SeasonPeriod::RegularSeason).await
+            fetch_and_save_nba_stats(SeasonId::from((year, SeasonPeriod::RegularSeason)), NBAStatKind::Team).await
         {
             eprintln!("{}", error_message);
         }
 
         if year >= 2020 {
             if let Err(error_message) =
-                fetch_and_save_nba_stats(year, NBAStatKind::Player, SeasonPeriod::PlayIn).await
+                fetch_and_save_nba_stats(SeasonId::from((year, SeasonPeriod::PlayIn)), NBAStatKind::Player).await
             {
                 eprintln!("{}", error_message);
             }
 
             if let Err(error_message) =
-                fetch_and_save_nba_stats(year, NBAStatKind::Team, SeasonPeriod::PlayIn).await
+                fetch_and_save_nba_stats(SeasonId::from((year, SeasonPeriod::PlayIn)), NBAStatKind::Team).await
             {
                 eprintln!("{}", error_message);
             }
         }
 
         if let Err(error_message) =
-            fetch_and_save_nba_stats(year, NBAStatKind::Player, SeasonPeriod::PostSeason).await
+            fetch_and_save_nba_stats(SeasonId::from((year, SeasonPeriod::PostSeason)), NBAStatKind::Player).await
         {
             eprintln!("{}", error_message);
         }
 
         if let Err(error_message) =
-            fetch_and_save_nba_stats(year, NBAStatKind::Team, SeasonPeriod::PostSeason).await
+            fetch_and_save_nba_stats(SeasonId::from((year, SeasonPeriod::PostSeason)), NBAStatKind::Team).await
         {
             eprintln!("{}", error_message);
         }
@@ -116,31 +116,34 @@ pub async fn observe_nba() {
 }
 
 async fn fetch_and_save_nba_stats(
-    year: i32,
+    season: SeasonId,
     stat: NBAStatKind,
-    period: SeasonPeriod,
 ) -> Result<(), String> {
-    let file_path = || nba_data_path(year, stat, period);
 
-    match ask_nba(year, stat, period).await {
+
+    let file_path = || nba_data_path(season, stat);
+
+    let (year, _period) = season.destructure();
+
+    match ask_nba(season, stat).await {
         Ok(response_data) => match write_games(file_path(), &response_data) {
             Ok(_) => {
                 println!(
-                    "✅\tsuccessfully saved nba stats for {} season at file: {:?}",
-                    season_fmt(year),
+                    "✅ successfully saved nba stats for {} season at file: {:?}",
+                    season_fmt(season),
                     file_path()
                 );
                 Ok(())
             }
             Err(e) => Err(format!(
-                "❌\terror saving nba stats for {} season at file {:?}: {}",
-                season_fmt(year),
+                "❌ error saving nba stats for {} season at file {:?}: {}",
+                season_fmt(season),
                 file_path(),
                 e
             )),
         },
         Err(e) => Err(format!(
-            "❌\tfailed to fetch {} stats for {} season: {:?}",
+            "❌ failed to fetch {} stats for {} season: {:?}",
             year, stat, e
         )),
     }

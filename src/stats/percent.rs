@@ -13,19 +13,20 @@ impl FromStr for Percent {
                 if f >= 0. && f <= 1. {
                     Ok(Percent(f))
                 } else {
-                    Err("percent is not in the correct bounds [0, 100]."
+                    Err("❌ percent is not in the correct bounds [0, 100]."
                         .parse()
                         .unwrap())
                 }
             }
-            Err(_) => Err("couldn't parse a percent from string.".parse().unwrap()),
+            Err(_) => Err("❌ couldn't parse a percent from string.".parse().unwrap()),
         }
     }
 }
 
-pub fn percent(num: Option<u32>, den: Option<u32>) -> String {
-    match [num, den] {
-        [Some(n), Some(d)] => format!("({:.1}%)", (n as f32 * 100.0) / d as f32),
-        _ => "-".to_string(),
+pub fn percent_string(num: i32, den: i32) -> String {
+    if den == 0 {
+        return "-".to_string()
     }
+
+    format!("({:.1}%)", (num as f32 * 100.0) / den as f32)
 }

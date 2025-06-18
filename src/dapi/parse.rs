@@ -1,9 +1,9 @@
+use crate::dapi::extract::{get_result_set, get_rows, headers};
+use crate::types::GameResult;
+use crate::types::GameResult::{Draw, Loss, Win};
 use chrono::{DateTime, Datelike, Local, NaiveDate};
 use serde_json::Value;
 use serde_json::Value::Null;
-use crate::format::extract::{get_result_set, headers, get_rows};
-use crate::stats::types::GameResult;
-use crate::stats::types::GameResult::{Draw, Loss, Win};
 
 pub fn parse_string(s: Option<&Value>) -> String {
     s.unwrap_or(&Null).to_string().replace("\"", "")
@@ -90,12 +90,19 @@ pub fn parse_wl(value: Option<&Value>) -> Option<GameResult> {
     }
 }
 
-pub fn parse_date(value: Option<&Value>) -> Option<NaiveDate> {
-    let json_date = value.unwrap();
+pub fn parse_date(value: &Value) -> Option<NaiveDate> {
+    match value {
+        Value::String(s) => {
 
-    let date_str = json_date.to_string().replace("\"", "");
+            NaiveDate::parse_from_str(&*s, "%Y-%m-%d").ok()
 
-    NaiveDate::parse_from_str(&*date_str, "%Y-%m-%d").ok()
+        },
+        _ => {
+            eprintln!("❌ JSON Value to parse GameDate from is not a String. ");
+
+            None
+        }
+    }
 }
 
 pub fn destructure_dt(dt: DateTime<Local>) -> DT {
@@ -112,13 +119,17 @@ pub struct DT {
     pub day: u32,
 }
 
-
 pub fn parse_season(value: Value) -> (Vec<Value>, Vec<String>) {
-    let set = get_result_set(&value).unwrap_or_else(|err| panic!("{}", err));
+    let set = get_result_set(&value)
+        .unwrap_or_else(|err| panic!("could not unwrap result set: {err}"));
 
-    let headers: Vec<String> = headers(&set).unwrap();
+    let headers: Vec<String> = headers(&set)
+        .unwrap_or_else(|err| panic!("could not unwrap headers from set: {err}"));
 
-    let rows: Vec<Value> = get_rows(&set).unwrap();
+
+    let rows: Vec<Value> = get_rows(&set)
+        .unwrap_or_else(|err| panic!("could not unwrap rows from set: {err}"));
+
 
     (rows, headers)
 }

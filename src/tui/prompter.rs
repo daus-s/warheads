@@ -1,11 +1,11 @@
+use crate::stats::se::SerdeEnum;
+use dialoguer::console::{style, Term};
 use dialoguer::{theme::ColorfulTheme, Input, Select};
 use serde::Serialize;
 use serde_json::{json, Value};
-use crate::stats::se::SerdeEnum;
 use std::any::type_name;
 use std::fmt::Debug;
 use std::str::FromStr;
-use dialoguer::console::{style, Term};
 
 pub fn prompt_and_validate<T>(prompt: &str) -> Value
 where
@@ -68,21 +68,19 @@ where
     S::values()[selection].clone()
 }
 
-pub fn prompt_and_delete(comparator: &str) -> bool
-{
-    let term = Term::stderr();
+pub fn prompt_and_delete(comparator: &str) -> bool {
 
     let should_delete = Select::with_theme(&ColorfulTheme::default())
         .with_prompt("Should this entry be deleted? (uncommon)")
         .items(&["No", "Yes"])
         .default(0)
         .interact()
-        .unwrap() == 1; // 1 is "Yes"
+        .unwrap()
+        == 1; // 1 is "Yes"
 
     if !should_delete {
         return false;
     }
-
 
     // prompt and validate that the newly typed thing is the comparator.
     // repeat until correct or canceled
@@ -93,23 +91,21 @@ pub fn prompt_and_delete(comparator: &str) -> bool
             style(comparator).yellow().bold()
         );
 
-
         match Input::<String>::new()
             .with_prompt("Confirmation")
             .interact_text()
         {
-            Ok(input) if input == comparator => {
-
-                return true
-            },
+            Ok(input) if input == comparator => return true,
             Ok(_) => {
-                println!("{} Incorrect input. Try again or press ESC to cancel.",
-                         style("Error:").red());
-            },
+                println!(
+                    "{} Incorrect input. Try again or press ESC to cancel.",
+                    style("Error:").red()
+                );
+            }
             Err(_) => {
                 // User pressed ESC or had input error
 
-                return prompt_and_delete(comparator)
+                return prompt_and_delete(comparator);
             }
         }
     }

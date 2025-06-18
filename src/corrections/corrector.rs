@@ -1,11 +1,10 @@
 use crate::corrections::correction::Correction;
 use crate::corrections::overwrite;
-use crate::format::extract::json_to_hashmap;
-use crate::stats::id::{Identifiable, Identity};
-use std::collections::HashMap;
-use std::fs;
-use serde_json::Value;
+use crate::dapi::extract::json_to_hashmap;
 use crate::format::path_manager::nba_data_path;
+use crate::stats::id::Identifiable;
+use serde_json::Value;
+use std::fs;
 
 pub trait Corrector {
     fn apply(&self) -> Result<(), String>;
@@ -13,14 +12,13 @@ pub trait Corrector {
 
 impl Corrector for Vec<Correction> {
     fn apply(&self) -> Result<(), String> {
-
         if self.is_empty() {
             return Ok(());
         }
 
-        let (season, kind, period) = self[0].domain();
+        let (season, kind) = self[0].domain();
 
-        let data_path = nba_data_path(season, kind, period);
+        let data_path = nba_data_path(season, kind);
 
         let contents = fs::read_to_string(&data_path)
             .unwrap_or_else(|e| format!("failed to read file {:?}: {e}", data_path));
@@ -34,14 +32,13 @@ impl Corrector for Vec<Correction> {
         // search with O(1) lookup in hashmap (hash might be slow for Identity)
 
         for correction in self {
-
             let id = &correction.identity();
 
             if let Some(game) = games_by_id.get_mut(id) {
                 if correction.delete {
                     to_remove.push(id.clone());
                 } else {
-                    *game = correction.correct(game.to_string());
+                    *game = correction.correct_string(game.to_string());
                 }
             }
         }

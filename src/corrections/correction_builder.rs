@@ -1,34 +1,75 @@
+use crate::corrections::correction::Correction;
+use crate::stats::game_metadata::GameMetaData;
+use crate::stats::nba_kind::NBAStatKind;
+use crate::stats::percent::Percent;
+use crate::stats::season_type::SeasonPeriod;
+use crate::stats::stat_column::StatColumn;
+use crate::stats::stat_value::StatValue;
+use crate::stats::types::BoolInt;
+use crate::tui::prompter::{prompt_and_delete, prompt_and_select, prompt_and_validate};
+use crate::types::{GameId, GameResult, MatchupString, PlayerId, SeasonId, TeamAbbreviation, TeamId};
 use chrono::NaiveDate;
 use serde_json::Value;
 use serde_json::Value::Null;
-use crate::corrections::correction::Correction;
-use crate::stats::game_info::GameInfo;
-use crate::stats::percent::Percent;
-use crate::stats::stat_column::StatColumn;
-use crate::stats::types::{BoolInt, GameResult, MatchupString};
-use crate::tui::prompter::{prompt_and_delete, prompt_and_select, prompt_and_validate};
+use std::collections::HashMap;
 
-pub struct CorrectionBuilder(Correction, GameInfo);
+pub struct CorrectionBuilder {
+    correction: Correction,
+    meta: Option<GameMetaData>,
+}
 
 impl CorrectionBuilder {
-    pub fn new(correction: Correction, game_info: GameInfo) -> Self {
-        CorrectionBuilder(correction, game_info)
+    pub fn new(
+        game_id: GameId,
+        season: SeasonId,
+        player_id: Option<PlayerId>,
+        team_id: TeamId,
+        team_abbr: TeamAbbreviation,
+        kind: NBAStatKind,
+        period: SeasonPeriod,
+    ) -> Self {
+        CorrectionBuilder {
+            correction: Correction {
+                game_id,
+                season,
+                player_id,
+                team_id,
+                team_abbr: team_abbr.clone(),
+                period,
+                kind,
+                delete: false,
+                corrections: HashMap::new(),
+            },
+            meta: None
+        }
+    }
+
+    pub fn update_meta(&mut self, meta: GameMetaData) {
+        self.meta = Some(meta);
+    }
+
+    pub fn add_missing_field(&mut self, col: StatColumn, val: StatValue) {
+        self.correction.corrections.insert(col, val);
     }
 
     pub fn create(&mut self) -> Correction {
         use std::io::{stdout, Write};
 
-        let (corrections, game_info) = (&mut self.0, &self.1);
+        let (corrections, meta_wrapper) = (&mut self.correction, self.meta.clone());
+
+        let meta = meta_wrapper.unwrap_or_else(|| panic!("💀 couldn't open game metadata."));
+
         let mut sorted_keys: Vec<StatColumn> = corrections.corrections.keys().cloned().collect();
+
         sorted_keys.sort();
 
         let mut stdout = stdout();
 
-        println!("{}", game_info);
+        println!("{}", meta);
 
-        let confirmation = &game_info.confirmation_string();
+        let confirmation = meta.display_name();
 
-        let delete = prompt_and_delete(confirmation);
+        let delete = prompt_and_delete(&confirmation);
 
         corrections.set_delete(delete);
 
@@ -119,15 +160,18 @@ impl CorrectionBuilder {
                         prompt_and_select::<BoolInt>(format!("enter {}", col).as_str())
                     }
                 };
-
                 // Lock in the value
                 val.set(value.clone());
 
                 // Display the confirmed value
-                print!("\x1B[2A\x1B[0J");  // Move up 2 lines and clear from cursor to end
+                print!("\x1B[2A\x1B[0J"); // Move up 2 lines and clear from cursor to end
                 println!("{}: {}", col, value); // New value
             }
         }
         corrections.clone()
+    }
+
+    pub fn correcting(&self) -> bool {
+        self.correction.len() > 0
     }
 }
