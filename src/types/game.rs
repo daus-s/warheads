@@ -28,7 +28,7 @@ impl Serialize for GameDate {
 
 /// `GameId` is a number represented by a JSON String. It will sometimes be parsed and interpreted
 /// as a numeric value.
-#[derive(Clone, Debug, Eq, Hash, PartialEq, Deserialize)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq, Ord, Deserialize, PartialOrd)]
 pub struct GameId(pub String);
 
 impl Display for GameId {
@@ -40,6 +40,12 @@ impl Display for GameId {
 impl From<String> for GameId {
     fn from(value: String) -> Self {
         GameId(value)
+    }
+}
+
+impl From<&str> for GameId {
+    fn from(value: &str) -> Self {
+        GameId(value.to_string())
     }
 }
 

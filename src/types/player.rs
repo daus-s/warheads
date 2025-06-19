@@ -24,7 +24,7 @@ impl Serialize for PlayerName {
 
 /// `PlayerId` is represented by an unsigned integer in the NBA dataset. It is represented as a
 /// *required* field in all PlayerBoxScores.
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, Deserialize)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize)]
 pub struct PlayerId(pub u64);
 
 impl Display for PlayerId {

@@ -11,13 +11,12 @@ use crate::stats::stat_value::StatValue;
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 
+use crate::stats::box_score::BoxScore;
 use crate::stats::nba_kind::NBAStatKind::{Player, Team};
-use crate::stats::player_box_score::PlayerBoxScore;
 use crate::stats::statify::StatPair;
+use crate::types::{GameId, PlayerId, SeasonId, TeamAbbreviation, TeamId};
 use std::path::Path;
 use std::{fs, io};
-use crate::stats::box_score::BoxScore;
-use crate::types::{GameId, PlayerId, SeasonId, TeamAbbreviation, TeamId};
 
 #[derive(Serialize, Deserialize, Clone, Eq, PartialEq)]
 pub struct Correction {

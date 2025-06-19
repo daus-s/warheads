@@ -1,9 +1,8 @@
 use crate::stats::season_type::SeasonPeriod;
-use crate::stats::season_type::SeasonPeriod::{AllStarGame, PostSeason, PreSeason, RegularSeason, PlayIn, NBACup};
+use crate::stats::season_type::SeasonPeriod::{AllStarGame, NBACup, PlayIn, PostSeason, PreSeason, RegularSeason};
 use serde::{Deserialize, Serialize, Serializer};
+use serde_json::Value;
 use std::fmt::{Display, Formatter};
-use crate::stats::player_box_score::PlayerBoxScoreBuilder;
-use crate::stats::stat_column::StatColumn;
 
 #[derive(Clone, Debug, Copy, PartialEq, Eq, Hash, Deserialize)]
 pub struct SeasonId(pub i32);
@@ -15,7 +14,7 @@ impl SeasonId {
             x if x > 30000 && x < 39999 => AllStarGame,
             x if x > 40000 && x < 49999 => PostSeason,
             x if x > 50000 && x < 59999 => PlayIn,
-            _ => unreachable!("{}", format!("could not match season id {self} to a SeasonPeriod")),
+            _ => panic!("💀 could not match season id {self} to a SeasonPeriod"),
         }
     }
 
@@ -28,9 +27,44 @@ impl SeasonId {
     }
 }
 
+/*
+ ===================================================================================================
+  From functions.
+
+   from:
+     • i32 -> SeasonId
+     • (i32, SeasonPeriod) -> SeasonId
+     • Value (serde_json_ -> Result<SeasonId, Infallible>
+ */
 impl From<i32> for SeasonId {
     fn from(value: i32) -> Self {
         SeasonId(value)
+    }
+}
+
+impl TryFrom<&Value> for SeasonId {
+    type Error = ();
+
+    fn try_from(value: &Value) -> Result<SeasonId, Self::Error> {
+        let s = match value.as_str() {
+            Some(s) => s,
+            None => {
+                eprintln!("⚠️ SeasonId is not a JSON String.");
+
+                return Err(());
+            }
+        };
+
+        let i = match s.parse::<i32>() {
+            Ok(x) => x,
+            Err(e) => {
+                eprintln!("⚠️ failed to parse an integer from the SeasonId field: {e}");
+
+                return Err(());
+            }
+        };
+
+        Ok(SeasonId(i))
     }
 }
 
@@ -49,12 +83,26 @@ impl From<(i32, SeasonPeriod)> for SeasonId {
     }
 }
 
+/*
+====================================================================================================
+Display functions
+*/
+
 impl Display for SeasonId {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
 
+
+
+
+/*
+====================================================================================================
+serde_json functions
+
+    Serialize
+*/
 impl Serialize for SeasonId {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where

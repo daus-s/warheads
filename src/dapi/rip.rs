@@ -17,7 +17,6 @@ use crate::stats::team_box_score::{TeamBoxScore, TeamBoxScoreBuilder};
 use crate::types::*;
 use serde_json::{from_str, Value};
 use std::collections::HashMap;
-use crate::dapi::box_score_builder::BoxScoreBuilder::PlayerBuilder;
 
 pub fn fetch_and_process_nba_games(
     season_id: SeasonId,
@@ -179,7 +178,7 @@ fn fields_to_team_box_score(
     let box_score = box_score_builder.build().unwrap();
 
     if correction_builder.correcting() {
-        eprintln!("❌ failed to create a TeamBoxScore for {team_name}. id: {player_id} game id: {game_id}");
+        eprintln!("❌ failed to create a TeamBoxScore for {team_name}. id: {team_id} game id: {game_id}");
 
         Err(correction_builder)
     } else {
@@ -234,25 +233,25 @@ fn fields_to_player_box_score(
 
     correction_builder.update_meta(meta);
 
-    let _wl = record_stat(s.game_result(), &mut box_score_builder, &mut correction_builder);
-    let _min = record_stat(s.minutes(), &mut box_score_builder, &mut correction_builder);
-    let _fgm = record_stat(s.field_goal_makes(), &mut box_score_builder, &mut correction_builder);
-    let _fga = record_stat(s.field_goal_attempts(), &mut box_score_builder, &mut correction_builder);
-    let _fg3m = record_stat(s.three_point_makes(), &mut box_score_builder, &mut correction_builder);
-    let _fg3a = record_stat(s.three_point_attempts(), &mut box_score_builder, &mut correction_builder);
-    let _ftm = record_stat(s.free_throw_makes(), &mut box_score_builder, &mut correction_builder);
-    let _fta = record_stat(s.free_throw_attempts(), &mut box_score_builder, &mut correction_builder);
-    let _oreb = record_stat(s.offensive_rebounds(), &mut box_score_builder, &mut correction_builder);
-    let _dreb = record_stat(s.defensive_rebounds(), &mut box_score_builder, &mut correction_builder);
-    let _reb = record_stat(s.rebounds(), &mut box_score_builder, &mut correction_builder);
-    let _ast = record_stat(s.assists(), &mut box_score_builder, &mut correction_builder);
-    let _stl = record_stat(s.steals(), &mut box_score_builder, &mut correction_builder);
-    let _blk = record_stat(s.blocks(), &mut box_score_builder, &mut correction_builder);
-    let _tov = record_stat(s.turnovers(), &mut box_score_builder, &mut correction_builder);
-    let _pf = record_stat(s.personal_fouls(), &mut box_score_builder, &mut correction_builder);
-    let _pts = record_stat(s.points(), &mut box_score_builder, &mut correction_builder);
-    let _plus_minus = record_stat(s.plus_minus(), &mut box_score_builder, &mut correction_builder);
-    let _fantasy_pts = record_stat(s.fantasy_points(), &mut box_score_builder, &mut correction_builder);
+    record_stat(s.game_result(), &mut box_score_builder, &mut correction_builder);
+    record_stat(s.minutes(), &mut box_score_builder, &mut correction_builder);
+    record_stat(s.field_goal_makes(), &mut box_score_builder, &mut correction_builder);
+    record_stat(s.field_goal_attempts(), &mut box_score_builder, &mut correction_builder);
+    record_stat(s.three_point_makes(), &mut box_score_builder, &mut correction_builder);
+    record_stat(s.three_point_attempts(), &mut box_score_builder, &mut correction_builder);
+    record_stat(s.free_throw_makes(), &mut box_score_builder, &mut correction_builder);
+    record_stat(s.free_throw_attempts(), &mut box_score_builder, &mut correction_builder);
+    record_stat(s.offensive_rebounds(), &mut box_score_builder, &mut correction_builder);
+    record_stat(s.defensive_rebounds(), &mut box_score_builder, &mut correction_builder);
+    record_stat(s.rebounds(), &mut box_score_builder, &mut correction_builder);
+    record_stat(s.assists(), &mut box_score_builder, &mut correction_builder);
+    record_stat(s.steals(), &mut box_score_builder, &mut correction_builder);
+    record_stat(s.blocks(), &mut box_score_builder, &mut correction_builder);
+    record_stat(s.turnovers(), &mut box_score_builder, &mut correction_builder);
+    record_stat(s.personal_fouls(), &mut box_score_builder, &mut correction_builder);
+    record_stat(s.points(), &mut box_score_builder, &mut correction_builder);
+    record_stat(s.plus_minus(), &mut box_score_builder, &mut correction_builder);
+    record_stat(s.fantasy_points(), &mut box_score_builder, &mut correction_builder);
 
 
     let box_score = box_score_builder.build().unwrap();

@@ -1,5 +1,5 @@
 use crate::corrections::correction_builder::CorrectionBuilder;
-use crate::dapi::box_score_builder::BoxScoreBuilder;
+use crate::dapi::box_score_builder::{BoxScoreBuilder};
 use crate::format::language::box_score_value_to_string;
 use crate::stats::id::{Identifiable, Identity};
 use crate::stats::nba_kind::NBAStatKind;
@@ -11,6 +11,7 @@ use serde_json::Value;
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
+use crate::dapi::box_score_stat::BoxScoreStat;
 
 type Domain = (SeasonId, NBAStatKind);
 pub fn json_to_hashmap(value: &Value) -> Result<HashMap<Identity, String>, String> {
@@ -69,10 +70,13 @@ fn get_rows_from_file(filepath: PathBuf) -> Result<Vec<Value>, String> {
 }
 
 
-pub fn record_stat(entry: Result<Stat, StatColumn>, box_score: &mut impl BoxScoreBuilder, correction: &mut CorrectionBuilder) {
+pub fn record_stat<T>(entry: Result<T, StatColumn>, box_score: &mut impl BoxScoreBuilder, correction: &mut CorrectionBuilder)
+where
+    T: Into<BoxScoreStat>
+{
     match entry {
-        Ok(t) => {
-            box_score.add_stat(t);
+        Ok(stat) => {
+            box_score.add_stat(stat.into());
         },
         Err(col) => {
             correction.add_missing_field(col, StatValue::new());
@@ -80,7 +84,12 @@ pub fn record_stat(entry: Result<Stat, StatColumn>, box_score: &mut impl BoxScor
     };
 }
 
-pub fn record_usable_stat(entry: Result<Stat, StatColumn>, box_score: &mut impl BoxScoreBuilder, correction: &mut CorrectionBuilder) -> Result<Stat, StatColumn>
+/// `record_usable_stat` takes a result of a type (must be a member of the BoxScoreStat enum) and
+/// the column (StatColumn).
+pub fn record_usable_stat<T>(entry: Result<T, StatColumn>, box_score: &mut impl BoxScoreBuilder, correction: &mut CorrectionBuilder) -> Result<T, StatColumn>
+where
+    T: Clone,
+    T: Into<BoxScoreStat>,
 {
     record_stat(entry.clone(), box_score, correction);
 

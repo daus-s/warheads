@@ -1,205 +1,191 @@
+use crate::dapi::box_score_stat::BoxScoreStat;
 use crate::stats::player_box_score::PlayerBoxScoreBuilder;
-use crate::stats::stat_column::StatColumn;
 use crate::stats::team_box_score::TeamBoxScoreBuilder;
 
 pub trait BoxScoreBuilder {
-    fn add_stat<T>(&mut self, stat: T);
+    fn add_stat(&mut self, stat: BoxScoreStat);
 }
 
 impl BoxScoreBuilder for PlayerBoxScoreBuilder {
-    fn add_stat(&mut self, stat: Stat)
-    {         match stat {
-                    StatColumn::SEASON_ID => {
-                        self.season_id(stat);
-                    }
-                    StatColumn::PLAYER_ID => {
-                        self.player_id(stat);
-                    }
-                    StatColumn::PLAYER_NAME => {
-                        self.player_name(stat);
-                    }
-                    StatColumn::TEAM_ID => {
-                        self.team_id(stat);
-                    }
-                    StatColumn::TEAM_ABBREVIATION => {
-                        self.team_abbreviation(stat);
-                    }
-                    StatColumn::TEAM_NAME => {
-                        self.team_name(stat);
-                    }
-                    StatColumn::GAME_ID => {
-                        self.game_id(stat);
-                    }
-                    StatColumn::GAME_DATE => {
-                        self.game_date(stat);
-                    }
-                    StatColumn::MATCHUP => {
-                        self.matchup(stat);
-                    }
-                    StatColumn::WL => {
-                        self.wl(stat);
-                    }
-                    StatColumn::MIN => {
-                        self.min(stat);
-                    }
-                    StatColumn::FGM => {
-                        self.fgm(stat);
-                    }
-                    StatColumn::FGA => {
-                        self.fga(stat);
-                    }
-                    StatColumn::FG3M => {
-                        self.fg3m(stat);
-                    }
-                    StatColumn::FG3A => {
-                        self.fg3a(stat);
-                    }
-                    StatColumn::FTM => {
-                        self.ftm(stat);
-                    }
-                    StatColumn::FTA => {
-                        self.fta(stat);
-                    }
-                    StatColumn::OREB => {
-                        self.oreb(stat);
-                    }
-                    StatColumn::DREB => {
-                        self.dreb(stat);
-                    }
-                    StatColumn::REB => {
-                        self.reb(stat);
-                    }
-                    StatColumn::AST => {
-                        self.ast(stat);
-                    }
-                    StatColumn::STL => {
-                        self.stl(stat);
-                    }
-                    StatColumn::BLK => {
-                        self.blk(stat);
-                    }
-                    StatColumn::TOV => {
-                        self.tov(stat);
-                    }
-                    StatColumn::PF => {
-                        self.pf(stat);
-                    }
-                    StatColumn::PTS => {
-                        self.pts(stat);
-                    }
-                    StatColumn::PLUS_MINUS => {
-                        self.plus_minus(stat);
-                    }
-                    StatColumn::FANTASY_PTS => {
-                        self.fantasy_pts(stat);
-                    }
-                    StatColumn::VIDEO_AVAILABLE => {
-                        panic!("💀 VideoAvailable is not a stat. (not implemented for BoxScore). ")
-                    }
-                    StatColumn::ELO => {
-                        self.elo(stat);
-                    }
-                    StatColumn::FG_PCT  |
-                    StatColumn::FG3_PCT |
-                    StatColumn::FT_PCT  => {
-                        panic!("💀 percentages are not implemented for BoxScores. ")
-                    }
-                }
+    fn add_stat(&mut self, stat: BoxScoreStat) {
+        match stat {
+            BoxScoreStat::SeasonId(s) => {
+                self.season_id(s);
             }
-        }
-
-impl BoxScoreBuilder for TeamBoxScoreBuilder {
-    fn add_stat<T>(&mut self, stat: T) {
-        match stat.col() {
-            StatColumn::SEASON_ID => {
-                self.season_id(stat);
+            BoxScoreStat::PlayerId(s) => {
+                self.player_id(s);
             }
-            StatColumn::TEAM_ID => {
-                self.team_id(stat);
+            BoxScoreStat::PlayerName(s) => {
+                self.player_name(s);
             }
-            StatColumn::TEAM_ABBREVIATION => {
-                self.team_abbreviation(stat);
+            BoxScoreStat::TeamId(s) => {
+                self.team_id(s);
             }
-            StatColumn::TEAM_NAME => {
-                self.team_name(stat);
+            BoxScoreStat::TeamAbbreviation(s) => {
+                self.team_abbreviation(s);
             }
-            StatColumn::GAME_ID => {
-                self.game_id(stat);
+            BoxScoreStat::TeamName(s) => {
+                self.team_name(s);
             }
-            StatColumn::GAME_DATE => {
-                self.game_date(stat);
+            BoxScoreStat::GameId(s) => {
+                self.game_id(s);
             }
-            StatColumn::MATCHUP => {
-                self.matchup(stat);
+            BoxScoreStat::GameDate(s) => {
+                self.game_date(s);
             }
-            StatColumn::WL => {
-                self.wl(stat);
+            BoxScoreStat::MatchupString(s) => {
+                self.matchup(s);
             }
-            StatColumn::MIN => {
-                self.min(stat);
+            BoxScoreStat::GameResult(s) => {
+                self.wl(s);
             }
-            StatColumn::FGM => {
-                self.fgm(stat);
+            BoxScoreStat::Minutes(s) => {
+                self.min(s);
             }
-            StatColumn::FGA => {
-                self.fga(stat);
+            BoxScoreStat::FieldGoalMakes(s) => {
+                self.fgm(s);
             }
-            StatColumn::FG3M => {
-                self.fg3m(stat);
+            BoxScoreStat::FieldGoalAttempts(s) => {
+                self.fga(s);
             }
-            StatColumn::FG3A => {
-                self.fg3a(stat);
+            BoxScoreStat::ThreePointMakes(s) => {
+                self.fg3m(s);
             }
-            StatColumn::FTM => {
-                self.ftm(stat);
+            BoxScoreStat::ThreePointAttempts(s) => {
+                self.fg3a(s);
             }
-            StatColumn::FTA => {
-                self.fta(stat);
+            BoxScoreStat::FreeThrowMakes(s) => {
+                self.ftm(s);
             }
-            StatColumn::OREB => {
-                self.oreb(stat);
+            BoxScoreStat::FreeThrowAttempts(s) => {
+                self.fta(s);
             }
-            StatColumn::DREB => {
-                self.dreb(stat);
+            BoxScoreStat::OffensiveRebounds(s) => {
+                self.oreb(s);
             }
-            StatColumn::REB => {
-                self.reb(stat);
+            BoxScoreStat::DefensiveRebounds(s) => {
+                self.dreb(s);
             }
-            StatColumn::AST => {
-                self.ast(stat);
+            BoxScoreStat::Rebounds(s) => {
+                self.reb(s);
             }
-            StatColumn::STL => {
-                self.stl(stat);
+            BoxScoreStat::Assists(s) => {
+                self.ast(s);
             }
-            StatColumn::BLK => {
-                self.blk(stat);
+            BoxScoreStat::Steals(s) => {
+                self.stl(s);
             }
-            StatColumn::TOV => {
-                self.tov(stat);
+            BoxScoreStat::Blocks(s) => {
+                self.blk(s);
             }
-            StatColumn::PF => {
-                self.pf(stat);
+            BoxScoreStat::Turnovers(s) => {
+                self.tov(s);
             }
-            StatColumn::PTS => {
-                self.pts(stat);
+            BoxScoreStat::PersonalFouls(s) => {
+                self.pf(s);
             }
-            StatColumn::PLUS_MINUS => {
-                self.plus_minus(stat);
+            BoxScoreStat::Points(s) => {
+                self.pts(s);
             }
-            StatColumn::VIDEO_AVAILABLE => {
-                panic!("💀 VideoAvailable is not a stat. (not implemented for BoxScore). ")
+            BoxScoreStat::PlusMinus(s) => {
+                self.plus_minus(s);
             }
-            StatColumn::PLAYER_ID   |
-            StatColumn::PLAYER_NAME |
-            StatColumn::FANTASY_PTS |
-            StatColumn::ELO         => {
-                panic!("💀 {} is not a team stat. PlayerName, PlayerId, FantasyPoints and ELO are all individual stats that cannot be added to a TeamBoxScore. ", stat.col())
+            BoxScoreStat::FantasyPoints(s) => {
+                self.fantasy_pts(s);
             }
-            StatColumn::FG_PCT  |
-            StatColumn::FG3_PCT |
-            StatColumn::FT_PCT  => {
-                panic!("💀 percentages are not recorded for BoxScores. ")
+            BoxScoreStat::Elo(s) => {
+                self.elo(s);
             }
         }
     }
 }
+
+impl BoxScoreBuilder for TeamBoxScoreBuilder {
+    fn add_stat(&mut self, stat: BoxScoreStat) {
+        match stat {
+            BoxScoreStat::SeasonId(s) => {
+                self.season_id(s);
+            }
+            BoxScoreStat::TeamId(s) => {
+                self.team_id(s);
+            }
+            BoxScoreStat::TeamAbbreviation(s) => {
+                self.team_abbreviation(s);
+            }
+            BoxScoreStat::TeamName(s) => {
+                self.team_name(s);
+            }
+            BoxScoreStat::GameId(s) => {
+                self.game_id(s);
+            }
+            BoxScoreStat::GameDate(s) => {
+                self.game_date(s);
+            }
+            BoxScoreStat::MatchupString(s) => {
+                self.matchup(s);
+            }
+            BoxScoreStat::GameResult(s) => {
+                self.wl(s);
+            }
+            BoxScoreStat::Minutes(s) => {
+                self.min(s);
+            }
+            BoxScoreStat::FieldGoalMakes(s) => {
+                self.fgm(s);
+            }
+            BoxScoreStat::FieldGoalAttempts(s) => {
+                self.fga(s);
+            }
+            BoxScoreStat::ThreePointMakes(s) => {
+                self.fg3m(s);
+            }
+            BoxScoreStat::ThreePointAttempts(s) => {
+                self.fg3a(s);
+            }
+            BoxScoreStat::FreeThrowMakes(s) => {
+                self.ftm(s);
+            }
+            BoxScoreStat::FreeThrowAttempts(s) => {
+                self.fta(s);
+            }
+            BoxScoreStat::OffensiveRebounds(s) => {
+                self.oreb(s);
+            }
+            BoxScoreStat::DefensiveRebounds(s) => {
+                self.dreb(s);
+            }
+            BoxScoreStat::Rebounds(s) => {
+                self.reb(s);
+            }
+            BoxScoreStat::Assists(s) => {
+                self.ast(s);
+            }
+            BoxScoreStat::Steals(s) => {
+                self.stl(s);
+            }
+            BoxScoreStat::Blocks(s) => {
+                self.blk(s);
+            }
+            BoxScoreStat::Turnovers(s) => {
+                self.tov(s);
+            }
+            BoxScoreStat::PersonalFouls(s) => {
+                self.pf(s);
+            }
+            BoxScoreStat::Points(s) => {
+                self.pts(s);
+            }
+            BoxScoreStat::PlusMinus(s) => {
+                self.plus_minus(s);
+            }
+            BoxScoreStat::FantasyPoints(_) |
+            BoxScoreStat::PlayerId(_) |
+            BoxScoreStat::PlayerName(_) |
+            BoxScoreStat::Elo(_) => {
+                panic!("💀 cannot add a player only stat to a TeamBoxScore. ")
+            }
+
+        }
+    }
+}
+

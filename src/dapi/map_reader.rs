@@ -5,38 +5,22 @@ use crate::stats::types::BoolInt;
 use crate::types::*;
 use serde_json::{Number, Value};
 use std::collections::HashMap;
+use std::convert::Infallible;
 use std::str::FromStr;
 
 impl MapReader for HashMap<StatColumn, Value> {
     fn season_id(&self) -> Result<SeasonId, StatColumn> {
-        let value = match self.get(&SEASON_ID) {
-            Some(v) => v,
+        match self.get(&SEASON_ID) {
+            Some(v) => match SeasonId::try_from(v) {
+                Ok(season_id) => Ok(season_id),
+                Err(_) => Err(SEASON_ID),
+            },
             None => {
                 eprintln!("⚠️ failed to get a SeasonId from the stat map.");
 
-                return Err(SEASON_ID);
+                Err(SEASON_ID)
             }
-        };
-
-        let s = match value.as_str() {
-            Some(s) => s,
-            None => {
-                eprintln!("⚠️ SeasonId is not a JSON String.");
-
-                return Err(SEASON_ID);
-            }
-        };
-
-        let i = match s.parse::<i32>() {
-            Ok(x) => x,
-            Err(e) => {
-                eprintln!("⚠️ failed to parse an integer from the SeasonId field: {e}");
-
-                return Err(SEASON_ID);
-            }
-        };
-
-        Ok(SeasonId(i))
+        }
     }
     fn player_id(&self) -> Result<PlayerId, StatColumn> {
         let value = match self.get(&PLAYER_ID) {

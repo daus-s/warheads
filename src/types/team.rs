@@ -5,7 +5,7 @@ use std::str::FromStr;
 pub struct TeamId(pub u64);
 
 #[derive(Debug, PartialEq, Eq)]
-struct TeamIdError;
+pub struct TeamIdError;
 
 impl FromStr for TeamId {
     type Err = TeamIdError;
@@ -49,7 +49,7 @@ impl Serialize for TeamId {
 pub struct TeamAbbreviation(pub String);
 
 #[derive(Debug, PartialEq, Eq)]
-struct TeamAbbreviationError;
+pub struct TeamAbbreviationError;
 
 
 impl TeamAbbreviation {
@@ -61,6 +61,7 @@ impl TeamAbbreviation {
         self.0.to_ascii_lowercase()
     }
 }
+
 impl FromStr for TeamAbbreviation {
     type Err = TeamAbbreviationError;
 

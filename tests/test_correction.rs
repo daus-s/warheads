@@ -1,39 +1,38 @@
 use pretty_assertions::assert_eq;
-use serde_json::Value::Number;
-use serde_json::{json, Value};
+use serde_json::json;
 use std::collections::HashMap;
 use std::fs;
-use std::path::PathBuf;
+use std::str::FromStr;
 use warheads::corrections::correction::Correction;
 use warheads::corrections::correction_loader::load_corrections;
-use warheads::corrections::corrector::Corrector;
 use warheads::dapi::extract::json_to_hashmap;
-use warheads::format::language::{partition, Columnizable};
+use warheads::format::language::partition;
 use warheads::format::path_manager::nba_correction_dir;
 use warheads::stats::id::Identifiable;
 use warheads::stats::nba_kind::NBAStatKind;
 use warheads::stats::nba_kind::NBAStatKind::Player;
 use warheads::stats::se::SerdeEnum;
 use warheads::stats::season_type::SeasonPeriod;
-use warheads::stats::season_type::SeasonPeriod::RegularSeason;
+use warheads::stats::stat_column::StatColumn;
 use warheads::stats::stat_column::StatColumn::*;
-use warheads::stats::stat_column::{player_column_index, StatColumn};
 use warheads::stats::stat_value::StatValue;
-use warheads::stats::types::GameResult::{Loss, Win};
+use warheads::types::GameResult::{Loss, Win};
+use warheads::types::{GameId, PlayerId, SeasonId, TeamAbbreviation, TeamId};
 
 #[test]
 pub fn test_load_correction() {
-    let year = 1959;
-    let season = year + 20000;
+
+    let season_id = SeasonId(21959);
+
     let kind = Player;
-    let period = RegularSeason;
 
-    let mut expected_corrections = expected_corrections(season, kind, period);
 
-    let mut actual_corrections = load_corrections(year, kind, period).unwrap_or_else(|e| {
+    let mut expected_corrections = expected_corrections(season_id, kind);
+
+    let mut actual_corrections = load_corrections(season_id, kind).unwrap_or_else(|e| {
         panic!(
             "Failed to load corrections from: {}\n{e}",
-            nba_correction_dir(year, kind, period)
+            nba_correction_dir(season_id, kind)
         )
     });
 
@@ -43,16 +42,16 @@ pub fn test_load_correction() {
     assert_eq!(actual_corrections, expected_corrections);
 }
 
-fn expected_corrections(season: i32, kind: NBAStatKind, period: SeasonPeriod) -> Vec<Correction> {
+fn expected_corrections(season_id: SeasonId, kind: NBAStatKind) -> Vec<Correction> {
     vec![
         Correction {
-            game_id: "0025900249".to_string(),
-            season,
-            player_id: Some(76160),
-            team_id: 1610612744,
-            team_abbr: "PHW".to_string(),
+            game_id: GameId::from("0025900249"),
+            season: season_id,
+            player_id: Some(PlayerId(76160)),
+            team_id: TeamId(1610612744),
+            team_abbr: TeamAbbreviation::from_str("PHW").unwrap(),
             kind,
-            period,
+            period: season_id.period(),
             delete: false,
             corrections: {
                 let mut cs: HashMap<StatColumn, StatValue> = HashMap::new();
@@ -63,13 +62,13 @@ fn expected_corrections(season: i32, kind: NBAStatKind, period: SeasonPeriod) ->
             },
         },
         Correction {
-            game_id: "0025900179".to_string(),
-            season,
-            player_id: Some(77131),
-            team_id: 1610612744,
-            team_abbr: "PHW".to_string(),
+            game_id: GameId::from("0025900179"),
+            season: season_id,
+            player_id: Some(PlayerId(77131)),
+            team_id: TeamId::from(1610612744),
+            team_abbr: TeamAbbreviation::from_str("PHW").unwrap(),
             kind,
-            period,
+            period: season_id.period(),
             delete: false,
             corrections: {
                 let mut cs: HashMap<StatColumn, StatValue> = HashMap::new();
@@ -80,13 +79,13 @@ fn expected_corrections(season: i32, kind: NBAStatKind, period: SeasonPeriod) ->
             },
         },
         Correction {
-            game_id: "0025900010".to_string(),
-            season,
-            player_id: Some(76136),
-            team_id: 1610612744,
-            team_abbr: "PHW".to_string(),
+            game_id: GameId::from("0025900010"),
+            season: season_id,
+            player_id: Some(PlayerId(76136)),
+            team_id: TeamId::from(1610612744),
+            team_abbr: TeamAbbreviation::from_str("PHW").unwrap(),
             kind,
-            period,
+            period: season_id.period(),
             delete: false,
             corrections: {
                 let mut cs: HashMap<StatColumn, StatValue> = HashMap::new();
@@ -97,13 +96,13 @@ fn expected_corrections(season: i32, kind: NBAStatKind, period: SeasonPeriod) ->
             },
         },
         Correction {
-            game_id: "0025900033".to_string(),
-            season,
-            player_id: Some(78013),
-            team_id: 1610612758,
-            team_abbr: "CIN".to_string(),
+            game_id: GameId::from("0025900033"),
+            season: season_id,
+            player_id: Some(PlayerId(78013)),
+            team_id: TeamId::from(1610612758),
+            team_abbr: TeamAbbreviation::from_str("CIN").unwrap(),
             kind,
-            period,
+            period: season_id.period(),
             delete: false,
             corrections: {
                 let mut cs: HashMap<StatColumn, StatValue> = HashMap::new();
@@ -114,13 +113,13 @@ fn expected_corrections(season: i32, kind: NBAStatKind, period: SeasonPeriod) ->
             },
         },
         Correction {
-            game_id: "0025900033".to_string(),
-            season,
-            player_id: Some(78040),
-            team_id: 1610612744,
-            team_abbr: "PHW".to_string(),
+            game_id: GameId::from("0025900033"),
+            season: season_id,
+            player_id: Some(PlayerId(78040)),
+            team_id: TeamId::from(1610612744),
+            team_abbr: TeamAbbreviation::from_str("PHW").unwrap(),
             kind,
-            period,
+            period: season_id.period(),
             delete: false,
             corrections: {
                 let mut cs: HashMap<StatColumn, StatValue> = HashMap::new();
@@ -131,13 +130,13 @@ fn expected_corrections(season: i32, kind: NBAStatKind, period: SeasonPeriod) ->
             },
         },
         Correction {
-            game_id: "0025900079".to_string(),
-            season,
-            player_id: Some(78216),
-            team_id: 1610612747,
-            team_abbr: "MNL".to_string(),
+            game_id: GameId::from("0025900079"),
+            season: season_id,
+            player_id: Some(PlayerId(78216)),
+            team_id: TeamId::from(1610612747),
+            team_abbr: TeamAbbreviation::from_str("MNL").unwrap(),
             kind,
-            period,
+            period: season_id.period(),
             delete: false,
             corrections: {
                 let mut cs: HashMap<StatColumn, StatValue> = HashMap::new();
@@ -148,13 +147,13 @@ fn expected_corrections(season: i32, kind: NBAStatKind, period: SeasonPeriod) ->
             },
         },
         Correction {
-            game_id: "0025900080".to_string(),
-            season,
-            player_id: Some(78223),
-            team_id: 1610612744,
-            team_abbr: "PHW".to_string(),
+            game_id: GameId::from("0025900080"),
+            season: season_id,
+            player_id: Some(PlayerId(78223)),
+            team_id: TeamId::from(1610612744),
+            team_abbr: TeamAbbreviation::from_str("PHW").unwrap(),
             kind,
-            period,
+            period: season_id.period(),
             delete: false,
             corrections: {
                 let mut cs: HashMap<StatColumn, StatValue> = HashMap::new();
@@ -165,13 +164,13 @@ fn expected_corrections(season: i32, kind: NBAStatKind, period: SeasonPeriod) ->
             },
         },
         Correction {
-            game_id: "0025900207".to_string(),
-            season,
-            player_id: Some(76658),
-            team_id: 1610612747,
-            team_abbr: "MNL".to_string(),
+            game_id: GameId::from("0025900207"),
+            season: season_id,
+            player_id: Some(PlayerId(76658)),
+            team_id: TeamId::from(1610612747),
+            team_abbr: TeamAbbreviation::from_str("MNL").unwrap(),
             kind,
-            period,
+            period: season_id.period(),
             delete: false,
             corrections: {
                 let mut cs: HashMap<StatColumn, StatValue> = HashMap::new();
@@ -182,24 +181,24 @@ fn expected_corrections(season: i32, kind: NBAStatKind, period: SeasonPeriod) ->
             },
         },
         Correction {
-            game_id: "0025900253".to_string(),
-            season,
-            player_id: Some(76783),
-            team_id: 1610612755,
-            team_abbr: "SYR".to_string(),
+            game_id: GameId::from("0025900253"),
+            season: season_id,
+            player_id: Some(PlayerId(76783)),
+            team_id: TeamId::from(1610612755),
+            team_abbr: TeamAbbreviation::from_str("SYR").unwrap(),
             kind,
-            period,
+            period: season_id.period(),
             delete: true,
             corrections: Default::default(),
         },
         Correction {
-            game_id: "0025900257".to_string(),
-            season,
-            player_id: Some(76783),
-            team_id: 1610612752,
-            team_abbr: "NYK".to_string(),
+            game_id: GameId::from("0025900257"),
+            season: season_id,
+            player_id: Some(PlayerId(76783)),
+            team_id: TeamId::from(1610612752),
+            team_abbr: TeamAbbreviation::from_str("NYK").unwrap(),
             kind,
-            period,
+            period: season_id.period(),
             delete: false,
             corrections: {
                 let mut cs: HashMap<StatColumn, StatValue> = HashMap::new();
@@ -216,22 +215,22 @@ fn expected_corrections(season: i32, kind: NBAStatKind, period: SeasonPeriod) ->
 fn test_apply_corrections() {
     let corrections = vec![
         Correction {
-            game_id: "12345678".to_string(),
-            season: 24,
-            player_id: Some(69420),
-            team_id: 32768,
-            team_abbr: "BOM".to_string(),
+            game_id: GameId::from("12345678"),
+            season: SeasonId(20024),
+            player_id: Some(PlayerId(69420)),
+            team_id: TeamId(32768),
+            team_abbr: TeamAbbreviation::from_str("BOM").unwrap(),
             kind: Player,
             period: SeasonPeriod::RegularSeason,
             delete: false,
             corrections: HashMap::from([(FG3M, StatValue::from_value(json!(2)))]),
         },
         Correction {
-            game_id: "12345678".to_string(),
-            season: 24,
-            player_id: Some(14141),
-            team_id: 32768,
-            team_abbr: "BOM".to_string(),
+            game_id: GameId::from("12345678"),
+            season: SeasonId(20024),
+            player_id: Some(PlayerId(14141)),
+            team_id: TeamId(32768),
+            team_abbr: TeamAbbreviation::from_str("BOM").unwrap(),
             kind: Player,
             period: SeasonPeriod::RegularSeason,
             delete: false,
@@ -241,22 +240,22 @@ fn test_apply_corrections() {
             ]),
         },
         Correction {
-            game_id: "11235813".to_string(),
-            season: 24,
-            player_id: Some(69420),
-            team_id: 32768,
-            team_abbr: "BOM".to_string(),
+            game_id: GameId::from("11235813"),
+            season: SeasonId(20024),
+            player_id: Some(PlayerId(69420)),
+            team_id: TeamId(32768),
+            team_abbr: TeamAbbreviation::from_str("BOM").unwrap(),
             kind: Player,
             period: SeasonPeriod::RegularSeason,
             delete: false,
             corrections: HashMap::from([(FG_PCT, StatValue::from_value(json!(3f32 / 7f32)))]),
         },
         Correction {
-            game_id: "11235813".to_string(),
-            season: 24,
-            player_id: Some(66666),
-            team_id: 16384,
-            team_abbr: "TRA".to_string(),
+            game_id: GameId::from("11235813"),
+            season: SeasonId(20024),
+            player_id: Some(PlayerId(66666)),
+            team_id: TeamId(16384),
+            team_abbr: TeamAbbreviation::from_str("TRA").unwrap(),
             kind: Player,
             period: SeasonPeriod::RegularSeason,
             delete: true,

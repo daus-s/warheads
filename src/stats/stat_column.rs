@@ -78,7 +78,6 @@ impl StatColumn {
             PLUS_MINUS => "plus_minus",
             FANTASY_PTS => "fantasy_pts",
             VIDEO_AVAILABLE => "video_available",
-            ELO => "elo",
         }
     }
 }
@@ -120,7 +119,6 @@ impl From<String> for StatColumn {
             "PLUS_MINUS" => PLUS_MINUS,
             "FANTASY_PTS" => FANTASY_PTS,
             "VIDEO_AVAILABLE" => VIDEO_AVAILABLE,
-            "ELO" => ELO,
             s => panic!("💀 unrecognized stat column name: {s}"),
         }
     }
