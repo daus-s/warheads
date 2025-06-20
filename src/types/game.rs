@@ -1,5 +1,5 @@
 use crate::stats::se::SerdeEnum;
-use chrono::NaiveDate;
+use chrono::{Datelike, NaiveDate};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{json, Value};
 use std::fmt::{Display, Formatter};
@@ -7,7 +7,7 @@ use std::str::FromStr;
 
 /// `GameDate`is a `chrono::NaiveDate` wrapper that implements the necessary traits to work
 /// interchangeably in the code base.
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug)]
 pub struct GameDate(pub NaiveDate);
 
 impl Display for GameDate {
@@ -21,14 +21,17 @@ impl Serialize for GameDate {
     where
         S: Serializer,
     {
-        serializer.serialize_str(&self.0.to_string())
+
+        let format = format!("{}-{:02}-{:02}", self.0.year(), self.0.month(), self.0.day());
+
+        serializer.serialize_str(&format)
     }
 }
 
 
 /// `GameId` is a number represented by a JSON String. It will sometimes be parsed and interpreted
 /// as a numeric value.
-#[derive(Clone, Debug, Eq, Hash, PartialEq, Ord, Deserialize, PartialOrd)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
 pub struct GameId(pub String);
 
 impl Display for GameId {
@@ -49,19 +52,10 @@ impl From<&str> for GameId {
     }
 }
 
-impl Serialize for GameId {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_str(&self.0)
-    }
-}
-
 /// `GameResult` is an enum that represents the result of a game a Win, Loss or a Draw (NFL only.)
 /// implements SerdeEnum as well as functions for `to_str` and `from_str`
 ///
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone)]
 pub enum GameResult {
     Win,
     Loss,
@@ -102,7 +96,7 @@ impl SerdeEnum for GameResult {
 }
 
 impl Display for GameResult {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 
         let str = match self {
             GameResult::Win => "W",
@@ -114,3 +108,11 @@ impl Display for GameResult {
     }
 }
 
+impl Serialize for GameResult {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}

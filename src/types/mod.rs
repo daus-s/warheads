@@ -55,4 +55,4 @@ pub use plus_minus::PlusMinus;
 pub mod fantasy_points;
 pub use fantasy_points::FantasyPoints;
 
-pub mod stat;
+mod tests;

@@ -1,27 +1,15 @@
 use crate::stats::shooting::{Attempts, Makes};
 use crate::stats::statify::SafetyValve;
-use serde::{Deserialize, Serialize, Serializer};
+use serde::{Serialize, Serializer};
 use std::fmt::{Display, Formatter};
+use crate::types::FieldGoalPercentage;
 
-
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct ThreePointAttempts(pub Option<u8>);
 
 impl Display for ThreePointAttempts {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0.unwrap_fmt("null"))
-    }
-}
-
-impl Serialize for ThreePointAttempts {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        match self.0 {
-            Some(u) => serializer.serialize_u8(u),
-            None => serializer.serialize_none(),
-        }
     }
 }
 
@@ -31,7 +19,7 @@ impl Attempts for ThreePointAttempts {
     }
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct ThreePointMakes(pub Option<u8>);
 
 impl Display for ThreePointMakes {
@@ -46,26 +34,14 @@ impl Makes for ThreePointMakes {
     }
 }
 
-impl Serialize for ThreePointMakes {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        match self.0 {
-            Some(u) => serializer.serialize_u8(u),
-            None => serializer.serialize_none(),
-        }
-    }
-}
 
-
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug)]
 pub struct ThreePointPercentage(pub Option<f32>);
 
 impl Display for ThreePointPercentage {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self.0 {
-            Some(float) => write!(f, "{:.6}", float),
+            Some(float) => write!(f, "{float:.6}"),
             None => write!(f, "null")
         }
     }
@@ -74,10 +50,10 @@ impl Display for ThreePointPercentage {
 impl Serialize for ThreePointPercentage {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: Serializer,
+        S: Serializer
     {
         match self.0 {
-            Some(f) => serializer.serialize_f32(f),
+            Some(f) => serializer.serialize_f64(f as f64),
             None => serializer.serialize_none(),
         }
     }

@@ -2,7 +2,7 @@ use crate::stats::statify::SafetyValve;
 use serde::{Deserialize, Serialize, Serializer};
 use std::fmt::{Display, Formatter};
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct Blocks(pub Option<u8>);
 
 impl Display for Blocks {
@@ -10,16 +10,3 @@ impl Display for Blocks {
         write!(f, "{}", self.0.unwrap_fmt("null"))
     }
 }
-
-impl Serialize for Blocks {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        match self.0 {
-            Some(u) => serializer.serialize_u8(u),
-            None => serializer.serialize_none(),
-        }
-    }
-}
-

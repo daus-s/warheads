@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize, Serializer};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Deserialize)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
 pub struct TeamId(pub u64);
 
 #[derive(Debug, PartialEq, Eq)]
@@ -32,20 +32,12 @@ impl Display for TeamId {
     }
 }
 
-impl Serialize for TeamId {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_u64(self.0)
-    }
-}
 
 /// `TeamAbbreviation` is a String wrapper that enforces the 3-character Limit, as well as the
 /// existence & correctness of the abbreviation.
 ///
 
-#[derive(Clone, Debug, Eq, Hash, PartialEq, Deserialize)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
 pub struct TeamAbbreviation(pub String);
 
 #[derive(Debug, PartialEq, Eq)]
@@ -86,33 +78,15 @@ impl Display for TeamAbbreviation {
     }
 }
 
-impl Serialize for TeamAbbreviation {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_str(&self.0)
-    }
-}
-
 
 /// `TeamName` is a validated (todo) String wrapper to represent Team Names and provide the same
 ///  existence checks as the other types in this module
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct TeamName(pub String);
 
 impl Display for TeamName {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
-    }
-}
-
-impl Serialize for TeamName {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_str(&self.0)
     }
 }

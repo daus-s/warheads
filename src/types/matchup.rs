@@ -1,7 +1,7 @@
 use crate::stats::visiting::Visiting;
 use crate::stats::visiting::Visiting::{Away, Home};
 use crate::types::TeamAbbreviation;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserializer, Serialize, Serializer};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
@@ -19,13 +19,13 @@ impl MatchupString {
     // todo: implement the functions from player and team box score for matchup string (from s3)
 
     pub fn from_matchup(
-        home: &TeamAbbreviation,
-        away: &TeamAbbreviation,
+        home: TeamAbbreviation,
+        away: TeamAbbreviation,
         visiting: Visiting,
     ) -> Self {
         MatchupString {
-            home: home.clone(),
-            away: away.clone(),
+            home,
+            away,
             visiting
         }
     }
@@ -81,20 +81,7 @@ impl Serialize for MatchupString {
     where
         S: Serializer,
     {
-        let s = format!("{}", self);
-
-        serializer.serialize_str(&*s)
-    }
-}
-
-impl<'de> Deserialize<'de> for MatchupString {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-
-        s.parse::<MatchupString>().map_err(serde::de::Error::custom)
+        serializer.serialize_str(&self.to_string())
     }
 }
 

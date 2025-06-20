@@ -108,8 +108,6 @@ impl Serialize for SeasonId {
     where
         S: Serializer,
     {
-        let int_string = format!("{}", self);
-
-        serializer.serialize_str(&int_string)
+       serializer.serialize_str(&format!("{}", self.0))
     }
 }

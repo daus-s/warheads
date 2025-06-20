@@ -1,7 +1,7 @@
 use crate::corrections::correction::Correction;
 use crate::stats::game_metadata::GameMetaData;
 use crate::stats::nba_kind::NBAStatKind;
-use crate::stats::percent::Percent;
+use crate::stats::percent::PercentGeneric;
 use crate::stats::season_type::SeasonPeriod;
 use crate::stats::stat_column::StatColumn;
 use crate::stats::stat_value::StatValue;
@@ -143,7 +143,7 @@ impl CorrectionBuilder {
 
                     //advanced statistics
                     StatColumn::FG_PCT | StatColumn::FG3_PCT | StatColumn::FT_PCT => {
-                        prompt_and_validate::<Percent>(
+                        prompt_and_validate::<PercentGeneric>(
                             format!("Enter {} (as a percentage, e.g., 45.6 for 45.6%)", col)
                                 .as_str(),
                         )

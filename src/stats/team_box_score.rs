@@ -3,15 +3,15 @@ use crate::stats::box_score::BoxScore;
 use crate::stats::percent::percent_string;
 use crate::stats::player_box_score::PlayerBoxScore;
 use crate::stats::shooting::{Attempts, Makes};
-use crate::types::*;
-use derive_builder::Builder;
-use serde::{Deserialize, Serialize};
-use std::fmt::Formatter;
 use crate::stats::stat_column::StatColumn;
 use crate::stats::stat_value::StatValue;
 use crate::stats::visiting::Visiting;
+use crate::types::*;
+use derive_builder::Builder;
+use serde::Serialize;
+use std::fmt::Formatter;
 
-#[derive(Builder, Clone, Debug, Serialize, Deserialize)]
+#[derive(Builder, Clone, Debug, Serialize)]
 pub struct TeamBoxScore {
     // team identification
     team_abbreviation: TeamAbbreviation,
