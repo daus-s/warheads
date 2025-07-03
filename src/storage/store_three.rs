@@ -1,6 +1,6 @@
+use crate::stats::box_score::BoxScore;
 use crate::stats::team_box_score::TeamBoxScore;
 use crate::stats::visiting::Visiting;
-use crate::stats::box_score::BoxScore;
 
 use aws_sdk_s3 as s3;
 use aws_sdk_s3::primitives::ByteStream;

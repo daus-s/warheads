@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize, Serializer};
 use std::fmt::{Display, Formatter};
 
-
 /// `PlayerName` is a  StringWrapper for player names. Included only as a String Wrapper,
 /// no added functionality is provided.
 #[derive(Clone, Debug, Serialize)]
@@ -12,7 +11,6 @@ impl Display for PlayerName {
         write!(f, "{}", self.0)
     }
 }
-
 
 /// `PlayerId` is represented by an unsigned integer in the NBA dataset. It is represented as a
 /// *required* field in all PlayerBoxScores.

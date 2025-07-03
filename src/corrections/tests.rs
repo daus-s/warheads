@@ -2,12 +2,12 @@
 mod tests {
     use crate::corrections::correction::Correction;
     use crate::stats::nba_kind::NBAStatKind;
-    use crate::stats::season_type::SeasonPeriod;
+    use crate::stats::season_period::SeasonPeriod;
     use crate::stats::stat_column::StatColumn;
     use crate::stats::stat_value::StatValue;
+    use crate::types::{GameId, PlayerId, SeasonId, TeamAbbreviation, TeamId};
     use serde_json::json;
     use std::collections::HashMap;
-    use crate::types::{GameId, PlayerId, SeasonId, TeamAbbreviation, TeamId};
 
     #[test]
     fn test_correct_wl() {
@@ -400,7 +400,7 @@ mod tests {
     fn sample_correction() -> Correction {
         Correction {
             game_id: GameId("123".to_string()),
-            season: SeasonId(20024),
+            season: SeasonId::from(20024),
             player_id: Some(PlayerId(23)),
             team_id: TeamId(151),
             team_abbr: TeamAbbreviation("LOL".to_string()),

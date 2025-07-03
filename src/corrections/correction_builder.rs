@@ -1,13 +1,16 @@
 use crate::corrections::correction::Correction;
 use crate::stats::game_metadata::GameMetaData;
+use crate::stats::id::Identifiable;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::percent::PercentGeneric;
-use crate::stats::season_type::SeasonPeriod;
+use crate::stats::season_period::SeasonPeriod;
 use crate::stats::stat_column::StatColumn;
 use crate::stats::stat_value::StatValue;
 use crate::stats::types::BoolInt;
 use crate::tui::prompter::{prompt_and_delete, prompt_and_select, prompt_and_validate};
-use crate::types::{GameId, GameResult, MatchupString, PlayerId, SeasonId, TeamAbbreviation, TeamId};
+use crate::types::{
+    GameId, GameResult, MatchupString, PlayerId, SeasonId, TeamAbbreviation, TeamId,
+};
 use chrono::NaiveDate;
 use serde_json::Value;
 use serde_json::Value::Null;
@@ -40,7 +43,7 @@ impl CorrectionBuilder {
                 delete: false,
                 corrections: HashMap::new(),
             },
-            meta: None
+            meta: None,
         }
     }
 
@@ -168,7 +171,24 @@ impl CorrectionBuilder {
                 println!("{}: {}", col, value); // New value
             }
         }
-        corrections.clone()
+        let correction = corrections.clone();
+
+        match correction.save() {
+            Ok(_) => {
+                println!(
+                    "✅ successfully saved corrections for {}",
+                    self.correction.identity()
+                );
+            }
+            Err(e) => {
+                eprintln!(
+                    "❌ failed to save corrections for {}: {e}",
+                    self.correction.identity()
+                );
+            }
+        };
+
+        correction
     }
 
     pub fn correcting(&self) -> bool {

@@ -15,11 +15,11 @@ impl Display for FantasyPoints {
 impl Serialize for FantasyPoints {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: Serializer
+        S: Serializer,
     {
         match self.0 {
             Some(f) => serializer.serialize_f64(f as f64),
-            None => serializer.serialize_none()
+            None => serializer.serialize_none(),
         }
     }
 }

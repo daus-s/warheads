@@ -1,25 +1,22 @@
 use crate::stats::shooting::{Attempts, Makes};
+use crate::stats::statify::SafetyValve;
 use serde::{Serialize, Serializer};
-use std::fmt::{format, Display};
-use serde_json::ser::Formatter;
-use crate::stats::percent::PercentageFormatter;
-use crate::types::{FreeThrowPercentage, ThreePointPercentage};
+use std::fmt::Display;
 
 #[derive(Clone, Debug, Serialize)]
-pub struct FieldGoalAttempts(pub u8);
+pub struct FieldGoalAttempts(pub Option<u8>);
 
 impl Attempts for FieldGoalAttempts {
-    fn attempts(&self) -> u8 {
+    fn attempts(&self) -> Option<u8> {
         self.0
     }
 }
 
 impl Display for FieldGoalAttempts {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{}", self.0.unwrap_fmt(" - "))
     }
 }
-
 
 #[derive(Clone, Debug, Serialize)]
 pub struct FieldGoalMakes(pub u8);
@@ -36,7 +33,6 @@ impl Display for FieldGoalMakes {
     }
 }
 
-
 /// `FieldGoalPercentage` is a wrapper of the `Option<f32>` struct. This allows for null values to
 /// represent making 0/0 field goals. field goals have always been recorded so the
 /// previous 2 fields are non-optional.s
@@ -47,7 +43,7 @@ impl Display for FieldGoalPercentage {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.0 {
             Some(float) => write!(f, "{:.5}", float),
-            None => write!(f, "null")
+            None => write!(f, "null"),
         }
     }
 }
@@ -55,7 +51,7 @@ impl Display for FieldGoalPercentage {
 impl Serialize for FieldGoalPercentage {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: Serializer
+        S: Serializer,
     {
         match self.0 {
             Some(f) => serializer.serialize_f64(f as f64),

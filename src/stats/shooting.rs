@@ -3,5 +3,5 @@ pub trait Makes {
 }
 
 pub trait Attempts {
-    fn attempts(&self) -> u8;
+    fn attempts(&self) -> Option<u8>;
 }

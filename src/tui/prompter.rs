@@ -69,7 +69,6 @@ where
 }
 
 pub fn prompt_and_delete(comparator: &str) -> bool {
-
     let should_delete = Select::with_theme(&ColorfulTheme::default())
         .with_prompt("Should this entry be deleted? (uncommon)")
         .items(&["No", "Yes"])

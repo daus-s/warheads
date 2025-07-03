@@ -21,13 +21,16 @@ impl Serialize for GameDate {
     where
         S: Serializer,
     {
-
-        let format = format!("{}-{:02}-{:02}", self.0.year(), self.0.month(), self.0.day());
+        let format = format!(
+            "{}-{:02}-{:02}",
+            self.0.year(),
+            self.0.month(),
+            self.0.day()
+        );
 
         serializer.serialize_str(&format)
     }
 }
-
 
 /// `GameId` is a number represented by a JSON String. It will sometimes be parsed and interpreted
 /// as a numeric value.
@@ -70,7 +73,9 @@ impl FromStr for GameResult {
             "W" | "w" => Ok(GameResult::Win),
             "L" | "l" => Ok(GameResult::Loss),
             "D" | "d" | "T" | "t" => Ok(GameResult::Draw),
-            _ => Err(format!("❌ could not parse a game result from the string: {s}")),
+            _ => Err(format!(
+                "❌ could not parse a game result from the string: {s}"
+            )),
         }
     }
 }
@@ -97,7 +102,6 @@ impl SerdeEnum for GameResult {
 
 impl Display for GameResult {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-
         let str = match self {
             GameResult::Win => "W",
             GameResult::Loss => "L",
@@ -111,7 +115,7 @@ impl Display for GameResult {
 impl Serialize for GameResult {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: Serializer
+        S: Serializer,
     {
         serializer.serialize_str(&self.to_string())
     }

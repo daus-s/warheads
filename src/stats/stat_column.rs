@@ -130,7 +130,6 @@ impl Display for StatColumn {
     }
 }
 
-
 //excluded stat columns: ELO, not in the original data set
 const PLAYER_COLUMNS: [StatColumn; 32] = [
     SEASON_ID,
@@ -169,6 +168,42 @@ const PLAYER_COLUMNS: [StatColumn; 32] = [
 
 pub fn player_column_index(stat: &StatColumn) -> Option<usize> {
     PLAYER_COLUMNS.iter().position(|x| x == stat)
+}
+
+const TEAM_COLUMNS: [StatColumn; 29] = [
+    SEASON_ID,
+    TEAM_ID,
+    TEAM_ABBREVIATION,
+    TEAM_NAME,
+    GAME_ID,
+    GAME_DATE,
+    MATCHUP,
+    WL,
+    MIN,
+    FGM,
+    FGA,
+    FG_PCT,
+    FG3M,
+    FG3A,
+    FG3_PCT,
+    FTM,
+    FTA,
+    FT_PCT,
+    OREB,
+    DREB,
+    REB,
+    AST,
+    STL,
+    BLK,
+    TOV,
+    PF,
+    PTS,
+    PLUS_MINUS,
+    VIDEO_AVAILABLE,
+];
+
+pub fn team_column_index(stat: &StatColumn) -> Option<usize> {
+    TEAM_COLUMNS.iter().position(|x| x == stat)
 }
 
 impl PartialOrd<Self> for StatColumn {

@@ -6,6 +6,6 @@ pub fn data() -> String {
 
     match dotenv::var("DATA") {
         Ok(s) => s,
-        Err(_) => panic!("💀 could not read DATA from environment. (.env)")
+        Err(_) => panic!("💀 could not read DATA from environment. (.env)"),
     }
 }

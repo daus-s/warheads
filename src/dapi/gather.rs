@@ -3,7 +3,7 @@ use crate::format::season::season_fmt;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::nba_stat::NBAStat::{Player, Team};
 use crate::stats::player_box_score::PlayerBoxScore;
-use crate::stats::season_type::minimum_spanning_era;
+use crate::stats::season_period::minimum_spanning_era;
 use crate::stats::team_box_score::TeamBoxScore;
 use crate::types::SeasonId;
 use reqwest;
@@ -28,10 +28,7 @@ pub fn read_nba_file(file_path: PathBuf) -> String {
     contents
 }
 
-pub async fn ask_nba(
-    season: SeasonId,
-    stat_kind: NBAStatKind,
-) -> Result<String, Box<dyn Error>> {
+pub async fn ask_nba(season: SeasonId, stat_kind: NBAStatKind) -> Result<String, Box<dyn Error>> {
     let client = Client::new();
 
     let mut headers = HeaderMap::new();
@@ -81,7 +78,7 @@ pub async fn ask_nba(
         HeaderValue::from_str("macOS").unwrap(),
     );
 
-    let season_param = season_fmt(season);
+    let season_param = season_fmt(season.year());
 
     let period = season.period();
 

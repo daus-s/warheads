@@ -32,7 +32,6 @@ impl Display for TeamId {
     }
 }
 
-
 /// `TeamAbbreviation` is a String wrapper that enforces the 3-character Limit, as well as the
 /// existence & correctness of the abbreviation.
 ///
@@ -43,9 +42,7 @@ pub struct TeamAbbreviation(pub String);
 #[derive(Debug, PartialEq, Eq)]
 pub struct TeamAbbreviationError;
 
-
 impl TeamAbbreviation {
-
     pub fn emphasize(&self) -> String {
         self.0.to_ascii_uppercase()
     }
@@ -77,7 +74,6 @@ impl Display for TeamAbbreviation {
         write!(f, "{}", self.0)
     }
 }
-
 
 /// `TeamName` is a validated (todo) String wrapper to represent Team Names and provide the same
 ///  existence checks as the other types in this module

@@ -74,7 +74,7 @@ impl TeamBoxScore {
     }
 
     pub fn season_str(&self) -> String {
-        season_fmt(self.season_id)
+        season_fmt(self.season_id.year())
     }
 
     pub fn elo(&self) -> i32 {
@@ -128,9 +128,9 @@ impl std::fmt::Display for TeamBoxScore {
                    Err(e) => e,
                },
                self.pts,
-               self.fgm, self.fga, percent_string(self.fgm.makes() as i32, self.fga.attempts() as i32),
-               self.fg3m, self.fg3a, percent_string(self.fg3m.makes() as i32, self.fg3a.attempts() as i32),
-               self.ftm, self.fta, percent_string(self.ftm.makes() as i32, self.fta.attempts() as i32),
+               self.fgm, self.fga, percent_string(self.fgm.makes() as i32, (self.fga.attempts().unwrap_or_else(|| 0)) as i32),
+               self.fg3m, self.fg3a, percent_string(self.fg3m.makes() as i32, (self.fg3a.attempts().unwrap_or_else(|| 0)) as i32),
+               self.ftm, self.fta, percent_string(self.ftm.makes() as i32, (self.fta.attempts().unwrap_or_else(|| 0)) as i32),
                self.reb, self.oreb, self.dreb,
                self.blk, self.stl,
                self.pf, self.tov

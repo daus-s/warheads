@@ -10,7 +10,7 @@ use std::str::FromStr;
 /// when loaded from String (or str)
 #[derive(Clone, Debug)]
 pub struct MatchupString {
-    home:  TeamAbbreviation,
+    home: TeamAbbreviation,
     away: TeamAbbreviation,
     visiting: Visiting,
 }
@@ -26,7 +26,7 @@ impl MatchupString {
         MatchupString {
             home,
             away,
-            visiting
+            visiting,
         }
     }
 
@@ -62,7 +62,9 @@ impl MatchupString {
         } else if *team == self.away {
             Ok(self.home.clone())
         } else {
-            Err(format!("❌ team {team} is neither of the contestants: {self}. "))
+            Err(format!(
+                "❌ team {team} is neither of the contestants: {self}. "
+            ))
         }
     }
 }

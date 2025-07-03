@@ -5,7 +5,6 @@ use std::fmt::{Display, Formatter};
 pub struct Elo(pub i32); // should this be signed or unsigned?
 
 impl Elo {
-
     /// this function defines the original value of any players ELO for the procession.
     pub fn init() -> Self {
         Elo(3000)

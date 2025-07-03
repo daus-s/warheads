@@ -178,14 +178,12 @@ impl BoxScoreBuilder for TeamBoxScoreBuilder {
             BoxScoreStat::PlusMinus(s) => {
                 self.plus_minus(s);
             }
-            BoxScoreStat::FantasyPoints(_) |
-            BoxScoreStat::PlayerId(_) |
-            BoxScoreStat::PlayerName(_) |
-            BoxScoreStat::Elo(_) => {
+            BoxScoreStat::FantasyPoints(_)
+            | BoxScoreStat::PlayerId(_)
+            | BoxScoreStat::PlayerName(_)
+            | BoxScoreStat::Elo(_) => {
                 panic!("💀 cannot add a player only stat to a TeamBoxScore. ")
             }
-
         }
     }
 }
-

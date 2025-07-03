@@ -1,18 +1,20 @@
 use crate::format::language::Columnizable;
-use crate::format::path_manager::{nba_correction_dir, nba_correction_file};
+use crate::format::path_manager::{
+    nba_correction_dir, nba_player_correction_file, nba_team_correction_file,
+};
 
 use serde::{Deserialize, Serialize};
 
 use crate::stats::nba_kind::NBAStatKind;
-use crate::stats::season_type::SeasonPeriod;
-use crate::stats::stat_column::{player_column_index, StatColumn};
+use crate::stats::season_period::SeasonPeriod;
+use crate::stats::stat_column::{player_column_index, team_column_index, StatColumn};
 use crate::stats::stat_value::StatValue;
 
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 
 use crate::stats::box_score::BoxScore;
-use crate::stats::nba_kind::NBAStatKind::{Player, Team};
+use crate::stats::nba_kind::NBAStatKind::{LineUp, Player, Team};
 use crate::stats::statify::StatPair;
 use crate::types::{GameId, PlayerId, SeasonId, TeamAbbreviation, TeamId};
 use std::path::Path;
@@ -40,7 +42,6 @@ pub struct Correction {
 }
 
 impl Correction {
-
     pub fn load(filename: &str) -> Result<Correction, String> {
         let path = Path::new(filename);
 
@@ -52,7 +53,37 @@ impl Correction {
         let correction: Correction = serde_json::from_str(&content)
             .map_err(|e| format!("Failed to deserialize file {}: {}", filename, e))?;
 
+        //todo: assert eq the path info and the file content
+
         Ok(correction)
+    }
+
+    /// Saves the correction to the file:
+    /// `corrections/{season_file}/{NBAStatType}/{}.json`
+    ///
+    /// This is a private function and is called when `fn create ->` is completed.
+    ///
+    pub fn save(&self) -> io::Result<()> {
+        let path = nba_correction_dir(self.season, self.kind);
+
+        fs::create_dir_all(&path)?;
+
+        let json = serde_json::to_string_pretty(self)?;
+
+        let filepath = match self.kind {
+            Team => nba_team_correction_file(self.season, self.game_id.clone(), self.team_id),
+            Player => nba_player_correction_file(
+                self.season,
+                self.game_id.clone(),
+                self.player_id.unwrap().clone(),
+            ),
+            LineUp => unimplemented!("lineup stats not yet implemented"),
+        };
+
+        // Write the JSON string to the file
+        fs::write(filepath, json)?;
+
+        Ok(())
     }
 
     ///
@@ -75,10 +106,10 @@ impl Correction {
                 }
             }
 
-            Some(format!(
-                "[\n          {}\n        ]",
-                cs.join(",\n          ")
-            ))
+            // this is formatted like the original nba data.
+            // our data will be nice and pretty.
+
+            Some(format!("[{}]", cs.join(",")))
         }
 
         match (columns.as_slice(), self.kind) {
@@ -90,12 +121,7 @@ impl Correction {
             (
                 [_season_id, _team_id, _team_abbreviation, _team_name, _game_id, _game_date, _matchup, _wl, _min, _fgm, _fga, _fg_pct, _fg3m, _fg3a, _fg3_pct, _ftm, _fta, _ft_pct, _oreb, _dreb, _reb, _ast, _stl, _blk, _tov, _pf, _pts, _plus_minus, _video_available],
                 Team,
-            ) => apply_corrections(
-                &mut columns,
-                &self.corrections,
-                todo!("create team_column_index"),
-            )
-            .unwrap(), // todo:  create team_column_index
+            ) => apply_corrections(&mut columns, &self.corrections, team_column_index).unwrap(),
             _ => {
                 eprintln!("columns string was not formatted correctly");
 
@@ -110,31 +136,6 @@ impl Correction {
         }
     }
 
-    /// Saves the correction to the file:
-    /// `corrections/{season_file}/{NBAStatType}/{}.json`
-    ///
-    /// This is a private function and is called when `fn create ->` is completed.
-    ///
-    pub fn save(&self) -> io::Result<()> {
-        let path = nba_correction_dir(self.season, self.kind);
-
-        let file = nba_correction_file(
-            self.season,
-            self.kind,
-            self.game_id.clone(),
-            self.player_id.unwrap().clone(),
-        );
-
-        fs::create_dir_all(&path)?;
-
-        let json = serde_json::to_string_pretty(self)?;
-
-        // Write the JSON string to the file
-        fs::write(format!("{}{}", path, file), json)?;
-
-        Ok(())
-    }
-
     pub fn len(&self) -> usize {
         self.corrections.len()
     }
@@ -146,7 +147,6 @@ impl Correction {
     pub fn set_delete(&mut self, delete: bool) {
         self.delete = delete
     }
-
 }
 
 impl Debug for Correction {
@@ -159,12 +159,12 @@ impl Debug for Correction {
             self.team_abbr,
             match self.player_id {
                 Some(pid) => pid.to_string(),
-                None => self.team_id.to_string()
+                None => self.team_id.to_string(),
             },
             match self.kind {
                 Team => "team",
                 Player => "player",
-                NBAStatKind::LineUp => "lineup",
+                LineUp => "lineup",
             },
             match self.delete {
                 true => "del".to_string(),

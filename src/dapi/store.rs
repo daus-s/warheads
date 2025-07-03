@@ -22,6 +22,11 @@ async fn sub_save(games: Vec<TeamBoxScore>) {
             .progress_chars("#>-"),
     );
 
+    pb.set_message(format!(
+        "saving box scores for the {} season. ",
+        games.get(0).unwrap().season_str()
+    ));
+
     for game in &games {
         crate::storage::store_three::save_nba_game(client.clone(), game.clone())
             .await

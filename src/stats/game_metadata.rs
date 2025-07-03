@@ -14,7 +14,6 @@ pub struct GameMetaData {
     /// The optionality represents whether the statistics contained in this set are a
     /// team or player box score with `None` representing TeamBoxScores
     /// and `Some(player_name)` representing PlayerBoxScores.
-
     player_name: Option<PlayerName>,
 
     /// team abbreviation is the unique identifier for a team
@@ -62,7 +61,13 @@ impl Display for GameMetaData {
                 self.team_name.to_string(),
                 s.to_string()
             ),
-            None => write!(f, "{} - {}\n{}", matchup, self.date, self.team_name.to_string()),
+            None => write!(
+                f,
+                "{} - {}\n{}",
+                matchup,
+                self.date,
+                self.team_name.to_string()
+            ),
         }
     }
 }

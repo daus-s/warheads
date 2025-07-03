@@ -21,7 +21,7 @@ pub fn write_to_data_file(domain: Domain, corrected_data: Vec<String>) -> Result
         Ok(_) => {
             println!(
                 "successfully applied corrections for {} season the in the file {:?}",
-                season_fmt(season),
+                season_fmt(season.year()),
                 data_path
             );
             Ok(())

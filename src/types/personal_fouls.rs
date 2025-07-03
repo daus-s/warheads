@@ -1,7 +1,6 @@
 use serde::{Serialize, Serializer};
 use std::fmt::{Display, Formatter};
 
-
 #[derive(Clone, Debug, Serialize)]
 pub struct PersonalFouls(pub u8);
 

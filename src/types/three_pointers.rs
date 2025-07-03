@@ -1,8 +1,8 @@
 use crate::stats::shooting::{Attempts, Makes};
 use crate::stats::statify::SafetyValve;
+use crate::types::FieldGoalPercentage;
 use serde::{Serialize, Serializer};
 use std::fmt::{Display, Formatter};
-use crate::types::FieldGoalPercentage;
 
 #[derive(Clone, Debug, Serialize)]
 pub struct ThreePointAttempts(pub Option<u8>);
@@ -14,8 +14,8 @@ impl Display for ThreePointAttempts {
 }
 
 impl Attempts for ThreePointAttempts {
-    fn attempts(&self) -> u8 {
-        self.0.unwrap_or_default()
+    fn attempts(&self) -> Option<u8> {
+        self.0
     }
 }
 
@@ -34,7 +34,6 @@ impl Makes for ThreePointMakes {
     }
 }
 
-
 #[derive(Clone, Debug)]
 pub struct ThreePointPercentage(pub Option<f32>);
 
@@ -42,7 +41,7 @@ impl Display for ThreePointPercentage {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self.0 {
             Some(float) => write!(f, "{float:.6}"),
-            None => write!(f, "null")
+            None => write!(f, "null"),
         }
     }
 }
@@ -50,7 +49,7 @@ impl Display for ThreePointPercentage {
 impl Serialize for ThreePointPercentage {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: Serializer
+        S: Serializer,
     {
         match self.0 {
             Some(f) => serializer.serialize_f64(f as f64),

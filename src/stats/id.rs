@@ -3,10 +3,10 @@ use crate::stats::box_score::BoxScore;
 use crate::types::{GameId, PlayerId, SeasonId, TeamAbbreviation, TeamId};
 use serde_json::Value;
 use serde_json::Value::Number;
-use std::fmt::{Debug, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 
-/// all identifiable structs can generate a identity struct by calling the identty method on the
-/// struct. this implementation is generic while the struct below is aspecific to the
+/// all identifiable structs can generate a identity struct by calling the identity method on the
+/// struct. this implementation is generic while the struct below is a specific to the
 pub trait Identifiable {
     fn identity(&self) -> Identity;
 }
@@ -67,6 +67,23 @@ impl Debug for Identity {
     }
 }
 
+impl Display for Identity {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self.player_id {
+            Some(id) => write!(
+                f,
+                "player_id: {}\nteam: {}\nyear: {}\ngame: {}",
+                id, self.team_abbr, self.season_id, self.game_id
+            ),
+            None => write!(
+                f,
+                "team: {}\nyear: {}\ngame: {}",
+                self.team_abbr, self.season_id, self.game_id
+            ),
+        }
+    }
+}
+
 ///
 ///     player_game schema:
 ///         ["SEASON_ID","PLAYER_ID","PLAYER_NAME","TEAM_ID","TEAM_ABBREVIATION","TEAM_NAME",
@@ -86,23 +103,22 @@ impl Identifiable for String {
         match columns.as_slice() {
             [season_id, player_id, _player_name, team_id, team_abbr, _team_name, game_id, _game_date, _matchup, _wl, _min, _fgm, _fga, _fg_pct, _fg3m, _fg3a, _fg3_pct, _ftm, _fta, _ft_pct, _oreb, _dreb, _reb, _ast, _stl, _blk, _tov, _pf, _pts, _plus_minus, _fantasy_pts, _video_available] =>
             {
-                let szn = season_id.replace('"', "").parse::<i32>().expect("failed to parse season id as an i32 (pre-conversion) while identifying a player game. player");
+                let szn = season_id.replace('"', "").parse::<i32>().expect("💀 failed to parse season id as an i32 (pre-conversion) while identifying a player game. player");
 
                 let pid = player_id.replace('\"', "").parse::<u64>().expect(
-                    "failed to parse player id as an u64 while identifying a player game. ",
+                    "💀 failed to parse player id as an u64 while identifying a player game. ",
                 );
 
-                let tid = team_id
-                    .replace('\"', "")
-                    .parse::<u64>()
-                    .expect("failed to parse team id as an u64 while identifying a player game. ");
+                let tid = team_id.replace('\"', "").parse::<u64>().expect(
+                    "💀 failed to parse team id as an u64 while identifying a player game. ",
+                );
 
                 let gid = game_id.replace('\"', "");
 
                 let tab = team_abbr.replace('\"', "");
 
                 Identity {
-                    season_id: SeasonId(szn),
+                    season_id: SeasonId::from(szn),
                     player_id: Some(PlayerId(pid)),
                     team_id: TeamId(tid),
                     team_abbr: TeamAbbreviation(tab),
@@ -111,19 +127,19 @@ impl Identifiable for String {
             }
             [season_id, team_id, team_abbr, _team_name, game_id, _game_date, _matchup, _wl, _min, _fgm, _fga, _fg_pct, _fg3m, _fg3a, _fg3_pct, _ftm, _fta, _ft_pct, _oreb, _dreb, _reb, _ast, _stl, _blk, _tov, _pf, _pts, _plus_minus, _video_available] =>
             {
-                let szn = season_id.replace('\"', "").parse::<i32>().expect("failed to parse season id as an u64 (pre-conversion) while identifying a team game. ");
+                let szn = season_id.replace('\"', "").parse::<i32>().expect("💀 failed to parse season id as an u64 (pre-conversion) while identifying a team game. ");
 
                 let tid = team_id
                     .replace('\"', "")
                     .parse::<u64>()
-                    .expect("failed to parse team id as an u64 while identifying a team game. ");
+                    .expect("💀 failed to parse team id as an u64 while identifying a team game. ");
 
                 let gid = game_id.replace('\"', "");
 
                 let tab = team_abbr.replace('\"', "");
 
                 Identity {
-                    season_id: SeasonId(szn),
+                    season_id: SeasonId::from(szn),
                     player_id: None,
                     team_id: TeamId(tid),
                     team_abbr: TeamAbbreviation(tab),
@@ -155,31 +171,31 @@ impl Identifiable for Value {
             //player game case
             [Value::String(szn), Number(player_id), _, Number(team_id), Value::String(team_abbr), _, Value::String(game_id), _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _] => {
                 Identity {
-                    season_id: SeasonId(
+                    season_id: SeasonId::from(
                         szn.parse::<i32>()
-                            .expect("expect szn column to be an i64 (i32)"),
+                            .expect("💀 expect szn column to be an i64 (i32)"),
                     ),
                     player_id: Some(PlayerId(
-                        player_id.as_u64().expect("expect player id to be a u64"),
+                        player_id.as_u64().expect("💀 expect player id to be a u64"),
                     )),
-                    team_id: TeamId(team_id.as_u64().expect("expect team id to be a u64")),
+                    team_id: TeamId(team_id.as_u64().expect("💀 expect team id to be a u64")),
                     team_abbr: TeamAbbreviation(team_abbr.to_string()),
                     game_id: GameId(game_id.to_string()),
                 }
             }
             [Value::String(szn), Number(team_id), Value::String(team_abbr), _, Value::String(game_id), _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _] => {
                 Identity {
-                    season_id: SeasonId(
+                    season_id: SeasonId::from(
                         szn.parse::<i32>()
-                            .expect("expect szn column to be an i64 (i32)"),
+                            .expect("💀 expect szn column to be an i64 (i32)"),
                     ),
                     player_id: None,
-                    team_id: TeamId(team_id.as_u64().expect("expect team id to be a u64")),
+                    team_id: TeamId(team_id.as_u64().expect("💀 expect team id to be a u64")),
                     team_abbr: TeamAbbreviation(team_abbr.to_string()),
                     game_id: GameId(game_id.to_string()),
                 }
             }
-            _ => panic!("row length is unrecognized. not a player or team stat"),
+            _ => panic!("💀 row length is unrecognized. not a player or team stat"),
         }
     }
 }

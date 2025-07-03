@@ -1,19 +1,19 @@
 use crate::stats::shooting::{Attempts, Makes};
+use crate::stats::statify::SafetyValve;
 use serde::{Serialize, Serializer};
 use std::fmt::{Display, Formatter};
-use crate::types::{FieldGoalPercentage, ThreePointPercentage};
 
 #[derive(Clone, Debug, Serialize)]
-pub struct FreeThrowAttempts(pub u8);
+pub struct FreeThrowAttempts(pub Option<u8>);
 
 impl Display for FreeThrowAttempts {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{}", self.0.unwrap_fmt("null"))
     }
 }
 
 impl Attempts for FreeThrowAttempts {
-    fn attempts(&self) -> u8 {
+    fn attempts(&self) -> Option<u8> {
         self.0
     }
 }
@@ -27,13 +27,11 @@ impl Display for FreeThrowMakes {
     }
 }
 
-
 impl Makes for FreeThrowMakes {
     fn makes(&self) -> u8 {
         self.0
     }
 }
-
 
 #[derive(Clone, Debug)]
 pub struct FreeThrowPercentage(pub Option<f32>);
@@ -42,17 +40,15 @@ impl Display for FreeThrowPercentage {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self.0 {
             Some(float) => write!(f, "{:.5}", float),
-            None => write!(f, "null")
-
+            None => write!(f, "null"),
         }
-
     }
 }
 
 impl Serialize for FreeThrowPercentage {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: Serializer
+        S: Serializer,
     {
         match self.0 {
             Some(f) => serializer.serialize_f64(f as f64),

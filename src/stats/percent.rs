@@ -1,5 +1,5 @@
-use std::io;
 use serde::{Deserialize, Serialize};
+use std::io;
 use std::str::FromStr;
 
 #[derive(Serialize, Deserialize)]
@@ -26,13 +26,11 @@ impl FromStr for PercentGeneric {
 
 pub fn percent_string(num: i32, den: i32) -> String {
     if den == 0 {
-        return "-".to_string()
+        return "-".to_string();
     }
 
     format!("({:.1}%)", (num as f32 * 100.0) / den as f32)
 }
-
-
 
 pub struct PercentageFormatter;
 
@@ -44,4 +42,3 @@ impl serde_json::ser::Formatter for PercentageFormatter {
         write!(writer, "{:.6}", value)
     }
 }
-

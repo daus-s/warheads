@@ -16,7 +16,7 @@ impl MapReader for HashMap<StatColumn, Value> {
                 Err(_) => Err(SEASON_ID),
             },
             None => {
-                eprintln!("⚠️ failed to get a SeasonId from the stat map.");
+                eprintln!("\t⚠️  failed to get a SeasonId from the stat map.");
 
                 Err(SEASON_ID)
             }
@@ -26,25 +26,16 @@ impl MapReader for HashMap<StatColumn, Value> {
         let value = match self.get(&PLAYER_ID) {
             Some(x) => x,
             None => {
-                eprintln!("⚠️ failed to get a PlayerId from the stat map.");
+                eprintln!("\t⚠️  failed to get a PlayerId from the stat map.");
 
                 return Err(PLAYER_ID);
             }
         };
 
-        let s = match value.as_str() {
-            Some(x) => x,
+        let u = match value.as_u64() {
+            Some(u) => u,
             None => {
-                eprintln!("⚠️ PlayerId is not a JSON String.");
-
-                return Err(PLAYER_ID);
-            }
-        };
-
-        let u = match s.parse::<u64>() {
-            Ok(x) => x,
-            Err(e) => {
-                eprintln!("⚠️ failed to parse an integer from the PlayerId field: {e}");
+                eprintln!("\t⚠️  PlayerId is not a JSON Number (u64).");
 
                 return Err(PLAYER_ID);
             }
@@ -57,7 +48,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let value = match self.get(&PLAYER_NAME) {
             Some(x) => x,
             None => {
-                eprintln!("⚠️ failed to get a PlayerName from the stat map.");
+                eprintln!("\t⚠️  failed to get a PlayerName from the stat map.");
 
                 return Err(PLAYER_NAME);
             }
@@ -66,7 +57,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let s = match value.as_str() {
             Some(x) => x,
             None => {
-                eprintln!("⚠️ PlayerName is not a JSON String.");
+                eprintln!("\t⚠️  PlayerName is not a JSON String.");
 
                 return Err(PLAYER_NAME);
             }
@@ -79,7 +70,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let value = match self.get(&TEAM_ID) {
             Some(v) => v,
             None => {
-                eprintln!("⚠️ failed to get a TeamId from the stat map.");
+                eprintln!("\t⚠️  failed to get a TeamId from the stat map.");
 
                 return Err(TEAM_ID);
             }
@@ -88,7 +79,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let u = match value.as_u64() {
             Some(u) => u,
             None => {
-                eprintln!("⚠️ TeamId is not an unsigned JSON number.");
+                eprintln!("\t⚠️  TeamId is not an unsigned JSON number.");
 
                 return Err(TEAM_ID);
             }
@@ -101,7 +92,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let value = match self.get(&TEAM_ABBREVIATION) {
             Some(v) => v,
             None => {
-                eprintln!("⚠️ failed to get a TeamAbbreviation from the stat map.");
+                eprintln!("\t⚠️  failed to get a TeamAbbreviation from the stat map.");
 
                 return Err(TEAM_ABBREVIATION);
             }
@@ -110,7 +101,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let s = match value.as_str() {
             Some(s) => s,
             None => {
-                eprintln!("⚠️ TeamAbbreviation is not a JSON String.");
+                eprintln!("\t⚠️  TeamAbbreviation is not a JSON String.");
 
                 return Err(TEAM_ABBREVIATION);
             }
@@ -123,7 +114,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let value = match self.get(&TEAM_NAME) {
             Some(v) => v,
             None => {
-                eprintln!("⚠️ failed to get a TeamName from the stat map.");
+                eprintln!("\t⚠️  failed to get a TeamName from the stat map.");
 
                 return Err(TEAM_NAME);
             }
@@ -133,7 +124,7 @@ impl MapReader for HashMap<StatColumn, Value> {
             Value::Null => Err(TEAM_NAME),
             Value::String(s) => Ok(TeamName(s.to_owned())),
             _ => {
-                eprintln!("⚠️ TeamName is not a JSON String.");
+                eprintln!("\t⚠️  TeamName is not a JSON String.");
 
                 Err(TEAM_NAME)
             }
@@ -143,7 +134,7 @@ impl MapReader for HashMap<StatColumn, Value> {
     fn game_id(&self) -> Result<GameId, StatColumn> {
         let value = match self.get(&GAME_ID) {
             None => {
-                eprintln!("⚠️ failed to get a GameId from the stat map.");
+                eprintln!("\t⚠️  failed to get a GameId from the stat map.");
 
                 return Err(GAME_ID);
             }
@@ -153,7 +144,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let s = match value.as_str() {
             Some(s) => s,
             None => {
-                eprintln!("⚠️ GameId is not a JSON String.");
+                eprintln!("\t⚠️  GameId is not a JSON String.");
 
                 return Err(GAME_ID);
             }
@@ -170,7 +161,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let value = match self.get(&GAME_DATE) {
             Some(x) => x,
             None => {
-                eprintln!("⚠️ failed to get a GameDate from the stat map.");
+                eprintln!("\t⚠️  failed to get a GameDate from the stat map.");
 
                 return Err(GAME_DATE);
             }
@@ -179,7 +170,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let d = match parse_date(value) {
             Some(x) => x,
             None => {
-                eprintln!("⚠️ failed to parse GameDate from the JSON String.");
+                eprintln!("\t⚠️  failed to parse GameDate from the JSON String.");
 
                 return Err(GAME_DATE);
             }
@@ -192,7 +183,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let value = match self.get(&MATCHUP) {
             Some(x) => x,
             None => {
-                eprintln!("⚠️ failed to get a MatchupString from the stat map.");
+                eprintln!("\t⚠️  failed to get a MatchupString from the stat map.");
 
                 return Err(MATCHUP);
             }
@@ -201,7 +192,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let s = match value.as_str() {
             Some(x) => x,
             None => {
-                eprintln!("⚠️ MatchupString is not a JSON String.");
+                eprintln!("\t⚠️  MatchupString is not a JSON String.");
 
                 return Err(MATCHUP);
             }
@@ -210,7 +201,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         match s.parse::<MatchupString>() {
             Ok(s) => Ok(s),
             Err(_) => {
-                eprintln!("⚠️ failed to parse MatchupString from the JSON String.");
+                eprintln!("\t⚠️  failed to parse MatchupString from the JSON String.");
 
                 Err(MATCHUP)
             }
@@ -221,7 +212,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let value = match self.get(&WL) {
             Some(x) => x,
             None => {
-                eprintln!("⚠️ failed to get a GameResult from the stat map.");
+                eprintln!("\t⚠️  failed to get a GameResult from the stat map.");
 
                 return Err(WL);
             }
@@ -230,7 +221,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let s = match value.as_str() {
             Some(x) => x,
             None => {
-                eprintln!("⚠️ GameResult is not a JSON String.");
+                eprintln!("\t⚠️  GameResult is not a JSON String.");
 
                 return Err(WL);
             }
@@ -239,7 +230,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         match GameResult::from_str(s) {
             Ok(g) => Ok(g),
             Err(e) => {
-                eprintln!("⚠️ failed to parse a GameResult from the JSON String: {e}");
+                eprintln!("\t⚠️  failed to parse a GameResult from the JSON String: {e}");
 
                 Err(WL)
             }
@@ -250,7 +241,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let value = match self.get(&MIN) {
             Some(x) => x,
             None => {
-                eprintln!("⚠️ failed to get a Minutes from the stat map.");
+                eprintln!("\t⚠️  failed to get a Minutes from the stat map.");
 
                 return Err(MIN);
             }
@@ -260,7 +251,7 @@ impl MapReader for HashMap<StatColumn, Value> {
             Some(u) => Ok(Minutes(u as u8)), // this cast is safe, the longest NBA game was 78 minutes. source:
             // https://www.guinnessworldrecords.com/world-records/428821-longest-nba-basketball-game
             None => {
-                eprintln!("⚠️ Minutes is not a JSON Number.");
+                eprintln!("\t⚠️  Minutes is not a JSON Number.");
 
                 Err(MIN)
             }
@@ -271,7 +262,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let value = match self.get(&FGM) {
             Some(x) => x,
             None => {
-                eprintln!("⚠️ failed to get a FieldGoalMakes from the stat map.");
+                eprintln!("\t⚠️  failed to get a FieldGoalMakes from the stat map.");
 
                 return Err(FGM);
             }
@@ -280,12 +271,12 @@ impl MapReader for HashMap<StatColumn, Value> {
         match value {
             Value::Number(u) if u.is_u64() => Ok(FieldGoalMakes(u.as_u64().unwrap() as u8)),
             Value::Number(u) if !u.is_u64() => {
-                eprintln!("⚠️ FieldGoalMakes is a number but not a unsigned int.");
+                eprintln!("\t⚠️  FieldGoalMakes is a number but not a unsigned int.");
 
                 Err(FGM)
             }
             _ => {
-                eprintln!("⚠️ FieldGoalMakes is not a JSON Number.");
+                eprintln!("\t⚠️  FieldGoalMakes is not a JSON Number.");
 
                 Err(FGM)
             }
@@ -296,22 +287,30 @@ impl MapReader for HashMap<StatColumn, Value> {
         let value = match self.get(&FGA) {
             Some(x) => x,
             None => {
-                eprintln!("⚠️ failed to get a FieldGoalAttempts from the stat map.");
+                eprintln!("\t⚠️  failed to get a FieldGoalAttempts from the stat map.");
 
                 return Err(FGA);
             }
         };
 
         match value {
-            Value::Number(u) if u.is_u64() => Ok(FieldGoalAttempts(u.as_u64().unwrap() as u8)),
+            Value::Number(u) if u.is_u64() => {
+                Ok(FieldGoalAttempts(Some(u.as_u64().unwrap() as u8)))
+            }
             Value::Number(u) if !u.is_u64() => {
-                eprintln!("⚠️ Could not parse an unsigned int from FieldGoalAttempts JSON Number.");
+                eprintln!(
+                    "\t⚠️  Could not parse an unsigned int from FieldGoalAttempts JSON Number."
+                );
 
                 Err(FGA)
             }
-            Value::Null => Err(FGA),
+            Value::Null => {
+                eprintln!("\t❕  FieldGoalAttempts is null and only permitted in special cases. ");
+
+                Ok(FieldGoalAttempts(None))
+            }
             _ => {
-                eprintln!("⚠️ FieldGoalAttempts is null. Field goals are always recorded. ");
+                eprintln!("\t⚠️  FieldGoalAttempts is null. Field goals are always recorded. ");
 
                 Err(FGA)
             }
@@ -322,7 +321,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let value = match self.get(&FG_PCT) {
             Some(x) => x,
             None => {
-                eprintln!("⚠️ failed to get a FieldGoalPercentage from the stat map.");
+                eprintln!("\t⚠️  failed to get a FieldGoalPercentage from the stat map.");
 
                 return Err(FG_PCT);
             }
@@ -335,19 +334,19 @@ impl MapReader for HashMap<StatColumn, Value> {
                 if percent >= 0f32 && percent <= 1f32 {
                     Ok(FieldGoalPercentage(Some(f.as_f64().unwrap() as f32)))
                 } else {
-                    eprintln!("⚠️ FieldGoalPercent ({percent}) is not bounded by the constraint: [0., 1.]");
+                    eprintln!("\t⚠️  FieldGoalPercent ({percent}) is not bounded by the constraint: [0., 1.]");
 
                     Err(FG_PCT)
                 }
             }
             Value::Number(f) if !f.is_f64() => {
-                eprintln!("⚠️ FieldGoalPercent is a JSON Number but not a float.");
+                eprintln!("\t⚠️  FieldGoalPercent is a JSON Number but not a float.");
 
                 Err(FG_PCT)
             }
             Value::Null => Ok(FieldGoalPercentage(None)),
             _ => {
-                eprintln!("⚠️ FieldGoalPercent is not a Number (u8) or Null (null).");
+                eprintln!("\t⚠️  FieldGoalPercent is not a Number (u8) or Null (null).");
 
                 Err(FG_PCT)
             }
@@ -358,7 +357,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let value = match self.get(&FG3M) {
             Some(x) => x,
             None => {
-                eprintln!("⚠️ failed to get a ThreePointMakes from the stat map.");
+                eprintln!("\t⚠️  failed to get a ThreePointMakes from the stat map.");
 
                 return Err(FG3M);
             }
@@ -367,13 +366,13 @@ impl MapReader for HashMap<StatColumn, Value> {
         match value {
             Value::Number(u) if u.is_u64() => Ok(ThreePointMakes(Some(u.as_u64().unwrap() as u8))),
             Value::Number(u) if !u.is_u64() => {
-                eprintln!("⚠️ ThreePointMakes is a Number but not unsigned or integral: {u}");
+                eprintln!("\t⚠️  ThreePointMakes is a Number but not unsigned or integral: {u}");
 
                 Err(FG3M)
             }
             Value::Null => Ok(ThreePointMakes(None)),
             _ => {
-                eprintln!("⚠️ ThreePointMakes is not a Number (u8) or Null (null).");
+                eprintln!("\t⚠️  ThreePointMakes is not a Number (u8) or Null (null).");
 
                 Err(FG3M)
             }
@@ -384,7 +383,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let value = match self.get(&FG3A) {
             Some(x) => x,
             None => {
-                eprintln!("⚠️ failed to get a ThreePointAttempts from the stat map.");
+                eprintln!("\t⚠️  failed to get a ThreePointAttempts from the stat map.");
 
                 return Err(FG3A);
             }
@@ -395,13 +394,13 @@ impl MapReader for HashMap<StatColumn, Value> {
                 Ok(ThreePointAttempts(Some(u.as_u64().unwrap() as u8)))
             }
             Value::Number(u) if !u.is_u64() => {
-                eprintln!("⚠️ ThreePointAttempts is a Number but not unsigned or integral: {u}");
+                eprintln!("\t⚠️  ThreePointAttempts is a Number but not unsigned or integral: {u}");
 
                 Err(FG3A)
             }
             Value::Null => Ok(ThreePointAttempts(None)),
             _ => {
-                eprintln!("⚠️ ThreePointAttempts is not a Number (u8) or Null (null).");
+                eprintln!("\t⚠️  ThreePointAttempts is not a Number (u8) or Null (null).");
 
                 Err(FG3A)
             }
@@ -412,7 +411,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let value = match self.get(&FG3_PCT) {
             Some(x) => x,
             None => {
-                eprintln!("⚠️ failed to get a ThreePointPercentage from the stat map.");
+                eprintln!("\t⚠️  failed to get a ThreePointPercentage from the stat map.");
 
                 return Err(FG3_PCT);
             }
@@ -425,19 +424,19 @@ impl MapReader for HashMap<StatColumn, Value> {
                 if percent >= 0f32 && percent <= 1f32 {
                     Ok(ThreePointPercentage(Some(f.as_f64().unwrap() as f32)))
                 } else {
-                    eprintln!("⚠️ ThreePointPercentage ({percent}) is not bounded by the constraint: [0., 1.]");
+                    eprintln!("\t⚠️  ThreePointPercentage ({percent}) is not bounded by the constraint: [0., 1.]");
 
                     Err(FG3_PCT)
                 }
             }
             Value::Number(f) if !f.is_f64() => {
-                eprintln!("⚠️ ThreePointPercentage is a JSON Number but not a float.");
+                eprintln!("\t⚠️  ThreePointPercentage is a JSON Number but not a float.");
 
                 Err(FG3_PCT)
             }
             Value::Null => Ok(ThreePointPercentage(None)),
             _ => {
-                eprintln!("⚠️ ThreePointPercentage is not a Number (u8) or Null (null).");
+                eprintln!("\t⚠️  ThreePointPercentage is not a Number (u8) or Null (null).");
 
                 Err(FG3_PCT)
             }
@@ -448,7 +447,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let value = match self.get(&FTM) {
             Some(x) => x,
             None => {
-                eprintln!("⚠️ failed to get a FreeThrowMakes from the stat map.");
+                eprintln!("\t⚠️  failed to get a FreeThrowMakes from the stat map.");
 
                 return Err(FTM);
             }
@@ -457,17 +456,19 @@ impl MapReader for HashMap<StatColumn, Value> {
         match value {
             Value::Number(u) if u.is_u64() => Ok(FreeThrowMakes(u.as_u64().unwrap() as u8)),
             Value::Number(u) if !u.is_u64() => {
-                eprintln!("⚠️ FreeThrowMakes is a Number but not unsigned or integral: {u}");
+                eprintln!("\t⚠️  FreeThrowMakes is a Number but not unsigned or integral: {u}");
 
                 Err(FTM)
             }
             Value::Null => {
-                eprintln!("⚠️ FreeThrowMakes is null when it is a non-optional field in the JSON.");
+                eprintln!(
+                    "\t⚠️  FreeThrowMakes is null when it is a non-optional field in the JSON."
+                );
 
                 Err(FTM)
             }
             _ => {
-                eprintln!("⚠️ FreeThrowMakes is not a Number (u8) or Null (null).");
+                eprintln!("\t⚠️  FreeThrowMakes is not a Number (u8) or Null (null).");
 
                 Err(FTM)
             }
@@ -478,28 +479,22 @@ impl MapReader for HashMap<StatColumn, Value> {
         let value = match self.get(&FTA) {
             Some(x) => x,
             None => {
-                eprintln!("⚠️ failed to get a FreeThrowAttempts from the stat map.");
+                eprintln!("\t⚠️  failed to get a FreeThrowAttempts from the stat map.");
 
                 return Err(FTA);
             }
         };
 
         match value {
-            Value::Number(u) if u.is_u64() => Ok(FreeThrowAttempts(u.as_u64().unwrap() as u8)),
+            Value::Number(u) if u.is_u64() => Ok(FreeThrowAttempts(u.as_u64().map(|u| u as u8))),
+            Value::Null => Ok(FreeThrowAttempts(None)),
             Value::Number(u) if !u.is_u64() => {
-                eprintln!("⚠️ FreeThrowAttempts is a Number but not unsigned or integral: {u}");
-
-                Err(FTA)
-            }
-            Value::Null => {
-                eprintln!(
-                    "⚠️ FreeThrowAttempts is null when it is a non-optional field in the JSON."
-                );
+                eprintln!("\t⚠️  FreeThrowAttempts is a Number but not unsigned or integral: {u}");
 
                 Err(FTA)
             }
             _ => {
-                eprintln!("⚠️ FreeThrowAttempts is the wrong type.");
+                eprintln!("\t⚠️  FreeThrowAttempts is the wrong type.");
 
                 Err(FTA)
             }
@@ -510,7 +505,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let value = match self.get(&FT_PCT) {
             Some(x) => x,
             None => {
-                eprintln!("⚠️ failed to get a FreeThrowPercentage from the stat map.");
+                eprintln!("\t⚠️  failed to get a FreeThrowPercentage from the stat map.");
 
                 return Err(FT_PCT);
             }
@@ -523,19 +518,19 @@ impl MapReader for HashMap<StatColumn, Value> {
                 if percent >= 0f32 && percent <= 1f32 {
                     Ok(FreeThrowPercentage(Some(f.as_f64().unwrap() as f32)))
                 } else {
-                    eprintln!("⚠️ FreeThrowPercentage ({percent}) is not bounded by the constraint: [0., 1.]");
+                    eprintln!("\t⚠️  FreeThrowPercentage ({percent}) is not bounded by the constraint: [0., 1.]");
 
                     Err(FT_PCT)
                 }
             }
             Value::Number(f) if !f.is_f64() => {
-                eprintln!("⚠️ FreeThrowPercentage is a JSON Number but not a float.");
+                eprintln!("\t⚠️  FreeThrowPercentage is a JSON Number but not a float.");
 
                 Err(FT_PCT)
             }
             Value::Null => Ok(FreeThrowPercentage(None)),
             _ => {
-                eprintln!("⚠️ FreeThrowPercentage is not a Number (u8) or Null (null).");
+                eprintln!("\t⚠️  FreeThrowPercentage is not a Number (u8) or Null (null).");
 
                 Err(FT_PCT)
             }
@@ -546,7 +541,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let value = match self.get(&OREB) {
             Some(x) => x,
             None => {
-                eprintln!("⚠️ failed to get a OffensiveRebounds from the stat map.");
+                eprintln!("\t⚠️  failed to get a OffensiveRebounds from the stat map.");
 
                 return Err(OREB);
             }
@@ -558,12 +553,12 @@ impl MapReader for HashMap<StatColumn, Value> {
                 Ok(OffensiveRebounds(Some(u.as_u64().unwrap() as u8)))
             }
             Value::Number(u) if !u.is_u64() => {
-                eprintln!("⚠️ OffensiveRebounds is a Number but not unsigned or integral.");
+                eprintln!("\t⚠️  OffensiveRebounds is a Number but not unsigned or integral.");
 
                 Err(OREB)
             }
             _ => {
-                eprintln!("⚠️ OffensiveRebounds is not a Number (u8) or Null (null).");
+                eprintln!("\t⚠️  OffensiveRebounds is not a Number (u8) or Null (null).");
 
                 Err(OREB)
             }
@@ -574,7 +569,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let value = match self.get(&DREB) {
             Some(x) => x,
             None => {
-                eprintln!("⚠️ failed to get a DefensiveRebounds from the stat map.");
+                eprintln!("\t⚠️  failed to get a DefensiveRebounds from the stat map.");
 
                 return Err(DREB);
             }
@@ -586,12 +581,12 @@ impl MapReader for HashMap<StatColumn, Value> {
                 Ok(DefensiveRebounds(Some(u.as_u64().unwrap() as u8)))
             }
             Value::Number(u) if !u.is_u64() => {
-                eprintln!("⚠️ DefensiveRebounds is a Number but not unsigned or integral.");
+                eprintln!("\t⚠️  DefensiveRebounds is a Number but not unsigned or integral.");
 
                 Err(OREB)
             }
             _ => {
-                eprintln!("⚠️ DefensiveRebounds is not a Number (u8) or Null (null).");
+                eprintln!("\t⚠️  DefensiveRebounds is not a Number (u8) or Null (null).");
 
                 Err(OREB)
             }
@@ -602,7 +597,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let value = match self.get(&REB) {
             Some(x) => x,
             None => {
-                eprintln!("⚠️ failed to get a Rebounds from the stat map.");
+                eprintln!("\t⚠️  failed to get a Rebounds from the stat map.");
 
                 return Err(REB);
             }
@@ -612,12 +607,12 @@ impl MapReader for HashMap<StatColumn, Value> {
             Value::Null => Ok(Rebounds(None)),
             Value::Number(u) if u.is_u64() => Ok(Rebounds(Some(u.as_u64().unwrap() as u8))),
             Value::Number(u) if !u.is_u64() => {
-                eprintln!("⚠️ Rebounds is a Number but not unsigned or integral.");
+                eprintln!("\t⚠️  Rebounds is a Number but not unsigned or integral.");
 
                 Err(REB)
             }
             _ => {
-                eprintln!("⚠️ Rebounds is not a Number (u8) or Null (null).");
+                eprintln!("\t⚠️  Rebounds is not a Number (u8) or Null (null).");
 
                 Err(REB)
             }
@@ -628,7 +623,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let value = match self.get(&AST) {
             Some(x) => x,
             None => {
-                eprintln!("⚠️ failed to get a Assists from the stat map.");
+                eprintln!("\t⚠️  failed to get a Assists from the stat map.");
 
                 return Err(AST);
             }
@@ -638,12 +633,12 @@ impl MapReader for HashMap<StatColumn, Value> {
             Value::Null => Ok(Assists(None)),
             Value::Number(u) if u.is_u64() => Ok(Assists(Some(u.as_u64().unwrap() as u8))),
             Value::Number(u) if !u.is_u64() => {
-                eprintln!("⚠️ Assists is a Number but not unsigned or integral.");
+                eprintln!("\t⚠️  Assists is a Number but not unsigned or integral.");
 
                 Err(AST)
             }
             _ => {
-                eprintln!("⚠️ Assists is not a Number (u8) or Null (null).");
+                eprintln!("\t⚠️  Assists is not a Number (u8) or Null (null).");
 
                 Err(AST)
             }
@@ -654,7 +649,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let value = match self.get(&STL) {
             Some(x) => x,
             None => {
-                eprintln!("⚠️ failed to get a Steals from the stat map.");
+                eprintln!("\t⚠️  failed to get a Steals from the stat map.");
 
                 return Err(STL);
             }
@@ -664,12 +659,12 @@ impl MapReader for HashMap<StatColumn, Value> {
             Value::Null => Ok(Steals(None)),
             Value::Number(u) if u.is_u64() => Ok(Steals(Some(u.as_u64().unwrap() as u8))),
             Value::Number(u) if !u.is_u64() => {
-                eprintln!("⚠️ Steals is a Number but not unsigned or integral.");
+                eprintln!("\t⚠️  Steals is a Number but not unsigned or integral.");
 
                 Err(STL)
             }
             _ => {
-                eprintln!("⚠️ Steals is not a Number (u8) or Null (null).");
+                eprintln!("\t⚠️  Steals is not a Number (u8) or Null (null).");
 
                 Err(STL)
             }
@@ -680,7 +675,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let value = match self.get(&BLK) {
             Some(x) => x,
             None => {
-                eprintln!("⚠️ failed to get a Blocks from the stat map.");
+                eprintln!("\t⚠️  failed to get a Blocks from the stat map.");
 
                 return Err(BLK);
             }
@@ -690,12 +685,12 @@ impl MapReader for HashMap<StatColumn, Value> {
             Value::Null => Ok(Blocks(None)),
             Value::Number(u) if u.is_u64() => Ok(Blocks(Some(u.as_u64().unwrap() as u8))),
             Value::Number(u) if !u.is_u64() => {
-                eprintln!("⚠️ Blocks is a Number but not unsigned or integral.");
+                eprintln!("\t⚠️  Blocks is a Number but not unsigned or integral.");
 
                 Err(BLK)
             }
             _ => {
-                eprintln!("⚠️ Blocks is not a Number (u8) or Null (null).");
+                eprintln!("\t⚠️  Blocks is not a Number (u8) or Null (null).");
 
                 Err(BLK)
             }
@@ -706,7 +701,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let value = match self.get(&TOV) {
             Some(x) => x,
             None => {
-                eprintln!("⚠️ failed to get a Turnovers from the stat map.");
+                eprintln!("\t⚠️  failed to get a Turnovers from the stat map.");
 
                 return Err(TOV);
             }
@@ -716,12 +711,12 @@ impl MapReader for HashMap<StatColumn, Value> {
             Value::Null => Ok(Turnovers(None)),
             Value::Number(u) if u.is_u64() => Ok(Turnovers(Some(u.as_u64().unwrap() as u8))),
             Value::Number(u) if !u.is_u64() => {
-                eprintln!("⚠️ Turnovers is a Number but not unsigned or integral.");
+                eprintln!("\t⚠️  Turnovers is a Number but not unsigned or integral.");
 
                 Err(TOV)
             }
             _ => {
-                eprintln!("⚠️ Turnovers is not a Number (u8) or Null (null).");
+                eprintln!("\t⚠️  Turnovers is not a Number (u8) or Null (null).");
 
                 Err(TOV)
             }
@@ -732,7 +727,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let value = match self.get(&PF) {
             Some(x) => x,
             None => {
-                eprintln!("⚠️ failed to get a PersonalFouls from the stat map.");
+                eprintln!("\t⚠️  failed to get a PersonalFouls from the stat map.");
 
                 return Err(PF);
             }
@@ -741,12 +736,17 @@ impl MapReader for HashMap<StatColumn, Value> {
         match value {
             Value::Number(u) if u.is_u64() => Ok(PersonalFouls(u.as_u64().unwrap() as u8)),
             Value::Number(u) if !u.is_u64() => {
-                eprintln!("⚠️ PersonalFouls is a Number but not unsigned or integral.");
+                eprintln!("\t⚠️  PersonalFouls is a Number but not unsigned or integral.");
 
                 Err(PF)
             }
+            Value::Null => {
+                eprintln!("\t❕ PersonalFouls is a Null, but not typically permitted to be Null. Its value has been defaulted to 0.");
+
+                Ok(PersonalFouls(0))
+            }
             _ => {
-                eprintln!("⚠️ PersonalFouls is not a Number when it is a non-optional field.");
+                eprintln!("\t⚠️  PersonalFouls is not a Number when it is a non-optional field. (special null cases are permitted but emit warnings)");
 
                 Err(PF)
             }
@@ -757,7 +757,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let value = match self.get(&PTS) {
             Some(x) => x,
             None => {
-                eprintln!("⚠️ failed to get a Points from the stat map.");
+                eprintln!("\t⚠️  failed to get a Points from the stat map.");
 
                 return Err(PTS);
             }
@@ -766,12 +766,12 @@ impl MapReader for HashMap<StatColumn, Value> {
         match value {
             Value::Number(u) if u.is_u64() => Ok(Points(u.as_u64().unwrap() as u8)),
             Value::Number(u) if !u.is_u64() => {
-                eprintln!("⚠️ Points is a Number but not unsigned or integral.");
+                eprintln!("\t⚠️  Points is a Number but not unsigned or integral.");
 
                 Err(PTS)
             }
             _ => {
-                eprintln!("⚠️ Points is not a Number when it is a non-optional field.");
+                eprintln!("\t⚠️  Points is not a Number when it is a non-optional field.");
 
                 Err(PTS)
             }
@@ -782,7 +782,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let value = match self.get(&PLUS_MINUS) {
             Some(x) => x,
             None => {
-                eprintln!("⚠️ failed to get a Points from the stat map.");
+                eprintln!("\t⚠️  failed to get a Points from the stat map.");
 
                 return Err(PLUS_MINUS);
             }
@@ -792,12 +792,12 @@ impl MapReader for HashMap<StatColumn, Value> {
             Value::Number(i) if i.is_i64() => Ok(PlusMinus(Some(i.as_i64().unwrap() as i16))),
             Value::Null => Ok(PlusMinus(None)),
             Value::Number(i) if !i.is_i64() => {
-                eprintln!("⚠️ PlusMinus is a Number but not integral.");
+                eprintln!("\t⚠️  PlusMinus is a Number but not integral.");
 
                 Err(PLUS_MINUS)
             }
             _ => {
-                eprintln!("⚠️ PlusMinus is not a Number (i64) or Null (null).");
+                eprintln!("\t⚠️  PlusMinus is not a Number (i64) or Null (null).");
 
                 Err(PLUS_MINUS)
             }
@@ -808,7 +808,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let value = match self.get(&FANTASY_PTS) {
             Some(x) => x,
             None => {
-                eprintln!("⚠️ failed to get a FantasyPoints from the stat map.");
+                eprintln!("\t⚠️  failed to get a FantasyPoints from the stat map.");
 
                 return Err(FANTASY_PTS);
             }
@@ -818,13 +818,14 @@ impl MapReader for HashMap<StatColumn, Value> {
             Value::Number(f) if f.is_f64() => Ok(FantasyPoints(Some(f.as_f64().unwrap() as f32))),
             Value::Number(f) if !f.is_f64() => {
                 eprintln!(
-                    "⚠️ FantasyPoints is a Number but not a floating point (or subset of *f*)."
+                    "\t⚠️  FantasyPoints is a Number but not a floating point (or subset of *f*)."
                 );
 
                 Err(FANTASY_PTS)
             }
+            Value::Null => Ok(FantasyPoints(None)),
             _ => {
-                eprintln!("⚠️ FantasyPoints is not a Number (f64) or Null (null).");
+                eprintln!("\t⚠️  FantasyPoints is not a Number (f64) or Null (null).");
 
                 Err(FANTASY_PTS)
             }
@@ -835,7 +836,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         let value = match self.get(&VIDEO_AVAILABLE) {
             Some(x) => x,
             None => {
-                eprintln!("⚠️ failed to get a VideoAvailable from the stat map.");
+                eprintln!("\t⚠️  failed to get a VideoAvailable from the stat map.");
 
                 return Err(VIDEO_AVAILABLE);
             }
@@ -861,7 +862,7 @@ impl MapReader for HashMap<StatColumn, Value> {
                 None => Err(VIDEO_AVAILABLE),
             },
             _ => {
-                eprintln!("⚠️ VideoAvailable is not Number or in the domain x∈{{0,1}}");
+                eprintln!("\t⚠️  VideoAvailable is not Number or in the domain x∈{{0,1}}");
 
                 Err(VIDEO_AVAILABLE)
             }

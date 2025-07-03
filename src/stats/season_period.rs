@@ -1,9 +1,9 @@
 use crate::format::stat_path_formatter::StatPathFormatter;
+use crate::types::SeasonId;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
-use crate::types::SeasonId;
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Eq, Hash)]
 #[serde(rename_all = "PascalCase")]
 pub enum SeasonPeriod {
     PreSeason,
@@ -67,9 +67,7 @@ pub fn minimum_spanning_era(year: i32) -> Vec<SeasonId> {
             SeasonId::from((year, SeasonPeriod::RegularSeason)),
         ]
     } else {
-        vec![
-            SeasonId::from((year, SeasonPeriod::RegularSeason))
-        ]
+        vec![SeasonId::from((year, SeasonPeriod::RegularSeason))]
     };
 
     if year >= 2020 {

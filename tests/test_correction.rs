@@ -12,7 +12,7 @@ use warheads::stats::id::Identifiable;
 use warheads::stats::nba_kind::NBAStatKind;
 use warheads::stats::nba_kind::NBAStatKind::Player;
 use warheads::stats::se::SerdeEnum;
-use warheads::stats::season_type::SeasonPeriod;
+use warheads::stats::season_period::SeasonPeriod;
 use warheads::stats::stat_column::StatColumn;
 use warheads::stats::stat_column::StatColumn::*;
 use warheads::stats::stat_value::StatValue;
@@ -21,15 +21,13 @@ use warheads::types::{GameId, PlayerId, SeasonId, TeamAbbreviation, TeamId};
 
 #[test]
 pub fn test_load_correction() {
-
-    let season_id = SeasonId(21959);
+    let season_id = SeasonId::from(21959);
 
     let kind = Player;
 
-
     let mut expected_corrections = expected_corrections(season_id, kind);
 
-    let mut actual_corrections = load_corrections(season_id, kind).unwrap_or_else(|e| {
+    let mut actual_corrections = load_corrections(season_id.year(), kind).unwrap_or_else(|e| {
         panic!(
             "Failed to load corrections from: {}\n{e}",
             nba_correction_dir(season_id, kind)
@@ -216,7 +214,7 @@ fn test_apply_corrections() {
     let corrections = vec![
         Correction {
             game_id: GameId::from("12345678"),
-            season: SeasonId(20024),
+            season: SeasonId::from(20024),
             player_id: Some(PlayerId(69420)),
             team_id: TeamId(32768),
             team_abbr: TeamAbbreviation::from_str("BOM").unwrap(),
@@ -227,7 +225,7 @@ fn test_apply_corrections() {
         },
         Correction {
             game_id: GameId::from("12345678"),
-            season: SeasonId(20024),
+            season: SeasonId::from(20024),
             player_id: Some(PlayerId(14141)),
             team_id: TeamId(32768),
             team_abbr: TeamAbbreviation::from_str("BOM").unwrap(),
@@ -241,7 +239,7 @@ fn test_apply_corrections() {
         },
         Correction {
             game_id: GameId::from("11235813"),
-            season: SeasonId(20024),
+            season: SeasonId::from(20024),
             player_id: Some(PlayerId(69420)),
             team_id: TeamId(32768),
             team_abbr: TeamAbbreviation::from_str("BOM").unwrap(),
@@ -252,7 +250,7 @@ fn test_apply_corrections() {
         },
         Correction {
             game_id: GameId::from("11235813"),
-            season: SeasonId(20024),
+            season: SeasonId::from(20024),
             player_id: Some(PlayerId(66666)),
             team_id: TeamId(16384),
             team_abbr: TeamAbbreviation::from_str("TRA").unwrap(),
@@ -264,6 +262,8 @@ fn test_apply_corrections() {
     ];
 
     let contents = bad_data();
+
+    eprintln!("contents: {} \n____________________________", contents);
 
     let value = serde_json::from_str(&contents)
         .unwrap_or_else(|e| panic!("failed to parse JSON from test file wtf: {e}"));
@@ -291,6 +291,8 @@ fn test_apply_corrections() {
         }
     }
 
+    dbg!(&games_by_id);
+
     for deletion in to_remove {
         games_by_id.remove(&deletion);
     }
@@ -302,7 +304,7 @@ fn test_apply_corrections() {
     games.sort();
 
     for game in games.iter() {
-        eprintln!("        {}", game);
+        eprintln!("GAME: {}", game);
     }
 
     let expected = expected_file().to_string();
@@ -342,9 +344,9 @@ fn test_apply_corrections() {
 }
 
 fn bad_data() -> String {
-    fs::read_to_string("tests/data/readable_data.json").unwrap()
+    fs::read_to_string("tests/data/data.json").unwrap()
 }
 
 fn expected_file() -> String {
-    fs::read_to_string("tests/data/readable_corrected.json").unwrap()
+    fs::read_to_string("tests/data/corrected.json").unwrap()
 }

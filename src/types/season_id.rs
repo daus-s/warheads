@@ -1,21 +1,22 @@
-use crate::stats::season_type::SeasonPeriod;
-use crate::stats::season_type::SeasonPeriod::{AllStarGame, NBACup, PlayIn, PostSeason, PreSeason, RegularSeason};
-use serde::{Deserialize, Serialize, Serializer};
+use crate::format::season::season_fmt;
+use crate::stats::season_period::SeasonPeriod;
+use crate::stats::season_period::SeasonPeriod::{
+    AllStarGame, NBACup, PlayIn, PostSeason, PreSeason, RegularSeason,
+};
+use serde::de;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 use std::fmt::{Display, Formatter};
 
-#[derive(Clone, Debug, Copy, PartialEq, Eq, Hash, Deserialize)]
-pub struct SeasonId(pub i32);
+#[derive(Clone, Debug, Copy, PartialEq, Eq, Hash)]
+pub struct SeasonId {
+    year: i32,
+    period: SeasonPeriod,
+}
+
 impl SeasonId {
     pub fn period(&self) -> SeasonPeriod {
-        match self.0 {
-            x if x > 10000 && x < 19999 => PreSeason,
-            x if x > 20000 && x < 29999 => RegularSeason, //also, in season tournament
-            x if x > 30000 && x < 39999 => AllStarGame,
-            x if x > 40000 && x < 49999 => PostSeason,
-            x if x > 50000 && x < 59999 => PlayIn,
-            _ => panic!("💀 could not match season id {self} to a SeasonPeriod"),
-        }
+        self.period
     }
 
     pub fn destructure(&self) -> (i32, SeasonPeriod) {
@@ -23,22 +24,36 @@ impl SeasonId {
     }
 
     pub fn year(&self) -> i32 {
-        self.0 % 10000
+        self.year
     }
 }
 
 /*
- ===================================================================================================
-  From functions.
+===================================================================================================
+ From functions.
 
-   from:
-     • i32 -> SeasonId
-     • (i32, SeasonPeriod) -> SeasonId
-     • Value (serde_json_ -> Result<SeasonId, Infallible>
- */
+  from:
+    • i32 -> SeasonId
+    • (i32, SeasonPeriod) -> SeasonId
+    • Value (serde_json_ -> Result<SeasonId, Infallible>
+*/
 impl From<i32> for SeasonId {
-    fn from(value: i32) -> Self {
-        SeasonId(value)
+    fn from(id: i32) -> Self {
+        let year = id % 10000;
+
+        let per_int = id - year;
+
+        let period = match per_int {
+            10_000 => PreSeason,
+            20_000 => RegularSeason,
+            40_000 => PostSeason,
+            60_000 => PlayIn,
+            20_000 => NBACup, //todo: distinguish between these games--caitlin clark effect
+            30_000 => AllStarGame,
+            _ => unreachable!(" no other season period offsets exist. "),
+        };
+
+        SeasonId { year, period }
     }
 }
 
@@ -55,16 +70,14 @@ impl TryFrom<&Value> for SeasonId {
             }
         };
 
-        let i = match s.parse::<i32>() {
-            Ok(x) => x,
+        match s.parse::<i32>() {
+            Ok(x) => Ok(SeasonId::from(x)),
             Err(e) => {
                 eprintln!("⚠️ failed to parse an integer from the SeasonId field: {e}");
 
                 return Err(());
             }
-        };
-
-        Ok(SeasonId(i))
+        }
     }
 }
 
@@ -72,14 +85,7 @@ impl From<(i32, SeasonPeriod)> for SeasonId {
     fn from(value: (i32, SeasonPeriod)) -> Self {
         let (year, period) = value;
 
-        match period {
-            PreSeason => SeasonId(10000 + year),
-            RegularSeason => SeasonId(20000 + year),
-            PostSeason => SeasonId(40000 + year),
-            PlayIn => SeasonId(50000 + year),
-            NBACup => SeasonId(20000 + year),
-            AllStarGame => SeasonId(30000 + year),
-        }
+        SeasonId { year, period }
     }
 }
 
@@ -90,12 +96,13 @@ Display functions
 
 impl Display for SeasonId {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        let year_str = season_fmt(self.year());
+
+        let period_str = serde_json::to_string(&self.period()).unwrap();
+
+        write!(f, "{} {}", year_str, period_str)
     }
 }
-
-
-
 
 /*
 ====================================================================================================
@@ -108,6 +115,30 @@ impl Serialize for SeasonId {
     where
         S: Serializer,
     {
-       serializer.serialize_str(&format!("{}", self.0))
+        let sum = match self.period {
+            PreSeason => 10_000,
+            RegularSeason => 20_000,
+            NBACup => 20_000,
+            AllStarGame => 30_000,
+            PostSeason => 40_000,
+            PlayIn => 60_000,
+        } + self.year;
+
+        serializer.serialize_str(&format!("{}", sum))
+    }
+}
+
+impl<'de> Deserialize<'de> for SeasonId {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+
+        eprintln!("{}", &s);
+
+        let i = s.parse::<i32>().map_err(de::Error::custom)?;
+
+        Ok(SeasonId::from(i))
     }
 }

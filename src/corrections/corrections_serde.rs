@@ -13,10 +13,7 @@ where
 {
     let mut map: HashMap<String, Value> = HashMap::new();
     for (key, value) in cs.clone() {
-        map.insert(
-         format!("{}", key),
-            value.val().unwrap_or_else(|| Null),
-        );
+        map.insert(format!("{}", key), value.val().unwrap_or_else(|| Null));
     }
     map.serialize(serializer)
 }

@@ -2,7 +2,6 @@ use crate::stats::statify::SafetyValve;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt::{Display, Formatter};
 
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct Assists(pub Option<u8>);
 
@@ -35,4 +34,3 @@ impl From<Option<u8>> for Assists {
         Assists(value)
     }
 }
-

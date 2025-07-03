@@ -1,4 +1,9 @@
-use crate::types::{Assists, Blocks, DefensiveRebounds, Elo, FantasyPoints, FieldGoalAttempts, FieldGoalMakes, FreeThrowAttempts, FreeThrowMakes, GameDate, GameId, GameResult, MatchupString, Minutes, OffensiveRebounds, PersonalFouls, PlayerId, PlayerName, PlusMinus, Points, Rebounds, SeasonId, Steals, TeamAbbreviation, TeamId, TeamName, ThreePointAttempts, ThreePointMakes, Turnovers};
+use crate::types::{
+    Assists, Blocks, DefensiveRebounds, Elo, FantasyPoints, FieldGoalAttempts, FieldGoalMakes,
+    FreeThrowAttempts, FreeThrowMakes, GameDate, GameId, GameResult, MatchupString, Minutes,
+    OffensiveRebounds, PersonalFouls, PlayerId, PlayerName, PlusMinus, Points, Rebounds, SeasonId,
+    Steals, TeamAbbreviation, TeamId, TeamName, ThreePointAttempts, ThreePointMakes, Turnovers,
+};
 
 /// box_score_stat is an enum that contains every type that may be used by a `BoxScore`
 /// all fields are parsed and translated into this format from the data source
@@ -34,8 +39,6 @@ pub enum BoxScoreStat {
     FantasyPoints(FantasyPoints),
     Elo(Elo),
 }
-
-
 
 impl From<SeasonId> for BoxScoreStat {
     fn from(value: SeasonId) -> Self {

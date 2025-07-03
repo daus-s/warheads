@@ -2,7 +2,6 @@ use crate::stats::statify::SafetyValve;
 use serde::{Deserialize, Serialize, Serializer};
 use std::fmt::{Display, Formatter};
 
-
 #[derive(Clone, Debug, Serialize)]
 pub struct Turnovers(pub Option<u8>);
 

@@ -6,7 +6,7 @@ pub mod nba_stat;
 pub mod percent;
 pub mod player_box_score;
 pub mod se;
-pub mod season_type;
+pub mod season_period;
 pub mod shooting;
 pub mod stat_column;
 pub(crate) mod stat_types;
