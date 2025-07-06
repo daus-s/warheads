@@ -15,7 +15,7 @@ async fn main() {
 
     let year = 1947;
 
-    let season = load_nba_season_from_file(year);
+    // let season = load_nba_season_from_file(year);
 
     let corrections = load_corrections(year, Team)
         .map_err(|err_str| eprintln!("{}", err_str))

@@ -19,6 +19,9 @@ impl Columnizable for String {
     }
 }
 
+/// partition overwrites previous data with newly corrected data based on the pattern of the NBA
+/// stats api JSON response.
+///
 /// partition takes the original string as a String and overwrites the entire bulk of the data with
 /// the newly corrected data supplied as a list of GameStrings and returns the updated data.
 ///

@@ -1,4 +1,6 @@
+use crate::dapi::hunting;
 use crate::dapi::rip::fetch_and_process_nba_games;
+use crate::format::path_manager::nba_data_path;
 use crate::format::season::season_fmt;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::nba_stat::NBAStat::{Player, Team};
@@ -7,13 +9,9 @@ use crate::stats::season_period::minimum_spanning_era;
 use crate::stats::team_box_score::TeamBoxScore;
 use crate::types::SeasonId;
 use reqwest;
-use reqwest::header::*;
-use reqwest::Client;
-use std::error::Error;
 use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
-use std::str::FromStr;
 use std::{fs, io};
 
 pub fn read_nba_file(file_path: PathBuf) -> String {
@@ -26,86 +24,6 @@ pub fn read_nba_file(file_path: PathBuf) -> String {
         .expect(format!("Failed to read {}", file_path.display()).as_str());
 
     contents
-}
-
-pub async fn ask_nba(season: SeasonId, stat_kind: NBAStatKind) -> Result<String, Box<dyn Error>> {
-    let client = Client::new();
-
-    let mut headers = HeaderMap::new();
-
-    headers.insert(ACCEPT, HeaderValue::from_str("*/*").unwrap());
-    headers.insert(
-        ACCEPT_LANGUAGE,
-        HeaderValue::from_str("en-US,en;q=0.9,de;q=0.8'").unwrap(),
-    );
-    headers.insert(CACHE_CONTROL, HeaderValue::from_str("no-cache").unwrap());
-    headers.insert(CONNECTION, HeaderValue::from_str("keep-alive").unwrap());
-    headers.insert(
-        ORIGIN,
-        HeaderValue::from_str("https://www.nba.com").unwrap(),
-    );
-    headers.insert(PRAGMA, HeaderValue::from_str("no-cache").unwrap());
-    headers.insert(
-        REFERER,
-        HeaderValue::from_str("https://www.nba.com/").unwrap(),
-    );
-    headers.insert(
-        HeaderName::from_str("Sec-Fetch-Dest").unwrap(),
-        HeaderValue::from_str("empty").unwrap(),
-    );
-    headers.insert(
-        HeaderName::from_str("Sec-Fetch-Mode").unwrap(),
-        HeaderValue::from_str("cors").unwrap(),
-    );
-    headers.insert(
-        HeaderName::from_str("Sec-Fetch-Site").unwrap(),
-        HeaderValue::from_str("same-site").unwrap(),
-    );
-    headers.insert(USER_AGENT, HeaderValue::from_str("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36").unwrap());
-    headers.insert(
-        HeaderName::from_str("sec-ch-ua").unwrap(),
-        HeaderValue::from_str(
-            "\"Google Chrome\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\"",
-        )
-        .unwrap(),
-    );
-    headers.insert(
-        HeaderName::from_str("sec-ch-ua-mobile").unwrap(),
-        HeaderValue::from_str("?0").unwrap(),
-    );
-    headers.insert(
-        HeaderName::from_str("sec-ch-ua-platform").unwrap(),
-        HeaderValue::from_str("macOS").unwrap(),
-    );
-
-    let season_param = season_fmt(season.year());
-
-    let period = season.period();
-
-    // if more url-encoded characters are needed you can use `urlencoding` crate
-    let url = format!(
-        "\
-        https://stats.nba.com/stats/leaguegamelog?Counter=1000&DateFrom=&DateTo=&\
-        Direction=DESC&ISTRound=&\
-        LeagueID=00&\
-        PlayerOrTeam={stat_kind}&\
-        Season={season_param}&\
-        SeasonType={period}&\
-        Sorter=DATE"
-    );
-
-    let response = client.get(&url).headers(headers).send().await?;
-
-    if response.status().is_success() {
-        Ok(response.text().await?)
-    } else {
-        Err(format!(
-            "❌ request failed with status: {}\nurl: {}",
-            response.status(),
-            &url
-        )
-        .into())
-    }
 }
 
 pub fn write_games(file_path: PathBuf, raw_json: &str) -> io::Result<()> {
@@ -157,4 +75,33 @@ pub fn team_games(year: i32, roster: Vec<PlayerBoxScore>) -> Vec<TeamBoxScore> {
     }
 
     games.clone()
+}
+
+pub async fn fetch_and_save_nba_stats(season: &SeasonId, stat: NBAStatKind) -> Result<(), String> {
+    let file_path = || nba_data_path(season, stat);
+
+    let (year, _period) = season.destructure();
+
+    match hunting::query_nba(season, stat).await {
+        Ok(response_data) => match write_games(file_path(), &response_data) {
+            Ok(_) => {
+                println!(
+                    "✅ successfully saved nba stats for {} season at file: {:?}",
+                    season_fmt(season.year()),
+                    file_path()
+                );
+                Ok(())
+            }
+            Err(e) => Err(format!(
+                "❌ error saving nba stats for {} season at file {:?}: {}",
+                season_fmt(season.year()),
+                file_path(),
+                e
+            )),
+        },
+        Err(e) => Err(format!(
+            "❌ failed to fetch {} stats for {} season: {:?}",
+            year, stat, e
+        )),
+    }
 }

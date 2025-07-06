@@ -5,6 +5,7 @@ use std::fs;
 use std::str::FromStr;
 use warheads::corrections::correction::Correction;
 use warheads::corrections::correction_loader::load_corrections;
+use warheads::corrections::corrector::Corrector;
 use warheads::dapi::extract::json_to_hashmap;
 use warheads::format::language::partition;
 use warheads::format::path_manager::nba_correction_dir;
@@ -30,7 +31,7 @@ pub fn test_load_correction() {
     let mut actual_corrections = load_corrections(season_id.year(), kind).unwrap_or_else(|e| {
         panic!(
             "Failed to load corrections from: {}\n{e}",
-            nba_correction_dir(season_id, kind)
+            nba_correction_dir(&season_id, kind)
         )
     });
 
@@ -263,82 +264,24 @@ fn test_apply_corrections() {
 
     let contents = bad_data();
 
-    eprintln!("contents: {} \n____________________________", contents);
+    let mut daps = HashMap::new();
 
-    let value = serde_json::from_str(&contents)
-        .unwrap_or_else(|e| panic!("failed to parse JSON from test file wtf: {e}"));
+    let domain = (SeasonId::from(20024), Player);
 
-    let mut games_by_id = json_to_hashmap(&value).unwrap_or_else(|e| {
-        panic!(
-            "failed to create hashmap of identity -> string \n\
-                    from the file `tests/data/data.json`: {e}"
-        )
-    });
+    daps.insert(domain, contents);
 
-    // let game_list = get_rows_from_file(PathBuf::from("tests/data/data.json"))?;
-
-    let mut to_remove = Vec::new();
-
-    for correction in corrections {
-        let id = correction.identity();
-
-        if let Some(game) = games_by_id.get(&id) {
-            if correction.delete {
-                to_remove.push(id.clone());
-            } else {
-                games_by_id.insert(id, correction.correct_string(game.clone()));
-            }
+    match corrections.apply(&mut daps) {
+        Ok(_) => {
+            println!("success");
         }
-    }
+        Err(_) => {
+            println!("failure");
+        }
+    };
 
-    dbg!(&games_by_id);
+    let expected = expected_file();
 
-    for deletion in to_remove {
-        games_by_id.remove(&deletion);
-    }
-
-    // dbg!(&games_by_id);
-
-    let mut games = games_by_id.into_values().collect::<Vec<String>>();
-
-    games.sort();
-
-    for game in games.iter() {
-        eprintln!("GAME: {}", game);
-    }
-
-    let expected = expected_file().to_string();
-
-    let corrected = partition(contents, games);
-    //
-    eprintln!("Corrected ==========================================================================\n{}\n====================================================================================", &corrected);
-
-    // eprintln!("Expected ===========================================================================\n{}\n====================================================================================", &expected);
-
-    // eprintln!("corrected chars: {}\nexpected chars: {}", corrected.len(), expected.len());
-    //
-    // let mut i: usize = 0;
-    //
-    // let mut exp_chars = expected.chars();
-    //
-    // let mut cor_chars = expected.chars();
-    //
-
-    // loop {
-    //     if i == 1277 {
-    //         break;
-    //     }
-    //
-    //     if exp_chars.nth(i) != cor_chars.nth(i) {
-    //         eprintln!("different characters occur at index {i}.");
-    //     }
-    //     else {
-    //         eprintln!("ok ({i}/1276)");
-    //     }
-    //
-    //     i = i + 1;
-    // }
-    //
+    let corrected = daps.get(&domain).unwrap().to_string();
 
     assert_eq!(expected, corrected)
 }

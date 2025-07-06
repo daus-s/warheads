@@ -1,5 +1,7 @@
 use crate::format::language::Columnizable;
 use crate::stats::box_score::BoxScore;
+use crate::stats::domain::Domain;
+use crate::stats::nba_kind::NBAStatKind::{Player, Team};
 use crate::types::{GameId, PlayerId, SeasonId, TeamAbbreviation, TeamId};
 use serde_json::Value;
 use serde_json::Value::Number;
@@ -48,6 +50,18 @@ pub struct Identity {
     pub team_abbr: TeamAbbreviation,
 
     pub game_id: GameId,
+}
+
+impl Identity {
+    pub fn domain(&self) -> Domain {
+        (
+            self.season_id,
+            match self.player_id {
+                None => Team,
+                Some(_) => Player,
+            },
+        )
+    }
 }
 
 impl Debug for Identity {

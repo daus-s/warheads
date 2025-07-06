@@ -1,3 +1,4 @@
+pub mod archive;
 mod box_score_builder;
 mod box_score_stat;
 pub mod extract;

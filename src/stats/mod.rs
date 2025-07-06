@@ -1,4 +1,5 @@
 pub mod box_score;
+pub mod domain;
 pub mod game_metadata;
 pub mod id;
 pub mod nba_kind;

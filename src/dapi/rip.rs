@@ -19,7 +19,7 @@ use serde_json::{from_str, Value};
 use std::collections::HashMap;
 
 pub fn fetch_and_process_nba_games(season_id: SeasonId, stat: NBAStatKind) -> Vec<NBAStat> {
-    match process_nba_games(season_id, stat) {
+    match process_nba_games(&season_id, stat) {
         Ok(games) => games,
 
         // handle corrections, maybe use something other than `result` in the future
@@ -38,8 +38,14 @@ pub fn fetch_and_process_nba_games(season_id: SeasonId, stat: NBAStatKind) -> Ve
                 .map(|mut corr| corr.create())
                 .collect();
 
+            let mut dap = HashMap::new();
+
+            let domain = (season_id, stat);
+
+            dap.insert(domain, nba_data_path(&season_id, stat));
+
             corrections
-                .apply()
+                .apply(&mut dap)
                 .map(|_| fetch_and_process_nba_games(season_id, stat))
                 .unwrap_or_else(|e| panic!("💀 failed to apply corrections: {}", e))
         }
@@ -55,7 +61,7 @@ pub fn fetch_and_process_nba_games(season_id: SeasonId, stat: NBAStatKind) -> Ve
 ///
 
 fn process_nba_games(
-    season_id: SeasonId,
+    season_id: &SeasonId,
     stat: NBAStatKind,
 ) -> Result<Vec<NBAStat>, Vec<CorrectionBuilder>> {
     let file_path = nba_data_path(season_id, stat);

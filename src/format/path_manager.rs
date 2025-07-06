@@ -17,7 +17,7 @@ static DATA: Lazy<String> = Lazy::new(data);
 /// **returns**
 ///
 /// `data/nba/data/{team or players}/{year}/{period}_{team or player}.json`
-pub fn nba_data_path(season: SeasonId, kind: NBAStatKind) -> PathBuf {
+pub fn nba_data_path(season: &SeasonId, kind: NBAStatKind) -> PathBuf {
     PathBuf::from(format!(
         "{}/nba/data/{}/{}/{}_{}",
         *DATA,
@@ -28,7 +28,7 @@ pub fn nba_data_path(season: SeasonId, kind: NBAStatKind) -> PathBuf {
     ))
 }
 
-pub fn nba_correction_dir(season: SeasonId, kind: NBAStatKind) -> String {
+pub fn nba_correction_dir(season: &SeasonId, kind: NBAStatKind) -> String {
     format!(
         "{}/nba/corrections/{}/{}/{}",
         *DATA,
@@ -39,7 +39,7 @@ pub fn nba_correction_dir(season: SeasonId, kind: NBAStatKind) -> String {
 }
 
 pub fn nba_player_correction_file(
-    season: SeasonId,
+    season: &SeasonId,
     game_id: GameId,
     player_id: PlayerId,
 ) -> String {
@@ -51,7 +51,7 @@ pub fn nba_player_correction_file(
     )
 }
 
-pub fn nba_team_correction_file(season: SeasonId, game_id: GameId, team_id: TeamId) -> String {
+pub fn nba_team_correction_file(season: &SeasonId, game_id: GameId, team_id: TeamId) -> String {
     format!(
         "{}/{}_{}.corr",
         nba_correction_dir(season, Team),

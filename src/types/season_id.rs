@@ -135,8 +135,6 @@ impl<'de> Deserialize<'de> for SeasonId {
     {
         let s = String::deserialize(deserializer)?;
 
-        eprintln!("{}", &s);
-
         let i = s.parse::<i32>().map_err(de::Error::custom)?;
 
         Ok(SeasonId::from(i))

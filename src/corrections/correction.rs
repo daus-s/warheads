@@ -64,16 +64,16 @@ impl Correction {
     /// This is a private function and is called when `fn create ->` is completed.
     ///
     pub fn save(&self) -> io::Result<()> {
-        let path = nba_correction_dir(self.season, self.kind);
+        let path = nba_correction_dir(&self.season, self.kind);
 
         fs::create_dir_all(&path)?;
 
         let json = serde_json::to_string_pretty(self)?;
 
         let filepath = match self.kind {
-            Team => nba_team_correction_file(self.season, self.game_id.clone(), self.team_id),
+            Team => nba_team_correction_file(&self.season, self.game_id.clone(), self.team_id),
             Player => nba_player_correction_file(
-                self.season,
+                &self.season,
                 self.game_id.clone(),
                 self.player_id.unwrap().clone(),
             ),
@@ -168,7 +168,14 @@ impl Debug for Correction {
             },
             match self.delete {
                 true => "del".to_string(),
-                false => format!("[.{}.]", self.corrections.len()),
+                false => format!(
+                    "corrections: {}",
+                    self.corrections
+                        .iter()
+                        .map(|(col, _val)| format!("{col}"))
+                        .collect::<Vec<String>>()
+                        .join(", ")
+                ),
             }
         )
     }

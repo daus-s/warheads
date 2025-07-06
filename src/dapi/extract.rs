@@ -3,19 +3,14 @@ use crate::dapi::box_score_builder::BoxScoreBuilder;
 use crate::dapi::box_score_stat::BoxScoreStat;
 use crate::format::language::box_score_value_to_string;
 use crate::stats::id::{Identifiable, Identity};
-use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::stat_column::StatColumn;
 use crate::stats::stat_column::StatColumn::*;
 use crate::stats::stat_value::StatValue;
-use crate::types::SeasonId;
 use serde_json::Value;
 use std::collections::HashMap;
-use std::fs;
-use std::path::PathBuf;
 
-type Domain = (SeasonId, NBAStatKind);
 pub fn json_to_hashmap(value: &Value) -> Result<HashMap<Identity, String>, String> {
-    // dbg!(value);
+    dbg!(value);
 
     let result_set = get_result_set(&value)?;
 
@@ -55,20 +50,6 @@ pub fn get_rows(set: &Value) -> Result<Vec<Value>, String> {
         .and_then(|r| r.as_array())
         .ok_or_else(|| "Missing or invalid 'rowSet' field")?
         .clone())
-}
-
-fn get_rows_from_file(filepath: PathBuf) -> Result<Vec<Value>, String> {
-    let content =
-        fs::read_to_string(&filepath).map_err(|_| format!("failed to read file {:?}", filepath))?;
-
-    let json: Value = serde_json::from_str(&content)
-        .map_err(|e| format!("failed to parse JSON from file: {}", e))?;
-
-    let set = get_result_set(&json).map_err(|e| format!("failed to get result set: {}", e))?;
-
-    let rows = get_rows(&set).map_err(|e| format!("failed to get rows: {}", e))?;
-
-    Ok(rows)
 }
 
 pub fn record_stat<T>(
