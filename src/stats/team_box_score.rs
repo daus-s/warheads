@@ -1,29 +1,28 @@
-use crate::stats::box_score::BoxScore;
-use crate::stats::percent::percent;
-use crate::stats::player_box_score::PlayerBoxScore;
-use crate::stats::statify::SafetyValve;
-use crate::stats::types::{GameResult, MatchupString};
-use crate::stats::visiting::Visiting;
-use crate::stats::visiting::Visiting::{Away, Home};
-use chrono::NaiveDate;
-use derive_builder::Builder;
-use crate::format::matchup::{format_matchup, opponent};
 use crate::format::season::season_fmt;
-use serde::{Deserialize, Serialize};
+use crate::stats::box_score::BoxScore;
+use crate::stats::percent::percent_string;
+use crate::stats::player_box_score::PlayerBoxScore;
+use crate::stats::shooting::{Attempts, Makes};
+use crate::stats::stat_column::StatColumn;
+use crate::stats::stat_value::StatValue;
+use crate::stats::visiting::Visiting;
+use crate::types::*;
+use derive_builder::Builder;
+use serde::Serialize;
 use std::fmt::Formatter;
 
-#[derive(Builder, Clone, Debug, Serialize, Deserialize)]
+#[derive(Builder, Clone, Debug, Serialize)]
 pub struct TeamBoxScore {
     // team identification
-    team_abbreviation: String,
-    team_name: String,
-    team_id: u64,
+    team_abbreviation: TeamAbbreviation,
+    team_name: TeamName,
+    team_id: TeamId,
 
     // game data
-    season_id: i32,
+    season_id: SeasonId,
     matchup: MatchupString,
-    game_date: NaiveDate,
-    game_id: String,
+    game_date: GameDate,
+    game_id: GameId,
 
     //roster
     roster: Vec<PlayerBoxScore>,
@@ -31,30 +30,38 @@ pub struct TeamBoxScore {
     // classic box score
     wl: GameResult,
 
-    min: Option<u32>,
-    fgm: Option<u32>,
-    fga: Option<u32>,
-    fg3m: Option<u32>,
-    fg3a: Option<u32>,
-    ftm: Option<u32>,
-    fta: Option<u32>,
-    oreb: Option<u32>,
-    dreb: Option<u32>,
-    reb: Option<u32>,
-    ast: Option<u32>,
-    stl: Option<u32>,
-    blk: Option<u32>,
-    tov: Option<u32>,
-    pf: Option<u32>, //personal fouls
-    pts: Option<u32>,
+    min: Minutes,
+    fgm: FieldGoalMakes,
+    fga: FieldGoalAttempts,
+
+    fg3m: ThreePointMakes,
+    fg3a: ThreePointAttempts,
+
+    ftm: FreeThrowMakes,
+    fta: FreeThrowAttempts,
+
+    oreb: OffensiveRebounds,
+    dreb: DefensiveRebounds,
+    reb: Rebounds,
+
+    ast: Assists,
+
+    stl: Steals,
+
+    blk: Blocks,
+
+    tov: Turnovers,
+
+    pf: PersonalFouls, //personal fouls
+    pts: Points,
 
     //advanced stats
-    plus_minus: Option<i32>,
+    plus_minus: PlusMinus,
 }
 
 impl TeamBoxScore {
     // not sure what type to return
-    pub fn game_id(&self) -> String {
+    pub fn game_id(&self) -> GameId {
         self.game_id.clone()
     }
 
@@ -62,46 +69,12 @@ impl TeamBoxScore {
         self.roster.push(value);
     }
 
-    pub fn home_or_away(&self) -> Visiting {
-        let team = &self.team_abbreviation.trim();
-
-        let MatchupString(matchup) = self.matchup.clone();
-
-        match matchup.split_whitespace().collect::<Vec<&str>>().as_slice() {
-            [home, "vs.", away] => {
-                if home == team {
-                    Home
-                } else if away == team {
-                    Away
-                } else {
-                    panic!(
-                        "team {} is neither of the contestants {} @ {}. ",
-                        self.team_abbreviation, away, home
-                    )
-                }
-            }
-            [away, "@", home] => {
-                if home == team {
-                    Home
-                } else if away == team {
-                    Away
-                } else {
-                    panic!(
-                        "team {} is neither of the contestants {} @ {}. ",
-                        self.team_abbreviation, away, home
-                    )
-                }
-            }
-            e => panic!("could not parse game format. {:#?}", e),
-        }
-    }
-
-    pub fn team_abbr(&self) -> String {
+    pub fn team_abbr(&self) -> TeamAbbreviation {
         self.team_abbreviation.clone()
     }
 
     pub fn season_str(&self) -> String {
-        season_fmt(self.season_id - 20000)
+        season_fmt(self.season_id.year())
     }
 
     pub fn elo(&self) -> i32 {
@@ -110,45 +83,57 @@ impl TeamBoxScore {
 }
 
 impl BoxScore for TeamBoxScore {
-    fn season(&self) -> i32 {
+    fn season(&self) -> SeasonId {
         self.season_id
     }
 
-    fn game_id(&self) -> String {
-        self.game_id.clone()
+    fn game_id(&self) -> &GameId {
+        &self.game_id
     }
 
-    fn player_id(&self) -> Option<u64> {
+    fn player_id(&self) -> Option<PlayerId> {
         None
     }
 
-    fn team_id(&self) -> u64 {
+    fn team_id(&self) -> TeamId {
         self.team_id
     }
 
-    fn team_abbr(&self) -> String {
-        self.team_abbreviation.clone()
+    fn team_abbr(&self) -> &TeamAbbreviation {
+        &self.team_abbreviation
+    }
+
+    fn home_or_away(&self) -> Visiting {
+        self.matchup.home_or_away()
+    }
+
+    fn set(&mut self, col: &StatColumn, val: &StatValue) {
+        todo!()
     }
 }
 
 impl std::fmt::Display for TeamBoxScore {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{} - {}\n{} {} against {}.\npts: {}\tfg: {}/{} {}\t3pt: {}/{} ({:.1}%)\tft: {}/{} ({:.1}%)\nreb: {}\toff: {}\tdef: {}\nblocks: {}\t steals: {}\nfouls: {}\t turnovers: {}\n",
-               format_matchup(self.matchup.string()),
+               self.matchup,
                self.game_date, self.team_abbreviation,
                match self.wl {
                    GameResult::Win => "win",
                    GameResult::Loss => "loss",
                    GameResult::Draw => panic!("nba games cannot end in a tie")
                },
-               opponent(self.matchup.string().as_str(), &self.team_abbreviation),
-               self.pts.unwrap_f("-"),
-               self.fgm.unwrap_f("-"), self.fga.unwrap_f("-"), percent(self.fgm, self.fga),
-               self.fg3m.unwrap_f("-"), self.fg3a.unwrap_f("-"), percent(self.fg3m, self.fg3a),
-               self.ftm.unwrap_f("-"), self.fta.unwrap_f("-"), percent(self.ftm, self.fta),
-               self.reb.unwrap_f("-"), self.oreb.unwrap_f("-"), self.dreb.unwrap_f("-"),
-               self.blk.unwrap_f("-"), self.stl.unwrap_f("-"),
-               self.pf.unwrap_f("-"), self.tov.unwrap_f("-")
+               match self.matchup.opponent(&self.team_abbreviation)
+               {
+                   Ok(t) => t.to_string(),
+                   Err(e) => e,
+               },
+               self.pts,
+               self.fgm, self.fga, percent_string(self.fgm.makes() as i32, (self.fga.attempts().unwrap_or_else(|| 0)) as i32),
+               self.fg3m, self.fg3a, percent_string(self.fg3m.makes() as i32, (self.fg3a.attempts().unwrap_or_else(|| 0)) as i32),
+               self.ftm, self.fta, percent_string(self.ftm.makes() as i32, (self.fta.attempts().unwrap_or_else(|| 0)) as i32),
+               self.reb, self.oreb, self.dreb,
+               self.blk, self.stl,
+               self.pf, self.tov
         )
     }
 }

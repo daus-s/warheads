@@ -11,22 +11,23 @@ impl Identifiable for Correction {
 
         match self.kind {
             NBAStatKind::Team => Identity {
-                year: self.season,
-                game_id: self.game_id.replace("\"", ""),
+                season_id: self.season,
+                game_id: self.game_id.clone(),
                 player_id: None,
                 team_id: self.team_id,
                 team_abbr: self.team_abbr.clone(),
             },
-            NBAStatKind::Player => Identity {
-                year: self.season,
-                game_id: self.game_id.replace("\"", "").parse().unwrap(),
-                player_id: Some(
-                    self.player_id
-                        .unwrap_or_else(|| panic!("no player id for a player correction object. ")),
-                ),
-                team_id: self.team_id,
-                team_abbr: self.team_abbr.clone(),
-            },
+            NBAStatKind::Player => {
+                Identity {
+                    season_id: self.season,
+                    game_id: self.game_id.clone(),
+                    player_id: Some(self.player_id.unwrap_or_else(|| {
+                        panic!("💀 no player id for a player correction object. ")
+                    })),
+                    team_id: self.team_id,
+                    team_abbr: self.team_abbr.clone(),
+                }
+            }
             NBAStatKind::LineUp => todo!("lineup stats not yet implemented"),
         }
     }

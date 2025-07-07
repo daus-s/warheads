@@ -11,3 +11,5 @@ pub mod stats;
 pub mod tui;
 
 pub mod storage;
+
+pub mod types;

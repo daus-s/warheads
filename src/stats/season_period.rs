@@ -1,8 +1,9 @@
 use crate::format::stat_path_formatter::StatPathFormatter;
+use crate::types::SeasonId;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Eq, Hash)]
 #[serde(rename_all = "PascalCase")]
 pub enum SeasonPeriod {
     PreSeason,
@@ -11,6 +12,19 @@ pub enum SeasonPeriod {
     PlayIn, //todo
     NBACup,
     AllStarGame, //ignore
+}
+
+impl SeasonPeriod {
+    pub fn get_offset(&self) -> i32 {
+        match self {
+            SeasonPeriod::PreSeason => 10_000,
+            SeasonPeriod::RegularSeason => 20_000,
+            SeasonPeriod::PostSeason => 40_000,
+            SeasonPeriod::PlayIn => 60_000,
+            SeasonPeriod::NBACup => 20_000,
+            SeasonPeriod::AllStarGame => 30_000,
+        }
+    }
 }
 
 impl Display for SeasonPeriod {
@@ -46,18 +60,21 @@ impl StatPathFormatter for SeasonPeriod {
     }
 }
 
-pub fn minimum_spanning_era(year: i32) -> Vec<SeasonPeriod> {
-    let mut minimum_spanning_era= if year >= 2003 {
-        vec![SeasonPeriod::PreSeason, SeasonPeriod::RegularSeason]
+pub fn minimum_spanning_era(year: i32) -> Vec<SeasonId> {
+    let mut minimum_spanning_era = if year >= 2003 {
+        vec![
+            SeasonId::from((year, SeasonPeriod::PreSeason)),
+            SeasonId::from((year, SeasonPeriod::RegularSeason)),
+        ]
     } else {
-        vec![SeasonPeriod::RegularSeason]
+        vec![SeasonId::from((year, SeasonPeriod::RegularSeason))]
     };
 
     if year >= 2020 {
-        minimum_spanning_era.push(SeasonPeriod::PlayIn);
+        minimum_spanning_era.push(SeasonId::from((year, SeasonPeriod::PlayIn)));
     }
 
-    minimum_spanning_era.push(SeasonPeriod::PostSeason);
+    minimum_spanning_era.push(SeasonId::from((year, SeasonPeriod::PostSeason)));
 
     minimum_spanning_era
 }

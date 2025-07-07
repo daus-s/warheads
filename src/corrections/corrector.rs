@@ -1,32 +1,40 @@
 use crate::corrections::correction::Correction;
 use crate::corrections::overwrite;
-use crate::format::extract::json_to_hashmap;
+use crate::dapi::archive::Archive;
+use crate::dapi::extract::json_to_hashmap;
+use crate::stats::domain::Domain;
 use crate::stats::id::{Identifiable, Identity};
 use std::collections::HashMap;
-use std::fs;
-use serde_json::Value;
-use crate::format::path_manager::nba_data_path;
 
 pub trait Corrector {
-    fn apply(&self) -> Result<(), String>;
+    ///applies the corrections from the self and writes it to an Archive object
+    fn apply<A: Archive>(&self, archives: &mut HashMap<Domain, A>) -> Result<(), String>;
 }
 
 impl Corrector for Vec<Correction> {
-    fn apply(&self) -> Result<(), String> {
-
+    fn apply<A>(&self, archives: &mut HashMap<Domain, A>) -> Result<(), String>
+    where
+        A: Archive,
+    {
         if self.is_empty() {
             return Ok(());
         }
 
-        let (season, kind, period) = self[0].domain();
+        let mut files: HashMap<Domain, HashMap<Identity, String>> = HashMap::new();
 
-        let data_path = nba_data_path(season, kind, period);
+        for (&domain, archive) in archives.into_iter() {
+            let value = serde_json::from_str(&archive.contents()).map_err(|e| {
+                format!(
+                    "❌ failed to parse a JSON object from the archive {}: {e}",
+                    archive.path()
+                )
+            })?;
 
-        let contents = fs::read_to_string(&data_path)
-            .unwrap_or_else(|e| format!("failed to read file {:?}: {e}", data_path));
+            let map = json_to_hashmap(&value)
+                .map_err(|e| format!("❌ failed to convert JSON object into a hashmap: {e}"))?;
 
-        let mut games_by_id = json_to_hashmap(&Value::from(contents))
-            .map_err(|e| format!("failed to convert json to rows: {}", e))?;
+            files.insert(domain, map);
+        }
 
         let mut to_remove = Vec::new();
 
@@ -34,24 +42,37 @@ impl Corrector for Vec<Correction> {
         // search with O(1) lookup in hashmap (hash might be slow for Identity)
 
         for correction in self {
+            let domain = correction.domain();
 
-            let id = &correction.identity();
+            let file = files.get_mut(&domain).ok_or_else(|| {
+                "❌ correction didnt have a relevant archive to be applied to".to_string()
+            })?;
 
-            if let Some(game) = games_by_id.get_mut(id) {
+            let id = correction.identity();
+
+            if let Some(game) = file.get_mut(&id) {
                 if correction.delete {
-                    to_remove.push(id.clone());
+                    to_remove.push(id);
                 } else {
-                    *game = correction.correct(game.to_string());
+                    *game = correction.correct_string(game.to_string());
                 }
             }
         }
 
         for id in to_remove {
-            games_by_id.remove(&id);
+            if let Some(map) = files.get_mut(&id.domain()) {
+                map.remove(&id);
+            }
         }
 
-        let games_vector = games_by_id.into_values().collect::<Vec<String>>();
+        for (domain, games_by_id) in files {
+            let mut games_vector = games_by_id.into_values().collect::<Vec<String>>();
 
-        overwrite::write_to_data_file(self[0].domain(), games_vector)
+            games_vector.sort(); //this is only needed to make the
+
+            overwrite::overwrite(domain, games_vector, archives.get_mut(&domain).unwrap())?;
+        }
+
+        Ok(())
     }
 }

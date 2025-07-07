@@ -1,4 +1,4 @@
-use warheads::dapi::hunting::{chronicle_nba, observe_nba};
+use warheads::dapi::hunting::{chronicle_nba, observe_nba, revise_nba};
 
 #[tokio::main]
 async fn main() {
@@ -6,5 +6,8 @@ async fn main() {
 
     observe_nba().await;
 
+    revise_nba();
+
     chronicle_nba().await;
+
 }

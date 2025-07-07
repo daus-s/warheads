@@ -1,8 +1,8 @@
-use std::fmt::{Display, Formatter};
 use derivative::Derivative;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use serde_json::Value::Null;
+use std::fmt::{Display, Formatter};
 
 ///
 /// StatValue
@@ -44,6 +44,16 @@ impl StatValue {
 
     pub fn clear(&mut self) {
         self.0 = Null
+    }
+
+    pub fn to_season_id(&self) -> Option<i32> {
+        match &self.0 {
+            Value::Number(i) => match i.as_i64() {
+                Some(i) => Some(i as i32),
+                None => None,
+            },
+            _ => None,
+        }
     }
 }
 

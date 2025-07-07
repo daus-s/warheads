@@ -1,7 +1,7 @@
 use crate::format::stat_path_formatter::StatPathFormatter;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
-#[derive(Copy, Clone, Serialize, Deserialize, Eq, PartialEq)]
+#[derive(Copy, Clone, Serialize, Deserialize, Eq, PartialEq, Hash)]
 pub enum NBAStatKind {
     Team,
     Player,

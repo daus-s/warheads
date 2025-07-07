@@ -1,17 +1,41 @@
 use crate::corrections::correction::Correction;
 use crate::format::path_manager::nba_correction_dir;
+use crate::format::season::season_fmt;
 use crate::stats::nba_kind::NBAStatKind;
+use crate::stats::season_period::minimum_spanning_era;
 use std::fs;
 use std::fs::DirEntry;
-use crate::stats::season_type::SeasonPeriod;
 
-pub fn load_corrections(szn: i32, kind: NBAStatKind, period: SeasonPeriod) -> Result<Vec<Correction>, String> {
-    let c_path = nba_correction_dir(szn, kind, period);
+pub fn load_corrections(year: i32, kind: NBAStatKind) -> Result<Vec<Correction>, String> {
+    let season = minimum_spanning_era(year);
 
-    let files = fs::read_dir(&c_path)
-        .map_err(|e| format!("failed to read directory {}: {}", &c_path, e))?;
+    let mut corrections = Vec::new();
 
-    load_corrections_from_file(files)
+    for period in season {
+        let c_path = nba_correction_dir(&period, kind);
+
+        fs::create_dir_all(&c_path)
+            .map_err(|e| format!("❌ failed to create directory path:{e}"))?;
+
+        let files = fs::read_dir(&c_path)
+            .map_err(|e| format!("❌ failed to read directory {}: {}", &c_path, e))?;
+
+        let dir = load_corrections_from_file(files);
+
+        if let Ok(mut loaded_corrections) = dir {
+            corrections.append(&mut loaded_corrections);
+        } else if let Err(e) = dir {
+            return Err(format!(
+                "❌ failed to load corrections for the {} {}: {e}",
+                season_fmt(year),
+                period.period()
+            ));
+        } else {
+            unreachable!()
+        }
+    }
+
+    Ok(corrections)
 }
 
 fn load_corrections_from_file(
@@ -19,11 +43,11 @@ fn load_corrections_from_file(
 ) -> Result<Vec<Correction>, String> {
     files
         .map(|file_result| {
-            let path = file_result.map_err(|e| format!("File error: {}", e))?;
+            let path = file_result.map_err(|e| format!("❌ file error: {}", e))?;
 
             let path_buf = path.path();
 
-            let path_str = path_buf.to_str().ok_or("Invalid file path encoding")?;
+            let path_str = path_buf.to_str().ok_or("❌ invalid file path encoding")?;
 
             read_correction(path_str)
         })
@@ -32,9 +56,9 @@ fn load_corrections_from_file(
 
 fn read_correction(filename: &str) -> Result<Correction, String> {
     fs::read_to_string(filename)
-        .map_err(|e| format!("Failed to read file {}: {}", filename, e))
+        .map_err(|e| format!("❌ failed to read file {}: {}", filename, e))
         .and_then(|json| {
             serde_json::from_str(&json)
-                .map_err(|e| format!("Failed to parse JSON in {}: {}", filename, e))
+                .map_err(|e| format!("❌ failed to parse JSON in {}: {}", filename, e))
         })
 }

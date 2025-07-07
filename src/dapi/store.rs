@@ -1,6 +1,6 @@
 use crate::dapi::hunting::load_nba_season_from_file;
-use indicatif::{ProgressBar, ProgressStyle};
 use crate::stats::team_box_score::TeamBoxScore;
+use indicatif::{ProgressBar, ProgressStyle};
 
 pub async fn save_nba_season(year: i32) {
     let team_games = load_nba_season_from_file(year);
@@ -21,6 +21,11 @@ async fn sub_save(games: Vec<TeamBoxScore>) {
             .unwrap()
             .progress_chars("#>-"),
     );
+
+    pb.set_message(format!(
+        "saving box scores for the {} season. ",
+        games.get(0).unwrap().season_str()
+    ));
 
     for game in &games {
         crate::storage::store_three::save_nba_game(client.clone(), game.clone())
