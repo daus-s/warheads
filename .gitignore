@@ -12,6 +12,7 @@ services/*/
 # ignore as to not upload sensitive data to any repos, store locally with backups
 data/
 backups/
+store/
 
 #previous versions specific stuff that could be useful
 .deprecated/

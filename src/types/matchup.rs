@@ -52,7 +52,7 @@ impl MatchupString {
     ///
     /// let matchup: MatchupString = "MEM @ LAL".parse().unwrap();
     ///
-    /// let opp = matchup.opponent();
+    /// let opp = matchup.opponent(&"LAL".parse().unwrap());
     ///
     /// assert_eq!(Ok(TeamAbbreviation("MEM".to_string())), opp);
     /// ```

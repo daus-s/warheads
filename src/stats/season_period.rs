@@ -1,9 +1,9 @@
 use crate::format::stat_path_formatter::StatPathFormatter;
 use crate::types::SeasonId;
 use serde::{Deserialize, Serialize};
-use std::fmt::{Display, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Serialize, Deserialize, Eq, Hash)]
 #[serde(rename_all = "PascalCase")]
 pub enum SeasonPeriod {
     PreSeason,
@@ -27,7 +27,7 @@ impl SeasonPeriod {
     }
 }
 
-impl Display for SeasonPeriod {
+impl Debug for SeasonPeriod {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let s: &str = match self {
             SeasonPeriod::PreSeason => "Pre%20Season",
@@ -36,6 +36,21 @@ impl Display for SeasonPeriod {
             SeasonPeriod::PlayIn => "PlayIn",
             SeasonPeriod::NBACup => "IST", //in season tournament
             SeasonPeriod::AllStarGame => "All%20Star",
+        };
+
+        write!(f, "{}", s)
+    }
+}
+
+impl Display for SeasonPeriod {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let s: &str = match self {
+            SeasonPeriod::PreSeason => "PreSeason",
+            SeasonPeriod::RegularSeason => "RegularSeason",
+            SeasonPeriod::PostSeason => "Playoffs",
+            SeasonPeriod::PlayIn => "PlayIn",
+            SeasonPeriod::NBACup => "NBACup", //in season tournament
+            SeasonPeriod::AllStarGame => "AllStarGame",
         };
 
         write!(f, "{}", s)

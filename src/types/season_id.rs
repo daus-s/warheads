@@ -75,7 +75,7 @@ impl TryFrom<&Value> for SeasonId {
             Err(e) => {
                 eprintln!("⚠️ failed to parse an integer from the SeasonId field: {e}");
 
-                return Err(());
+                Err(())
             }
         }
     }

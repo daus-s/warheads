@@ -139,9 +139,7 @@ pub async fn query_nba(
         HeaderValue::from_str("macOS").unwrap(),
     );
 
-    let season_param = season_fmt(season.year());
 
-    let period = season.period();
 
     // if more url-encoded characters are needed you can use `urlencoding` crate
     let url = format!(
@@ -149,10 +147,13 @@ pub async fn query_nba(
         https://stats.nba.com/stats/leaguegamelog?Counter=1000&DateFrom=&DateTo=&\
         Direction=DESC&ISTRound=&\
         LeagueID=00&\
-        PlayerOrTeam={stat_kind}&\
-        Season={season_param}&\
-        SeasonType={period}&\
-        Sorter=DATE"
+        PlayerOrTeam={}&\
+        Season={}&\
+        SeasonType={:?}&\
+        Sorter=DATE",
+        stat_kind,
+        season_fmt(season.year()),
+        season.period()
     );
 
     let response = client.get(&url).headers(headers).send().await?;
