@@ -5,7 +5,6 @@ use crate::stats::types::BoolInt;
 use crate::types::*;
 use serde_json::{Number, Value};
 use std::collections::HashMap;
-use std::convert::Infallible;
 use std::str::FromStr;
 
 impl MapReader for HashMap<StatColumn, Value> {

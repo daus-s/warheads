@@ -112,7 +112,7 @@ impl Display for Identity {
 ///
 impl Identifiable for String {
     fn identity(&self) -> Identity {
-        let mut columns = self.columns();
+        let columns = self.columns();
 
         match columns.as_slice() {
             [season_id, player_id, _player_name, team_id, team_abbr, _team_name, game_id, _game_date, _matchup, _wl, _min, _fgm, _fga, _fg_pct, _fg3m, _fg3a, _fg3_pct, _ftm, _fta, _ft_pct, _oreb, _dreb, _reb, _ast, _stl, _blk, _tov, _pf, _pts, _plus_minus, _fantasy_pts, _video_available] =>
@@ -160,7 +160,7 @@ impl Identifiable for String {
                     game_id: GameId(gid),
                 }
             }
-            _ => panic!("unrecognized game schema"),
+            _ => panic!("💀 unrecognized schema. could not extract an identity from the box score string. "),
         }
     }
 }
@@ -197,19 +197,18 @@ impl Identifiable for Value {
                     game_id: GameId(game_id.to_string()),
                 }
             }
-            [Value::String(szn), Number(team_id), Value::String(team_abbr), _, Value::String(game_id), _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _] => {
+            [szn, Number(team_id), Value::String(team_abbr), _, Value::String(game_id), _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _] => {
                 Identity {
-                    season_id: SeasonId::from(
-                        szn.parse::<i32>()
-                            .expect("💀 expect szn column to be an i64 (i32)"),
-                    ),
+                    season_id: SeasonId::try_from(szn).expect("💀 couldnt parse season_id from JSON value"),
                     player_id: None,
                     team_id: TeamId(team_id.as_u64().expect("💀 expect team id to be a u64")),
                     team_abbr: TeamAbbreviation(team_abbr.to_string()),
                     game_id: GameId(game_id.to_string()),
                 }
             }
-            _ => panic!("💀 row length is unrecognized. not a player or team stat"),
+            _ => panic!("💀 unrecognized schema. could not match to a player or team stat"),
         }
     }
 }
+
+

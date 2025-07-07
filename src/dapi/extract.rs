@@ -4,14 +4,11 @@ use crate::dapi::box_score_stat::BoxScoreStat;
 use crate::format::language::box_score_value_to_string;
 use crate::stats::id::{Identifiable, Identity};
 use crate::stats::stat_column::StatColumn;
-use crate::stats::stat_column::StatColumn::*;
 use crate::stats::stat_value::StatValue;
 use serde_json::Value;
 use std::collections::HashMap;
 
 pub fn json_to_hashmap(value: &Value) -> Result<HashMap<Identity, String>, String> {
-    dbg!(value);
-
     let result_set = get_result_set(&value)?;
 
     let rows = get_rows(&result_set)?;

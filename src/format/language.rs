@@ -15,6 +15,7 @@ impl Columnizable for String {
         self.replace(['[', ']'], "")
             .split(",")
             .map(|x| x.to_string().trim().into())
+            .filter(|s| s != "")
             .collect()
     }
 }
@@ -91,7 +92,7 @@ pub fn box_score_value_to_string(value: &Value) -> String {
         }
         [season_id, team_id, team_abbr, team_name, game_id, game_date, matchup, wl, min, fgm, fga, fg_pct, fg3m, fg3a, fg3_pct, ftm, fta, ft_pct, oreb, dreb, reb, ast, stl, blk, tov, pf, pts, plus_minus, video_available] =>
         {
-            format!("[{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},\n]",
+            format!("[{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}]",
                       StatPair(SEASON_ID, StatValue::from_value(season_id.clone())),
                       StatPair(TEAM_ID, StatValue::from_value(team_id.clone())),
                       StatPair(TEAM_ABBREVIATION, StatValue::from_value(team_abbr.clone())),

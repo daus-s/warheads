@@ -4,7 +4,6 @@ use crate::stats::stat_value::StatValue;
 use crate::stats::team_box_score::TeamBoxScore;
 use crate::stats::visiting::Visiting;
 use crate::types::*;
-use crate::types::*;
 use derive_builder::Builder;
 use serde::Serialize;
 use std::fmt::Formatter;

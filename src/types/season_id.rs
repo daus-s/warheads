@@ -47,10 +47,10 @@ impl From<i32> for SeasonId {
             10_000 => PreSeason,
             20_000 => RegularSeason,
             40_000 => PostSeason,
-            60_000 => PlayIn,
+            50_000 => PlayIn,
             20_000 => NBACup, //todo: distinguish between these games--caitlin clark effect
             30_000 => AllStarGame,
-            _ => unreachable!(" no other season period offsets exist. "),
+            _ => panic!("💀 no other season period offsets exist:  {per_int}"),
         };
 
         SeasonId { year, period }

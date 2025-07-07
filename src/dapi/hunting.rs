@@ -69,7 +69,7 @@ pub async fn observe_nba() {
 
     let begin = 1946; //first year of the nba in record is 1946-1947 szn
 
-    for year in begin..curr_year + seasonal_depression {
+    for year in begin..curr_year+seasonal_depression {
         for era in minimum_spanning_era(year) {
             if let Err(msg) = gather::fetch_and_save_nba_stats(&era, Player).await {
                 eprintln!("{}", msg);
@@ -169,7 +169,7 @@ pub async fn query_nba(
     }
 }
 
-fn revise_nba() {
+pub fn revise_nba() {
     let DT { year, month, day } = destructure_dt(Local::now());
 
     let seasonal_depression = if month > 8 || month == 8 && day >= 14 {
@@ -197,11 +197,6 @@ fn revise_nba() {
                     "{msg}\n⚠️ failed to overwrite NBA player data for {}",
                     season_fmt(szn)
                 );
-            } else {
-                println!(
-                    "✅ successfully corrected and overwrote player data for the {} season",
-                    season_fmt(szn)
-                );
             }
         } else if let Err(msg) = player_corrections {
             eprintln!(
@@ -222,11 +217,6 @@ fn revise_nba() {
             if let Err(msg) = corrections.apply(&mut team_archives) {
                 println!(
                     "{msg}\n⚠️ failed to overwrite NBA team data for {}",
-                    season_fmt(szn)
-                );
-            } else {
-                println!(
-                    "✅ successfully corrected and overwrote team data for the {} season",
                     season_fmt(szn)
                 );
             }

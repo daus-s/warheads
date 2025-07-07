@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
 /// `PlayerName` is a  StringWrapper for player names. Included only as a String Wrapper,

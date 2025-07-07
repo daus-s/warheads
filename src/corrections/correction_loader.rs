@@ -3,7 +3,6 @@ use crate::format::path_manager::nba_correction_dir;
 use crate::format::season::season_fmt;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::season_period::minimum_spanning_era;
-use crate::types::SeasonId;
 use std::fs;
 use std::fs::DirEntry;
 

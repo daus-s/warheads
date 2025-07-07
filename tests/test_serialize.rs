@@ -8,5 +8,5 @@ fn test_player_serialization() {
 }
 
 fn read_from_file() -> String {
-    fs::read_to_string("/tests/data/player.json").expect("failed to read from test file")
+    fs::read_to_string("tests/data/player.json").expect("failed to read from test file")
 }

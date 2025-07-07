@@ -8,7 +8,6 @@ use crate::stats::player_box_score::PlayerBoxScore;
 use crate::stats::season_period::minimum_spanning_era;
 use crate::stats::team_box_score::TeamBoxScore;
 use crate::types::SeasonId;
-use reqwest;
 use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;

@@ -2,7 +2,6 @@ use crate::dapi::archive::Archive;
 use crate::format::language::partition;
 use crate::format::season::season_fmt;
 use crate::stats::domain::Domain;
-use std::fmt::Debug;
 
 pub fn overwrite(
     domain: Domain,

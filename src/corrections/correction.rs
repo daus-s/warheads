@@ -109,7 +109,11 @@ impl Correction {
             // this is formatted like the original nba data.
             // our data will be nice and pretty.
 
-            Some(format!("[{}]", cs.join(",")))
+            let corrected_string = format!("[{}]", cs.join(","));
+
+            dbg!(&corrected_string);
+
+            Some(corrected_string)
         }
 
         match (columns.as_slice(), self.kind) {
@@ -122,7 +126,9 @@ impl Correction {
                 [_season_id, _team_id, _team_abbreviation, _team_name, _game_id, _game_date, _matchup, _wl, _min, _fgm, _fga, _fg_pct, _fg3m, _fg3a, _fg3_pct, _ftm, _fta, _ft_pct, _oreb, _dreb, _reb, _ast, _stl, _blk, _tov, _pf, _pts, _plus_minus, _video_available],
                 Team,
             ) => apply_corrections(&mut columns, &self.corrections, team_column_index).unwrap(),
-            _ => {
+            col => {
+                dbg!(col.0);
+
                 eprintln!("columns string was not formatted correctly");
 
                 game.to_string()

@@ -1,5 +1,5 @@
 use crate::stats::se::SerdeEnum;
-use dialoguer::console::{style, Term};
+use dialoguer::console::style;
 use dialoguer::{theme::ColorfulTheme, Input, Select};
 use serde::Serialize;
 use serde_json::{json, Value};

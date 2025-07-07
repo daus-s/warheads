@@ -1,7 +1,7 @@
 use crate::stats::visiting::Visiting;
 use crate::stats::visiting::Visiting::{Away, Home};
 use crate::types::TeamAbbreviation;
-use serde::{Deserializer, Serialize, Serializer};
+use serde::{Serialize, Serializer};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 

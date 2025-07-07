@@ -2,8 +2,8 @@ use crate::format::path_manager::nba_data_path;
 use crate::stats::domain::Domain;
 use crate::stats::nba_kind::NBAStatKind::{Player, Team};
 use crate::stats::season_period::minimum_spanning_era;
+use serde_json::Value;
 use std::collections::HashMap;
-use std::fmt::{Debug, Formatter};
 use std::fs;
 use std::path::PathBuf;
 
@@ -33,6 +33,8 @@ impl Archive for String {
 
 impl Archive for PathBuf {
     fn write(&mut self, new_content: String) -> Result<(), ()> {
+        let _parseable: Value = serde_json::from_str(&new_content).expect("💀 failed to convert new data to JSON. writing to JSON file requires being parseable");
+
         match fs::write(&self, new_content) {
             Ok(_) => Ok(()),
             Err(_e) => Err(()),

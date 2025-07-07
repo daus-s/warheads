@@ -1,6 +1,5 @@
 use crate::stats::shooting::{Attempts, Makes};
 use crate::stats::statify::SafetyValve;
-use crate::types::FieldGoalPercentage;
 use serde::{Serialize, Serializer};
 use std::fmt::{Display, Formatter};
 

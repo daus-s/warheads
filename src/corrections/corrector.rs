@@ -2,12 +2,9 @@ use crate::corrections::correction::Correction;
 use crate::corrections::overwrite;
 use crate::dapi::archive::Archive;
 use crate::dapi::extract::json_to_hashmap;
-use crate::format::path_manager::nba_data_path;
 use crate::stats::domain::Domain;
 use crate::stats::id::{Identifiable, Identity};
-use serde_json::Value;
 use std::collections::HashMap;
-use std::fs;
 
 pub trait Corrector {
     ///applies the corrections from the self and writes it to an Archive object
@@ -47,7 +44,7 @@ impl Corrector for Vec<Correction> {
         for correction in self {
             let domain = correction.domain();
 
-            let mut file = files.get_mut(&domain).ok_or_else(|| {
+            let file = files.get_mut(&domain).ok_or_else(|| {
                 "❌ correction didnt have a relevant archive to be applied to".to_string()
             })?;
 
@@ -63,7 +60,7 @@ impl Corrector for Vec<Correction> {
         }
 
         for id in to_remove {
-            if let Some(mut map) = files.get_mut(&id.domain()) {
+            if let Some(map) = files.get_mut(&id.domain()) {
                 map.remove(&id);
             }
         }

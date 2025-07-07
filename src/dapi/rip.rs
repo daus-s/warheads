@@ -12,11 +12,11 @@ use crate::stats::nba_kind::NBAStatKind::{LineUp, Player, Team};
 use crate::stats::nba_stat::NBAStat;
 use crate::stats::player_box_score::{PlayerBoxScore, PlayerBoxScoreBuilder};
 use crate::stats::stat_column::StatColumn;
-use crate::stats::stat_column::StatColumn::*;
 use crate::stats::team_box_score::{TeamBoxScore, TeamBoxScoreBuilder};
-use crate::types::*;
+use crate::types::{SeasonId, Elo};
 use serde_json::{from_str, Value};
 use std::collections::HashMap;
+use crate::format::season::season_fmt;
 
 pub fn fetch_and_process_nba_games(season_id: SeasonId, stat: NBAStatKind) -> Vec<NBAStat> {
     match process_nba_games(&season_id, stat) {
@@ -68,7 +68,7 @@ fn process_nba_games(
 
     let json = &read_nba_file(file_path);
 
-    let (rows, headers) = parse_season(from_str(json).unwrap());
+    let (rows, headers) = parse_season(from_str(json).expect(&format!("💀 failed to parse a season json object from the {} {} ({})", season_fmt(season_id.year()), season_id.period(), stat)));
 
     season(rows, headers, stat)
 }
@@ -183,11 +183,7 @@ fn fields_to_team_box_score(
         team_name.clone(),
     );
 
-    println!("♻️  creating PlayerBoxScore for {team_name}. id: {team_id} game id: {game_id}\n");
-
     correction_builder.update_meta(meta);
-
-    println!("    failed to record stat:");
 
     record_stat(
         s.game_result(),
@@ -261,17 +257,15 @@ fn fields_to_team_box_score(
     );
 
     if correction_builder.correcting() {
-        eprintln!("\n❌ failed to create a TeamBoxScore for {team_name}. id: {team_id} game id: {game_id}\n");
+        eprintln!("\n❌ failed to create a TeamBoxScore for {team_name}. id: {team_id} game id: {game_id}");
 
         Err(correction_builder)
     } else {
-        println!("    ✅ Success. \n");
-
         let box_score = box_score_builder.build()
             .map_err(|e| format!("{e}"))
             .unwrap_or_else(|e| panic!("💀 failed to create TeamBoxScore: {e}\n💀 GameId: {game_id}\n💀 SeasonId: {season_id}\n💀 TeamId: {team_id}\n💀 TeamAbbreviation: {team_abbr}"));
 
-        println!("✅ successfully created TeamBoxScore for {team_name}. id: {team_id} game id: {game_id}\n");
+        println!("✅ successfully created TeamBoxScore for {team_name}. id: {team_id} game id: {game_id}");
 
         Ok(box_score)
     }
@@ -347,11 +341,7 @@ fn fields_to_player_box_score(
         team_name.clone(),
     );
 
-    println!("♻️  creating PlayerBoxScore for {player_name}. id: {player_id} game id: {game_id}\n");
-
     correction_builder.update_meta(meta);
-
-    println!("    failed to record stat:");
 
     record_stat(
         s.game_result(),
@@ -430,17 +420,16 @@ fn fields_to_player_box_score(
     );
 
     if correction_builder.correcting() {
-        eprintln!("\n❌ failed to create a PlayerBoxScore for {player_name}. id: {player_id} game id: {game_id}\n");
+        eprintln!("\n❌ failed to create a PlayerBoxScore for {player_name}. id: {player_id} game id: {game_id}");
 
         Err(correction_builder)
     } else {
-        println!("\t✅ None. \n");
 
         let box_score = box_score_builder.build()
             .map_err(|e| format!("{e}"))
             .unwrap_or_else(|e| panic!("💀 failed to create PlayerBoxScore: {e}\n💀 GameId: {game_id}\n💀 PlayerId: {player_id}\n💀 SeasonId: {season_id}\n💀 TeamId: {team_id}\n💀 TeamAbbreviation: {team_abbr}"));
 
-        println!("✅ successfully created PlayerBoxScore for {player_name}. id: {player_id} game id: {game_id}\n");
+        println!("✅ successfully created PlayerBoxScore for {player_name}. id: {player_id} game id: {game_id}");
 
         Ok(box_score)
     }
