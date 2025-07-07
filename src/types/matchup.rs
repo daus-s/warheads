@@ -1,7 +1,7 @@
 use crate::stats::visiting::Visiting;
 use crate::stats::visiting::Visiting::{Away, Home};
-use crate::types::TeamAbbreviation;
-use serde::{Serialize, Serializer};
+use crate::types::{SeasonId, TeamAbbreviation};
+use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
@@ -84,6 +84,19 @@ impl Serialize for MatchupString {
         S: Serializer,
     {
         serializer.serialize_str(&self.to_string())
+    }
+}
+
+impl<'de> Deserialize<'de> for MatchupString {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+
+        let matchup = s.parse().map_err(de::Error::custom)?;
+
+        Ok(matchup)
     }
 }
 

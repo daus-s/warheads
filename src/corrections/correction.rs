@@ -111,8 +111,6 @@ impl Correction {
 
             let corrected_string = format!("[{}]", cs.join(","));
 
-            dbg!(&corrected_string);
-
             Some(corrected_string)
         }
 

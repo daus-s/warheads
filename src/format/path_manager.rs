@@ -1,6 +1,7 @@
 use crate::constants::paths::data;
 use crate::format::season::season_path;
 use crate::format::stat_path_formatter::StatPathFormatter as SPF;
+use crate::stats::domain::Domain;
 use crate::stats::id::Identity;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::nba_kind::NBAStatKind::{Player, Team};
@@ -68,11 +69,27 @@ pub fn nba_team_correction_file(season: &SeasonId, game_id: GameId, team_id: Tea
     )
 }
 
-
 /// `nba_storage_path` returns the PathBuf to the location of the processed nba data for storage on
 /// disk.
-pub fn nba_storage_path(id: Identity) -> PathBuf {
-    let s = format!("{}/nba/store/{}/{}/{}_{}",*DATA, season_path(&id.season_id), id.season_id.period(), id.game_id, id.team_abbr);
+pub fn nba_storage_path(season_id: &SeasonId) -> PathBuf {
+    let (_year, period) = season_id.destructure();
+
+    let s = format!(
+        "{}/nba/store/{}/{}/",
+        *DATA,
+        season_path(&season_id),
+        period
+    );
 
     PathBuf::from(s)
+}
+
+pub fn nba_storage_file(id: &Identity) -> PathBuf {
+    let s = format!("{}_{}", id.game_id, id.team_abbr);
+
+    let mut path = nba_storage_path(&id.season_id);
+
+    path.push(s);
+
+    path
 }

@@ -1,9 +1,9 @@
 use crate::stats::shooting::{Attempts, Makes};
 use crate::stats::statify::SafetyValve;
-use serde::{Serialize, Serializer};
+use serde::{Deserialize, Serialize, Serializer};
 use std::fmt::Display;
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct FieldGoalAttempts(pub Option<u8>);
 
 impl Attempts for FieldGoalAttempts {
@@ -18,7 +18,7 @@ impl Display for FieldGoalAttempts {
     }
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct FieldGoalMakes(pub u8);
 
 impl Makes for FieldGoalMakes {
@@ -36,7 +36,7 @@ impl Display for FieldGoalMakes {
 /// `FieldGoalPercentage` is a wrapper of the `Option<f32>` struct. This allows for null values to
 /// represent making 0/0 field goals. field goals have always been recorded so the
 /// previous 2 fields are non-optional.s
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct FieldGoalPercentage(pub Option<f32>);
 
 impl Display for FieldGoalPercentage {

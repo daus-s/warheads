@@ -2,7 +2,7 @@ use crate::dapi::extract::{get_result_set, get_rows, headers};
 use chrono::{DateTime, Datelike, Local, NaiveDate};
 use serde_json::Value;
 
-pub fn parse_date(value: &Value) -> Option<NaiveDate> {
+pub fn value_to_date(value: &Value) -> Option<NaiveDate> {
     match value {
         Value::String(s) => NaiveDate::parse_from_str(&*s, "%Y-%m-%d").ok(),
         _ => {

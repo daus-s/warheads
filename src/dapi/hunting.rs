@@ -69,7 +69,7 @@ pub async fn observe_nba() {
 
     let begin = 1946; //first year of the nba in record is 1946-1947 szn
 
-    for year in begin..curr_year+seasonal_depression {
+    for year in begin..curr_year + seasonal_depression {
         for era in minimum_spanning_era(year) {
             if let Err(msg) = gather::fetch_and_save_nba_stats(&era, Player).await {
                 eprintln!("{}", msg);
@@ -80,10 +80,6 @@ pub async fn observe_nba() {
             }
         }
     }
-}
-
-pub fn process_elo() {
-    todo!("assign elo values to players on a game by game basis")
 }
 
 pub async fn query_nba(
@@ -138,8 +134,6 @@ pub async fn query_nba(
         HeaderName::from_str("sec-ch-ua-platform").unwrap(),
         HeaderValue::from_str("macOS").unwrap(),
     );
-
-
 
     // if more url-encoded characters are needed you can use `urlencoding` crate
     let url = format!(

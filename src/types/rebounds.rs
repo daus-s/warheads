@@ -1,8 +1,8 @@
 use crate::stats::statify::SafetyValve;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Rebounds(pub Option<u8>);
 
 impl Display for Rebounds {
@@ -11,7 +11,7 @@ impl Display for Rebounds {
     }
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct OffensiveRebounds(pub Option<u8>);
 
 impl Display for OffensiveRebounds {
@@ -20,7 +20,7 @@ impl Display for OffensiveRebounds {
     }
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct DefensiveRebounds(pub Option<u8>);
 
 impl Display for DefensiveRebounds {

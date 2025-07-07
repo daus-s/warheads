@@ -33,7 +33,9 @@ impl Archive for String {
 
 impl Archive for PathBuf {
     fn write(&mut self, new_content: String) -> Result<(), ()> {
-        let _parseable: Value = serde_json::from_str(&new_content).expect("💀 failed to convert new data to JSON. writing to JSON file requires being parseable");
+        let _parseable: Value = serde_json::from_str(&new_content).expect(
+            "💀 failed to convert new data to JSON. writing to JSON file requires being parseable",
+        );
 
         match fs::write(&self, new_content) {
             Ok(_) => Ok(()),

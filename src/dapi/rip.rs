@@ -6,6 +6,7 @@ use crate::dapi::gather::read_nba_file;
 use crate::dapi::map_reader::MapReader;
 use crate::dapi::parse::*;
 use crate::format::path_manager::nba_data_path;
+use crate::format::season::season_fmt;
 use crate::stats::game_metadata::GameMetaData;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::nba_kind::NBAStatKind::{LineUp, Player, Team};
@@ -13,10 +14,9 @@ use crate::stats::nba_stat::NBAStat;
 use crate::stats::player_box_score::{PlayerBoxScore, PlayerBoxScoreBuilder};
 use crate::stats::stat_column::StatColumn;
 use crate::stats::team_box_score::{TeamBoxScore, TeamBoxScoreBuilder};
-use crate::types::{SeasonId, Elo};
+use crate::types::{Elo, SeasonId};
 use serde_json::{from_str, Value};
 use std::collections::HashMap;
-use crate::format::season::season_fmt;
 
 pub fn fetch_and_process_nba_games(season_id: SeasonId, stat: NBAStatKind) -> Vec<NBAStat> {
     match process_nba_games(&season_id, stat) {
@@ -68,7 +68,12 @@ fn process_nba_games(
 
     let json = &read_nba_file(file_path);
 
-    let (rows, headers) = parse_season(from_str(json).expect(&format!("💀 failed to parse a season json object from the {} {} ({})", season_fmt(season_id.year()), season_id.period(), stat)));
+    let (rows, headers) = parse_season(from_str(json).expect(&format!(
+        "💀 failed to parse a season json object from the {} {} ({})",
+        season_fmt(season_id.year()),
+        season_id.period(),
+        stat
+    )));
 
     season(rows, headers, stat)
 }
@@ -424,7 +429,6 @@ fn fields_to_player_box_score(
 
         Err(correction_builder)
     } else {
-
         let box_score = box_score_builder.build()
             .map_err(|e| format!("{e}"))
             .unwrap_or_else(|e| panic!("💀 failed to create PlayerBoxScore: {e}\n💀 GameId: {game_id}\n💀 PlayerId: {player_id}\n💀 SeasonId: {season_id}\n💀 TeamId: {team_id}\n💀 TeamAbbreviation: {team_abbr}"));

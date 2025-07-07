@@ -1,5 +1,7 @@
 use crate::format::season::season_fmt;
 use crate::stats::box_score::BoxScore;
+use crate::stats::domain::Domain;
+use crate::stats::nba_kind::NBAStatKind::Team;
 use crate::stats::percent::percent_string;
 use crate::stats::player_box_score::PlayerBoxScore;
 use crate::stats::shooting::{Attempts, Makes};
@@ -8,10 +10,10 @@ use crate::stats::stat_value::StatValue;
 use crate::stats::visiting::Visiting;
 use crate::types::*;
 use derive_builder::Builder;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::fmt::Formatter;
 
-#[derive(Builder, Clone, Debug, Serialize)]
+#[derive(Builder, Clone, Debug, Serialize, Deserialize)]
 pub struct TeamBoxScore {
     // team identification
     team_abbreviation: TeamAbbreviation,
@@ -79,6 +81,10 @@ impl TeamBoxScore {
 
     pub fn elo(&self) -> i32 {
         todo!()
+    }
+
+    pub fn domain(&self) -> Domain {
+        (self.season_id, Team)
     }
 }
 

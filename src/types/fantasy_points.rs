@@ -1,9 +1,9 @@
 use crate::stats::statify::SafetyValve;
-use serde::{Serialize, Serializer};
+use serde::{Deserialize, Serialize, Serializer};
 use std::fmt::{Display, Formatter};
 use std::io;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct FantasyPoints(pub Option<f32>);
 
 impl Display for FantasyPoints {

@@ -78,7 +78,7 @@ impl Display for TeamAbbreviation {
 /// `TeamName` is a validated (todo) String wrapper to represent Team Names and provide the same
 ///  existence checks as the other types in this module
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TeamName(pub String);
 
 impl Display for TeamName {

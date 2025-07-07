@@ -1,6 +1,7 @@
 use crate::stats::se::SerdeEnum;
+use crate::types::SeasonId;
 use chrono::{Datelike, NaiveDate};
-use serde::{Deserialize, Serialize, Serializer};
+use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{json, Value};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
@@ -9,6 +10,19 @@ use std::str::FromStr;
 /// interchangeably in the code base.
 #[derive(Clone, Debug)]
 pub struct GameDate(pub NaiveDate);
+
+impl<'de> Deserialize<'de> for GameDate {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+
+        let date = NaiveDate::parse_from_str(&*s, "%Y-%m-%d").map_err(de::Error::custom)?;
+
+        Ok(GameDate(date))
+    }
+}
 
 impl Display for GameDate {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -58,7 +72,7 @@ impl From<&str> for GameId {
 /// `GameResult` is an enum that represents the result of a game a Win, Loss or a Draw (NFL only.)
 /// implements SerdeEnum as well as functions for `to_str` and `from_str`
 ///
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Deserialize)]
 pub enum GameResult {
     Win,
     Loss,

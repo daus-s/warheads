@@ -5,10 +5,10 @@ use crate::stats::team_box_score::TeamBoxScore;
 use crate::stats::visiting::Visiting;
 use crate::types::*;
 use derive_builder::Builder;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::fmt::Formatter;
 
-#[derive(Builder, Clone, Debug, Serialize)]
+#[derive(Builder, Clone, Debug, Serialize, Deserialize)]
 pub struct PlayerBoxScore {
     //team identification
     team_abbreviation: TeamAbbreviation,

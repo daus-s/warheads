@@ -1,8 +1,8 @@
 use crate::stats::statify::SafetyValve;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Steals(pub Option<u8>);
 
 impl Display for Steals {

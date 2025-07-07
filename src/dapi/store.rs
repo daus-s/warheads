@@ -9,7 +9,7 @@ pub async fn save_nba_season(year: i32) {
 }
 
 async fn sub_save(games: Vec<TeamBoxScore>) {
-    let client = crate::storage::client::create().await;
+    // let client = crate::storage::client::create().await;
 
     let num_games = games.len() as u64;
 
@@ -28,9 +28,7 @@ async fn sub_save(games: Vec<TeamBoxScore>) {
     ));
 
     for game in &games {
-        crate::storage::store_three::save_nba_game(client.clone(), game.clone())
-            .await
-            .unwrap();
+        crate::storage::store_disk::save_nba_game(game).unwrap();
 
         pb.inc(1);
     }

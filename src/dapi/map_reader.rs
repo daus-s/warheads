@@ -1,4 +1,4 @@
-use crate::dapi::parse::parse_date;
+use crate::dapi::parse::value_to_date;
 use crate::stats::stat_column::StatColumn;
 use crate::stats::stat_column::StatColumn::*;
 use crate::stats::types::BoolInt;
@@ -166,7 +166,7 @@ impl MapReader for HashMap<StatColumn, Value> {
             }
         };
 
-        let d = match parse_date(value) {
+        let d = match value_to_date(value) {
             Some(x) => x,
             None => {
                 eprintln!("\t⚠️  failed to parse GameDate from the JSON String.");

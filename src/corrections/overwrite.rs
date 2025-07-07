@@ -13,7 +13,7 @@ pub fn overwrite(
     match archive.write(new_content) {
         Ok(_) => {
             println!(
-                "✅ successfully saved corrected data for the {} season the in the archive:s {}",
+                "✅ successfully saved corrected data for the {} season the in the archive: {}",
                 season_fmt(domain.0.year()),
                 archive.path()
             );

@@ -166,7 +166,9 @@ impl Identifiable for String {
                     game_id: GameId(gid),
                 }
             }
-            _ => panic!("💀 unrecognized schema. could not extract an identity from the box score string. "),
+            _ => panic!(
+                "💀 unrecognized schema. could not extract an identity from the box score string. "
+            ),
         }
     }
 }
@@ -205,7 +207,8 @@ impl Identifiable for Value {
             }
             [szn, Number(team_id), Value::String(team_abbr), _, Value::String(game_id), _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _] => {
                 Identity {
-                    season_id: SeasonId::try_from(szn).expect("💀 couldnt parse season_id from JSON value"),
+                    season_id: SeasonId::try_from(szn)
+                        .expect("💀 couldnt parse season_id from JSON value"),
                     player_id: None,
                     team_id: TeamId(team_id.as_u64().expect("💀 expect team id to be a u64")),
                     team_abbr: TeamAbbreviation(team_abbr.to_string()),
@@ -216,5 +219,3 @@ impl Identifiable for Value {
         }
     }
 }
-
-
