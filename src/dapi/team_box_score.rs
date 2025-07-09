@@ -3,7 +3,7 @@ use crate::stats::box_score::BoxScore;
 use crate::stats::domain::Domain;
 use crate::stats::nba_kind::NBAStatKind::Team;
 use crate::stats::percent::percent_string;
-use crate::stats::player_box_score::PlayerBoxScore;
+use crate::dapi::player_box_score::PlayerBoxScore;
 use crate::stats::shooting::{Attempts, Makes};
 use crate::stats::stat_column::StatColumn;
 use crate::stats::stat_value::StatValue;
@@ -80,9 +80,19 @@ impl TeamBoxScore {
     }
 
     pub fn elo(&self) -> i32 {
-        todo!()
+        let mut sum = 0;
+
+        for player in &self.roster {
+            sum += player.elo();
+        }
+
+        sum
     }
 
+
+    pub fn result(&self) -> GameResult {
+        self.wl
+    }
     pub fn domain(&self) -> Domain {
         (self.season_id, Team)
     }

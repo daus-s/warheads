@@ -11,10 +11,10 @@ use crate::stats::game_metadata::GameMetaData;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::nba_kind::NBAStatKind::{LineUp, Player, Team};
 use crate::stats::nba_stat::NBAStat;
-use crate::stats::player_box_score::{PlayerBoxScore, PlayerBoxScoreBuilder};
+use crate::dapi::player_box_score::{PlayerBoxScore, PlayerBoxScoreBuilder};
 use crate::stats::stat_column::StatColumn;
-use crate::stats::team_box_score::{TeamBoxScore, TeamBoxScoreBuilder};
-use crate::types::{Elo, SeasonId};
+use crate::dapi::team_box_score::{TeamBoxScore, TeamBoxScoreBuilder};
+use crate::types::SeasonId;
 use serde_json::{from_str, Value};
 use std::collections::HashMap;
 
@@ -308,7 +308,6 @@ fn fields_to_player_box_score(
     box_score_builder.season_id(season_id);
     box_score_builder.team_id(team_id);
     box_score_builder.team_abbreviation(team_abbr.clone());
-    box_score_builder.elo(Elo::init());
 
     let period = season_id.period();
 

@@ -1,6 +1,6 @@
 use crate::dapi::box_score_stat::BoxScoreStat;
-use crate::stats::player_box_score::PlayerBoxScoreBuilder;
-use crate::stats::team_box_score::TeamBoxScoreBuilder;
+use crate::dapi::player_box_score::PlayerBoxScoreBuilder;
+use crate::dapi::team_box_score::TeamBoxScoreBuilder;
 
 pub trait BoxScoreBuilder {
     fn add_stat(&mut self, stat: BoxScoreStat);
@@ -93,9 +93,6 @@ impl BoxScoreBuilder for PlayerBoxScoreBuilder {
             BoxScoreStat::FantasyPoints(s) => {
                 self.fantasy_pts(s);
             }
-            BoxScoreStat::Elo(s) => {
-                self.elo(s);
-            }
         }
     }
 }
@@ -180,8 +177,7 @@ impl BoxScoreBuilder for TeamBoxScoreBuilder {
             }
             BoxScoreStat::FantasyPoints(_)
             | BoxScoreStat::PlayerId(_)
-            | BoxScoreStat::PlayerName(_)
-            | BoxScoreStat::Elo(_) => {
+            | BoxScoreStat::PlayerName(_) => {
                 panic!("💀 cannot add a player only stat to a TeamBoxScore. ")
             }
         }

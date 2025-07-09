@@ -27,20 +27,6 @@ mod test_serde_type_support {
     }
 
     #[test]
-    fn test_serialize_elo() {
-        let elo1 = Elo(3000);
-
-        let json_str1 = serde_json::to_string(&elo1).expect("couldn't serialize elo1. ");
-
-        let elo2 = Elo(-101);
-
-        let json_str2 = serde_json::to_string(&elo2).expect("couldn't serialize elo1. ");
-
-        assert_eq!(json_str1, "3000");
-        assert_eq!(json_str2, "-101");
-    }
-
-    #[test]
     fn test_serialize_fantasy_pts() {
         let fantasy_points = FantasyPoints(Some(69.420));
 

@@ -1,6 +1,6 @@
 use crate::format::path_manager::nba_storage_path;
 use crate::format::season::season_fmt;
-use crate::stats::team_box_score::TeamBoxScore;
+use crate::dapi::team_box_score::TeamBoxScore;
 use crate::types::SeasonId;
 use std::fs;
 

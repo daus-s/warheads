@@ -1,5 +1,5 @@
 use crate::dapi::hunting::load_nba_season_from_file;
-use crate::stats::team_box_score::TeamBoxScore;
+use crate::dapi::team_box_score::TeamBoxScore;
 use indicatif::{ProgressBar, ProgressStyle};
 
 pub async fn save_nba_season(year: i32) {

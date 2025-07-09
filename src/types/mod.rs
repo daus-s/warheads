@@ -4,9 +4,6 @@ pub use team::{TeamAbbreviation, TeamId, TeamName};
 pub mod season_id;
 pub use season_id::SeasonId;
 
-pub mod elo;
-pub use elo::Elo;
-
 pub mod game;
 pub use game::{GameDate, GameId, GameResult};
 

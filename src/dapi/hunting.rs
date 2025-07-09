@@ -4,7 +4,7 @@
 
     GOOD WILL HUNTING
 */
-use crate::stats::team_box_score::TeamBoxScore;
+use crate::dapi::team_box_score::TeamBoxScore;
 use std::collections::HashMap;
 
 use crate::corrections::correction_loader::load_corrections;

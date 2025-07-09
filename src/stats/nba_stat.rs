@@ -1,6 +1,6 @@
 use crate::stats::box_score::BoxScore;
-use crate::stats::player_box_score::PlayerBoxScore;
-use crate::stats::team_box_score::TeamBoxScore;
+use crate::dapi::player_box_score::PlayerBoxScore;
+use crate::dapi::team_box_score::TeamBoxScore;
 
 pub enum NBAStat {
     Player(PlayerBoxScore),

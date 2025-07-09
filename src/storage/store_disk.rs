@@ -1,7 +1,7 @@
 use crate::format::path_manager::{nba_storage_file, nba_storage_path};
 use crate::stats::box_score::BoxScore;
 use crate::stats::id::Identifiable;
-use crate::stats::team_box_score::TeamBoxScore;
+use crate::dapi::team_box_score::TeamBoxScore;
 use std::fs;
 
 pub fn save_nba_game(roster: &TeamBoxScore) -> Result<(), String> {
