@@ -34,7 +34,7 @@ mod test_path_manager {
             player_id: None,
             team_id: TeamId(69420),
             team_abbr: TeamAbbreviation("SON".to_string()),
-            game_id: GameId("42424343".to_string()),
+            game_id: GameId(42424343),
         };
 
         let actual_file = nba_storage_file(&id);

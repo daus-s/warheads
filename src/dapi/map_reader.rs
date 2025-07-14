@@ -149,8 +149,8 @@ impl MapReader for HashMap<StatColumn, Value> {
             }
         };
 
-        if let Ok(_) = s.parse::<u32>() {
-            Ok(GameId(s.to_string()))
+        if let Ok(u) = s.parse::<u64>() {
+            Ok(GameId(u))
         } else {
             Err(GAME_ID)
         }

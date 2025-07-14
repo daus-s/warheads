@@ -46,10 +46,9 @@ impl Serialize for GameDate {
     }
 }
 
-/// `GameId` is a number represented by a JSON String. It will sometimes be parsed and interpreted
-/// as a numeric value.
-#[derive(Clone, Debug, Eq, Hash, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
-pub struct GameId(pub String);
+/// `GameId` is a number represented in the NBA data by a JSON String, but we will use it as an int.
+#[derive(Clone, Debug, Eq, Hash, PartialEq, Ord, PartialOrd)]
+pub struct GameId(pub u64);
 
 impl Display for GameId {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -59,13 +58,35 @@ impl Display for GameId {
 
 impl From<String> for GameId {
     fn from(value: String) -> Self {
-        GameId(value)
+        GameId(value.parse().unwrap())
     }
 }
 
 impl From<&str> for GameId {
     fn from(value: &str) -> Self {
-        GameId(value.to_string())
+        GameId::from(value.to_string())
+    }
+}
+
+impl<'de> Deserialize<'de> for GameId {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+
+        let game_number = s.parse::<u64>().map_err(de::Error::custom)?;
+
+        Ok(GameId(game_number))
+    }
+}
+
+impl Serialize for GameId {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(&format!("{:0>10}", self.0))
     }
 }
 

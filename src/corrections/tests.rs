@@ -399,7 +399,7 @@ mod tests {
     //
     fn sample_correction() -> Correction {
         Correction {
-            game_id: GameId("123".to_string()),
+            game_id: GameId(123),
             season: SeasonId::from(20024),
             player_id: Some(PlayerId(23)),
             team_id: TeamId(151),

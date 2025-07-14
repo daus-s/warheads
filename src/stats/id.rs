@@ -142,7 +142,7 @@ impl Identifiable for String {
                     player_id: Some(PlayerId(pid)),
                     team_id: TeamId(tid),
                     team_abbr: TeamAbbreviation(tab),
-                    game_id: GameId(gid),
+                    game_id: GameId::from(gid),
                 }
             }
             [season_id, team_id, team_abbr, _team_name, game_id, _game_date, _matchup, _wl, _min, _fgm, _fga, _fg_pct, _fg3m, _fg3a, _fg3_pct, _ftm, _fta, _ft_pct, _oreb, _dreb, _reb, _ast, _stl, _blk, _tov, _pf, _pts, _plus_minus, _video_available] =>
@@ -163,7 +163,7 @@ impl Identifiable for String {
                     player_id: None,
                     team_id: TeamId(tid),
                     team_abbr: TeamAbbreviation(tab),
-                    game_id: GameId(gid),
+                    game_id: GameId::from(gid),
                 }
             }
             _ => panic!(
@@ -202,7 +202,7 @@ impl Identifiable for Value {
                     )),
                     team_id: TeamId(team_id.as_u64().expect("💀 expect team id to be a u64")),
                     team_abbr: TeamAbbreviation(team_abbr.to_string()),
-                    game_id: GameId(game_id.to_string()),
+                    game_id: GameId::from(game_id.to_owned()),
                 }
             }
             [szn, Number(team_id), Value::String(team_abbr), _, Value::String(game_id), _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _] => {
@@ -212,7 +212,7 @@ impl Identifiable for Value {
                     player_id: None,
                     team_id: TeamId(team_id.as_u64().expect("💀 expect team id to be a u64")),
                     team_abbr: TeamAbbreviation(team_abbr.to_string()),
-                    game_id: GameId(game_id.to_string()),
+                    game_id: GameId::from(game_id.to_owned()),
                 }
             }
             _ => panic!("💀 unrecognized schema. could not match to a player or team stat"),
