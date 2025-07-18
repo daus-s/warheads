@@ -178,7 +178,7 @@ impl MapReader for HashMap<StatColumn, Value> {
         Ok(GameDate(d))
     }
 
-    fn matchup(&self) -> Result<MatchupString, StatColumn> {
+    fn matchup(&self) -> Result<Matchup, StatColumn> {
         let value = match self.get(&MATCHUP) {
             Some(x) => x,
             None => {
@@ -197,7 +197,7 @@ impl MapReader for HashMap<StatColumn, Value> {
             }
         };
 
-        match s.parse::<MatchupString>() {
+        match s.parse::<Matchup>() {
             Ok(s) => Ok(s),
             Err(_) => {
                 eprintln!("\t⚠️  failed to parse MatchupString from the JSON String.");
@@ -887,7 +887,7 @@ pub trait MapReader {
     fn team_name(&self) -> Result<TeamName, StatColumn>;
     fn game_id(&self) -> Result<GameId, StatColumn>; //identity
     fn game_date(&self) -> Result<GameDate, StatColumn>;
-    fn matchup(&self) -> Result<MatchupString, StatColumn>;
+    fn matchup(&self) -> Result<Matchup, StatColumn>;
     fn game_result(&self) -> Result<GameResult, StatColumn>;
     fn minutes(&self) -> Result<Minutes, StatColumn>;
     fn field_goal_makes(&self) -> Result<FieldGoalMakes, StatColumn>;

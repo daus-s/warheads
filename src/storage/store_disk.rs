@@ -3,8 +3,9 @@ use crate::stats::box_score::BoxScore;
 use crate::stats::id::Identifiable;
 use crate::dapi::team_box_score::TeamBoxScore;
 use std::fs;
+use crate::stats::game_obj::GameObject;
 
-pub fn save_nba_game(roster: &TeamBoxScore) -> Result<(), String> {
+pub fn save_nba_game(roster: &GameObject) -> Result<(), String> {
     let season = roster.season();
 
     let path = nba_storage_path(&season);

@@ -19,7 +19,7 @@ pub struct PlayerBoxScore {
     season_id: SeasonId,
     game_date: GameDate,
     game_id: GameId,
-    matchup: MatchupString,
+    matchup: Matchup,
 
     // player data
     player_id: PlayerId,
@@ -105,7 +105,7 @@ impl BoxScore for PlayerBoxScore {
     }
 
     fn home_or_away(&self) -> Visiting {
-        self.matchup.home_or_away()
+        self.matchup.home_or_away(&self.team_abbreviation).unwrap_or_else(|e| panic!("💀 couldn't get visiting status from box score: {e}"))
     }
 
     fn set(&mut self, col: &StatColumn, val: &StatValue) {

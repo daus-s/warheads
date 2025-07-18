@@ -1,6 +1,6 @@
 use crate::stats::visiting::Visiting;
 use crate::stats::visiting::Visiting::{Away, Home};
-use crate::types::{SeasonId, TeamAbbreviation};
+use crate::types::TeamAbbreviation;
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
@@ -9,29 +9,35 @@ use std::str::FromStr;
 /// enforced by its `fn parse() -> Self`
 /// when loaded from String (or str)
 #[derive(Clone, Debug)]
-pub struct MatchupString {
-    home: TeamAbbreviation,
-    away: TeamAbbreviation,
-    visiting: Visiting,
+pub struct Matchup {
+    pub home: TeamAbbreviation,
+    pub away: TeamAbbreviation,
 }
 
-impl MatchupString {
+impl Matchup {
     // todo: implement the functions from player and team box score for matchup string (from s3)
 
     pub fn from_matchup(
         home: TeamAbbreviation,
         away: TeamAbbreviation,
-        visiting: Visiting,
     ) -> Self {
-        MatchupString {
+        Matchup {
             home,
             away,
-            visiting,
         }
     }
 
-    pub fn home_or_away(&self) -> Visiting {
-        self.visiting
+    pub fn home_or_away(&self, team: &TeamAbbreviation) -> Result<Visiting, String> {
+        let home = &self.home;
+        let away = &self.away;
+
+        match team == home {
+            true => Ok(Home),
+            false => match team == away {
+                true => Ok(Away),
+                false => Err(format!("❌ team abbreviation {team} is not one of the two teams in this matchup: {home}, {away}"))
+            }
+        }
     }
 
     /// Returns the opposing team's abbreviation unmodified.
@@ -48,9 +54,9 @@ impl MatchupString {
     /// # Examples
     ///
     /// ```
-    /// use warheads::types::{MatchupString, TeamAbbreviation};
+    /// use warheads::types::{Matchup, TeamAbbreviation};
     ///
-    /// let matchup: MatchupString = "MEM @ LAL".parse().unwrap();
+    /// let matchup: Matchup = "MEM @ LAL".parse().unwrap();
     ///
     /// let opp = matchup.opponent(&"LAL".parse().unwrap());
     ///
@@ -69,16 +75,13 @@ impl MatchupString {
     }
 }
 
-impl Display for MatchupString {
+impl Display for Matchup {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self.visiting {
-            Home => write!(f, "{} vs. {}", self.home, self.away),
-            Away => write!(f, "{} @ {}", self.away, self.home),
-        }
+        write!(f, "{} @ {}", self.away, self.home)
     }
 }
 
-impl Serialize for MatchupString {
+impl Serialize for Matchup {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -87,7 +90,7 @@ impl Serialize for MatchupString {
     }
 }
 
-impl<'de> Deserialize<'de> for MatchupString {
+impl<'de> Deserialize<'de> for Matchup {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
@@ -100,20 +103,18 @@ impl<'de> Deserialize<'de> for MatchupString {
     }
 }
 
-impl FromStr for MatchupString {
+impl FromStr for Matchup {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.split_whitespace().collect::<Vec<&str>>().as_slice() {
-            [home, "vs." ,away] => Ok(MatchupString {
+            [home, "vs." ,away] => Ok(Matchup {
                 home: TeamAbbreviation(home.to_string()),
                 away: TeamAbbreviation(away.to_string()),
-                visiting: Home,
             }),
-            [away, "@" ,home] => Ok(MatchupString {
+            [away, "@" ,home] => Ok(Matchup {
                     home: TeamAbbreviation(home.to_string()),
                     away: TeamAbbreviation(away.to_string()),
-                    visiting: Away,
                 }),
             _ => Err(format!("❌ {} is not a valid matchup string. expected either:\n  • [tm1, @, tm2]\n  • [tm1, vs, tm2]", s )),
         }

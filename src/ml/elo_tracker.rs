@@ -20,12 +20,12 @@ impl EloTracker {
     pub fn save(&self) -> Result<(), String> {
         let filename = save_path("elo.csv"); //todo: add customizability for different models here
 
-        let mut writer = Writer::from_path(filename).map_err(|e| format!("❌ failed to open a writer for {filename}"))?;
+        let mut writer = Writer::from_path(&filename).map_err(|e| format!("❌ failed to open a writer for {filename}: {e}"))?;
 
-        for ((GameId(game), PlayerId(player)), elo) in self.game_player_ratings {
-            match writer.write_record(&[game as i64, player as i64, elo]) {
+        for ((GameId(game), PlayerId(player)), elo) in &self.game_player_ratings {
+            match writer.serialize(&[*game as i64, *player as i64, *elo]) {
                 Ok(_) => {
-                    eprintln!("✅ successfully wrote record for {player} in {game}: {}{elo}", match elo < 0 {
+                    eprintln!("✅ successfully wrote record for {player} in {game}: {}{elo}", match *elo < 0 {
                         true => "",
                         false => "+",
                     });

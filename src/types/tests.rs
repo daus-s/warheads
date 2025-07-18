@@ -149,10 +149,10 @@ mod test_serde_type_support {
     #[test]
     fn test_serialize_matchup() {
         let sonics =
-            MatchupString::from_matchup("SON".parse().unwrap(), "OKC".parse().unwrap(), Home);
+            Matchup::from_matchup("SON".parse().unwrap(), "OKC".parse().unwrap());
 
         let bums =
-            MatchupString::from_matchup("SON".parse().unwrap(), "OKC".parse().unwrap(), Away);
+            Matchup::from_matchup("SON".parse().unwrap(), "OKC".parse().unwrap());
 
         let sonics_str =
             serde_json::to_string(&sonics).expect("couldn't serialize Sonic's matchup. ");

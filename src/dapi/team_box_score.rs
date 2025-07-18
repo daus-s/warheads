@@ -22,7 +22,7 @@ pub struct TeamBoxScore {
 
     // game data
     season_id: SeasonId,
-    matchup: MatchupString,
+    matchup: Matchup,
     game_date: GameDate,
     game_id: GameId,
 
@@ -120,7 +120,7 @@ impl BoxScore for TeamBoxScore {
     }
 
     fn home_or_away(&self) -> Visiting {
-        self.matchup.home_or_away()
+        self.matchup.home_or_away(&self.team_abbreviation).unwrap_or_else(|e| panic!("💀 couldn't get visiting status from box score: {e}"))
     }
 
     fn set(&mut self, col: &StatColumn, val: &StatValue) {
@@ -136,7 +136,7 @@ impl std::fmt::Display for TeamBoxScore {
                match self.wl {
                    GameResult::Win => "win",
                    GameResult::Loss => "loss",
-                   GameResult::Draw => panic!("nba games cannot end in a tie")
+                   GameResult::Draw => panic!("💀 nba games cannot end in a tie")
                },
                match self.matchup.opponent(&self.team_abbreviation)
                {

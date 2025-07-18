@@ -15,3 +15,5 @@ pub mod statify;
 mod tests;
 pub mod types;
 pub mod visiting;
+pub mod game_obj;
+mod field_status;

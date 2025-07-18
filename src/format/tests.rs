@@ -22,7 +22,7 @@ mod test_path_manager {
         static DATA: Lazy<String> = Lazy::new(data);
 
         let expected_file = PathBuf::from(format!(
-            "{}/nba/store/2025_26/RegularSeason/42424343_SON",
+            "{}/nba/store/2025_26/RegularSeason/42424343",
             *DATA
         ));
         let expected_path = PathBuf::from(format!("{}/nba/store/2025_26/RegularSeason/", *DATA));

@@ -9,7 +9,7 @@ use crate::stats::stat_value::StatValue;
 use crate::stats::types::BoolInt;
 use crate::tui::prompter::{prompt_and_delete, prompt_and_select, prompt_and_validate};
 use crate::types::{
-    GameId, GameResult, MatchupString, PlayerId, SeasonId, TeamAbbreviation, TeamId,
+    GameId, GameResult, Matchup, PlayerId, SeasonId, TeamAbbreviation, TeamId,
 };
 use chrono::NaiveDate;
 use serde_json::Value;
@@ -111,7 +111,7 @@ impl CorrectionBuilder {
                         prompt_and_validate::<String>(format!("enter {}", col).as_str())
                     }
                     StatColumn::MATCHUP => {
-                        prompt_and_validate::<MatchupString>(format!("enter {}", col).as_str())
+                        prompt_and_validate::<Matchup>(format!("enter {}", col).as_str())
                     }
 
                     //player data

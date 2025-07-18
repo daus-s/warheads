@@ -1,9 +1,9 @@
-use crate::types::{GameDate, MatchupString, PlayerName, TeamAbbreviation, TeamName};
+use crate::types::{GameDate, Matchup, PlayerName, TeamAbbreviation, TeamName};
 use std::fmt::{Display, Formatter};
 
 #[derive(Clone)]
 pub struct GameMetaData {
-    matchup: MatchupString,
+    matchup: Matchup,
     date: GameDate,
 
     /// ## player_name
@@ -25,7 +25,7 @@ pub struct GameMetaData {
 
 impl GameMetaData {
     pub fn new(
-        matchup: MatchupString,
+        matchup: Matchup,
         date: GameDate,
         player_name: Option<PlayerName>,
         team_abbr: TeamAbbreviation,

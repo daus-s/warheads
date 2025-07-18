@@ -47,7 +47,7 @@ impl Serialize for GameDate {
 }
 
 /// `GameId` is a number represented in the NBA data by a JSON String, but we will use it as an int.
-#[derive(Clone, Debug, Eq, Hash, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq, Ord, PartialOrd, Copy)]
 pub struct GameId(pub u64);
 
 impl Display for GameId {

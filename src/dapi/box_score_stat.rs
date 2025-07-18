@@ -1,6 +1,6 @@
 use crate::types::{
     Assists, Blocks, DefensiveRebounds, FantasyPoints, FieldGoalAttempts, FieldGoalMakes,
-    FreeThrowAttempts, FreeThrowMakes, GameDate, GameId, GameResult, MatchupString, Minutes,
+    FreeThrowAttempts, FreeThrowMakes, GameDate, GameId, GameResult, Matchup, Minutes,
     OffensiveRebounds, PersonalFouls, PlayerId, PlayerName, PlusMinus, Points, Rebounds, SeasonId,
     Steals, TeamAbbreviation, TeamId, TeamName, ThreePointAttempts, ThreePointMakes, Turnovers,
 };
@@ -17,7 +17,7 @@ pub enum BoxScoreStat {
     TeamName(TeamName),
     GameId(GameId),
     GameDate(GameDate),
-    MatchupString(MatchupString),
+    MatchupString(Matchup),
     GameResult(GameResult),
     Minutes(Minutes),
     FieldGoalMakes(FieldGoalMakes),
@@ -79,8 +79,8 @@ impl From<GameDate> for BoxScoreStat {
         BoxScoreStat::GameDate(value)
     }
 }
-impl From<MatchupString> for BoxScoreStat {
-    fn from(value: MatchupString) -> Self {
+impl From<Matchup> for BoxScoreStat {
+    fn from(value: Matchup) -> Self {
         BoxScoreStat::MatchupString(value)
     }
 }
