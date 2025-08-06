@@ -1,5 +1,6 @@
 use crate::stats::stat_column::StatColumn;
 use crate::stats::stat_value::StatValue;
+use serde_json::Value;
 use std::fmt::{Display, Formatter};
 
 pub trait SafetyValve<T> {
@@ -17,18 +18,18 @@ where
     }
 }
 
-pub struct StatPair(pub StatColumn, pub StatValue);
+pub struct StatPair(pub StatColumn, pub Value);
 
 impl Display for StatPair {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self.0 {
             StatColumn::FG_PCT | StatColumn::FG3_PCT | StatColumn::FT_PCT => {
-                match self.1.value().as_f64() {
+                match self.1.as_f64() {
                     Some(n) => write!(f, "{:.6}", n),
                     None => write!(f, "null"),
                 }
             }
-            StatColumn::FANTASY_PTS => match self.1.value().as_f64() {
+            StatColumn::FANTASY_PTS => match self.1.as_f64() {
                 Some(n) => write!(f, "{:.1}", n),
                 None => write!(f, "null"),
             },

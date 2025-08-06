@@ -18,7 +18,7 @@ impl Display for FieldGoalAttempts {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct FieldGoalMakes(pub u8);
 
 impl Makes for FieldGoalMakes {

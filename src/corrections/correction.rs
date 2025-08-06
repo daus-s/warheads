@@ -8,7 +8,6 @@ use serde::{Deserialize, Serialize};
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::season_period::SeasonPeriod;
 use crate::stats::stat_column::{player_column_index, team_column_index, StatColumn};
-use crate::stats::stat_value::StatValue;
 
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
@@ -16,13 +15,16 @@ use std::fmt::{Debug, Formatter};
 use crate::stats::box_score::BoxScore;
 use crate::stats::nba_kind::NBAStatKind::{LineUp, Player, Team};
 use crate::stats::statify::StatPair;
-use crate::types::{GameId, PlayerId, SeasonId, TeamAbbreviation, TeamId};
+use crate::types::{GameDate, GameId, PlayerId, SeasonId, TeamAbbreviation, TeamId};
+use serde_json::Value;
 use std::path::Path;
 use std::{fs, io};
 
 #[derive(Serialize, Deserialize, Clone, Eq, PartialEq)]
 pub struct Correction {
     pub game_id: GameId,
+
+    pub game_date: GameDate,
 
     pub season: SeasonId,
 
@@ -38,7 +40,7 @@ pub struct Correction {
 
     pub delete: bool,
 
-    pub corrections: HashMap<StatColumn, StatValue>,
+    pub corrections: HashMap<StatColumn, Value>,
 }
 
 impl Correction {
@@ -64,16 +66,16 @@ impl Correction {
     /// This is a private function and is called when `fn create ->` is completed.
     ///
     pub fn save(&self) -> io::Result<()> {
-        let path = nba_correction_dir(&self.season, self.kind);
+        let path = nba_correction_dir(self.season, self.kind);
 
         fs::create_dir_all(&path)?;
 
         let json = serde_json::to_string_pretty(self)?;
 
         let filepath = match self.kind {
-            Team => nba_team_correction_file(&self.season, self.game_id.clone(), self.team_id),
+            Team => nba_team_correction_file(self.season, self.game_id.clone(), self.team_id),
             Player => nba_player_correction_file(
-                &self.season,
+                self.season,
                 self.game_id.clone(),
                 self.player_id.unwrap().clone(),
             ),
@@ -97,7 +99,7 @@ impl Correction {
 
         fn apply_corrections(
             cs: &mut Vec<String>,
-            corrections: &HashMap<StatColumn, StatValue>,
+            corrections: &HashMap<StatColumn, Value>,
             column_index_fn: fn(&StatColumn) -> Option<usize>,
         ) -> Option<String> {
             for (&col, val) in corrections {
@@ -124,19 +126,17 @@ impl Correction {
                 [_season_id, _team_id, _team_abbreviation, _team_name, _game_id, _game_date, _matchup, _wl, _min, _fgm, _fga, _fg_pct, _fg3m, _fg3a, _fg3_pct, _ftm, _fta, _ft_pct, _oreb, _dreb, _reb, _ast, _stl, _blk, _tov, _pf, _pts, _plus_minus, _video_available],
                 Team,
             ) => apply_corrections(&mut columns, &self.corrections, team_column_index).unwrap(),
-            col => {
-                dbg!(col.0);
-
-                eprintln!("columns string was not formatted correctly");
+            (ls, k) => {
+                eprintln!("{k} columns string was not formatted correctly");
 
                 game.to_string()
             }
         }
     }
 
-    pub fn correct_box_score(&self, game: &mut impl BoxScore) {
+    pub fn correct_box_score(&self, game: &mut BoxScore) {
         for (col, val) in self.corrections.iter() {
-            game.set(col, val)
+            let _ = game.try_set_col(col, val);
         }
     }
 

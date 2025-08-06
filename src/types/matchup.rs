@@ -17,14 +17,8 @@ pub struct Matchup {
 impl Matchup {
     // todo: implement the functions from player and team box score for matchup string (from s3)
 
-    pub fn from_matchup(
-        home: TeamAbbreviation,
-        away: TeamAbbreviation,
-    ) -> Self {
-        Matchup {
-            home,
-            away,
-        }
+    pub fn from_matchup(home: TeamAbbreviation, away: TeamAbbreviation) -> Self {
+        Matchup { home, away }
     }
 
     pub fn home_or_away(&self, team: &TeamAbbreviation) -> Result<Visiting, String> {

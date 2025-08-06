@@ -2,7 +2,7 @@ use crate::types::{GameDate, Matchup, PlayerName, TeamAbbreviation, TeamName};
 use std::fmt::{Display, Formatter};
 
 #[derive(Clone)]
-pub struct GameMetaData {
+pub struct GameDisplay {
     matchup: Matchup,
     date: GameDate,
 
@@ -23,7 +23,7 @@ pub struct GameMetaData {
     team_name: TeamName,
 }
 
-impl GameMetaData {
+impl GameDisplay {
     pub fn new(
         matchup: Matchup,
         date: GameDate,
@@ -31,7 +31,7 @@ impl GameMetaData {
         team_abbr: TeamAbbreviation,
         team_name: TeamName,
     ) -> Self {
-        GameMetaData {
+        GameDisplay {
             matchup,
             date,
             player_name,
@@ -48,7 +48,7 @@ impl GameMetaData {
     }
 }
 
-impl Display for GameMetaData {
+impl Display for GameDisplay {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let matchup = format!("{}", self.matchup);
         // matching on name's existence is the same as checking Player vs. Team box score

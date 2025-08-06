@@ -8,6 +8,31 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 use std::fmt::{Display, Formatter};
 
+///
+/// season_id: SeasonId
+///
+/// contains the information for both the season period (regular season, pre-season etc.) and
+/// the calendar year of the start of the season
+///
+/// Ex:
+///
+/// (1946-47 season -> 1946)
+///
+/// based on what period of the season the game is we add the season period offset
+///
+/// *Regular season offset => 20000* for more info on this see the SeasonPeriod module
+///```
+/// use warheads::stats::season_period::SeasonPeriod::RegularSeason;
+/// use warheads::types::SeasonId;
+///
+/// let year = 1946;
+///
+/// let season_id = 1946 + 20000;
+///
+/// let s_id = SeasonId::from(21946);
+///
+/// assert_eq!(SeasonId::from((1946, RegularSeason)), s_id)
+///```
 #[derive(Clone, Debug, Copy, PartialEq, Eq, Hash)]
 pub struct SeasonId {
     year: i32,

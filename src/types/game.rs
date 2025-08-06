@@ -8,7 +8,7 @@ use std::str::FromStr;
 
 /// `GameDate`is a `chrono::NaiveDate` wrapper that implements the necessary traits to work
 /// interchangeably in the code base.
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 pub struct GameDate(pub NaiveDate);
 
 impl<'de> Deserialize<'de> for GameDate {
@@ -47,7 +47,7 @@ impl Serialize for GameDate {
 }
 
 /// `GameId` is a number represented in the NBA data by a JSON String, but we will use it as an int.
-#[derive(Clone, Debug, Eq, Hash, PartialEq, Ord, PartialOrd, Copy)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Ord, PartialOrd)]
 pub struct GameId(pub u64);
 
 impl Display for GameId {
@@ -137,13 +137,17 @@ impl SerdeEnum for GameResult {
 
 impl Display for GameResult {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let str = match self {
-            GameResult::Win => "W",
-            GameResult::Loss => "L",
-            GameResult::Draw => "D",
-        };
-
-        write!(f, "{}", str)
+        match self {
+            GameResult::Win => {
+                write!(f, "W")
+            }
+            GameResult::Loss => {
+                write!(f, "L")
+            }
+            GameResult::Draw => {
+                write!(f, "D")
+            }
+        }
     }
 }
 

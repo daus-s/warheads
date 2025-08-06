@@ -58,8 +58,8 @@ pub fn domain_archive_pairs(year: i32) -> HashMap<Domain, PathBuf> {
     let mut dap: HashMap<Domain, PathBuf> = HashMap::new();
 
     for season_id in eras {
-        dap.insert((season_id, Player), nba_data_path(&season_id, Player));
-        dap.insert((season_id, Team), nba_data_path(&season_id, Team));
+        dap.insert((season_id, Player), nba_data_path(season_id, Player));
+        dap.insert((season_id, Team), nba_data_path(season_id, Team));
     }
 
     dap

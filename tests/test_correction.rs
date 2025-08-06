@@ -1,8 +1,9 @@
 use pretty_assertions::assert_eq;
-use serde_json::json;
+use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::fs;
 use std::str::FromStr;
+use chrono::NaiveDate;
 use warheads::corrections::correction::Correction;
 use warheads::corrections::correction_loader::load_corrections;
 use warheads::corrections::corrector::Corrector;
@@ -18,7 +19,7 @@ use warheads::stats::stat_column::StatColumn;
 use warheads::stats::stat_column::StatColumn::*;
 use warheads::stats::stat_value::StatValue;
 use warheads::types::GameResult::{Loss, Win};
-use warheads::types::{GameId, PlayerId, SeasonId, TeamAbbreviation, TeamId};
+use warheads::types::{GameDate, GameId, PlayerId, SeasonId, TeamAbbreviation, TeamId};
 
 #[test]
 pub fn test_load_correction() {
@@ -31,7 +32,7 @@ pub fn test_load_correction() {
     let mut actual_corrections = load_corrections(season_id.year(), kind).unwrap_or_else(|e| {
         panic!(
             "Failed to load corrections from: {}\n{e}",
-            nba_correction_dir(&season_id, kind)
+            nba_correction_dir(season_id, kind)
         )
     });
 
@@ -45,6 +46,7 @@ fn expected_corrections(season_id: SeasonId, kind: NBAStatKind) -> Vec<Correctio
     vec![
         Correction {
             game_id: GameId::from("0025900249"),
+            game_date: GameDate(NaiveDate::from_ymd_opt(1960, 02, 18).unwrap()),
             season: season_id,
             player_id: Some(PlayerId(76160)),
             team_id: TeamId(1610612744),
@@ -53,15 +55,16 @@ fn expected_corrections(season_id: SeasonId, kind: NBAStatKind) -> Vec<Correctio
             period: season_id.period(),
             delete: false,
             corrections: {
-                let mut cs: HashMap<StatColumn, StatValue> = HashMap::new();
+                let mut cs: HashMap<StatColumn, Value> = HashMap::new();
 
-                cs.insert(WL, StatValue::from_value(Loss.evaluate()));
+                cs.insert(WL, Loss.evaluate());
 
                 cs
             },
         },
         Correction {
             game_id: GameId::from("0025900179"),
+            game_date: GameDate(NaiveDate::from_ymd_opt(1960, 1, 19).unwrap()),
             season: season_id,
             player_id: Some(PlayerId(77131)),
             team_id: TeamId::from(1610612744),
@@ -70,15 +73,16 @@ fn expected_corrections(season_id: SeasonId, kind: NBAStatKind) -> Vec<Correctio
             period: season_id.period(),
             delete: false,
             corrections: {
-                let mut cs: HashMap<StatColumn, StatValue> = HashMap::new();
+                let mut cs: HashMap<StatColumn, Value> = HashMap::new();
 
-                cs.insert(WL, StatValue::from_value(Win.evaluate()));
+                cs.insert(WL, Win.evaluate());
 
                 cs
             },
         },
         Correction {
             game_id: GameId::from("0025900010"),
+            game_date: GameDate(NaiveDate::from_ymd_opt(1959, 10, 31).unwrap()),
             season: season_id,
             player_id: Some(PlayerId(76136)),
             team_id: TeamId::from(1610612744),
@@ -87,15 +91,16 @@ fn expected_corrections(season_id: SeasonId, kind: NBAStatKind) -> Vec<Correctio
             period: season_id.period(),
             delete: false,
             corrections: {
-                let mut cs: HashMap<StatColumn, StatValue> = HashMap::new();
+                let mut cs: HashMap<StatColumn, Value> = HashMap::new();
 
-                cs.insert(WL, StatValue::from_value(Win.evaluate()));
+                cs.insert(WL, Win.evaluate());
 
                 cs
             },
         },
         Correction {
             game_id: GameId::from("0025900033"),
+            game_date: GameDate(NaiveDate::from_ymd_opt(1959,11,12).unwrap()),
             season: season_id,
             player_id: Some(PlayerId(78013)),
             team_id: TeamId::from(1610612758),
@@ -104,15 +109,16 @@ fn expected_corrections(season_id: SeasonId, kind: NBAStatKind) -> Vec<Correctio
             period: season_id.period(),
             delete: false,
             corrections: {
-                let mut cs: HashMap<StatColumn, StatValue> = HashMap::new();
+                let mut cs: HashMap<StatColumn, Value> = HashMap::new();
 
-                cs.insert(WL, StatValue::from_value(Loss.evaluate()));
+                cs.insert(WL, Loss.evaluate());
 
                 cs
             },
         },
         Correction {
             game_id: GameId::from("0025900033"),
+            game_date: GameDate(NaiveDate::from_ymd_opt(1959,11,12).unwrap()),
             season: season_id,
             player_id: Some(PlayerId(78040)),
             team_id: TeamId::from(1610612744),
@@ -121,15 +127,16 @@ fn expected_corrections(season_id: SeasonId, kind: NBAStatKind) -> Vec<Correctio
             period: season_id.period(),
             delete: false,
             corrections: {
-                let mut cs: HashMap<StatColumn, StatValue> = HashMap::new();
+                let mut cs: HashMap<StatColumn, Value> = HashMap::new();
 
-                cs.insert(WL, StatValue::from_value(Win.evaluate()));
+                cs.insert(WL, Win.evaluate());
 
                 cs
             },
         },
         Correction {
             game_id: GameId::from("0025900079"),
+            game_date: GameDate(NaiveDate::from_ymd_opt(1959,12,03).unwrap()),
             season: season_id,
             player_id: Some(PlayerId(78216)),
             team_id: TeamId::from(1610612747),
@@ -138,15 +145,16 @@ fn expected_corrections(season_id: SeasonId, kind: NBAStatKind) -> Vec<Correctio
             period: season_id.period(),
             delete: false,
             corrections: {
-                let mut cs: HashMap<StatColumn, StatValue> = HashMap::new();
+                let mut cs: HashMap<StatColumn, Value> = HashMap::new();
 
-                cs.insert(WL, StatValue::from_value(Loss.evaluate()));
+                cs.insert(WL, Loss.evaluate());
 
                 cs
             },
         },
         Correction {
             game_id: GameId::from("0025900080"),
+            game_date: GameDate(NaiveDate::from_ymd_opt(1959, 12, 04).unwrap()),
             season: season_id,
             player_id: Some(PlayerId(78223)),
             team_id: TeamId::from(1610612744),
@@ -155,15 +163,16 @@ fn expected_corrections(season_id: SeasonId, kind: NBAStatKind) -> Vec<Correctio
             period: season_id.period(),
             delete: false,
             corrections: {
-                let mut cs: HashMap<StatColumn, StatValue> = HashMap::new();
+                let mut cs: HashMap<StatColumn, Value> = HashMap::new();
 
-                cs.insert(WL, StatValue::from_value(Win.evaluate()));
+                cs.insert(WL, Win.evaluate());
 
                 cs
             },
         },
         Correction {
             game_id: GameId::from("0025900207"),
+            game_date: GameDate(NaiveDate::from_ymd_opt(1960, 2, 01).unwrap()),
             season: season_id,
             player_id: Some(PlayerId(76658)),
             team_id: TeamId::from(1610612747),
@@ -172,15 +181,16 @@ fn expected_corrections(season_id: SeasonId, kind: NBAStatKind) -> Vec<Correctio
             period: season_id.period(),
             delete: false,
             corrections: {
-                let mut cs: HashMap<StatColumn, StatValue> = HashMap::new();
+                let mut cs: HashMap<StatColumn, Value> = HashMap::new();
 
-                cs.insert(WL, StatValue::from_value(Loss.evaluate()));
+                cs.insert(WL, Loss.evaluate());
 
                 cs
             },
         },
         Correction {
             game_id: GameId::from("0025900253"),
+            game_date: GameDate(NaiveDate::from_ymd_opt(1960, 02, 20).unwrap()),
             season: season_id,
             player_id: Some(PlayerId(76783)),
             team_id: TeamId::from(1610612755),
@@ -192,6 +202,7 @@ fn expected_corrections(season_id: SeasonId, kind: NBAStatKind) -> Vec<Correctio
         },
         Correction {
             game_id: GameId::from("0025900257"),
+            game_date: GameDate(NaiveDate::from_ymd_opt(1960, 02, 21).unwrap()),
             season: season_id,
             player_id: Some(PlayerId(76783)),
             team_id: TeamId::from(1610612752),
@@ -200,9 +211,9 @@ fn expected_corrections(season_id: SeasonId, kind: NBAStatKind) -> Vec<Correctio
             period: season_id.period(),
             delete: false,
             corrections: {
-                let mut cs: HashMap<StatColumn, StatValue> = HashMap::new();
+                let mut cs: HashMap<StatColumn, Value> = HashMap::new();
 
-                cs.insert(WL, StatValue::from_value(Loss.evaluate()));
+                cs.insert(WL, Loss.evaluate());
 
                 cs
             },
@@ -215,6 +226,7 @@ fn test_apply_corrections() {
     let corrections = vec![
         Correction {
             game_id: GameId::from("12345678"),
+            game_date: GameDate(Default::default()),
             season: SeasonId::from(20024),
             player_id: Some(PlayerId(69420)),
             team_id: TeamId(32768),
@@ -222,10 +234,11 @@ fn test_apply_corrections() {
             kind: Player,
             period: SeasonPeriod::RegularSeason,
             delete: false,
-            corrections: HashMap::from([(FG3M, StatValue::from_value(json!(2)))]),
+            corrections: HashMap::from([(FG3M, json!(2))]),
         },
         Correction {
             game_id: GameId::from("12345678"),
+            game_date: GameDate(Default::default()),
             season: SeasonId::from(20024),
             player_id: Some(PlayerId(14141)),
             team_id: TeamId(32768),
@@ -234,12 +247,13 @@ fn test_apply_corrections() {
             period: SeasonPeriod::RegularSeason,
             delete: false,
             corrections: HashMap::from([
-                (FGM, StatValue::from_value(json!(6))),
-                (FG3M, StatValue::from_value(json!(3))),
+                (FGM, json!(6)),
+                (FG3M, json!(3)),
             ]),
         },
         Correction {
             game_id: GameId::from("11235813"),
+            game_date: GameDate(Default::default()),
             season: SeasonId::from(20024),
             player_id: Some(PlayerId(69420)),
             team_id: TeamId(32768),
@@ -247,10 +261,11 @@ fn test_apply_corrections() {
             kind: Player,
             period: SeasonPeriod::RegularSeason,
             delete: false,
-            corrections: HashMap::from([(FG_PCT, StatValue::from_value(json!(3f32 / 7f32)))]),
+            corrections: HashMap::from([(FG_PCT, json!(3f32 / 7f32))]),
         },
         Correction {
             game_id: GameId::from("11235813"),
+            game_date: GameDate(Default::default()),
             season: SeasonId::from(20024),
             player_id: Some(PlayerId(66666)),
             team_id: TeamId(16384),

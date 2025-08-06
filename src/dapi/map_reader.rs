@@ -803,6 +803,9 @@ impl MapReader for HashMap<StatColumn, Value> {
         }
     }
 
+    //we can --delete-- IGNORE this function because we don't ask the map about fantasy points
+    // as it is not a member of the
+
     fn fantasy_points(&self) -> Result<FantasyPoints, StatColumn> {
         let value = match self.get(&FANTASY_PTS) {
             Some(x) => x,

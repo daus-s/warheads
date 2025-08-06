@@ -1,5 +1,5 @@
 use crate::corrections::correction::Correction;
-use crate::stats::game_metadata::GameMetaData;
+use crate::stats::game_metadata::GameDisplay;
 use crate::stats::id::Identifiable;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::percent::PercentGeneric;
@@ -9,7 +9,7 @@ use crate::stats::stat_value::StatValue;
 use crate::stats::types::BoolInt;
 use crate::tui::prompter::{prompt_and_delete, prompt_and_select, prompt_and_validate};
 use crate::types::{
-    GameId, GameResult, Matchup, PlayerId, SeasonId, TeamAbbreviation, TeamId,
+    GameDate, GameId, GameResult, Matchup, PlayerId, SeasonId, TeamAbbreviation, TeamId,
 };
 use chrono::NaiveDate;
 use serde_json::Value;
@@ -18,7 +18,7 @@ use std::collections::HashMap;
 
 pub struct CorrectionBuilder {
     correction: Correction,
-    meta: Option<GameMetaData>,
+    meta: Option<GameDisplay>,
 }
 
 impl CorrectionBuilder {
@@ -30,10 +30,12 @@ impl CorrectionBuilder {
         team_abbr: TeamAbbreviation,
         kind: NBAStatKind,
         period: SeasonPeriod,
+        game_date: GameDate,
     ) -> Self {
         CorrectionBuilder {
             correction: Correction {
                 game_id,
+                game_date,
                 season,
                 player_id,
                 team_id,
@@ -47,11 +49,11 @@ impl CorrectionBuilder {
         }
     }
 
-    pub fn update_meta(&mut self, meta: GameMetaData) {
+    pub fn update_meta(&mut self, meta: GameDisplay) {
         self.meta = Some(meta);
     }
 
-    pub fn add_missing_field(&mut self, col: StatColumn, val: StatValue) {
+    pub fn add_missing_field(&mut self, col: StatColumn, val: Value) {
         self.correction.corrections.insert(col, val);
     }
 
@@ -62,9 +64,10 @@ impl CorrectionBuilder {
 
         let meta = meta_wrapper.unwrap_or_else(|| panic!("💀 couldn't open game metadata."));
 
-        let mut sorted_keys: Vec<StatColumn> = corrections.corrections.keys().cloned().collect();
+        let mut fields_to_correct: Vec<StatColumn> =
+            corrections.corrections.keys().cloned().collect();
 
-        sorted_keys.sort();
+        fields_to_correct.sort();
 
         let mut stdout = stdout();
 
@@ -80,10 +83,10 @@ impl CorrectionBuilder {
             return corrections.clone(); //if we are deleting we don't need any values for the corrections
         }
 
-        for col in sorted_keys {
-            if let Some(val) = corrections.corrections.get_mut(&col) {
+        for col in fields_to_correct {
+            if let Some(val) = corrections.corrections.get(&col) {
                 // Display the column name and current value (grayed out if not confirmed) //id like this to update after the new value is completed is that possible
-                println!("\x1b[90m{}: {}\x1b[0m", col, val.val().unwrap_or(Null));
+                println!("\x1b[90m{}: {}\x1b[0m", col, val);
                 stdout.flush().unwrap();
 
                 /*
@@ -163,8 +166,9 @@ impl CorrectionBuilder {
                         prompt_and_select::<BoolInt>(format!("enter {}", col).as_str())
                     }
                 };
+
                 // Lock in the value
-                val.set(value.clone());
+                corrections.corrections.insert(col, value.clone()); //only cloned for display below
 
                 // Display the confirmed value
                 print!("\x1B[2A\x1B[0J"); // Move up 2 lines and clear from cursor to end

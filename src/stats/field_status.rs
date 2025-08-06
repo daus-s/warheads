@@ -1,7 +1,7 @@
-use std::fmt::{Display, Formatter};
 use crate::stats::visiting::Visiting;
 use crate::stats::visiting::Visiting::{Away, Home};
-use crate::types::Matchup;
+use crate::types::{Matchup, TeamAbbreviation};
+use std::fmt::{Display, Formatter};
 
 pub struct FieldStatus {
     matchup: Matchup,

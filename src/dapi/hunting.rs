@@ -16,6 +16,7 @@ use crate::dapi::store::save_nba_season;
 use crate::format::path_manager::nba_data_path;
 use crate::format::season::season_fmt;
 use crate::stats::domain::Domain;
+use crate::stats::id::Identity;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::nba_kind::NBAStatKind::{Player, Team};
 use crate::stats::season_period::minimum_spanning_era;
@@ -31,7 +32,7 @@ use std::error::Error;
 use std::path::PathBuf;
 use std::str::FromStr;
 
-pub fn load_nba_season_from_file(year: i32) -> Vec<TeamBoxScore> {
+pub fn load_nba_season_from_file(year: i32) -> Vec<(Identity, TeamBoxScore)> {
     let player_games = player_games(year);
 
     team_games(year, player_games)
@@ -71,11 +72,11 @@ pub async fn observe_nba() {
 
     for year in begin..curr_year + seasonal_depression {
         for era in minimum_spanning_era(year) {
-            if let Err(msg) = gather::fetch_and_save_nba_stats(&era, Player).await {
+            if let Err(msg) = gather::fetch_and_save_nba_stats(era, Player).await {
                 eprintln!("{}", msg);
             }
 
-            if let Err(msg) = gather::fetch_and_save_nba_stats(&era, Team).await {
+            if let Err(msg) = gather::fetch_and_save_nba_stats(era, Team).await {
                 eprintln!("{}", msg);
             }
         }
@@ -83,7 +84,7 @@ pub async fn observe_nba() {
 }
 
 pub async fn query_nba(
-    season: &SeasonId,
+    season: SeasonId,
     stat_kind: NBAStatKind,
 ) -> Result<String, Box<dyn Error>> {
     let client = Client::new();
@@ -183,7 +184,7 @@ pub fn revise_nba() {
         let mut player_archives = eras
             .iter()
             .map(|x| (x, Player))
-            .map(|(&s, k)| ((s, k), nba_data_path(&s, k)))
+            .map(|(&s, k)| ((s, k), nba_data_path(s, k)))
             .collect::<HashMap<Domain, PathBuf>>();
 
         if let Ok(corrections) = player_corrections {
@@ -205,7 +206,7 @@ pub fn revise_nba() {
         let mut team_archives = eras
             .iter()
             .map(|x| (x, Team))
-            .map(|(&s, k)| ((s, k), nba_data_path(&s, k)))
+            .map(|(&s, k)| ((s, k), nba_data_path(s, k)))
             .collect::<HashMap<Domain, PathBuf>>();
 
         if let Ok(corrections) = team_corrections {

@@ -1,23 +1,13 @@
 use crate::types::{
-    Assists, Blocks, DefensiveRebounds, FantasyPoints, FieldGoalAttempts, FieldGoalMakes,
-    FreeThrowAttempts, FreeThrowMakes, GameDate, GameId, GameResult, Matchup, Minutes,
-    OffensiveRebounds, PersonalFouls, PlayerId, PlayerName, PlusMinus, Points, Rebounds, SeasonId,
-    Steals, TeamAbbreviation, TeamId, TeamName, ThreePointAttempts, ThreePointMakes, Turnovers,
+    Assists, Blocks, DefensiveRebounds, FieldGoalAttempts, FieldGoalMakes, FreeThrowAttempts,
+    FreeThrowMakes, GameResult, Minutes, OffensiveRebounds, PersonalFouls, PlusMinus, Points,
+    Rebounds, Steals, ThreePointAttempts, ThreePointMakes, Turnovers,
 };
 
 /// box_score_stat is an enum that contains every type that may be used by a `BoxScore`
 /// all fields are parsed and translated into this format from the data source
 
 pub enum BoxScoreStat {
-    SeasonId(SeasonId),
-    PlayerId(PlayerId),
-    PlayerName(PlayerName),
-    TeamId(TeamId),
-    TeamAbbreviation(TeamAbbreviation),
-    TeamName(TeamName),
-    GameId(GameId),
-    GameDate(GameDate),
-    MatchupString(Matchup),
     GameResult(GameResult),
     Minutes(Minutes),
     FieldGoalMakes(FieldGoalMakes),
@@ -36,54 +26,8 @@ pub enum BoxScoreStat {
     PersonalFouls(PersonalFouls),
     Points(Points),
     PlusMinus(PlusMinus),
-    FantasyPoints(FantasyPoints),
 }
 
-impl From<SeasonId> for BoxScoreStat {
-    fn from(value: SeasonId) -> Self {
-        BoxScoreStat::SeasonId(value)
-    }
-}
-impl From<PlayerId> for BoxScoreStat {
-    fn from(value: PlayerId) -> Self {
-        BoxScoreStat::PlayerId(value)
-    }
-}
-impl From<PlayerName> for BoxScoreStat {
-    fn from(value: PlayerName) -> Self {
-        BoxScoreStat::PlayerName(value)
-    }
-}
-impl From<TeamId> for BoxScoreStat {
-    fn from(value: TeamId) -> Self {
-        BoxScoreStat::TeamId(value)
-    }
-}
-impl From<TeamAbbreviation> for BoxScoreStat {
-    fn from(value: TeamAbbreviation) -> Self {
-        BoxScoreStat::TeamAbbreviation(value)
-    }
-}
-impl From<TeamName> for BoxScoreStat {
-    fn from(value: TeamName) -> Self {
-        BoxScoreStat::TeamName(value)
-    }
-}
-impl From<GameId> for BoxScoreStat {
-    fn from(value: GameId) -> Self {
-        BoxScoreStat::GameId(value)
-    }
-}
-impl From<GameDate> for BoxScoreStat {
-    fn from(value: GameDate) -> Self {
-        BoxScoreStat::GameDate(value)
-    }
-}
-impl From<Matchup> for BoxScoreStat {
-    fn from(value: Matchup) -> Self {
-        BoxScoreStat::MatchupString(value)
-    }
-}
 impl From<GameResult> for BoxScoreStat {
     fn from(value: GameResult) -> Self {
         BoxScoreStat::GameResult(value)
@@ -172,10 +116,5 @@ impl From<Points> for BoxScoreStat {
 impl From<PlusMinus> for BoxScoreStat {
     fn from(value: PlusMinus) -> Self {
         BoxScoreStat::PlusMinus(value)
-    }
-}
-impl From<FantasyPoints> for BoxScoreStat {
-    fn from(value: FantasyPoints) -> Self {
-        BoxScoreStat::FantasyPoints(value)
     }
 }

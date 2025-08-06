@@ -1,8 +1,8 @@
-use csv::Writer;
-use once_cell::sync::Lazy;
 use crate::constants::paths::data;
 use crate::stats::visiting::Visiting;
 use crate::types::{GameId, PlayerId};
+use csv::Writer;
+use once_cell::sync::Lazy;
 
 type PlayerGame = (GameId, PlayerId);
 
@@ -12,7 +12,6 @@ pub struct EloTracker {
 
 impl EloTracker {
     pub fn process_elo(&self) {
-
         // load season by season, dont nuke the memory will all tge history.
         todo!("assign elo values to players on a game by game basis")
     }
@@ -20,21 +19,27 @@ impl EloTracker {
     pub fn save(&self) -> Result<(), String> {
         let filename = save_path("elo.csv"); //todo: add customizability for different models here
 
-        let mut writer = Writer::from_path(&filename).map_err(|e| format!("❌ failed to open a writer for {filename}: {e}"))?;
+        let mut writer = Writer::from_path(&filename)
+            .map_err(|e| format!("❌ failed to open a writer for {filename}: {e}"))?;
 
         for ((GameId(game), PlayerId(player)), elo) in &self.game_player_ratings {
             match writer.serialize(&[*game as i64, *player as i64, *elo]) {
                 Ok(_) => {
-                    eprintln!("✅ successfully wrote record for {player} in {game}: {}{elo}", match *elo < 0 {
-                        true => "",
-                        false => "+",
-                    });
+                    eprintln!(
+                        "✅ successfully wrote record for {player} in {game}: {}{elo}",
+                        match *elo < 0 {
+                            true => "",
+                            false => "+",
+                        }
+                    );
                 }
                 Err(e) => {
-                    return Err(format!("❌ failed to write record for {player} in {game}: {e}"));
+                    return Err(format!(
+                        "❌ failed to write record for {player} in {game}: {e}"
+                    ));
                 }
             };
-        };
+        }
 
         Ok(())
     }

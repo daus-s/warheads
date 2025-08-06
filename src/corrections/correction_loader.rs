@@ -12,7 +12,7 @@ pub fn load_corrections(year: i32, kind: NBAStatKind) -> Result<Vec<Correction>,
     let mut corrections = Vec::new();
 
     for period in season {
-        let c_path = nba_correction_dir(&period, kind);
+        let c_path = nba_correction_dir(period, kind);
 
         fs::create_dir_all(&c_path)
             .map_err(|e| format!("❌ failed to create directory path:{e}"))?;
