@@ -44,13 +44,16 @@ impl Corrector for Vec<Correction> {
         for correction in self {
             let domain = correction.domain();
 
-            let file = files.get_mut(&domain).ok_or_else(|| {
+            let map = files.get_mut(&domain).ok_or_else(|| {
                 "❌ correction didnt have a relevant archive to be applied to".to_string()
             })?;
 
             let id = correction.identity();
 
-            if let Some(game) = file.get_mut(&id) {
+            if let Some(game) = map.get_mut(&id) {
+
+                dbg!(correction.delete);
+
                 if correction.delete {
                     to_remove.push(id);
                 } else {
@@ -59,11 +62,14 @@ impl Corrector for Vec<Correction> {
             }
         }
 
+        dbg!(&to_remove);
+
         for id in to_remove {
             if let Some(map) = files.get_mut(&id.domain()) {
                 map.remove(&id);
             }
         }
+
 
         for (domain, games_by_id) in files {
             let mut games_vector = games_by_id.into_values().collect::<Vec<String>>();

@@ -226,7 +226,7 @@ fn test_apply_corrections() {
     let corrections = vec![
         Correction {
             game_id: GameId::from("12345678"),
-            game_date: GameDate(Default::default()),
+            game_date: GameDate(NaiveDate::from_ymd_opt(0025, 02, 05).unwrap()),
             season: SeasonId::from(20024),
             player_id: Some(PlayerId(69420)),
             team_id: TeamId(32768),
@@ -238,7 +238,7 @@ fn test_apply_corrections() {
         },
         Correction {
             game_id: GameId::from("12345678"),
-            game_date: GameDate(Default::default()),
+            game_date: GameDate(NaiveDate::from_ymd_opt(0025, 02, 05).unwrap()),
             season: SeasonId::from(20024),
             player_id: Some(PlayerId(14141)),
             team_id: TeamId(32768),
@@ -253,7 +253,7 @@ fn test_apply_corrections() {
         },
         Correction {
             game_id: GameId::from("11235813"),
-            game_date: GameDate(Default::default()),
+            game_date: GameDate(NaiveDate::from_ymd_opt(0024, 11, 05).unwrap()),
             season: SeasonId::from(20024),
             player_id: Some(PlayerId(69420)),
             team_id: TeamId(32768),
@@ -265,7 +265,7 @@ fn test_apply_corrections() {
         },
         Correction {
             game_id: GameId::from("11235813"),
-            game_date: GameDate(Default::default()),
+            game_date: GameDate(NaiveDate::from_ymd_opt(0025, 02, 28).unwrap()),
             season: SeasonId::from(20024),
             player_id: Some(PlayerId(66666)),
             team_id: TeamId(16384),
@@ -287,10 +287,10 @@ fn test_apply_corrections() {
 
     match corrections.apply(&mut daps) {
         Ok(_) => {
-            println!("success");
+            eprintln!("success");
         }
         Err(_) => {
-            println!("failure");
+            eprintln!("failure");
         }
     };
 
