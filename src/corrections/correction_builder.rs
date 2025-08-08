@@ -3,9 +3,7 @@ use crate::stats::game_metadata::GameDisplay;
 use crate::stats::id::Identifiable;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::percent::PercentGeneric;
-use crate::stats::season_period::SeasonPeriod;
 use crate::stats::stat_column::StatColumn;
-use crate::stats::stat_value::StatValue;
 use crate::stats::types::BoolInt;
 use crate::tui::prompter::{prompt_and_delete, prompt_and_select, prompt_and_validate};
 use crate::types::{
@@ -13,9 +11,10 @@ use crate::types::{
 };
 use chrono::NaiveDate;
 use serde_json::Value;
-use serde_json::Value::Null;
 use std::collections::HashMap;
+use std::fmt::Debug;
 
+#[derive(Debug)]
 pub struct CorrectionBuilder {
     correction: Correction,
     meta: Option<GameDisplay>,
@@ -29,7 +28,6 @@ impl CorrectionBuilder {
         team_id: TeamId,
         team_abbr: TeamAbbreviation,
         kind: NBAStatKind,
-        period: SeasonPeriod,
         game_date: GameDate,
     ) -> Self {
         CorrectionBuilder {
@@ -40,7 +38,7 @@ impl CorrectionBuilder {
                 player_id,
                 team_id,
                 team_abbr: team_abbr.clone(),
-                period,
+                period: season.period(),
                 kind,
                 delete: false,
                 corrections: HashMap::new(),

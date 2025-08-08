@@ -230,20 +230,26 @@ mod test_column_indices {
 
 #[cfg(test)]
 mod test_serialize_game_obj {
+    use crate::constants::paths::test;
     use crate::stats::game_obj::GameObject;
-    use std::fs;
-    use chrono::NaiveDate;
     use crate::types::{GameDate, GameId, SeasonId};
+    use chrono::NaiveDate;
+    use once_cell::sync::Lazy;
+    use std::fs;
 
+    static TEST: Lazy<String> = Lazy::new(test);
+    #[test]
     fn test_de_serialize_game_obj() {
+        let s = format!("{}/data/0020500673_SEA", *TEST);
+
         let home = serde_json::from_str(
-            &fs::read_to_string("/tests/data/0020500673_SEA")
+            &fs::read_to_string(format!("{}/data/0020500673_SEA", *TEST))
                 .expect("failed to read seattle box score"),
         )
         .expect("failed to parse seattle box score");
 
         let away = serde_json::from_str(
-            &fs::read_to_string("/tests/data/0020500673_GSW")
+            &fs::read_to_string(format!("{}/data/0020500673_GSW", *TEST))
                 .expect("failed to read golden state box score"),
         )
         .expect("failed to parse golden state box score");
@@ -254,7 +260,7 @@ mod test_serialize_game_obj {
 
         let game_object = GameObject::create(szn, date, game_id, home, away);
 
-        let expected = fs::read_to_string("/tests/data/game_object.json")
+        let expected = fs::read_to_string(format!("{}/data/game_object.json", *TEST))
             .expect("failed to read test file for GameObjectSerialization");
 
         assert_eq!(

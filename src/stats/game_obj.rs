@@ -2,9 +2,9 @@ use crate::dapi::team_box_score::TeamBoxScore;
 use crate::stats::box_score::BoxScore;
 use crate::stats::game_metadata::GameDisplay;
 use crate::stats::id::{Identifiable, Identity};
+use crate::stats::visiting::Visiting;
 use crate::types::{GameDate, GameId, SeasonId};
 use serde::{Deserialize, Serialize};
-use crate::stats::visiting::Visiting;
 
 #[derive(Serialize, Deserialize)]
 pub struct GameObject {
@@ -31,8 +31,6 @@ impl GameObject {
         team1: TeamBoxScore,
         team2: TeamBoxScore,
     ) -> Self {
-        assert_ne!(team1.visiting(), team2.visiting());
-
         match (team1.visiting(), team2.visiting()) {
             // team 1 is home, team 2 is away
             (Visiting::Home, Visiting::Away) => {
@@ -54,7 +52,7 @@ impl GameObject {
                     away: team1,
                 }
             }
-            _ => unreachable!()
+            _ => panic!("💀 if this error is arising check that your input box scores have opposite field states to this function")
         }
     }
 
@@ -65,7 +63,6 @@ impl GameObject {
     pub fn game_id(&self) -> GameId {
         self.game_id
     }
-
 
     /// ## Moment
     /// returns the moment (season and game) of the specific game.

@@ -26,7 +26,7 @@ where
                 json!(t)
             }
             "chrono::naive::date::NaiveDate" => json!(t),
-            "stats::types::MatchupString" => json!(t),
+            "warheads::types::matchup::Matchup" => json!(t),
             _ => panic!("Unrecognized type: {}", type_name::<T>()), // Panic for unrecognized types
         },
         Err(_) => json!(None::<T>),

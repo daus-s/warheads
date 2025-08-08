@@ -2,8 +2,9 @@ use crate::format::stat_path_formatter::StatPathFormatter;
 use crate::types::SeasonId;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Formatter};
+use crate::format::url_format::UrlFormatter;
 
-#[derive(Clone, Copy, PartialEq, Serialize, Deserialize, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Serialize, Deserialize, Eq, Hash, Debug)]
 #[serde(rename_all = "PascalCase")]
 pub enum SeasonPeriod {
     PreSeason,
@@ -26,22 +27,6 @@ impl SeasonPeriod {
         }
     }
 }
-
-impl Debug for SeasonPeriod {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let s: &str = match self {
-            SeasonPeriod::PreSeason => "Pre%20Season",
-            SeasonPeriod::RegularSeason => "Regular%20Season",
-            SeasonPeriod::PostSeason => "Playoffs",
-            SeasonPeriod::PlayIn => "PlayIn",
-            SeasonPeriod::NBACup => "IST", //in season tournament
-            SeasonPeriod::AllStarGame => "All%20Star",
-        };
-
-        write!(f, "{}", s)
-    }
-}
-
 impl Display for SeasonPeriod {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let s: &str = match self {
@@ -92,4 +77,20 @@ pub fn minimum_spanning_era(year: i32) -> Vec<SeasonId> {
     minimum_spanning_era.push(SeasonId::from((year, SeasonPeriod::PostSeason)));
 
     minimum_spanning_era
+}
+
+
+impl UrlFormatter for SeasonPeriod {
+    fn url(&self) -> String {
+        let s: &str = match self {
+            SeasonPeriod::PreSeason => "Pre%20Season",
+            SeasonPeriod::RegularSeason => "Regular%20Season",
+            SeasonPeriod::PostSeason => "Playoffs",
+            SeasonPeriod::PlayIn => "PlayIn",
+            SeasonPeriod::NBACup => "IST", //in season tournament
+            SeasonPeriod::AllStarGame => "All%20Star",
+        };
+
+        s.to_string()
+    }
 }

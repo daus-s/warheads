@@ -1,5 +1,6 @@
 use crate::format::path_manager::nba_data_path;
 use crate::stats::domain::Domain;
+use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::nba_kind::NBAStatKind::{Player, Team};
 use crate::stats::season_period::minimum_spanning_era;
 use serde_json::Value;
@@ -60,6 +61,18 @@ pub fn domain_archive_pairs(year: i32) -> HashMap<Domain, PathBuf> {
     for season_id in eras {
         dap.insert((season_id, Player), nba_data_path(season_id, Player));
         dap.insert((season_id, Team), nba_data_path(season_id, Team));
+    }
+
+    dap
+}
+
+pub fn typed_domain_archive_pairs(year: i32, kind: NBAStatKind) -> HashMap<Domain, PathBuf> {
+    let eras = minimum_spanning_era(year);
+
+    let mut dap: HashMap<Domain, PathBuf> = HashMap::new();
+
+    for season_id in eras {
+        dap.insert((season_id, kind), nba_data_path(season_id, kind));
     }
 
     dap

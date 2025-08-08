@@ -126,7 +126,7 @@ impl Correction {
                 [_season_id, _team_id, _team_abbreviation, _team_name, _game_id, _game_date, _matchup, _wl, _min, _fgm, _fga, _fg_pct, _fg3m, _fg3a, _fg3_pct, _ftm, _fta, _ft_pct, _oreb, _dreb, _reb, _ast, _stl, _blk, _tov, _pf, _pts, _plus_minus, _video_available],
                 Team,
             ) => apply_corrections(&mut columns, &self.corrections, team_column_index).unwrap(),
-            (ls, k) => {
+            (_ls, k) => {
                 eprintln!("{k} columns string was not formatted correctly");
 
                 game.to_string()

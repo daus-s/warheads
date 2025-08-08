@@ -1,9 +1,9 @@
+use chrono::NaiveDate;
 use pretty_assertions::assert_eq;
 use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::fs;
 use std::str::FromStr;
-use chrono::NaiveDate;
 use warheads::corrections::correction::Correction;
 use warheads::corrections::correction_loader::load_corrections;
 use warheads::corrections::corrector::Corrector;
@@ -100,7 +100,7 @@ fn expected_corrections(season_id: SeasonId, kind: NBAStatKind) -> Vec<Correctio
         },
         Correction {
             game_id: GameId::from("0025900033"),
-            game_date: GameDate(NaiveDate::from_ymd_opt(1959,11,12).unwrap()),
+            game_date: GameDate(NaiveDate::from_ymd_opt(1959, 11, 12).unwrap()),
             season: season_id,
             player_id: Some(PlayerId(78013)),
             team_id: TeamId::from(1610612758),
@@ -118,7 +118,7 @@ fn expected_corrections(season_id: SeasonId, kind: NBAStatKind) -> Vec<Correctio
         },
         Correction {
             game_id: GameId::from("0025900033"),
-            game_date: GameDate(NaiveDate::from_ymd_opt(1959,11,12).unwrap()),
+            game_date: GameDate(NaiveDate::from_ymd_opt(1959, 11, 12).unwrap()),
             season: season_id,
             player_id: Some(PlayerId(78040)),
             team_id: TeamId::from(1610612744),
@@ -136,7 +136,7 @@ fn expected_corrections(season_id: SeasonId, kind: NBAStatKind) -> Vec<Correctio
         },
         Correction {
             game_id: GameId::from("0025900079"),
-            game_date: GameDate(NaiveDate::from_ymd_opt(1959,12,03).unwrap()),
+            game_date: GameDate(NaiveDate::from_ymd_opt(1959, 12, 03).unwrap()),
             season: season_id,
             player_id: Some(PlayerId(78216)),
             team_id: TeamId::from(1610612747),
@@ -246,10 +246,7 @@ fn test_apply_corrections() {
             kind: Player,
             period: SeasonPeriod::RegularSeason,
             delete: false,
-            corrections: HashMap::from([
-                (FGM, json!(6)),
-                (FG3M, json!(3)),
-            ]),
+            corrections: HashMap::from([(FGM, json!(6)), (FG3M, json!(3))]),
         },
         Correction {
             game_id: GameId::from("11235813"),

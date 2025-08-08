@@ -27,7 +27,7 @@ impl Matchup {
 
         match team == home {
             true => Ok(Home),
-            false => match team == away {
+            false => match *team == *away {
                 true => Ok(Away),
                 false => Err(format!("❌ team abbreviation {team} is not one of the two teams in this matchup: {home}, {away}"))
             }
@@ -112,5 +112,14 @@ impl FromStr for Matchup {
                 }),
             _ => Err(format!("❌ {} is not a valid matchup string. expected either:\n  • [tm1, @, tm2]\n  • [tm1, vs, tm2]", s )),
         }
+    }
+}
+
+// this should be called after parsing a matchup
+pub fn is_matchup_for_team(matchup_as_string: &str, team_abbreviation: &TeamAbbreviation) -> bool {
+    match matchup_as_string.split_whitespace().collect::<Vec<&str>>().as_slice() {
+        [home, "vs.", _away] => home == &team_abbreviation.0,
+        [away, "@", _home] => away == &team_abbreviation.0,
+        _ => panic!("❌ {} is not a valid matchup string. expected either:\n  • [tm1, @, tm2]\n  • [tm1, vs, tm2]", matchup_as_string),
     }
 }

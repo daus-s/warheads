@@ -31,6 +31,7 @@ use reqwest::Client;
 use std::error::Error;
 use std::path::PathBuf;
 use std::str::FromStr;
+use crate::format::url_format::UrlFormatter;
 
 pub fn load_nba_season_from_file(year: i32) -> Vec<(Identity, TeamBoxScore)> {
     let player_games = player_games(year);
@@ -48,7 +49,7 @@ pub async fn chronicle_nba() {
         0
     }; // august14th
 
-    let begin = 1946; //first year of the nba in record is 1946-1947 szn
+    let begin = 2024; //first year of the nba in record is 1946-1947 szn
 
     for szn in begin..year + seasonal_depression {
         save_nba_season(szn).await;
@@ -68,7 +69,7 @@ pub async fn observe_nba() {
         0
     }; // august14th
 
-    let begin = 1946; //first year of the nba in record is 1946-1947 szn
+    let begin = 2024; //first year of the nba in record is 1946-1947 szn
 
     for year in begin..curr_year + seasonal_depression {
         for era in minimum_spanning_era(year) {
@@ -83,10 +84,7 @@ pub async fn observe_nba() {
     }
 }
 
-pub async fn query_nba(
-    season: SeasonId,
-    stat_kind: NBAStatKind,
-) -> Result<String, Box<dyn Error>> {
+pub async fn query_nba(season: SeasonId, stat_kind: NBAStatKind) -> Result<String, Box<dyn Error>> {
     let client = Client::new();
 
     let mut headers = HeaderMap::new();
@@ -144,11 +142,11 @@ pub async fn query_nba(
         LeagueID=00&\
         PlayerOrTeam={}&\
         Season={}&\
-        SeasonType={:?}&\
+        SeasonType={}&\
         Sorter=DATE",
-        stat_kind,
-        season_fmt(season.year()),
-        season.period()
+        stat_kind.url(),
+        season.year().url(),
+        season.period().url()
     );
 
     let response = client.get(&url).headers(headers).send().await?;

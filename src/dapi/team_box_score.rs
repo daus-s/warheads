@@ -7,9 +7,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TeamBoxScore {
     // team identification
+    pub team_id: TeamId,
     team_abbreviation: TeamAbbreviation,
     team_name: TeamName,
-    team_id: TeamId,
 
     //home or away
     visiting: Visiting,
@@ -32,10 +32,6 @@ impl TeamBoxScore {
 
     pub fn team_name(&self) -> TeamName {
         self.team_name.clone()
-    }
-
-    pub fn team_id(&self) -> TeamId {
-        self.team_id
     }
 
     pub fn visiting(&self) -> Visiting {

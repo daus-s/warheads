@@ -55,10 +55,6 @@ impl FromStr for TeamAbbreviation {
     type Err = TeamAbbreviationError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.len() != 3 {
-            return Err(TeamAbbreviationError);
-        };
-
         Ok(TeamAbbreviation(s.to_string()))
     }
 }

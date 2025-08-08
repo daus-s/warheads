@@ -12,3 +12,4 @@ mod read;
 pub mod rip;
 mod store;
 pub mod team_box_score;
+mod tests;

@@ -1,7 +1,7 @@
 use crate::types::{GameDate, Matchup, PlayerName, TeamAbbreviation, TeamName};
 use std::fmt::{Display, Formatter};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct GameDisplay {
     matchup: Matchup,
     date: GameDate,

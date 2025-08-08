@@ -23,7 +23,7 @@ impl Identifiable for Correction {
                 game_id: self.game_id.clone(),
                 player_id: Some(
                     self.player_id
-                        .expect(("💀 no player id for a player correction object. ")),
+                        .expect("💀 no player id for a player correction object. "),
                 ),
                 team_id: self.team_id,
                 game_date: self.game_date,

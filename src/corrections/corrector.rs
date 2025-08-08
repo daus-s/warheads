@@ -20,21 +20,7 @@ impl Corrector for Vec<Correction> {
             return Ok(());
         }
 
-        let mut files: HashMap<Domain, HashMap<Identity, String>> = HashMap::new();
-
-        for (&domain, archive) in archives.into_iter() {
-            let value = serde_json::from_str(&archive.contents()).map_err(|e| {
-                format!(
-                    "❌ failed to parse a JSON object from the archive {}: {e}",
-                    archive.path()
-                )
-            })?;
-
-            let map = json_to_hashmap(&value)
-                .map_err(|e| format!("❌ failed to convert JSON object into a hashmap: {e}"))?;
-
-            files.insert(domain, map);
-        }
+        let mut files: HashMap<Domain, HashMap<Identity, String>> = files(archives)?;
 
         let mut to_remove = Vec::new();
 
@@ -51,9 +37,6 @@ impl Corrector for Vec<Correction> {
             let id = correction.identity();
 
             if let Some(game) = map.get_mut(&id) {
-
-                dbg!(correction.delete);
-
                 if correction.delete {
                     to_remove.push(id);
                 } else {
@@ -62,14 +45,11 @@ impl Corrector for Vec<Correction> {
             }
         }
 
-        dbg!(&to_remove);
-
         for id in to_remove {
             if let Some(map) = files.get_mut(&id.domain()) {
                 map.remove(&id);
             }
         }
-
 
         for (domain, games_by_id) in files {
             let mut games_vector = games_by_id.into_values().collect::<Vec<String>>();
@@ -81,4 +61,29 @@ impl Corrector for Vec<Correction> {
 
         Ok(())
     }
+}
+
+fn files<A>(
+    archives: &HashMap<Domain, A>,
+) -> Result<HashMap<Domain, HashMap<Identity, String>>, String>
+where
+    A: Archive,
+{
+    let mut files: HashMap<Domain, HashMap<Identity, String>> = HashMap::new();
+
+    for (&domain, archive) in archives.into_iter() {
+        let value = serde_json::from_str(&archive.contents()).map_err(|e| {
+            format!(
+                "❌ failed to parse a JSON object from the archive {}: {e}",
+                archive.path()
+            )
+        })?;
+
+        let map = json_to_hashmap(&value)
+            .map_err(|e| format!("❌ failed to convert JSON object into a hashmap: {e}"))?;
+
+        files.insert(domain, map);
+    }
+
+    Ok(files)
 }

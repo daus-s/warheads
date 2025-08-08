@@ -15,9 +15,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::PTS, json!(10));
+        correction.corrections.insert(StatColumn::PTS, json!(10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -31,9 +29,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::MIN, json!(10));
+        correction.corrections.insert(StatColumn::MIN, json!(10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -47,9 +43,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::FGM, json!(10));
+        correction.corrections.insert(StatColumn::FGM, json!(10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -63,9 +57,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::FGA, json!(10));
+        correction.corrections.insert(StatColumn::FGA, json!(10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -95,9 +87,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::FG3M, json!(10));
+        correction.corrections.insert(StatColumn::FG3M, json!(10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -111,9 +101,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::FG3A, json!(10));
+        correction.corrections.insert(StatColumn::FG3A, json!(10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -143,9 +131,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::FTM, json!(10));
+        correction.corrections.insert(StatColumn::FTM, json!(10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -159,9 +145,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::FTA, json!(10));
+        correction.corrections.insert(StatColumn::FTA, json!(10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -191,9 +175,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::OREB, json!(10));
+        correction.corrections.insert(StatColumn::OREB, json!(10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -207,9 +189,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::DREB, json!(10));
+        correction.corrections.insert(StatColumn::DREB, json!(10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -223,9 +203,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::REB, json!(10));
+        correction.corrections.insert(StatColumn::REB, json!(10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -239,9 +217,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::AST, json!(10));
+        correction.corrections.insert(StatColumn::AST, json!(10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -255,9 +231,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::STL, json!(10));
+        correction.corrections.insert(StatColumn::STL, json!(10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -271,9 +245,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::BLK, json!(10));
+        correction.corrections.insert(StatColumn::BLK, json!(10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -287,9 +259,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::TOV, json!(10));
+        correction.corrections.insert(StatColumn::TOV, json!(10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -303,9 +273,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::PF, json!(5));
+        correction.corrections.insert(StatColumn::PF, json!(5));
 
         assert_eq!(
             correction.correct_string(data),
@@ -319,9 +287,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::PTS, json!(10));
+        correction.corrections.insert(StatColumn::PTS, json!(10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -367,10 +333,9 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction.corrections.insert(
-            StatColumn::FANTASY_PTS,
-            json!(69.420),
-        ); //assert that the value is being truncated properly
+        correction
+            .corrections
+            .insert(StatColumn::FANTASY_PTS, json!(69.420)); //assert that the value is being truncated properly
 
         assert_eq!(
             correction.correct_string(data),

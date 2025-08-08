@@ -106,7 +106,7 @@ impl MapReader for HashMap<StatColumn, Value> {
             }
         };
 
-        Ok(TeamAbbreviation(s.to_string()))
+        Ok(TeamAbbreviation(s.trim().to_string()))
     }
 
     fn team_name(&self) -> Result<TeamName, StatColumn> {

@@ -146,7 +146,6 @@ mod test_serde_type_support {
         assert_eq!(json_str, "\"2000-02-05\"")
     }
 
-
     // we no longer serialize the matchup field sand instead it is represented in the game object.
     // #[test]
     // fn test_serialize_matchup() {

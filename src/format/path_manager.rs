@@ -1,8 +1,6 @@
 use crate::constants::paths::data;
 use crate::format::season::season_path;
 use crate::format::stat_path_formatter::StatPathFormatter as SPF;
-use crate::stats::domain::Domain;
-use crate::stats::id::Identity;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::nba_kind::NBAStatKind::{Player, Team};
 use crate::types::{GameId, PlayerId, SeasonId, TeamId};
@@ -74,12 +72,7 @@ pub fn nba_team_correction_file(season: SeasonId, game_id: GameId, team_id: Team
 pub fn nba_storage_path(season_id: SeasonId) -> PathBuf {
     let (_year, period) = season_id.destructure();
 
-    let s = format!(
-        "{}/nba/store/{}/{}/",
-        *DATA,
-        season_path(season_id),
-        period
-    );
+    let s = format!("{}/nba/store/{}/{}/", *DATA, season_path(season_id), period);
 
     PathBuf::from(s)
 }

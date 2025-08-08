@@ -16,8 +16,11 @@ use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::nba_kind::NBAStatKind::{LineUp, Player, Team};
 use crate::stats::nba_stat::NBAStat;
 use crate::stats::stat_column::StatColumn;
+use crate::stats::stat_column::StatColumn::MATCHUP;
+use crate::types::matchup::is_matchup_for_team;
 use crate::types::{GameDate, SeasonId};
 use chrono::NaiveDate;
+use serde_json::Value::Null;
 use serde_json::{from_str, Value};
 use std::collections::HashMap;
 
@@ -30,8 +33,8 @@ pub fn fetch_and_process_nba_games(
 
         // handle corrections, maybe use something other than `result` in the future
         Err(corrections_meta) => {
-            eprintln!(
-                "there are {} {} corrections to make for the {}",
+            println!(
+                "ℹ️ there are {} {} corrections to make for the {}",
                 corrections_meta.len(),
                 stat,
                 season_id
@@ -75,7 +78,7 @@ fn process_nba_games(
     let json = &read_nba_file(file_path);
 
     let (rows, headers) = parse_season(from_str(json).expect(&format!(
-        "💀 failed to parse a season json object from the {} {} ({})",
+        "💀 failed to parse a season json object for the {} {} ({})",
         season_fmt(season_id.year()),
         season_id.period(),
         stat
@@ -174,13 +177,21 @@ fn fields_to_team_box_score(
         team_id,
         team_abbr.clone(),
         Team,
-        period,
         game_date,
     );
 
-    let matchup = s
+    let mut matchup = s
         .matchup()
         .expect("💀 couldn't get Matchup from map, which is necessary for GameMetaData. ");
+
+    //check matchup is well-ordered (self team is first listed)
+    //this only needs to be checked on team box_scores
+
+    let matchup_string = s.get(&MATCHUP).expect("💀 couldn't get Matchup from map, which is necessary for checking Matchup-TeamAbbreviation validity. ").as_str().expect("💀 Matchup in HashMap is not of type JSON::String");
+
+    if !is_matchup_for_team(matchup_string, &team_abbr) {
+        correction_builder.add_missing_field(MATCHUP, Null);
+    }
 
     let visiting = matchup
         .home_or_away(&team_abbr)
@@ -336,7 +347,6 @@ fn fields_to_player_box_score(
         team_id,
         team_abbr.clone(),
         Player,
-        period,
         game_date,
     );
 

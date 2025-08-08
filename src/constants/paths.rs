@@ -9,3 +9,12 @@ pub fn data() -> String {
         Err(_) => panic!("💀 could not read DATA from environment. (.env)"),
     }
 }
+
+pub fn test() -> String {
+    dotenv::dotenv().ok();
+
+    match dotenv::var("TEST") {
+        Ok(s) => s,
+        Err(_) => panic!("💀 could not read TEST from environment. (.env)"),
+    }
+}
