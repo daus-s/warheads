@@ -1,11 +1,11 @@
 use crate::corrections::correction::Correction;
-use crate::stats::game_metadata::GameDisplay;
+use crate::stats::game_display::GameDisplay;
 use crate::stats::id::Identifiable;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::percent::PercentGeneric;
 use crate::stats::stat_column::StatColumn;
 use crate::stats::types::BoolInt;
-use crate::tui::prompter::{prompt_and_delete, prompt_and_select, prompt_and_validate};
+use crate::tui::prompter::{prompt_and_delete, prompt_and_select, prompt_and_validate, prompt_with_options};
 use crate::types::{
     GameDate, GameId, GameResult, Matchup, PlayerId, SeasonId, TeamAbbreviation, TeamId,
 };
@@ -17,7 +17,7 @@ use std::fmt::Debug;
 #[derive(Debug)]
 pub struct CorrectionBuilder {
     correction: Correction,
-    meta: Option<GameDisplay>,
+    display: Option<GameDisplay>,
 }
 
 impl CorrectionBuilder {
@@ -43,12 +43,12 @@ impl CorrectionBuilder {
                 delete: false,
                 corrections: HashMap::new(),
             },
-            meta: None,
+            display: None,
         }
     }
 
-    pub fn update_meta(&mut self, meta: GameDisplay) {
-        self.meta = Some(meta);
+    pub fn update_display(&mut self, meta: GameDisplay) {
+        self.display = Some(meta);
     }
 
     pub fn add_missing_field(&mut self, col: StatColumn, val: Value) {
@@ -58,9 +58,9 @@ impl CorrectionBuilder {
     pub fn create(&mut self) -> Correction {
         use std::io::{stdout, Write};
 
-        let (corrections, meta_wrapper) = (&mut self.correction, self.meta.clone());
+        let (corrections, display_option) = (&mut self.correction, self.display.clone());
 
-        let meta = meta_wrapper.unwrap_or_else(|| panic!("💀 couldn't open game metadata."));
+        let display = display_option.unwrap_or_else(|| panic!("💀 couldn't open game metadata."));
 
         let mut fields_to_correct: Vec<StatColumn> =
             corrections.corrections.keys().cloned().collect();
@@ -69,9 +69,9 @@ impl CorrectionBuilder {
 
         let mut stdout = stdout();
 
-        println!("{}", meta);
+        println!("{}", display);
 
-        let confirmation = meta.display_name();
+        let confirmation = display.display_name();
 
         let delete = prompt_and_delete(&confirmation);
 
@@ -112,7 +112,9 @@ impl CorrectionBuilder {
                         prompt_and_validate::<String>(format!("enter {}", col).as_str())
                     }
                     StatColumn::MATCHUP => {
-                        prompt_and_validate::<Matchup>(format!("enter {}", col).as_str())
+                        let tm = corrections.team_abbr();
+
+                        prompt_with_options::<(Matchup, TeamAbbreviation)>(format!("enter {}", col).as_str(), (display.matchup(), tm))
                     }
 
                     //player data

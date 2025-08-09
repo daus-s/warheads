@@ -36,7 +36,7 @@ impl Display for TeamId {
 /// existence & correctness of the abbreviation.
 ///
 
-#[derive(Clone, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq, Serialize, Deserialize, Default)]
 pub struct TeamAbbreviation(pub String);
 
 #[derive(Debug, PartialEq, Eq)]

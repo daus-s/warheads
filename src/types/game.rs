@@ -1,4 +1,4 @@
-use crate::stats::se::SerdeEnum;
+use crate::stats::serde_enum::SerdeEnum;
 use crate::types::SeasonId;
 use chrono::{Datelike, NaiveDate};
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
@@ -93,7 +93,7 @@ impl Serialize for GameId {
 /// `GameResult` is an enum that represents the result of a game a Win, Loss or a Draw (NFL only.)
 /// implements SerdeEnum as well as functions for `to_str` and `from_str`
 ///
-#[derive(Debug, Copy, Clone, Deserialize, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum GameResult {
     Win,
     Loss,
@@ -157,5 +157,16 @@ impl Serialize for GameResult {
         S: Serializer,
     {
         serializer.serialize_str(&self.to_string())
+    }
+}
+
+impl<'de> Deserialize<'de> for GameResult {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+
+        s.parse::<GameResult>().map_err(de::Error::custom)
     }
 }

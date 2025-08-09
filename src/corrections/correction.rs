@@ -151,6 +151,10 @@ impl Correction {
     pub fn set_delete(&mut self, delete: bool) {
         self.delete = delete
     }
+
+    pub fn team_abbr(&self) -> TeamAbbreviation {
+        self.team_abbr.clone()
+    }
 }
 
 impl Debug for Correction {

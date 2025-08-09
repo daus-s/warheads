@@ -4,11 +4,14 @@ use crate::types::TeamAbbreviation;
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
+use serde_json::{json, Value};
+use crate::dapi::team_box_score::TeamBoxScore;
+use crate::stats::itemize::Itemize;
 
 /// `MatchupString` is a String wrapper that is
 /// enforced by its `fn parse() -> Self`
 /// when loaded from String (or str)
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct Matchup {
     pub home: TeamAbbreviation,
     pub away: TeamAbbreviation,
@@ -121,5 +124,35 @@ pub fn is_matchup_for_team(matchup_as_string: &str, team_abbreviation: &TeamAbbr
         [home, "vs.", _away] => home == &team_abbreviation.0,
         [away, "@", _home] => away == &team_abbreviation.0,
         _ => panic!("❌ {} is not a valid matchup string. expected either:\n  • [tm1, @, tm2]\n  • [tm1, vs, tm2]", matchup_as_string),
+    }
+}
+
+pub fn home_and_away(team1: TeamBoxScore, team2: TeamBoxScore) -> Result<(TeamBoxScore, TeamBoxScore), (TeamBoxScore, TeamBoxScore)> {
+    match (team1.visiting(), team2.visiting()) {
+        (Home, Away) => Ok((team1, team2)),
+        (Away, Home) => Ok((team2, team1)),
+        _ => Err((team1, team2))
+    }
+}
+
+
+impl Itemize for (Matchup, TeamAbbreviation) {
+    fn itemize(&self) -> Vec<Value> {
+        let (matchup, team) = self;
+
+        if matchup.home == *team {
+            vec![
+                json!(format!("{} @ {}", matchup.home, matchup.away)),
+                json!(format!("{} vs. {}", matchup.home, matchup.away)),
+            ]
+        } else if matchup.away == *team {
+            vec![
+                json!(format!("{} @ {}", matchup.away, matchup.home)),
+                json!(format!("{} vs. {}", matchup.away, matchup.home)),
+            ]
+        } else {
+            panic!("💀 TeamAbbreviation is not in their given Matchup. ")
+        }
+
     }
 }

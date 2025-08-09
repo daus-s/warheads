@@ -13,7 +13,7 @@ use warheads::format::path_manager::nba_correction_dir;
 use warheads::stats::id::Identifiable;
 use warheads::stats::nba_kind::NBAStatKind;
 use warheads::stats::nba_kind::NBAStatKind::Player;
-use warheads::stats::se::SerdeEnum;
+use warheads::stats::serde_enum::SerdeEnum;
 use warheads::stats::season_period::SeasonPeriod;
 use warheads::stats::stat_column::StatColumn;
 use warheads::stats::stat_column::StatColumn::*;

@@ -243,13 +243,13 @@ mod test_serialize_game_obj {
         let s = format!("{}/data/0020500673_SEA", *TEST);
 
         let home = serde_json::from_str(
-            &fs::read_to_string(format!("{}/data/0020500673_SEA", *TEST))
+            &fs::read_to_string(format!("{}/data/0020500673_SEA.json", *TEST))
                 .expect("failed to read seattle box score"),
         )
         .expect("failed to parse seattle box score");
 
         let away = serde_json::from_str(
-            &fs::read_to_string(format!("{}/data/0020500673_GSW", *TEST))
+            &fs::read_to_string(format!("{}/data/0020500673_GSW.json", *TEST))
                 .expect("failed to read golden state box score"),
         )
         .expect("failed to parse golden state box score");

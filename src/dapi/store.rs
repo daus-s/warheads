@@ -6,16 +6,13 @@ use crate::dapi::hunting::load_nba_season_from_file;
 use crate::dapi::team_box_score::TeamBoxScore;
 use crate::format::season::season_fmt;
 use crate::stats::domain::Domain;
-use crate::stats::game_metadata::GameDisplay;
 use crate::stats::game_obj::GameObject;
 use crate::stats::id::Identity;
 use crate::stats::nba_kind::NBAStatKind::Team;
-use crate::types::{Matchup, SeasonId};
+use crate::types::GameId;
 use indicatif::{ProgressBar, ProgressStyle};
 use std::collections::HashMap;
 use std::path::PathBuf;
-use serde_json::Value::Null;
-use crate::stats::stat_column::StatColumn::MATCHUP;
 
 pub async fn save_nba_season(year: i32) {
     let team_games = load_nba_season_from_file(year);
@@ -30,13 +27,13 @@ pub async fn save_nba_season(year: i32) {
                 season_fmt(year)
             );
 
-            for cs in correction_builders.iter() {
-                dbg!(cs);
-            }
+            // for cs in correction_builders.iter() {
+            //     dbg!(cs);
+            // }
 
             let corrections: Vec<Correction> = correction_builders
                 .iter_mut()
-                .map(|c| c.create())
+                .map(|corr| corr.create())
                 .collect();
 
             let mut domain_archive: HashMap<Domain, PathBuf> =
@@ -89,88 +86,57 @@ async fn sub_save(season: Vec<GameObject>) {
     pb.finish_with_message(format!("saved {} season.", season_fmt(szn)));
 }
 
+type TeamGame = (Identity, TeamBoxScore);
+
 fn pair_off(
-    mut games: Vec<(Identity, TeamBoxScore)>,
+    mut games: Vec<TeamGame>,
 ) -> Result<Vec<GameObject>, Vec<CorrectionBuilder>> {
-    let mut pairs = Vec::new();
-    let mut corrections = Vec::new();
+    let mut pairs = HashMap::<GameId, (Option<TeamGame>, Option<TeamGame>)>::new();
+    let mut corrections: Vec<CorrectionBuilder> = Vec::new();
 
-    for (id1, box_score1) in games.iter() {
-        for (id2, box_score2) in games.iter() {
-            if id1.game_id == id2.game_id && box_score1.team_id != box_score2.team_id {
-                // while these subsequent checks are redundant it seems like a good check as if they
-                // don't match then our data is malformed so we will exit the program.
-                if id1.game_date != id2.game_date || id1.season_id != id2.season_id {
-                    panic!("💀 malformed game's with matching GameId's have inconsistent data.")
-                } else {
-                    //any issues with pairing off the games will be added here.
-                    if box_score1.visiting() == box_score2.visiting() {
-                        let mut correction1 = CorrectionBuilder::new(
-                            id1.game_id,
-                            id1.season_id,
-                            None,
-                            box_score1.team_id,
-                            box_score1.team_abbr(),
-                            Team,
-                            id1.game_date,
-                        );
+    let l = games.len();
 
-                        let display1 = GameDisplay::new(
-                            Matchup::from_matchup(id1.team_abbr.clone(), id2.team_abbr.clone()),
-                            id1.game_date,
-                            None,
-                            id1.team_abbr.clone(),
-                            box_score1.team_name(),
-                        );
-
-                        correction1.update_meta(display1);
-
-                        // let mut correction2 = CorrectionBuilder::new(
-                        //     id2.game_id,
-                        //     id2.season_id,
-                        //     None,
-                        //     box_score2.team_id,
-                        //     box_score2.team_abbr(),
-                        //     Team,
-                        //     id2.game_date,
-                        // );
-                        //
-                        // let display2 = GameDisplay::new(
-                        //     Matchup::from_matchup(id2.team_abbr.clone(), id1.team_abbr.clone()),
-                        //     id2.game_date,
-                        //     None,
-                        //     id2.team_abbr.clone(),
-                        //     box_score2.team_name(),
-                        // );
-                        // correction2.update_meta(display2);
-
-
-                        // add correction fields
-                        correction1.add_missing_field(MATCHUP, Null);
-                        // correction2.add_missing_field(MATCHUP, Null);
-
-                        corrections.push(correction1);
-                        // corrections.push(correction2);
-
-                    } else {
-                        let game_object = GameObject::create(
-                            id1.season_id,
-                            id1.game_date,
-                            id1.game_id,
-                            box_score1.clone(),
-                            box_score2.clone(),
-                        ); //would rather not clone
-
-                        pairs.push(game_object);
+    for (id, game) in games.into_iter() {
+        match pairs.get_mut(&id.game_id) {
+            Some((game1, game2)) => {
+                match game1 {
+                    Some(_game1) => {
+                        *game2 = Some((id, game));
+                    }
+                    None => {
+                        *game1 = Some((id, game));
                     }
                 }
+            }
+            None => {
+                pairs.insert(id.game_id, (Some((id, game)), None));
             }
         }
     }
 
-    if corrections.len() == 0 {
-        Ok(pairs)
-    } else {
+    assert_eq!(pairs.len(), l / 2);
+
+    let mut games: Vec<GameObject> = Vec::with_capacity(l / 2);
+
+    for (_game_id, (a, b)) in pairs.into_iter() {
+        match (a, b) {
+            (Some((id1, game1)), Some((id2, game2))) => {
+                match GameObject::try_create(id1, game1, id2, game2) {
+                    Ok(game_object) => {
+                        games.push(game_object);
+                    }
+                    Err(mut corrections_builders) => {
+                        corrections.append(&mut corrections_builders);
+                    }
+                }
+            },
+            _ => {},
+        }
+    }
+
+    if corrections.len() > 0 {
         Err(corrections)
+    } else {
+        Ok(games)
     }
 }

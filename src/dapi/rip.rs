@@ -10,7 +10,7 @@ use crate::dapi::team_box_score::TeamBoxScore;
 use crate::format::path_manager::nba_data_path;
 use crate::format::season::season_fmt;
 use crate::stats::box_score::BoxScoreBuilder;
-use crate::stats::game_metadata::GameDisplay;
+use crate::stats::game_display::GameDisplay;
 use crate::stats::id::Identity;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::nba_kind::NBAStatKind::{LineUp, Player, Team};
@@ -205,11 +205,10 @@ fn fields_to_team_box_score(
         matchup.clone(),
         game_date.clone(),
         None,
-        team_abbr.clone(),
         team_name.clone(),
     );
 
-    correction_builder.update_meta(meta);
+    correction_builder.update_display(meta);
 
     record_stat(
         s.game_result(),
@@ -363,11 +362,10 @@ fn fields_to_player_box_score(
         matchup.clone(),
         game_date.clone(),
         Some(player_name.clone()),
-        team_abbr.clone(),
         team_name.clone(),
     );
 
-    correction_builder.update_meta(meta);
+    correction_builder.update_display(meta);
 
     record_stat(
         s.game_result(),

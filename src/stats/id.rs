@@ -50,6 +50,10 @@ impl Identity {
     pub fn game(&self) -> GameData {
         GameData::new(self.season_id, self.game_id, self.team_id)
     }
+
+    pub fn team_abbr(&self) -> TeamAbbreviation {
+        self.team_abbr.to_owned()
+    }
 }
 
 impl Debug for Identity {

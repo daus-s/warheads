@@ -1,5 +1,6 @@
 use crate::types::{GameDate, Matchup, PlayerName, TeamAbbreviation, TeamName};
 use std::fmt::{Display, Formatter};
+use crate::stats::statify::SafetyValve;
 
 #[derive(Clone, Debug)]
 pub struct GameDisplay {
@@ -17,7 +18,6 @@ pub struct GameDisplay {
     player_name: Option<PlayerName>,
 
     /// team abbreviation is the unique identifier for a team
-    team_abbr: TeamAbbreviation,
 
     /// team name (full)
     team_name: TeamName,
@@ -28,14 +28,12 @@ impl GameDisplay {
         matchup: Matchup,
         date: GameDate,
         player_name: Option<PlayerName>,
-        team_abbr: TeamAbbreviation,
         team_name: TeamName,
     ) -> Self {
         GameDisplay {
             matchup,
             date,
             player_name,
-            team_abbr,
             team_name,
         }
     }
@@ -46,16 +44,21 @@ impl GameDisplay {
             None => self.team_name.to_string(),
         }
     }
+
+    pub fn matchup(&self) -> Matchup {
+        self.matchup.clone()
+    }
 }
 
 impl Display for GameDisplay {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let matchup = format!("{}", self.matchup);
         // matching on name's existence is the same as checking Player vs. Team box score
+
         match &self.player_name {
             Some(s) => write!(
                 f,
-                "{} - {}\n{}\n{}",
+                "{} - {}\n{}:{}",
                 matchup,
                 self.date,
                 self.team_name.to_string(),
