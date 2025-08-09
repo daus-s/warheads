@@ -1,6 +1,5 @@
 use crate::stats::schema::Schema;
 use crate::stats::stat_column::StatColumn;
-use crate::stats::stat_value::StatValue;
 use crate::types::{
     Assists, Blocks, DefensiveRebounds, FantasyPoints, FieldGoalAttempts, FieldGoalMakes,
     FreeThrowAttempts, FreeThrowMakes, GameResult, Minutes, OffensiveRebounds, PersonalFouls,

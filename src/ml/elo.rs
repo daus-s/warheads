@@ -1,7 +1,4 @@
-use crate::dapi::team_box_score::TeamBoxScore;
-use crate::ml::cdf;
 use crate::stats::game_obj::GameObject;
-use crate::types::GameResult::{Draw, Loss, Win};
 
 pub fn update_elo(game_object: GameObject) {
     let elo1 = 69420;

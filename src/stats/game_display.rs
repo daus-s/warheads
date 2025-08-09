@@ -1,6 +1,5 @@
-use crate::types::{GameDate, Matchup, PlayerName, TeamAbbreviation, TeamName};
+use crate::types::{GameDate, Matchup, PlayerName, TeamName};
 use std::fmt::{Display, Formatter};
-use crate::stats::statify::SafetyValve;
 
 #[derive(Clone, Debug)]
 pub struct GameDisplay {

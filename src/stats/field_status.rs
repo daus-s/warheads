@@ -1,6 +1,6 @@
 use crate::stats::visiting::Visiting;
 use crate::stats::visiting::Visiting::{Away, Home};
-use crate::types::{Matchup, TeamAbbreviation};
+use crate::types::Matchup;
 use std::fmt::{Display, Formatter};
 
 pub struct FieldStatus {

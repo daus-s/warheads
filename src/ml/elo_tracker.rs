@@ -1,5 +1,4 @@
 use crate::constants::paths::data;
-use crate::stats::visiting::Visiting;
 use crate::types::{GameId, PlayerId};
 use csv::Writer;
 use once_cell::sync::Lazy;

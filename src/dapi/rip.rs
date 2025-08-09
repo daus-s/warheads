@@ -18,8 +18,7 @@ use crate::stats::nba_stat::NBAStat;
 use crate::stats::stat_column::StatColumn;
 use crate::stats::stat_column::StatColumn::MATCHUP;
 use crate::types::matchup::is_matchup_for_team;
-use crate::types::{GameDate, SeasonId};
-use chrono::NaiveDate;
+use crate::types::SeasonId;
 use serde_json::Value::Null;
 use serde_json::{from_str, Value};
 use std::collections::HashMap;
@@ -180,7 +179,7 @@ fn fields_to_team_box_score(
         game_date,
     );
 
-    let mut matchup = s
+    let matchup = s
         .matchup()
         .expect("💀 couldn't get Matchup from map, which is necessary for GameMetaData. ");
 

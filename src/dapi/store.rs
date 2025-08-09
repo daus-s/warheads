@@ -89,7 +89,7 @@ async fn sub_save(season: Vec<GameObject>) {
 type TeamGame = (Identity, TeamBoxScore);
 
 fn pair_off(
-    mut games: Vec<TeamGame>,
+    games: Vec<TeamGame>,
 ) -> Result<Vec<GameObject>, Vec<CorrectionBuilder>> {
     let mut pairs = HashMap::<GameId, (Option<TeamGame>, Option<TeamGame>)>::new();
     let mut corrections: Vec<CorrectionBuilder> = Vec::new();

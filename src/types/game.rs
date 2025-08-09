@@ -1,5 +1,4 @@
 use crate::stats::serde_enum::SerdeEnum;
-use crate::types::SeasonId;
 use chrono::{Datelike, NaiveDate};
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{json, Value};

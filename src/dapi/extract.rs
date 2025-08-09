@@ -4,7 +4,6 @@ use crate::format::language::box_score_value_to_string;
 use crate::stats::box_score::BoxScoreBuilder;
 use crate::stats::id::{Identifiable, Identity};
 use crate::stats::stat_column::StatColumn;
-use crate::stats::stat_value::StatValue;
 use serde_json::Value;
 use std::collections::HashMap;
 
