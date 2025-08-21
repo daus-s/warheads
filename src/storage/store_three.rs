@@ -36,11 +36,3 @@ pub async fn save_nba_game(client: Client, game: GameObject) -> Result<(), s3::E
 
     Ok(())
 }
-
-async fn list_player_games(pid: u32) -> Vec<u64> {
-    todo!("this will return a list of all the games in which a player played")
-    /*
-        due to the nature of the data this function does not need to be optimized, but it really should be.
-        between most games, players are not traded so you can kinda assume that they'll be on the team the next game.
-    */
-}

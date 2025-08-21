@@ -3,6 +3,7 @@ use crate::stats::domain::Domain;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::nba_kind::NBAStatKind::{Player, Team};
 use crate::stats::season_period::minimum_spanning_era;
+use crate::types::SeasonId;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::fs;
@@ -74,6 +75,18 @@ pub fn typed_domain_archive_pairs(year: i32, kind: NBAStatKind) -> HashMap<Domai
     for season_id in eras {
         dap.insert((season_id, kind), nba_data_path(season_id, kind));
     }
+
+    dap
+}
+
+// return a single domain archive pair as a HashMap. this is used for by dapi,
+// when sourcing and writing data, as it is broken into a single season period.
+pub fn domain_archive_pair(season_id: SeasonId, kind: NBAStatKind) -> HashMap<Domain, PathBuf> {
+    let mut dap = HashMap::new();
+
+    let domain = (season_id, kind);
+
+    dap.insert(domain, nba_data_path(season_id, kind));
 
     dap
 }

@@ -4,6 +4,7 @@ use crate::format::season::season_fmt;
 use crate::types::SeasonId;
 use std::fs;
 
+// todo: if data is loaded in the file system load from the json files rather than the source data (ugly).
 pub fn read_season(season_id: SeasonId) -> Result<Vec<TeamBoxScore>, String> {
     let dir = nba_storage_path(season_id);
 

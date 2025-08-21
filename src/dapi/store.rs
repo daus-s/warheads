@@ -1,5 +1,5 @@
 use crate::corrections::correction::Correction;
-use crate::corrections::correction_builder::CorrectionBuilder;
+use crate::corrections::correction_builder::{self, CorrectionBuilder};
 use crate::corrections::corrector::Corrector;
 use crate::dapi::archive::typed_domain_archive_pairs;
 use crate::dapi::hunting::load_nba_season_from_file;
@@ -8,7 +8,7 @@ use crate::format::season::season_fmt;
 use crate::stats::domain::Domain;
 use crate::stats::game_obj::GameObject;
 use crate::stats::id::Identity;
-use crate::stats::nba_kind::NBAStatKind::Team;
+use crate::stats::nba_kind::NBAStatKind::{Player, Team};
 use crate::types::GameId;
 use indicatif::{ProgressBar, ProgressStyle};
 use std::collections::HashMap;
@@ -88,9 +88,7 @@ async fn sub_save(season: Vec<GameObject>) {
 
 type TeamGame = (Identity, TeamBoxScore);
 
-fn pair_off(
-    games: Vec<TeamGame>,
-) -> Result<Vec<GameObject>, Vec<CorrectionBuilder>> {
+fn pair_off(games: Vec<TeamGame>) -> Result<Vec<GameObject>, Vec<CorrectionBuilder>> {
     let mut pairs = HashMap::<GameId, (Option<TeamGame>, Option<TeamGame>)>::new();
     let mut corrections: Vec<CorrectionBuilder> = Vec::new();
 
@@ -98,23 +96,61 @@ fn pair_off(
 
     for (id, game) in games.into_iter() {
         match pairs.get_mut(&id.game_id) {
-            Some((game1, game2)) => {
-                match game1 {
-                    Some(_game1) => {
-                        *game2 = Some((id, game));
-                    }
-                    None => {
-                        *game1 = Some((id, game));
-                    }
+            Some((game1, game2)) => match game1 {
+                Some(_game1) => {
+                    *game2 = Some((id, game));
                 }
-            }
+                None => {
+                    *game1 = Some((id, game));
+                }
+            },
             None => {
                 pairs.insert(id.game_id, (Some((id, game)), None));
             }
         }
     }
 
-    assert_eq!(pairs.len(), l / 2);
+    //find and report unpaired unboxed games
+    for (id, pair) in pairs.iter() {
+        match pair {
+            (Some(game), None) | (None, Some(game)) => {
+                eprintln!(
+                    "⚠️ unpaired game: {} season: {}",
+                    id,
+                    pair.0.as_ref().unwrap().0.season_id
+                );
+
+                let Identity {
+                    season_id,
+                    player_id,
+                    team_id,
+                    team_abbr,
+                    game_id,
+                    game_date,
+                } = game.0.clone();
+
+                let mut correction_builder = correction_builder::CorrectionBuilder::new(
+                    game_id,
+                    season_id,
+                    player_id,
+                    team_id,
+                    team_abbr,
+                    match player_id {
+                        Some(_id) => Player,
+                        None => Team,
+                    },
+                    game_date,
+                );
+
+                correction_builder.set_delete(true);
+
+                corrections.push(correction_builder);
+            }
+            _ => {
+                //do nothing
+            }
+        }
+    }
 
     let mut games: Vec<GameObject> = Vec::with_capacity(l / 2);
 
@@ -129,8 +165,8 @@ fn pair_off(
                         corrections.append(&mut corrections_builders);
                     }
                 }
-            },
-            _ => {},
+            }
+            _ => {}
         }
     }
 

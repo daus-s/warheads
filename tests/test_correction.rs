@@ -7,19 +7,17 @@ use std::str::FromStr;
 use warheads::corrections::correction::Correction;
 use warheads::corrections::correction_loader::load_corrections;
 use warheads::corrections::corrector::Corrector;
-use warheads::dapi::extract::json_to_hashmap;
-use warheads::format::language::partition;
 use warheads::format::path_manager::nba_correction_dir;
-use warheads::stats::id::Identifiable;
-use warheads::stats::nba_kind::NBAStatKind;
-use warheads::stats::nba_kind::NBAStatKind::Player;
-use warheads::stats::serde_enum::SerdeEnum;
+use warheads::stats::nba_kind::NBAStatKind::{self, Player};
 use warheads::stats::season_period::SeasonPeriod;
+use warheads::stats::serde_enum::SerdeEnum;
 use warheads::stats::stat_column::StatColumn;
 use warheads::stats::stat_column::StatColumn::*;
-use warheads::stats::stat_value::StatValue;
-use warheads::types::GameResult::{Loss, Win};
-use warheads::types::{GameDate, GameId, PlayerId, SeasonId, TeamAbbreviation, TeamId};
+use warheads::types::{
+    GameDate, GameId,
+    GameResult::{Loss, Win},
+    PlayerId, SeasonId, TeamAbbreviation, TeamId,
+};
 
 #[test]
 pub fn test_load_correction() {
@@ -27,9 +25,9 @@ pub fn test_load_correction() {
 
     let kind = Player;
 
-    let mut expected_corrections = expected_corrections(season_id, kind);
+    let mut expected_corrections = expected_corrections();
 
-    let mut actual_corrections = load_corrections(season_id.year(), kind).unwrap_or_else(|e| {
+    let mut actual_corrections = load_corrections(season_id, kind).unwrap_or_else(|e| {
         panic!(
             "Failed to load corrections from: {}\n{e}",
             nba_correction_dir(season_id, kind)
@@ -42,7 +40,10 @@ pub fn test_load_correction() {
     assert_eq!(actual_corrections, expected_corrections);
 }
 
-fn expected_corrections(season_id: SeasonId, kind: NBAStatKind) -> Vec<Correction> {
+fn expected_corrections() -> Vec<Correction> {
+    let season_id = SeasonId::from(21959);
+    let kind = Player;
+
     vec![
         Correction {
             game_id: GameId::from("0025900249"),

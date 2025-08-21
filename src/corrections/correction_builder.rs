@@ -5,7 +5,9 @@ use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::percent::PercentGeneric;
 use crate::stats::stat_column::StatColumn;
 use crate::stats::types::BoolInt;
-use crate::tui::prompter::{prompt_and_delete, prompt_and_select, prompt_and_validate, prompt_with_options};
+use crate::tui::prompter::{
+    prompt_and_delete, prompt_and_select, prompt_and_validate, prompt_with_options,
+};
 use crate::types::{
     GameDate, GameId, GameResult, Matchup, PlayerId, SeasonId, TeamAbbreviation, TeamId,
 };
@@ -58,9 +60,40 @@ impl CorrectionBuilder {
     pub fn create(&mut self) -> Correction {
         use std::io::{stdout, Write};
 
-        let (corrections, display_option) = (&mut self.correction, self.display.clone());
+        let (mut corrections, display_option) = (self.correction.clone(), self.display.clone());
 
-        let display = display_option.unwrap_or_else(|| panic!("💀 couldn't open game metadata."));
+        let (display_string, confirmation) = match display_option {
+            Some(display) => (format!("{display}"), display.display_name()),
+            None => (
+                format!("🚫 no game display data 🚫"),
+                String::from("GENERIC DELETE"),
+            ),
+        };
+
+        dbg!((&self.correction).identity());
+
+        println!("{}", display_string);
+
+        //if the correctionbuilder is provided as deleting it is from a source that needs to delete the data so we should not check again.
+        if corrections.delete {
+            println!("🗑️ deleting {}", corrections.identity());
+
+            save_correction_wrapper(&corrections);
+
+            return corrections.clone();
+        } else {
+            let delete = prompt_and_delete(&confirmation);
+
+            corrections.set_delete(delete);
+
+            if delete {
+                println!("🗑️ deleting {}", corrections.identity());
+
+                save_correction_wrapper(&corrections);
+
+                return corrections.clone(); //if we are deleting we don't need any values for the corrections
+            }
+        }
 
         let mut fields_to_correct: Vec<StatColumn> =
             corrections.corrections.keys().cloned().collect();
@@ -68,18 +101,6 @@ impl CorrectionBuilder {
         fields_to_correct.sort();
 
         let mut stdout = stdout();
-
-        println!("{}", display);
-
-        let confirmation = display.display_name();
-
-        let delete = prompt_and_delete(&confirmation);
-
-        corrections.set_delete(delete);
-
-        if delete {
-            return corrections.clone(); //if we are deleting we don't need any values for the corrections
-        }
 
         for col in fields_to_correct {
             if let Some(val) = corrections.corrections.get(&col) {
@@ -114,7 +135,16 @@ impl CorrectionBuilder {
                     StatColumn::MATCHUP => {
                         let tm = corrections.team_abbr();
 
-                        prompt_with_options::<(Matchup, TeamAbbreviation)>(format!("enter {}", col).as_str(), (display.matchup(), tm))
+                        if let Some(display) = self.display.clone() {
+                            prompt_with_options::<(Matchup, TeamAbbreviation)>(
+                                format!("enter {}", col).as_str(),
+                                (display.matchup(), tm),
+                            )
+                        } else {
+                            eprintln!("❌ cannot correct matchup. assigning new matchup to Null");
+
+                            Value::Null
+                        }
                     }
 
                     //player data
@@ -175,27 +205,33 @@ impl CorrectionBuilder {
                 println!("{}: {}", col, value); // New value
             }
         }
-        let correction = corrections.clone();
+        save_correction_wrapper(&corrections);
 
-        match correction.save() {
-            Ok(_) => {
-                println!(
-                    "✅ successfully saved corrections for {}",
-                    self.correction.identity()
-                );
-            }
-            Err(e) => {
-                eprintln!(
-                    "❌ failed to save corrections for {}: {e}",
-                    self.correction.identity()
-                );
-            }
-        };
-
-        correction
+        corrections
     }
 
     pub fn correcting(&self) -> bool {
         self.correction.len() > 0
     }
+
+    pub fn set_delete(&mut self, delete: bool) {
+        self.correction.delete = delete;
+    }
+}
+
+fn save_correction_wrapper(correction: &Correction) {
+    match correction.save() {
+        Ok(_) => {
+            println!(
+                "✅ successfully saved corrections for {}",
+                correction.identity()
+            );
+        }
+        Err(e) => {
+            eprintln!(
+                "❌ failed to save corrections for {}: {e}",
+                correction.identity()
+            );
+        }
+    };
 }

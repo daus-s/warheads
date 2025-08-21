@@ -1,8 +1,8 @@
 use crate::format::stat_path_formatter::StatPathFormatter;
+use crate::format::url_format::UrlFormatter;
 use crate::types::SeasonId;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Formatter};
-use crate::format::url_format::UrlFormatter;
 
 #[derive(Clone, Copy, PartialEq, Serialize, Deserialize, Eq, Hash, Debug)]
 #[serde(rename_all = "PascalCase")]
@@ -65,20 +65,21 @@ pub fn minimum_spanning_era(year: i32) -> Vec<SeasonId> {
         vec![
             SeasonId::from((year, SeasonPeriod::PreSeason)),
             SeasonId::from((year, SeasonPeriod::RegularSeason)),
+            SeasonId::from((year, SeasonPeriod::PostSeason)),
         ]
     } else {
-        vec![SeasonId::from((year, SeasonPeriod::RegularSeason))]
+        vec![
+            SeasonId::from((year, SeasonPeriod::RegularSeason)),
+            SeasonId::from((year, SeasonPeriod::PostSeason)),
+        ]
     };
 
     if year >= 2020 {
         minimum_spanning_era.push(SeasonId::from((year, SeasonPeriod::PlayIn)));
     }
 
-    minimum_spanning_era.push(SeasonId::from((year, SeasonPeriod::PostSeason)));
-
     minimum_spanning_era
 }
-
 
 impl UrlFormatter for SeasonPeriod {
     fn url(&self) -> String {

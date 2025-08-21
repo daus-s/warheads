@@ -49,24 +49,23 @@ pub fn nba_player_correction_file(
     season: SeasonId,
     game_id: GameId,
     player_id: PlayerId,
-) -> String {
-    format!(
+) -> PathBuf {
+    PathBuf::from(format!(
         "{}/{}_{}.corr",
         nba_correction_dir(season, Player),
         game_id,
         player_id
-    )
+    ))
 }
 
-pub fn nba_team_correction_file(season: SeasonId, game_id: GameId, team_id: TeamId) -> String {
-    format!(
+pub fn nba_team_correction_file(season: SeasonId, game_id: GameId, team_id: TeamId) -> PathBuf {
+    PathBuf::from(format!(
         "{}/{}_{}.corr",
         nba_correction_dir(season, Team),
         game_id,
         team_id
-    )
+    ))
 }
-
 /// `nba_storage_path` returns the PathBuf to the location of the processed nba data for storage on
 /// disk.
 pub fn nba_storage_path(season_id: SeasonId) -> PathBuf {

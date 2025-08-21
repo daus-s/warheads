@@ -31,7 +31,7 @@ impl Corrector for Vec<Correction> {
             let domain = correction.domain();
 
             let map = files.get_mut(&domain).ok_or_else(|| {
-                "❌ correction didnt have a relevant archive to be applied to".to_string()
+                "⚠️ correction didnt have a relevant archive to be applied to".to_string()
             })?;
 
             let id = correction.identity();
@@ -74,13 +74,13 @@ where
     for (&domain, archive) in archives.into_iter() {
         let value = serde_json::from_str(&archive.contents()).map_err(|e| {
             format!(
-                "❌ failed to parse a JSON object from the archive {}: {e}",
+                "⚠️ failed to parse a JSON object from the archive {}: {e}",
                 archive.path()
             )
         })?;
 
         let map = json_to_hashmap(&value)
-            .map_err(|e| format!("❌ failed to convert JSON object into a hashmap: {e}"))?;
+            .map_err(|e| format!("⚠️ failed to convert JSON object into a hashmap: {e}"))?;
 
         files.insert(domain, map);
     }

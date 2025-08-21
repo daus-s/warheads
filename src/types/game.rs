@@ -51,13 +51,13 @@ pub struct GameId(pub u64);
 
 impl Display for GameId {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{:0>10}", self.0)
     }
 }
 
 impl From<String> for GameId {
     fn from(value: String) -> Self {
-        GameId(value.parse().unwrap())
+        GameId(value.parse().expect("💀 couldn't parse game id"))
     }
 }
 

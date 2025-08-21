@@ -1,6 +1,7 @@
-use crate::corrections::correction::Correction;
 use crate::corrections::correction_builder::CorrectionBuilder;
+use crate::corrections::correction_loader::load_corrections;
 use crate::corrections::corrector::Corrector;
+use crate::dapi::archive::domain_archive_pair;
 use crate::dapi::extract::record_stat;
 use crate::dapi::gather::read_nba_file;
 use crate::dapi::map_reader::MapReader;
@@ -25,36 +26,54 @@ use std::collections::HashMap;
 
 pub fn fetch_and_process_nba_games(
     season_id: SeasonId,
-    stat: NBAStatKind,
+    kind: NBAStatKind,
 ) -> Vec<(Identity, NBAStat)> {
-    match process_nba_games(season_id, stat) {
+    match process_nba_games(season_id, kind) {
         Ok(games) => games,
 
         // handle corrections, maybe use something other than `result` in the future
-        Err(corrections_meta) => {
+        Err(correction_builders) => {
+            //check if the corrections exist?
             println!(
-                "ℹ️ there are {} {} corrections to make for the {}",
-                corrections_meta.len(),
-                stat,
-                season_id
+                "checking if corrections for the {} exist.",
+                season_fmt(season_id.year())
             );
 
-            //check if the corrections exist?
+            let mut corrections = Vec::new();
 
-            let corrections: Vec<Correction> = corrections_meta
-                .into_iter()
-                .map(|mut corr| corr.create())
-                .collect();
+            if let Ok(mut preexisting_corrections) = load_corrections(season_id, kind) {
+                println!(
+                    "ℹ️  {} {} corrections already exist for the {}",
+                    preexisting_corrections.len(),
+                    kind,
+                    season_id
+                );
 
-            let mut dap = HashMap::new();
+                corrections.append(&mut preexisting_corrections);
+            }
 
-            let domain = (season_id, stat);
+            println!(
+                "ℹ️ there are {} {} corrections to make for the {}",
+                correction_builders.len(),
+                kind,
+                season_id
+            );
+            for mut correction_builder in correction_builders {
+                let correction = correction_builder.create();
 
-            dap.insert(domain, nba_data_path(season_id, stat));
+                for loaded_correction in corrections.iter() {
+                    if loaded_correction == &correction {
+                        continue;
+                    } else {
+                        corrections.push(correction);
+                        break;
+                    }
+                }
+            }
 
             corrections
-                .apply(&mut dap)
-                .map(|_| fetch_and_process_nba_games(season_id, stat))
+                .apply(&mut domain_archive_pair(season_id, kind))
+                .map(|_| fetch_and_process_nba_games(season_id, kind))
                 .unwrap_or_else(|e| panic!("💀 failed to apply corrections: {}", e))
         }
     }
@@ -167,8 +186,6 @@ fn fields_to_team_box_score(
         game_date,
     };
 
-    let period = season_id.period();
-
     let mut correction_builder = CorrectionBuilder::new(
         game_id.clone(),
         season_id,
@@ -200,12 +217,7 @@ fn fields_to_team_box_score(
         .team_name()
         .expect("💀 couldn't get TeamName from map, which is necessary for GameMetaData. ");
 
-    let meta = GameDisplay::new(
-        matchup.clone(),
-        game_date.clone(),
-        None,
-        team_name.clone(),
-    );
+    let meta = GameDisplay::new(matchup.clone(), game_date, None, team_name.clone());
 
     correction_builder.update_display(meta);
 
@@ -335,8 +347,6 @@ fn fields_to_player_box_score(
         game_date,
         game_id,
     };
-
-    let period = season_id.period();
 
     let mut correction_builder = CorrectionBuilder::new(
         game_id.clone(),

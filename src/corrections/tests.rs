@@ -1,5 +1,5 @@
 #[cfg(test)]
-mod tests {
+mod correct_columns {
     use crate::corrections::correction::Correction;
     use crate::stats::nba_kind::NBAStatKind;
     use crate::stats::season_period::SeasonPeriod;

@@ -361,7 +361,7 @@ impl BoxScore {
                 Ok(())
             }
             Err(e) => {
-                eprintln!("❌ WL as JSON must be type String and .");
+                eprintln!("❌ WL as JSON must be type String and in [W, L]: {e}");
 
                 Err(())
             }

@@ -70,11 +70,10 @@ impl From<i32> for SeasonId {
 
         let period = match per_int {
             10_000 => PreSeason,
-            20_000 => RegularSeason,
+            20_000 => RegularSeason, //although some games are NBA Cup games, this determination is not made by the SeasonId.
+            30_000 => AllStarGame,
             40_000 => PostSeason,
             50_000 => PlayIn,
-            20_000 => NBACup, //todo: distinguish between these games--caitlin clark effect
-            30_000 => AllStarGame,
             _ => panic!("💀 no other season period offsets exist:  {per_int}"),
         };
 

@@ -46,7 +46,7 @@ where
         _ => input
             .parse::<T>()
             .map(|_| ())
-            .map_err(|_| format!("❌ could not parse a {} from \"{}\".", type_name::<T>(), input)),
+            .map_err(|_| format!("⚠️ could not parse a {} from \"{}\".", type_name::<T>(), input)),
     }
 }
 

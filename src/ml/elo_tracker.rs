@@ -11,12 +11,12 @@ pub struct EloTracker {
 
 impl EloTracker {
     pub fn process_elo(&self) {
-        // load season by season, dont nuke the memory will all tge history.
+        // load season by season, don't nuke the memory will all tge history.
         todo!("assign elo values to players on a game by game basis")
     }
 
     pub fn save(&self) -> Result<(), String> {
-        let filename = save_path("elo.csv"); //todo: add customizability for different models here
+        let filename = Self::save_path("elo.csv"); //todo: add customizability for different models here
 
         let mut writer = Writer::from_path(&filename)
             .map_err(|e| format!("❌ failed to open a writer for {filename}: {e}"))?;
@@ -42,10 +42,10 @@ impl EloTracker {
 
         Ok(())
     }
-}
 
-fn save_path(filename: &str) -> String {
-    static DATA: Lazy<String> = Lazy::new(data);
+    fn save_path(filename: &str) -> String {
+        static DATA: Lazy<String> = Lazy::new(data);
 
-    format!("{}/nba/elo/{}", *DATA, filename)
+        format!("{}/nba/elo/{}", *DATA, filename)
+    }
 }
