@@ -13,15 +13,15 @@ pub fn value_to_date(value: &Value) -> Option<NaiveDate> {
     }
 }
 //
-pub fn destructure_dt(dt: DateTime<Local>) -> DT {
-    DT {
+pub fn destructure_dt(dt: DateTime<Local>) -> DestructuredDateTime {
+    DestructuredDateTime {
         year: dt.year(),
         month: dt.month(),
         day: dt.day(),
     }
 }
 
-pub struct DT {
+pub struct DestructuredDateTime {
     pub year: i32,
     pub month: u32,
     pub day: u32,

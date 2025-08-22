@@ -6,7 +6,7 @@ use crate::constants::paths::test;
 use crate::dapi::write::write_games;
 
 use crate::proc::gather::{player_games, team_games};
-use crate::proc::hunting::make_nba_request;
+use crate::proc::query::make_nba_request;
 use crate::proc::store::pair_off;
 
 use crate::stats::game_obj::GameObject;

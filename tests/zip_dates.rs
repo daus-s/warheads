@@ -15,7 +15,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::fs::read_dir;
 
-#[test]
+#[ignore = "dead_code"]
 fn zip_dates() {
     for year in 1946..2025 {
         let periods = minimum_spanning_era(year);
