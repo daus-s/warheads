@@ -1,5 +1,5 @@
-use crate::dapi::hunting;
 use crate::dapi::player_box_score::PlayerBoxScore;
+use crate::dapi::query;
 use crate::dapi::rip::fetch_and_process_nba_games;
 use crate::dapi::team_box_score::TeamBoxScore;
 use crate::format::path_manager::nba_data_path;
@@ -90,7 +90,7 @@ pub async fn fetch_and_save_nba_stats(season: SeasonId, stat: NBAStatKind) -> Re
 
     let (year, _period) = season.destructure();
 
-    match hunting::query_nba(season, stat).await {
+    match query::query_nba(season, stat).await {
         Ok(response_data) => match write_games(file_path(), &response_data) {
             Ok(_) => {
                 println!(

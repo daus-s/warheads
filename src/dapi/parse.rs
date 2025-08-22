@@ -13,23 +13,23 @@ pub fn value_to_date(value: &Value) -> Option<NaiveDate> {
     }
 }
 //
-pub fn destructure_dt(dt: DateTime<Local>) -> DT {
-    DT {
+pub fn destructure_dt(dt: DateTime<Local>) -> DestructuredDateTime {
+    DestructuredDateTime {
         year: dt.year(),
         month: dt.month(),
         day: dt.day(),
     }
 }
 
-pub struct DT {
+pub struct DestructuredDateTime {
     pub year: i32,
     pub month: u32,
     pub day: u32,
 }
 
 pub fn parse_season(value: Value) -> (Vec<Value>, Vec<String>) {
-    let set =
-        get_result_set(&value).unwrap_or_else(|err| panic!("💀 could not unwrap result set: {err}"));
+    let set = get_result_set(&value)
+        .unwrap_or_else(|err| panic!("💀 could not unwrap result set: {err}"));
 
     let headers: Vec<String> =
         headers(&set).unwrap_or_else(|err| panic!("💀 could not unwrap headers from set: {err}"));

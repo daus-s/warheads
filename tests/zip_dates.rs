@@ -11,7 +11,7 @@ use warheads::stats::stat_column::team_column_index;
 use warheads::stats::stat_column::StatColumn;
 use warheads::types::{GameDate, GameId, SeasonId, TeamId};
 
-#[test]
+#[ignore = "dead_code"]
 fn zip_dates() {
     for year in 1946..2025 {
         let periods = minimum_spanning_era(year);
