@@ -3,7 +3,7 @@ use crate::stats::statify::SafetyValve;
 use serde::{Deserialize, Serialize, Serializer};
 use std::fmt::Display;
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct FieldGoalAttempts(pub Option<u8>);
 
 impl Attempts for FieldGoalAttempts {
@@ -18,7 +18,7 @@ impl Display for FieldGoalAttempts {
     }
 }
 
-#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct FieldGoalMakes(pub u8);
 
 impl Makes for FieldGoalMakes {

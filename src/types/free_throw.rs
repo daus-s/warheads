@@ -3,7 +3,7 @@ use crate::stats::statify::SafetyValve;
 use serde::{Deserialize, Serialize, Serializer};
 use std::fmt::{Display, Formatter};
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct FreeThrowAttempts(pub Option<u8>);
 
 impl Display for FreeThrowAttempts {
@@ -18,7 +18,7 @@ impl Attempts for FreeThrowAttempts {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct FreeThrowMakes(pub u8);
 
 impl Display for FreeThrowMakes {

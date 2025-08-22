@@ -92,7 +92,7 @@ impl Serialize for GameId {
 /// `GameResult` is an enum that represents the result of a game a Win, Loss or a Draw (NFL only.)
 /// implements SerdeEnum as well as functions for `to_str` and `from_str`
 ///
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum GameResult {
     Win,
     Loss,

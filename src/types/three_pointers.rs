@@ -3,7 +3,7 @@ use crate::stats::statify::SafetyValve;
 use serde::{Deserialize, Serialize, Serializer};
 use std::fmt::{Display, Formatter};
 
-#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ThreePointAttempts(pub Option<u8>);
 
 impl Display for ThreePointAttempts {
@@ -18,7 +18,7 @@ impl Attempts for ThreePointAttempts {
     }
 }
 
-#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ThreePointMakes(pub Option<u8>);
 
 impl Display for ThreePointMakes {
