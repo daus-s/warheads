@@ -1,4 +1,4 @@
-use crate::stats::se::SerdeEnum;
+use crate::stats::serde_enum::SerdeEnum;
 use serde_json::{json, Value};
 
 /// BoolInt is an int that is either 1 or 0

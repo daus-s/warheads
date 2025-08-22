@@ -1,9 +1,9 @@
-use crate::types::{GameDate, MatchupString, PlayerName, TeamAbbreviation, TeamName};
+use crate::types::{GameDate, Matchup, PlayerName, TeamName};
 use std::fmt::{Display, Formatter};
 
-#[derive(Clone)]
-pub struct GameMetaData {
-    matchup: MatchupString,
+#[derive(Clone, Debug)]
+pub struct GameDisplay {
+    matchup: Matchup,
     date: GameDate,
 
     /// ## player_name
@@ -17,25 +17,22 @@ pub struct GameMetaData {
     player_name: Option<PlayerName>,
 
     /// team abbreviation is the unique identifier for a team
-    team_abbr: TeamAbbreviation,
 
     /// team name (full)
     team_name: TeamName,
 }
 
-impl GameMetaData {
+impl GameDisplay {
     pub fn new(
-        matchup: MatchupString,
+        matchup: Matchup,
         date: GameDate,
         player_name: Option<PlayerName>,
-        team_abbr: TeamAbbreviation,
         team_name: TeamName,
     ) -> Self {
-        GameMetaData {
+        GameDisplay {
             matchup,
             date,
             player_name,
-            team_abbr,
             team_name,
         }
     }
@@ -46,16 +43,21 @@ impl GameMetaData {
             None => self.team_name.to_string(),
         }
     }
+
+    pub fn matchup(&self) -> Matchup {
+        self.matchup.clone()
+    }
 }
 
-impl Display for GameMetaData {
+impl Display for GameDisplay {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let matchup = format!("{}", self.matchup);
         // matching on name's existence is the same as checking Player vs. Team box score
+
         match &self.player_name {
             Some(s) => write!(
                 f,
-                "{} - {}\n{}\n{}",
+                "{} - {}\n{}:{}",
                 matchup,
                 self.date,
                 self.team_name.to_string(),

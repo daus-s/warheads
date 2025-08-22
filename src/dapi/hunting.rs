@@ -7,7 +7,7 @@
 use crate::dapi::team_box_score::TeamBoxScore;
 use std::collections::HashMap;
 
-use crate::corrections::correction_loader::load_corrections;
+use crate::corrections::correction_loader::load_season_corrections;
 use crate::corrections::corrector::Corrector;
 use crate::dapi::gather;
 use crate::dapi::gather::{player_games, team_games};
@@ -15,7 +15,9 @@ use crate::dapi::parse::{destructure_dt, DT};
 use crate::dapi::store::save_nba_season;
 use crate::format::path_manager::nba_data_path;
 use crate::format::season::season_fmt;
+use crate::format::url_format::UrlFormatter;
 use crate::stats::domain::Domain;
+use crate::stats::id::Identity;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::nba_kind::NBAStatKind::{Player, Team};
 use crate::stats::season_period::minimum_spanning_era;
@@ -31,7 +33,9 @@ use std::error::Error;
 use std::path::PathBuf;
 use std::str::FromStr;
 
-pub fn load_nba_season_from_file(year: i32) -> Vec<TeamBoxScore> {
+const BEGINNING: i32 = 1946;
+
+pub fn load_nba_season_from_file(year: i32) -> Vec<(Identity, TeamBoxScore)> {
     let player_games = player_games(year);
 
     team_games(year, player_games)
@@ -47,7 +51,7 @@ pub async fn chronicle_nba() {
         0
     }; // august14th
 
-    let begin = 1946; //first year of the nba in record is 1946-1947 szn
+    let begin = BEGINNING; //first year of the nba in record is 1946-1947 szn
 
     for szn in begin..year + seasonal_depression {
         save_nba_season(szn).await;
@@ -67,25 +71,22 @@ pub async fn observe_nba() {
         0
     }; // august14th
 
-    let begin = 1946; //first year of the nba in record is 1946-1947 szn
+    let begin = BEGINNING; //first year of the nba in record is 1946-1947 szn
 
     for year in begin..curr_year + seasonal_depression {
         for era in minimum_spanning_era(year) {
-            if let Err(msg) = gather::fetch_and_save_nba_stats(&era, Player).await {
+            if let Err(msg) = gather::fetch_and_save_nba_stats(era, Player).await {
                 eprintln!("{}", msg);
             }
 
-            if let Err(msg) = gather::fetch_and_save_nba_stats(&era, Team).await {
+            if let Err(msg) = gather::fetch_and_save_nba_stats(era, Team).await {
                 eprintln!("{}", msg);
             }
         }
     }
 }
 
-pub async fn query_nba(
-    season: &SeasonId,
-    stat_kind: NBAStatKind,
-) -> Result<String, Box<dyn Error>> {
+pub async fn query_nba(season: SeasonId, stat_kind: NBAStatKind) -> Result<String, Box<dyn Error>> {
     let client = Client::new();
 
     let mut headers = HeaderMap::new();
@@ -143,11 +144,11 @@ pub async fn query_nba(
         LeagueID=00&\
         PlayerOrTeam={}&\
         Season={}&\
-        SeasonType={:?}&\
+        SeasonType={}&\
         Sorter=DATE",
-        stat_kind,
-        season_fmt(season.year()),
-        season.period()
+        stat_kind.url(),
+        season.year().url(),
+        season.period().url()
     );
 
     let response = client.get(&url).headers(headers).send().await?;
@@ -173,51 +174,51 @@ pub fn revise_nba() {
         0
     }; // august14th
 
-    let begin = 1946; //first year of the nba in record is 1946-1947 szn
+    let begin = BEGINNING; //first year of the nba in record is 1946-1947 szn
 
     for szn in begin..year + seasonal_depression {
         let eras = minimum_spanning_era(szn);
 
-        let player_corrections = load_corrections(szn, Player);
+        let player_corrections = load_season_corrections(szn, Player);
 
         let mut player_archives = eras
             .iter()
             .map(|x| (x, Player))
-            .map(|(&s, k)| ((s, k), nba_data_path(&s, k)))
+            .map(|(&s, k)| ((s, k), nba_data_path(s, k)))
             .collect::<HashMap<Domain, PathBuf>>();
 
         if let Ok(corrections) = player_corrections {
             if let Err(msg) = corrections.apply(&mut player_archives) {
                 println!(
-                    "{msg}\n⚠️ failed to overwrite NBA player data for {}",
+                    "{msg}\n❌ failed to overwrite NBA player data for {}",
                     season_fmt(szn)
                 );
             }
         } else if let Err(msg) = player_corrections {
             eprintln!(
-                "{msg}\n⚠️ failed to load player corrections for the {} season:",
+                "{msg}\n❌ failed to load player corrections for the {} season:",
                 season_fmt(szn)
             )
         }
 
-        let team_corrections = load_corrections(szn, Team);
+        let team_corrections = load_season_corrections(szn, Team);
 
         let mut team_archives = eras
             .iter()
             .map(|x| (x, Team))
-            .map(|(&s, k)| ((s, k), nba_data_path(&s, k)))
+            .map(|(&s, k)| ((s, k), nba_data_path(s, k)))
             .collect::<HashMap<Domain, PathBuf>>();
 
         if let Ok(corrections) = team_corrections {
             if let Err(msg) = corrections.apply(&mut team_archives) {
                 println!(
-                    "{msg}\n⚠️ failed to overwrite NBA team data for {}",
+                    "{msg}\n❌ failed to overwrite NBA team data for {}",
                     season_fmt(szn)
                 );
             }
         } else if let Err(msg) = team_corrections {
             eprintln!(
-                "{msg}\n⚠️ failed to load team corrections for the {} season:",
+                "{msg}\n❌ failed to load team corrections for the {} season:",
                 season_fmt(szn)
             )
         }

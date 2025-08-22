@@ -1,4 +1,4 @@
-use crate::stats::se::SerdeEnum;
+use crate::stats::serde_enum::SerdeEnum;
 use dialoguer::console::style;
 use dialoguer::{theme::ColorfulTheme, Input, Select};
 use serde::Serialize;
@@ -6,6 +6,7 @@ use serde_json::{json, Value};
 use std::any::type_name;
 use std::fmt::Debug;
 use std::str::FromStr;
+use crate::stats::itemize::Itemize;
 
 pub fn prompt_and_validate<T>(prompt: &str) -> Value
 where
@@ -26,8 +27,8 @@ where
                 json!(t)
             }
             "chrono::naive::date::NaiveDate" => json!(t),
-            "stats::types::MatchupString" => json!(t),
-            _ => panic!("Unrecognized type: {}", type_name::<T>()), // Panic for unrecognized types
+            "warheads::types::matchup::Matchup" => json!(t),
+            _ => panic!("Unrecognized type: {}", type_name::<T>()), // Panic for unrecognized types //does that make sense
         },
         Err(_) => json!(None::<T>),
     }
@@ -45,7 +46,7 @@ where
         _ => input
             .parse::<T>()
             .map(|_| ())
-            .map_err(|_| format!("could not parse a {} from \"{}\".", type_name::<T>(), input)),
+            .map_err(|_| format!("⚠️ could not parse a {} from \"{}\".", type_name::<T>(), input)),
     }
 }
 
@@ -66,6 +67,26 @@ where
         .unwrap();
 
     S::values()[selection].clone()
+}
+
+pub fn prompt_with_options<I>(prompt: &str, i: I) -> Value
+where I: Itemize
+{
+    let options = i.itemize();
+
+    let selection = Select::with_theme(&ColorfulTheme::default())
+        .with_prompt(prompt)
+        .items(
+            &options
+                .iter()
+                .map(|x| x.to_string())
+                .collect::<Vec<String>>(),
+        )
+        .default(0)
+        .interact()
+        .unwrap();
+
+    options[selection].clone()
 }
 
 pub fn prompt_and_delete(comparator: &str) -> bool {

@@ -4,8 +4,6 @@
 
 ### Abstract
 
-WARHeads is a predictionoo engine that gathers NBA Data, parses it and processes it and generates win probabilites via various methods such as ELO foor the NBA, a nueral-entwork for the NFL and Wins Above Replacement statistics. 
+WARHeads is a prediction engine that gathers NBA Data, parses it and processes it and generates win probabilites via various methods such as ELO. It also does analysis for the NFL and basic analytics for the MLB Wins Above Replacement statistics.
 
-### Warnings
-
- - ⚠️ failed to get a <StatType> from the stat map.
+We will add Formula 1 later to create predictions for F1 based on tracks as well. 

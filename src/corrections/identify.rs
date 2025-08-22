@@ -15,19 +15,20 @@ impl Identifiable for Correction {
                 game_id: self.game_id.clone(),
                 player_id: None,
                 team_id: self.team_id,
+                game_date: self.game_date,
                 team_abbr: self.team_abbr.clone(),
             },
-            NBAStatKind::Player => {
-                Identity {
-                    season_id: self.season,
-                    game_id: self.game_id.clone(),
-                    player_id: Some(self.player_id.unwrap_or_else(|| {
-                        panic!("💀 no player id for a player correction object. ")
-                    })),
-                    team_id: self.team_id,
-                    team_abbr: self.team_abbr.clone(),
-                }
-            }
+            NBAStatKind::Player => Identity {
+                season_id: self.season,
+                game_id: self.game_id.clone(),
+                player_id: Some(
+                    self.player_id
+                        .expect("💀 no player id for a player correction object. "),
+                ),
+                team_id: self.team_id,
+                game_date: self.game_date,
+                team_abbr: self.team_abbr.clone(),
+            },
             NBAStatKind::LineUp => todo!("lineup stats not yet implemented"),
         }
     }

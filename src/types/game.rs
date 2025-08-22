@@ -1,5 +1,4 @@
-use crate::stats::se::SerdeEnum;
-use crate::types::SeasonId;
+use crate::stats::serde_enum::SerdeEnum;
 use chrono::{Datelike, NaiveDate};
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{json, Value};
@@ -8,7 +7,7 @@ use std::str::FromStr;
 
 /// `GameDate`is a `chrono::NaiveDate` wrapper that implements the necessary traits to work
 /// interchangeably in the code base.
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 pub struct GameDate(pub NaiveDate);
 
 impl<'de> Deserialize<'de> for GameDate {
@@ -46,33 +45,54 @@ impl Serialize for GameDate {
     }
 }
 
-/// `GameId` is a number represented by a JSON String. It will sometimes be parsed and interpreted
-/// as a numeric value.
-#[derive(Clone, Debug, Eq, Hash, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
-pub struct GameId(pub String);
+/// `GameId` is a number represented in the NBA data by a JSON String, but we will use it as an int.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Ord, PartialOrd)]
+pub struct GameId(pub u64);
 
 impl Display for GameId {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{:0>10}", self.0)
     }
 }
 
 impl From<String> for GameId {
     fn from(value: String) -> Self {
-        GameId(value)
+        GameId(value.parse().expect("💀 couldn't parse game id"))
     }
 }
 
 impl From<&str> for GameId {
     fn from(value: &str) -> Self {
-        GameId(value.to_string())
+        GameId::from(value.to_string())
+    }
+}
+
+impl<'de> Deserialize<'de> for GameId {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+
+        let game_number = s.parse::<u64>().map_err(de::Error::custom)?;
+
+        Ok(GameId(game_number))
+    }
+}
+
+impl Serialize for GameId {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(&format!("{:0>10}", self.0))
     }
 }
 
 /// `GameResult` is an enum that represents the result of a game a Win, Loss or a Draw (NFL only.)
 /// implements SerdeEnum as well as functions for `to_str` and `from_str`
 ///
-#[derive(Debug, Copy, Clone, Deserialize, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum GameResult {
     Win,
     Loss,
@@ -116,13 +136,17 @@ impl SerdeEnum for GameResult {
 
 impl Display for GameResult {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let str = match self {
-            GameResult::Win => "W",
-            GameResult::Loss => "L",
-            GameResult::Draw => "D",
-        };
-
-        write!(f, "{}", str)
+        match self {
+            GameResult::Win => {
+                write!(f, "W")
+            }
+            GameResult::Loss => {
+                write!(f, "L")
+            }
+            GameResult::Draw => {
+                write!(f, "D")
+            }
+        }
     }
 }
 
@@ -132,5 +156,16 @@ impl Serialize for GameResult {
         S: Serializer,
     {
         serializer.serialize_str(&self.to_string())
+    }
+}
+
+impl<'de> Deserialize<'de> for GameResult {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+
+        s.parse::<GameResult>().map_err(de::Error::custom)
     }
 }

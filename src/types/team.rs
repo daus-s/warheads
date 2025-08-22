@@ -36,7 +36,7 @@ impl Display for TeamId {
 /// existence & correctness of the abbreviation.
 ///
 
-#[derive(Clone, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq, Serialize, Deserialize, Default)]
 pub struct TeamAbbreviation(pub String);
 
 #[derive(Debug, PartialEq, Eq)]
@@ -55,10 +55,6 @@ impl FromStr for TeamAbbreviation {
     type Err = TeamAbbreviationError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.len() != 3 {
-            return Err(TeamAbbreviationError);
-        };
-
         Ok(TeamAbbreviation(s.to_string()))
     }
 }

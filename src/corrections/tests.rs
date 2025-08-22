@@ -1,11 +1,11 @@
 #[cfg(test)]
-mod tests {
+mod correct_columns {
     use crate::corrections::correction::Correction;
     use crate::stats::nba_kind::NBAStatKind;
     use crate::stats::season_period::SeasonPeriod;
     use crate::stats::stat_column::StatColumn;
     use crate::stats::stat_value::StatValue;
-    use crate::types::{GameId, PlayerId, SeasonId, TeamAbbreviation, TeamId};
+    use crate::types::{GameDate, GameId, PlayerId, SeasonId, TeamAbbreviation, TeamId};
     use serde_json::json;
     use std::collections::HashMap;
 
@@ -15,9 +15,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::PTS, StatValue::from_value(json!(10)));
+        correction.corrections.insert(StatColumn::PTS, json!(10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -31,9 +29,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::MIN, StatValue::from_value(json!(10)));
+        correction.corrections.insert(StatColumn::MIN, json!(10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -47,9 +43,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::FGM, StatValue::from_value(json!(10)));
+        correction.corrections.insert(StatColumn::FGM, json!(10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -63,9 +57,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::FGA, StatValue::from_value(json!(10)));
+        correction.corrections.insert(StatColumn::FGA, json!(10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -81,7 +73,7 @@ mod tests {
 
         correction
             .corrections
-            .insert(StatColumn::FG_PCT, StatValue::from_value(json!(0.500000)));
+            .insert(StatColumn::FG_PCT, json!(0.500000));
 
         assert_eq!(
             correction.correct_string(data),
@@ -95,9 +87,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::FG3M, StatValue::from_value(json!(10)));
+        correction.corrections.insert(StatColumn::FG3M, json!(10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -111,9 +101,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::FG3A, StatValue::from_value(json!(10)));
+        correction.corrections.insert(StatColumn::FG3A, json!(10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -129,7 +117,7 @@ mod tests {
 
         correction
             .corrections
-            .insert(StatColumn::FG3_PCT, StatValue::from_value(json!(0.500000)));
+            .insert(StatColumn::FG3_PCT, json!(0.500000));
 
         assert_eq!(
             correction.correct_string(data),
@@ -143,9 +131,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::FTM, StatValue::from_value(json!(10)));
+        correction.corrections.insert(StatColumn::FTM, json!(10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -159,9 +145,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::FTA, StatValue::from_value(json!(10)));
+        correction.corrections.insert(StatColumn::FTA, json!(10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -177,7 +161,7 @@ mod tests {
 
         correction
             .corrections
-            .insert(StatColumn::FT_PCT, StatValue::from_value(json!(0.500000)));
+            .insert(StatColumn::FT_PCT, json!(0.500000));
 
         assert_eq!(
             correction.correct_string(data),
@@ -191,9 +175,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::OREB, StatValue::from_value(json!(10)));
+        correction.corrections.insert(StatColumn::OREB, json!(10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -207,9 +189,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::DREB, StatValue::from_value(json!(10)));
+        correction.corrections.insert(StatColumn::DREB, json!(10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -223,9 +203,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::REB, StatValue::from_value(json!(10)));
+        correction.corrections.insert(StatColumn::REB, json!(10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -239,9 +217,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::AST, StatValue::from_value(json!(10)));
+        correction.corrections.insert(StatColumn::AST, json!(10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -255,9 +231,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::STL, StatValue::from_value(json!(10)));
+        correction.corrections.insert(StatColumn::STL, json!(10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -271,9 +245,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::BLK, StatValue::from_value(json!(10)));
+        correction.corrections.insert(StatColumn::BLK, json!(10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -287,9 +259,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::TOV, StatValue::from_value(json!(10)));
+        correction.corrections.insert(StatColumn::TOV, json!(10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -303,9 +273,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::PF, StatValue::from_value(json!(5)));
+        correction.corrections.insert(StatColumn::PF, json!(5));
 
         assert_eq!(
             correction.correct_string(data),
@@ -319,9 +287,7 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction
-            .corrections
-            .insert(StatColumn::PTS, StatValue::from_value(json!(10)));
+        correction.corrections.insert(StatColumn::PTS, json!(10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -337,7 +303,7 @@ mod tests {
 
         correction
             .corrections
-            .insert(StatColumn::PLUS_MINUS, StatValue::from_value(json!(-10)));
+            .insert(StatColumn::PLUS_MINUS, json!(-10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -353,7 +319,7 @@ mod tests {
 
         correction
             .corrections
-            .insert(StatColumn::PLUS_MINUS, StatValue::from_value(json!(10)));
+            .insert(StatColumn::PLUS_MINUS, json!(10));
 
         assert_eq!(
             correction.correct_string(data),
@@ -367,10 +333,9 @@ mod tests {
 
         let mut correction = sample_correction();
 
-        correction.corrections.insert(
-            StatColumn::FANTASY_PTS,
-            StatValue::from_value(json!(69.420)),
-        ); //assert that the value is being truncated properly
+        correction
+            .corrections
+            .insert(StatColumn::FANTASY_PTS, json!(69.420)); //assert that the value is being truncated properly
 
         assert_eq!(
             correction.correct_string(data),
@@ -386,7 +351,7 @@ mod tests {
 
         correction
             .corrections
-            .insert(StatColumn::VIDEO_AVAILABLE, StatValue::from_value(json!(1)));
+            .insert(StatColumn::VIDEO_AVAILABLE, json!(1));
 
         assert_eq!(
             correction.correct_string(data),
@@ -399,7 +364,8 @@ mod tests {
     //
     fn sample_correction() -> Correction {
         Correction {
-            game_id: GameId("123".to_string()),
+            game_id: GameId(123),
+            game_date: GameDate(Default::default()),
             season: SeasonId::from(20024),
             player_id: Some(PlayerId(23)),
             team_id: TeamId(151),

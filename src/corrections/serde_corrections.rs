@@ -1,0 +1,27 @@
+use crate::stats::stat_column::StatColumn;
+#[allow(unused_imports)]
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde_json::Value;
+use std::collections::HashMap;
+
+#[allow(dead_code)] // required for serialize
+pub fn serialize<S>(cs: &HashMap<StatColumn, Value>, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let mut map: HashMap<String, Value> = HashMap::new();
+    for (key, value) in cs.clone() {
+        map.insert(format!("{}", key), value);
+    }
+    map.serialize(serializer)
+}
+
+#[allow(dead_code)] // required for deserialize
+pub fn deserialize<'de, D>(deserializer: D) -> Result<HashMap<StatColumn, Value>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let map: HashMap<StatColumn, Value> = HashMap::deserialize(deserializer)?;
+
+    Ok(map)
+}

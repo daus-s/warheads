@@ -146,23 +146,22 @@ mod test_serde_type_support {
         assert_eq!(json_str, "\"2000-02-05\"")
     }
 
-    #[test]
-    fn test_serialize_matchup() {
-        let sonics =
-            MatchupString::from_matchup("SON".parse().unwrap(), "OKC".parse().unwrap(), Home);
-
-        let bums =
-            MatchupString::from_matchup("SON".parse().unwrap(), "OKC".parse().unwrap(), Away);
-
-        let sonics_str =
-            serde_json::to_string(&sonics).expect("couldn't serialize Sonic's matchup. ");
-
-        let bum_str =
-            serde_json::to_string(&bums).expect("couldn't serialize the BUMS's matchup. ");
-
-        assert_eq!(sonics_str, "\"SON vs. OKC\"");
-        assert_eq!(bum_str, "\"OKC @ SON\"");
-    }
+    // we no longer serialize the matchup field sand instead it is represented in the game object.
+    // #[test]
+    // fn test_serialize_matchup() {
+    //     let sonics = Matchup::from_matchup("SON".parse().unwrap(), "OKC".parse().unwrap());
+    //
+    //     let bums = Matchup::from_matchup("SON".parse().unwrap(), "OKC".parse().unwrap());
+    //
+    //     let sonics_str =
+    //         serde_json::to_string(&sonics).expect("couldn't serialize Sonic's matchup. ");
+    //
+    //     let bum_str =
+    //         serde_json::to_string(&bums).expect("couldn't serialize the BUMS's matchup. ");
+    //
+    //     assert_eq!(sonics_str, "\"SON vs. OKC\"");
+    //     assert_eq!(bum_str, "\"OKC @ SON\"");
+    // }
 
     #[test]
     fn test_serialize_min() {

@@ -20,7 +20,7 @@ impl Display for OffensiveRebounds {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, Copy)]
 pub struct DefensiveRebounds(pub Option<u8>);
 
 impl Display for DefensiveRebounds {

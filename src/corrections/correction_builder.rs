@@ -1,24 +1,25 @@
 use crate::corrections::correction::Correction;
-use crate::stats::game_metadata::GameMetaData;
+use crate::stats::game_display::GameDisplay;
 use crate::stats::id::Identifiable;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::percent::PercentGeneric;
-use crate::stats::season_period::SeasonPeriod;
 use crate::stats::stat_column::StatColumn;
-use crate::stats::stat_value::StatValue;
 use crate::stats::types::BoolInt;
-use crate::tui::prompter::{prompt_and_delete, prompt_and_select, prompt_and_validate};
+use crate::tui::prompter::{
+    prompt_and_delete, prompt_and_select, prompt_and_validate, prompt_with_options,
+};
 use crate::types::{
-    GameId, GameResult, MatchupString, PlayerId, SeasonId, TeamAbbreviation, TeamId,
+    GameDate, GameId, GameResult, Matchup, PlayerId, SeasonId, TeamAbbreviation, TeamId,
 };
 use chrono::NaiveDate;
 use serde_json::Value;
-use serde_json::Value::Null;
 use std::collections::HashMap;
+use std::fmt::Debug;
 
+#[derive(Debug)]
 pub struct CorrectionBuilder {
     correction: Correction,
-    meta: Option<GameMetaData>,
+    display: Option<GameDisplay>,
 }
 
 impl CorrectionBuilder {
@@ -29,61 +30,82 @@ impl CorrectionBuilder {
         team_id: TeamId,
         team_abbr: TeamAbbreviation,
         kind: NBAStatKind,
-        period: SeasonPeriod,
+        game_date: GameDate,
     ) -> Self {
         CorrectionBuilder {
             correction: Correction {
                 game_id,
+                game_date,
                 season,
                 player_id,
                 team_id,
                 team_abbr: team_abbr.clone(),
-                period,
+                period: season.period(),
                 kind,
                 delete: false,
                 corrections: HashMap::new(),
             },
-            meta: None,
+            display: None,
         }
     }
 
-    pub fn update_meta(&mut self, meta: GameMetaData) {
-        self.meta = Some(meta);
+    pub fn update_display(&mut self, meta: GameDisplay) {
+        self.display = Some(meta);
     }
 
-    pub fn add_missing_field(&mut self, col: StatColumn, val: StatValue) {
+    pub fn add_missing_field(&mut self, col: StatColumn, val: Value) {
         self.correction.corrections.insert(col, val);
     }
 
     pub fn create(&mut self) -> Correction {
         use std::io::{stdout, Write};
 
-        let (corrections, meta_wrapper) = (&mut self.correction, self.meta.clone());
+        let (mut corrections, display_option) = (self.correction.clone(), self.display.clone());
 
-        let meta = meta_wrapper.unwrap_or_else(|| panic!("💀 couldn't open game metadata."));
+        let (display_string, confirmation) = match display_option {
+            Some(display) => (format!("{display}"), display.display_name()),
+            None => (
+                format!("🚫 no game display data 🚫"),
+                String::from("GENERIC DELETE"),
+            ),
+        };
 
-        let mut sorted_keys: Vec<StatColumn> = corrections.corrections.keys().cloned().collect();
+        dbg!((&self.correction).identity());
 
-        sorted_keys.sort();
+        println!("{}", display_string);
+
+        //if the correctionbuilder is provided as deleting it is from a source that needs to delete the data so we should not check again.
+        if corrections.delete {
+            println!("🗑️ deleting {}", corrections.identity());
+
+            save_correction_wrapper(&corrections);
+
+            return corrections.clone();
+        } else {
+            let delete = prompt_and_delete(&confirmation);
+
+            corrections.set_delete(delete);
+
+            if delete {
+                println!("🗑️ deleting {}", corrections.identity());
+
+                save_correction_wrapper(&corrections);
+
+                return corrections.clone(); //if we are deleting we don't need any values for the corrections
+            }
+        }
+
+        let mut fields_to_correct: Vec<StatColumn> =
+            corrections.corrections.keys().cloned().collect();
+
+        fields_to_correct.sort();
 
         let mut stdout = stdout();
 
-        println!("{}", meta);
-
-        let confirmation = meta.display_name();
-
-        let delete = prompt_and_delete(&confirmation);
-
-        corrections.set_delete(delete);
-
-        if delete {
-            return corrections.clone(); //if we are deleting we don't need any values for the corrections
-        }
-
-        for col in sorted_keys {
-            if let Some(val) = corrections.corrections.get_mut(&col) {
+        for col in fields_to_correct {
+            if let Some(val) = corrections.corrections.get(&col) {
                 // Display the column name and current value (grayed out if not confirmed) //id like this to update after the new value is completed is that possible
-                println!("\x1b[90m{}: {}\x1b[0m", col, val.val().unwrap_or(Null));
+                println!("\x1b[90m{}: {}\x1b[0m", col, val);
                 stdout.flush().unwrap();
 
                 /*
@@ -111,7 +133,18 @@ impl CorrectionBuilder {
                         prompt_and_validate::<String>(format!("enter {}", col).as_str())
                     }
                     StatColumn::MATCHUP => {
-                        prompt_and_validate::<MatchupString>(format!("enter {}", col).as_str())
+                        let tm = corrections.team_abbr();
+
+                        if let Some(display) = self.display.clone() {
+                            prompt_with_options::<(Matchup, TeamAbbreviation)>(
+                                format!("enter {}", col).as_str(),
+                                (display.matchup(), tm),
+                            )
+                        } else {
+                            eprintln!("❌ cannot correct matchup. assigning new matchup to Null");
+
+                            Value::Null
+                        }
                     }
 
                     //player data
@@ -163,35 +196,42 @@ impl CorrectionBuilder {
                         prompt_and_select::<BoolInt>(format!("enter {}", col).as_str())
                     }
                 };
+
                 // Lock in the value
-                val.set(value.clone());
+                corrections.corrections.insert(col, value.clone()); //only cloned for display below
 
                 // Display the confirmed value
                 print!("\x1B[2A\x1B[0J"); // Move up 2 lines and clear from cursor to end
                 println!("{}: {}", col, value); // New value
             }
         }
-        let correction = corrections.clone();
+        save_correction_wrapper(&corrections);
 
-        match correction.save() {
-            Ok(_) => {
-                println!(
-                    "✅ successfully saved corrections for {}",
-                    self.correction.identity()
-                );
-            }
-            Err(e) => {
-                eprintln!(
-                    "❌ failed to save corrections for {}: {e}",
-                    self.correction.identity()
-                );
-            }
-        };
-
-        correction
+        corrections
     }
 
     pub fn correcting(&self) -> bool {
         self.correction.len() > 0
     }
+
+    pub fn set_delete(&mut self, delete: bool) {
+        self.correction.delete = delete;
+    }
+}
+
+fn save_correction_wrapper(correction: &Correction) {
+    match correction.save() {
+        Ok(_) => {
+            println!(
+                "✅ successfully saved corrections for {}",
+                correction.identity()
+            );
+        }
+        Err(e) => {
+            eprintln!(
+                "❌ failed to save corrections for {}: {e}",
+                correction.identity()
+            );
+        }
+    };
 }

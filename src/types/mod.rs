@@ -8,7 +8,7 @@ pub mod game;
 pub use game::{GameDate, GameId, GameResult};
 
 pub mod matchup;
-pub use matchup::MatchupString;
+pub use matchup::Matchup;
 
 pub mod player;
 pub use player::{PlayerId, PlayerName};

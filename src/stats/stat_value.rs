@@ -10,10 +10,12 @@ use std::fmt::{Display, Formatter};
 /// in code this returns an option of the value when calling val to copy it so
 /// as it can be treated as `None` in match case statements.
 ///
+/// i do not care about this but im not gonna break anything it shouldn't have existed
+/// in the first place.
 ///
 #[derive(Serialize, Deserialize, Eq, PartialEq, Derivative, Clone)]
 #[derivative(Hash)]
-pub struct StatValue(Value);
+pub struct StatValue(pub Value);
 
 impl StatValue {
     pub fn new() -> Self {

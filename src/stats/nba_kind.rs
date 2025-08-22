@@ -1,6 +1,8 @@
 use crate::format::stat_path_formatter::StatPathFormatter;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
+use crate::format::url_format::UrlFormatter;
+
 #[derive(Copy, Clone, Serialize, Deserialize, Eq, PartialEq, Hash)]
 pub enum NBAStatKind {
     Team,
@@ -16,11 +18,21 @@ impl Display for NBAStatKind {
             f,
             "{}",
             match self {
-                NBAStatKind::Team => "T",
-                NBAStatKind::Player => "P",
-                NBAStatKind::LineUp => panic!("lineup url formatting is not supported"),
+                NBAStatKind::Team => "Team",
+                NBAStatKind::Player => "Player",
+                NBAStatKind::LineUp => unimplemented!("💀 lineup url formatting is not supported"),
             }
         )
+    }
+}
+
+impl UrlFormatter for NBAStatKind {
+    fn url(&self) -> String {
+        match self {
+            NBAStatKind::Team => "T".to_string(),
+            NBAStatKind::Player => "P".to_string(),
+            NBAStatKind::LineUp => todo!("lineup stats are not supported yet."),
+        }
     }
 }
 

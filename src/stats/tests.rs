@@ -1,5 +1,5 @@
 #[cfg(test)]
-mod tests {
+mod test_column_indices {
     use crate::stats::stat_column::player_column_index;
     use crate::stats::stat_column::StatColumn::*;
 
@@ -225,5 +225,47 @@ mod tests {
         let index = player_column_index(&VIDEO_AVAILABLE).unwrap();
 
         assert_eq!(31usize, index);
+    }
+}
+
+#[cfg(test)]
+mod test_serialize_game_obj {
+    use crate::constants::paths::test;
+    use crate::stats::game_obj::GameObject;
+    use crate::types::{GameDate, GameId, SeasonId};
+    use chrono::NaiveDate;
+    use once_cell::sync::Lazy;
+    use std::fs;
+
+    static TEST: Lazy<String> = Lazy::new(test);
+    #[test]
+    fn test_de_serialize_game_obj() {
+        let s = format!("{}/data/0020500673_SEA", *TEST);
+
+        let home = serde_json::from_str(
+            &fs::read_to_string(format!("{}/data/0020500673_SEA.json", *TEST))
+                .expect("failed to read seattle box score"),
+        )
+        .expect("failed to parse seattle box score");
+
+        let away = serde_json::from_str(
+            &fs::read_to_string(format!("{}/data/0020500673_GSW.json", *TEST))
+                .expect("failed to read golden state box score"),
+        )
+        .expect("failed to parse golden state box score");
+
+        let szn = SeasonId::from(22005);
+        let date = GameDate(NaiveDate::from_ymd_opt(2006, 02, 01).unwrap());
+        let game_id = GameId(0020500673);
+
+        let game_object = GameObject::create(szn, date, game_id, home, away);
+
+        let expected = fs::read_to_string(format!("{}/data/game_object.json", *TEST))
+            .expect("failed to read test file for GameObjectSerialization");
+
+        assert_eq!(
+            expected,
+            serde_json::to_string_pretty(&game_object).expect("couldn't serialize game object")
+        )
     }
 }

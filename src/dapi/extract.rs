@@ -1,10 +1,9 @@
 use crate::corrections::correction_builder::CorrectionBuilder;
-use crate::dapi::box_score_builder::BoxScoreBuilder;
 use crate::dapi::box_score_stat::BoxScoreStat;
 use crate::format::language::box_score_value_to_string;
+use crate::stats::box_score::BoxScoreBuilder;
 use crate::stats::id::{Identifiable, Identity};
 use crate::stats::stat_column::StatColumn;
-use crate::stats::stat_value::StatValue;
 use serde_json::Value;
 use std::collections::HashMap;
 
@@ -51,26 +50,80 @@ pub fn get_rows(set: &Value) -> Result<Vec<Value>, String> {
 
 pub fn record_stat<T>(
     entry: Result<T, StatColumn>,
-    box_score: &mut impl BoxScoreBuilder,
+    box_score: &mut BoxScoreBuilder,
     correction: &mut CorrectionBuilder,
 ) where
     T: Into<BoxScoreStat>,
 {
     match entry {
-        Ok(stat) => {
-            box_score.add_stat(stat.into());
-        }
+        Ok(stat) => match stat.into() {
+            BoxScoreStat::GameResult(wl) => {
+                box_score.wl(wl);
+            }
+            BoxScoreStat::Minutes(min) => {
+                box_score.min(min);
+            }
+            BoxScoreStat::FieldGoalMakes(fgm) => {
+                box_score.fgm(fgm);
+            }
+            BoxScoreStat::FieldGoalAttempts(fga) => {
+                box_score.fga(fga);
+            }
+            BoxScoreStat::ThreePointMakes(fg3m) => {
+                box_score.fg3m(fg3m);
+            }
+            BoxScoreStat::ThreePointAttempts(fg3a) => {
+                box_score.fg3a(fg3a);
+            }
+            BoxScoreStat::FreeThrowMakes(ftm) => {
+                box_score.ftm(ftm);
+            }
+            BoxScoreStat::FreeThrowAttempts(fta) => {
+                box_score.fta(fta);
+            }
+            BoxScoreStat::OffensiveRebounds(oreb) => {
+                box_score.oreb(oreb);
+            }
+            BoxScoreStat::DefensiveRebounds(dreb) => {
+                box_score.dreb(dreb);
+            }
+            BoxScoreStat::Rebounds(reb) => {
+                box_score.reb(reb);
+            }
+            BoxScoreStat::Assists(ast) => {
+                box_score.ast(ast);
+            }
+            BoxScoreStat::Steals(stl) => {
+                box_score.stl(stl);
+            }
+            BoxScoreStat::Blocks(blk) => {
+                box_score.blk(blk);
+            }
+            BoxScoreStat::Turnovers(tov) => {
+                box_score.tov(tov);
+            }
+            BoxScoreStat::PersonalFouls(pf) => {
+                box_score.pf(pf);
+            }
+            BoxScoreStat::Points(pts) => {
+                box_score.pts(pts);
+            }
+            BoxScoreStat::PlusMinus(plus_minus) => {
+                box_score.plus_minus(plus_minus);
+            }
+        },
         Err(col) => {
-            correction.add_missing_field(col, StatValue::new());
+            correction.add_missing_field(col, Value::Null);
         }
     };
 }
 
+/// ## record_usable_stat
 /// `record_usable_stat` takes a result of a type (must be a member of the BoxScoreStat enum) and
-/// the column (StatColumn).
+/// the column (StatColumn) and returns the wrapped Result value `entry: Result<T, StatColumn>`.
 pub fn record_usable_stat<T>(
     entry: Result<T, StatColumn>,
-    box_score: &mut impl BoxScoreBuilder,
+    box_score: &mut BoxScoreBuilder,
     correction: &mut CorrectionBuilder,
 ) -> Result<T, StatColumn>
 where

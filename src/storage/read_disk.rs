@@ -1,11 +1,12 @@
+use crate::dapi::team_box_score::TeamBoxScore;
 use crate::format::path_manager::nba_storage_path;
 use crate::format::season::season_fmt;
-use crate::dapi::team_box_score::TeamBoxScore;
 use crate::types::SeasonId;
 use std::fs;
 
+// todo: if data is loaded in the file system load from the json files rather than the source data (ugly).
 pub fn read_season(season_id: SeasonId) -> Result<Vec<TeamBoxScore>, String> {
-    let dir = nba_storage_path(&season_id);
+    let dir = nba_storage_path(season_id);
 
     let files = fs::read_dir(dir).map_err(|e| {
         format!(
@@ -28,9 +29,7 @@ pub fn read_season(season_id: SeasonId) -> Result<Vec<TeamBoxScore>, String> {
 
                 games.push(game);
             }
-            Err(e) => {
-                return Err(format!("❌ failed to get an entry from file: {e}"))
-            }
+            Err(e) => return Err(format!("❌ failed to get an entry from file: {e}")),
         }
     }
 

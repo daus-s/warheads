@@ -1,7 +1,4 @@
-use crate::stats::box_score::BoxScore;
-use crate::dapi::team_box_score::TeamBoxScore;
-use crate::stats::visiting::Visiting;
-
+use crate::stats::game_obj::GameObject;
 use aws_sdk_s3 as s3;
 use aws_sdk_s3::primitives::ByteStream;
 use aws_sdk_s3::Client;
@@ -15,16 +12,10 @@ use aws_sdk_s3::Client;
 ///     game - should absolutely have its player scores already initialized
 ///
 ///
-pub async fn save_nba_game(client: Client, game: TeamBoxScore) -> Result<(), s3::Error> {
+pub async fn save_nba_game(client: Client, game: GameObject) -> Result<(), s3::Error> {
     let game_id = game.game_id();
 
-    let away = game.home_or_away();
-
-    let filename = game_id.to_string()
-        + match away {
-            Visiting::Home => "",
-            Visiting::Away => "a",
-        };
+    let filename = game_id.to_string();
 
     let content = match serde_json::to_string(&game) {
         Ok(str) => str.as_bytes().to_vec(),
@@ -44,12 +35,4 @@ pub async fn save_nba_game(client: Client, game: TeamBoxScore) -> Result<(), s3:
         .expect(format!("Failed to save game {} at games/{}", game_id, filename).as_str());
 
     Ok(())
-}
-
-async fn list_player_games(pid: u32) -> Vec<u64> {
-    todo!("this will return a list of all the games in which a player played")
-    /*
-        due to the nature of the data this function does not need to be optimized, but it really should be.
-        between most games, players are not traded so you can kinda assume that they'll be on the team the next game.
-    */
 }
