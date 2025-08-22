@@ -6,23 +6,14 @@ use crate::dapi::season_manager::nba_lifespan;
 
     GOOD WILL HUNTING
 */
-use crate::dapi::team_box_score::TeamBoxScore;
 
 use crate::corrections::correction_loader::load_season_corrections;
 use crate::corrections::corrector::Corrector;
 use crate::dapi::gather;
-use crate::dapi::gather::{player_games, team_games};
 use crate::dapi::store::save_nba_season;
 use crate::format::season::season_fmt;
-use crate::stats::id::Identity;
 use crate::stats::nba_kind::NBAStatKind::{Player, Team};
 use crate::stats::season_period::minimum_spanning_era;
-
-pub fn load_nba_season_from_file(year: i32) -> Vec<(Identity, TeamBoxScore)> {
-    let player_games = player_games(year);
-
-    team_games(year, player_games)
-}
 
 /// you can build around this function but not from it... this is the one function to start the nba into memory then iterate over elo.
 pub async fn chronicle_nba() {

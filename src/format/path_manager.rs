@@ -76,10 +76,10 @@ pub fn nba_storage_path(season_id: SeasonId) -> PathBuf {
     PathBuf::from(s)
 }
 
-pub fn nba_storage_file(id: (SeasonId, GameId)) -> PathBuf {
-    let s = format!("{}", id.1);
+pub fn nba_storage_file(season_id: SeasonId, game_id: GameId) -> PathBuf {
+    let s = format!("{}", game_id);
 
-    let mut path = nba_storage_path(id.0);
+    let mut path = nba_storage_path(season_id);
 
     path.push(s);
 

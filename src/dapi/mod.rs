@@ -4,6 +4,7 @@ mod box_score_stat;
 pub mod extract;
 pub mod gather;
 pub mod hunting;
+pub mod load;
 mod map_reader;
 mod parse;
 pub mod player_box_score;

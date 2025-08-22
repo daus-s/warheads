@@ -2,7 +2,7 @@ use crate::corrections::correction::Correction;
 use crate::corrections::correction_builder::{self, CorrectionBuilder};
 use crate::corrections::corrector::Corrector;
 use crate::dapi::archive::typed_domain_archive_pairs;
-use crate::dapi::hunting::load_nba_season_from_file;
+use crate::dapi::load::load_nba_season_from_file;
 use crate::dapi::team_box_score::TeamBoxScore;
 use crate::format::season::season_fmt;
 use crate::stats::domain::Domain;

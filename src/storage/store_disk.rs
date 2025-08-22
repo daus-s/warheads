@@ -13,9 +13,9 @@ pub fn save_nba_game(roster: &GameObject) -> Result<(), String> {
     fs::create_dir_all(&path)
         .map_err(|e| format!("❌ failed to create the path to the file {:?}: {e}", path))?;
 
-    let identity = roster.moment();
+    let (season, game) = roster.moment();
 
-    let file = nba_storage_file(identity);
+    let file = nba_storage_file(season, game);
 
     fs::write(&file, contents)
         .map_err(|e| format!("❌ failed to write to the file {:?}: {e}", file))?;

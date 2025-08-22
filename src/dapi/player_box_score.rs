@@ -3,7 +3,7 @@ use crate::types::*;
 use serde::{Deserialize, Serialize};
 use std::fmt::Formatter;
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct PlayerBoxScore {
     player_id: PlayerId,
     player_name: PlayerName,

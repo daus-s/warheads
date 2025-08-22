@@ -44,7 +44,7 @@ mod test_path_manager {
             game_date: GameDate(Default::default()),
         };
 
-        let actual_file = nba_storage_file((szn, game_id));
+        let actual_file = nba_storage_file(szn, game_id);
         let actual_path = nba_storage_path(szn);
 
         assert_eq!(expected_path, actual_path);

@@ -4,7 +4,7 @@ use crate::stats::visiting::Visiting;
 use crate::types::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct TeamBoxScore {
     // team identification
     pub team_id: TeamId,
