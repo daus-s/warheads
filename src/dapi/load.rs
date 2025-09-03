@@ -61,7 +61,8 @@ mod test_load {
 
     use super::*;
 
-    fn load_game() {
+    #[test]
+    fn test_load_game() {
         let game = GameId::from("0042400113");
 
         let season = SeasonId::from(42024);
