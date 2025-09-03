@@ -1,5 +1,19 @@
-use crate::stats::game_obj::GameObject;
+use crate::types::{GameId, PlayerId};
 
-pub fn update_elo(_game_object: GameObject) {
-    todo!("build elo function");
+pub struct Elo {
+    pub player_id: PlayerId,
+    pub game_id: GameId,
+    pub rating: i64,
+}
+
+pub const INITIAL_RATING: i64 = 3000;
+
+impl Elo {
+    pub fn new(player_id: PlayerId, game_id: GameId, rating: i64) -> Self {
+        Elo {
+            player_id,
+            game_id,
+            rating,
+        }
+    }
 }

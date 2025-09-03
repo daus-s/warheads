@@ -1,8 +1,9 @@
-use crate::dapi::player_box_score::PlayerBoxScore;
 use crate::stats::box_score::BoxScore;
 use crate::stats::visiting::Visiting;
 use crate::types::*;
+use crate::{dapi::player_box_score::PlayerBoxScore, ml::elo};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct TeamBoxScore {
@@ -53,5 +54,26 @@ impl TeamBoxScore {
             box_score,
             roster: Vec::new(),
         }
+    }
+
+    pub fn box_score(&self) -> &BoxScore {
+        &self.box_score
+    }
+
+    pub fn roster(&self) -> &Vec<PlayerBoxScore> {
+        &self.roster
+    }
+
+    pub fn get_team_rating(&self, ratings: &mut HashMap<PlayerId, i64>) -> i64 {
+        let mut rating = 0;
+        for player in self.roster() {
+            if let Some(i) = ratings.get(&player.player_id()) {
+                rating += *i;
+            } else {
+                ratings.insert(player.player_id(), elo::INITIAL_RATING);
+                rating += elo::INITIAL_RATING;
+            }
+        }
+        rating
     }
 }
