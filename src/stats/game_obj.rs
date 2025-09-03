@@ -6,18 +6,19 @@ use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::stat_column::StatColumn::{GAME_DATE, MATCHUP};
 use crate::stats::visiting::Visiting;
 use crate::types::matchup::home_and_away;
-use crate::types::{GameDate, GameId, Matchup, SeasonId};
+use crate::types::GameResult::{Loss, Win};
+use crate::types::{GameDate, GameId, Matchup, SeasonId, TeamId};
 use serde::{Deserialize, Serialize};
 use serde_json::Value::Null;
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
 pub struct GameObject {
-    season_id: SeasonId,
-    game_date: GameDate,
-    game_id: GameId,
+    pub season_id: SeasonId,
+    pub game_date: GameDate,
+    pub game_id: GameId,
 
-    home: TeamBoxScore,
-    away: TeamBoxScore,
+    pub home: TeamBoxScore,
+    pub away: TeamBoxScore,
 }
 
 impl GameObject {
@@ -153,5 +154,20 @@ impl GameObject {
     /// returns the moment (season and game) of the specific game.
     pub fn moment(&self) -> (SeasonId, GameId) {
         (self.season_id, self.game_id)
+    }
+
+    pub fn winner(&self) -> TeamId {
+        let home = self.home.box_score();
+        let away = self.away.box_score();
+
+        assert_ne!(home.wl(), away.wl());
+
+        if *home.wl() == Win && *away.wl() == Loss {
+            self.home.team_id
+        } else if *away.wl() == Win && *home.wl() == Loss {
+            self.away.team_id
+        } else {
+            panic!("💀 if this error is arising check that your input box scores have opposite game result states to this function")
+        }
     }
 }

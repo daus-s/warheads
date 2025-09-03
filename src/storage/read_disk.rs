@@ -5,7 +5,7 @@ use std::fs;
 use std::path::PathBuf;
 
 // todo: if data is loaded in the file system load from the json files rather than the source data (ugly).
-pub fn read_season(season_id: SeasonId) -> Result<Vec<GameObject>, String> {
+pub fn read_nba_season(season_id: SeasonId) -> Result<Vec<GameObject>, String> {
     let dir = nba_storage_path(season_id);
 
     let games = read_directory(&dir)?;

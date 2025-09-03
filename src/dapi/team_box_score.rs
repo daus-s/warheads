@@ -1,4 +1,6 @@
-use crate::corrections::correction::Correction;
+use std::collections::HashMap;
+
+use crate::{corrections::correction::Correction, ml::elo};
 
 use crate::dapi::from_value::FromValue;
 use crate::dapi::player_box_score::PlayerBoxScore;
@@ -66,6 +68,14 @@ impl TeamBoxScore {
         &mut self.roster
     }
 
+    pub fn box_score(&self) -> &BoxScore {
+        &self.box_score
+    }
+
+    pub fn roster(&self) -> &Vec<PlayerBoxScore> {
+        &self.roster
+    }
+
     pub fn correct_box_score(&mut self, correction: &mut Correction) {
         correction.correct_box_score(&mut self.box_score);
     }
@@ -120,6 +130,24 @@ impl TeamBoxScore {
             }
             _ => true,
         });
+    }
+
+    pub fn get_team_rating(&self, ratings: &mut HashMap<PlayerId, i64>) -> i64 {
+        let mut rating = 0;
+        for player in self.roster() {
+            if let Some(i) = ratings.get(&player.player_id()) {
+                rating += *i;
+            } else {
+                ratings.insert(player.player_id(), elo::INITIAL_RATING);
+                rating += elo::INITIAL_RATING;
+            }
+        }
+        rating
+    }
+
+    pub fn get_normalized_team_rating(&self, ratings: &mut HashMap<PlayerId, i64>) -> f64 {
+        let rating = self.get_team_rating(ratings);
+        rating as f64 / self.roster().len() as f64
     }
 }
 
