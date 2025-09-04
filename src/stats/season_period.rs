@@ -21,7 +21,7 @@ impl SeasonPeriod {
             SeasonPeriod::PreSeason => 10_000,
             SeasonPeriod::RegularSeason => 20_000,
             SeasonPeriod::PostSeason => 40_000,
-            SeasonPeriod::PlayIn => 60_000,
+            SeasonPeriod::PlayIn => 50_000,
             SeasonPeriod::NBACup => 20_000,
             SeasonPeriod::AllStarGame => 30_000,
         }
