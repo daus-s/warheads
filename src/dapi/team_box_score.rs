@@ -64,7 +64,7 @@ impl TeamBoxScore {
         &self.roster
     }
 
-    pub fn get_team_rating(&self, ratings: &mut HashMap<PlayerId, i64>) -> i64 {
+    fn get_team_rating(&self, ratings: &mut HashMap<PlayerId, i64>) -> i64 {
         let mut rating = 0;
         for player in self.roster() {
             if let Some(i) = ratings.get(&player.player_id()) {
@@ -75,5 +75,10 @@ impl TeamBoxScore {
             }
         }
         rating
+    }
+
+    pub fn get_normalized_team_rating(&self, ratings: &mut HashMap<PlayerId, i64>) -> f64 {
+        let rating = self.get_team_rating(ratings);
+        rating as f64 / self.roster().len() as f64
     }
 }

@@ -8,6 +8,8 @@ pub struct Elo {
 
 pub const INITIAL_RATING: i64 = 3000;
 
+pub const K: i64 = 32;
+
 impl Elo {
     pub fn new(player_id: PlayerId, game_id: GameId, rating: i64) -> Self {
         Elo {
