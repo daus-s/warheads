@@ -1,7 +1,7 @@
 use num::pow::Pow;
 
-pub(crate) fn prob(diff: i32) -> f64 {
-    let exponent = -1. * diff as f64 / 400.0;
+pub(crate) fn prob(diff: f64) -> f64 {
+    let exponent = -1. * diff / 400.0;
     /* FIDE uses 400 for the scale factor and chess players have a similar number of games to nba players
      * each year, so this factor seems appropriate
      *
@@ -13,7 +13,7 @@ pub(crate) fn prob(diff: i32) -> f64 {
 
 #[test]
 fn test_diff_0() {
-    let diff = 0; //0 std devs
+    let diff = 0f64; //0 std devs
 
     let expected = prob(diff);
 
@@ -22,7 +22,7 @@ fn test_diff_0() {
 
 #[test]
 fn test_diff_1() {
-    let diff = 400; //1 std devs
+    let diff = 400f64; //1 std devs
 
     let expected = prob(diff);
 
@@ -31,7 +31,7 @@ fn test_diff_1() {
 
 #[test]
 fn test_specific_diff() {
-    let diff = 200; // https://en.wikipedia.org/wiki/Elo_rating_system#Mathematical_details::text=Performance%20is%20not,of%20approximately%200.75.
+    let diff = 200f64; // https://en.wikipedia.org/wiki/Elo_rating_system#Mathematical_details::text=Performance%20is%20not,of%20approximately%200.75.
 
     let expected = prob(diff);
 
@@ -41,9 +41,9 @@ fn test_specific_diff() {
 #[test]
 fn test_symmetry() {
     for diff in 0..200 {
-        let win = prob(diff);
+        let win = prob(diff as f64);
 
-        let loss = prob(-1 * diff);
+        let loss = prob(-1f64 * diff as f64);
 
         let tol = 1. - (win + loss) <= 0.00000000000005;
 

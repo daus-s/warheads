@@ -1,8 +1,13 @@
 use std::collections::HashMap;
+use std::fs;
+use std::path::PathBuf;
 
 use crate::constants::paths::data;
 use crate::dapi::season_manager::nba_lifespan;
+use crate::ml::cdf::prob;
 use crate::ml::elo::Elo;
+use crate::ml::elo::{self, Elo};
+use crate::stats::game_obj::GameObject;
 use crate::stats::season_period::minimum_spanning_era;
 use crate::storage::read_disk::read_nba_season;
 use crate::types::PlayerId;
@@ -15,6 +20,13 @@ pub struct EloTracker {
 }
 
 impl EloTracker {
+    pub fn new() -> Self {
+        Self {
+            historical_ratings: Vec::new(),
+            current_ratings: HashMap::new(),
+        }
+    }
+
     pub fn process_elo(&mut self) {
         // todo: assign elo values to players on a game by game basis
 
@@ -33,15 +45,91 @@ impl EloTracker {
             }
 
             for game in season_games {
-                let mut home_rating = game.home.get_team_rating(&mut self.current_ratings);
-                let mut away_rating = game.away.get_team_rating(&mut self.current_ratings);
+                let home_rating = game
+                    .home
+                    .get_normalized_team_rating(&mut self.current_ratings);
+                let away_rating = game
+                    .away
+                    .get_normalized_team_rating(&mut self.current_ratings);
 
                 let delta = home_rating - away_rating;
 
-                todo!("Implement Elo calculation for the game")
+                //R'=R+K∙(S-E) where s is the score and e is the expected (1 for win - win prob)
+
+                let step = elo::K as f64 * (1.0 - prob(delta)); //this is the winners step, the losers step is -step
+
+                self.update_ratings(&game, step);
             }
         }
     }
+
+    //todo: implement a rating share function as a parameter
+    fn update_ratings(&mut self, game: &GameObject, step: f64) {
+        let step = step as i64;
+        if game.winner() == game.home.team_id {
+            for player in game.home.roster() {
+                let id = player.player_id();
+
+                self.current_ratings
+                    .entry(id)
+                    .and_modify(|rating| *rating += step)
+                    .or_insert(elo::INITIAL_RATING);
+
+                self.historical_ratings.push(Elo {
+                    player_id: id,
+                    game_id: game.game_id,
+                    rating: self.current_ratings[&id],
+                });
+            }
+            for player in game.away.roster() {
+                let id = player.player_id();
+
+                self.current_ratings
+                    .entry(id)
+                    .and_modify(|rating| *rating -= step)
+                    .or_insert(elo::INITIAL_RATING);
+
+                self.historical_ratings.push(Elo {
+                    player_id: id,
+                    game_id: game.game_id,
+                    rating: self.current_ratings[&id],
+                });
+            }
+        } else if game.winner() == game.away.team_id {
+            for player in game.home.roster() {
+                let id = player.player_id();
+
+                self.current_ratings
+                    .entry(id)
+                    .and_modify(|rating| *rating -= step)
+                    .or_insert(elo::INITIAL_RATING);
+
+                self.historical_ratings.push(Elo {
+                    player_id: id,
+                    game_id: game.game_id,
+                    rating: self.current_ratings[&id],
+                });
+            }
+            for player in game.away.roster() {
+                let id = player.player_id();
+
+                self.current_ratings
+                    .entry(id)
+                    .and_modify(|rating| *rating += step)
+                    .or_insert(elo::INITIAL_RATING);
+
+                self.historical_ratings.push(Elo {
+                    player_id: id,
+                    game_id: game.game_id,
+                    rating: self.current_ratings[&id],
+                });
+            }
+        } else {
+            panic!("💀 if this error is arising check that your input box scores have opposite field states to this function")
+        }
+    }
+
+    // SERIALIZATION
 
     //todo: add correct formating s.t. every row is the same number of characters for easy indexing
     pub fn save(&self) -> Result<(), String> {
@@ -49,8 +137,23 @@ impl EloTracker {
 
         let filename = Self::save_path(&format!("{model_name}.csv"));
 
-        let mut writer = Writer::from_path(&filename)
-            .map_err(|e| format!("❌ failed to open a writer for {filename}: {e}"))?;
+        let mut writer = match Writer::from_path(&filename) {
+            Ok(writer) => writer,
+            Err(e) => {
+                eprintln!("❌ failed to open a writer for {}: {e}", filename.display());
+
+                fs::create_dir_all(filename.parent().unwrap()).map_err(|e| {
+                    format!(
+                        "❌ failed to create directory for {}: {e}",
+                        filename.display()
+                    )
+                })?;
+
+                Writer::from_path(&filename).map_err(|e| {
+                    format!("❌ failed to open a writer for {}: {e}", filename.display())
+                })?
+            }
+        };
 
         for elo in &self.historical_ratings {
             let Elo {
@@ -81,9 +184,9 @@ impl EloTracker {
         Ok(())
     }
 
-    fn save_path(filename: &str) -> String {
+    fn save_path(filename: &str) -> PathBuf {
         static DATA: Lazy<String> = Lazy::new(data);
 
-        format!("{}/nba/elo/{}", *DATA, filename)
+        PathBuf::from(format!("{}/nba/elo/{}", *DATA, filename))
     }
 }
