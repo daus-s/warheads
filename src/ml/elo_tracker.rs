@@ -44,76 +44,51 @@ impl EloTracker {
 
                 //R'=R+K∙(S-E) where s is the score and e is the expected (1 for win - win prob)
 
-                let step = elo::K as f64 * (1.0 - prob(delta)); //this is the winners step, the losers step is -step
-
-                self.update_ratings(&game, step);
+                self.update_ratings(&game, delta);
             }
         }
     }
 
     //todo: implement a rating share function as a parameter
-    fn update_ratings(&mut self, game: &GameObject, step: f64) {
-        let step = step as i64;
+    fn update_ratings(&mut self, game: &GameObject, delta: f64) {
+        let mut step_home = (elo::K as f64 * (1.0 - prob(delta))) as i64; //this is the winners step, the losers step is -step
+        let mut step_away = (elo::K as f64 * (1.0 - prob(-1f64 * delta))) as i64;
+
         if game.winner() == game.home.team_id {
-            for player in game.home.roster() {
-                let id = player.player_id();
-
-                self.current_ratings
-                    .entry(id)
-                    .and_modify(|rating| *rating += step)
-                    .or_insert(elo::INITIAL_RATING);
-
-                self.historical_ratings.push(Elo {
-                    player_id: id,
-                    game_id: game.game_id,
-                    rating: self.current_ratings[&id],
-                });
-            }
-            for player in game.away.roster() {
-                let id = player.player_id();
-
-                self.current_ratings
-                    .entry(id)
-                    .and_modify(|rating| *rating -= step)
-                    .or_insert(elo::INITIAL_RATING);
-
-                self.historical_ratings.push(Elo {
-                    player_id: id,
-                    game_id: game.game_id,
-                    rating: self.current_ratings[&id],
-                });
-            }
+            step_away = -1 * (step_away as i64);
         } else if game.winner() == game.away.team_id {
-            for player in game.home.roster() {
-                let id = player.player_id();
-
-                self.current_ratings
-                    .entry(id)
-                    .and_modify(|rating| *rating -= step)
-                    .or_insert(elo::INITIAL_RATING);
-
-                self.historical_ratings.push(Elo {
-                    player_id: id,
-                    game_id: game.game_id,
-                    rating: self.current_ratings[&id],
-                });
-            }
-            for player in game.away.roster() {
-                let id = player.player_id();
-
-                self.current_ratings
-                    .entry(id)
-                    .and_modify(|rating| *rating += step)
-                    .or_insert(elo::INITIAL_RATING);
-
-                self.historical_ratings.push(Elo {
-                    player_id: id,
-                    game_id: game.game_id,
-                    rating: self.current_ratings[&id],
-                });
-            }
+            step_home = -1 * (step_home as i64);
         } else {
-            panic!("💀 if this error is arising check that your input box scores have opposite field states to this function")
+            panic!("💀 Game must have a winner. somehow passed the win/loss check in GameObject::try_create");
+        }
+
+        for player in game.home.roster() {
+            let id = player.player_id();
+
+            self.current_ratings
+                .entry(id)
+                .and_modify(|rating| *rating += step_home)
+                .or_insert(elo::INITIAL_RATING);
+
+            self.historical_ratings.push(Elo {
+                player_id: id,
+                game_id: game.game_id,
+                rating: self.current_ratings[&id],
+            });
+        }
+        for player in game.away.roster() {
+            let id = player.player_id();
+
+            self.current_ratings
+                .entry(id)
+                .and_modify(|rating| *rating += step_away)
+                .or_insert(elo::INITIAL_RATING);
+
+            self.historical_ratings.push(Elo {
+                player_id: id,
+                game_id: game.game_id,
+                rating: self.current_ratings[&id],
+            });
         }
     }
 

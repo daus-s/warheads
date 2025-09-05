@@ -3,7 +3,7 @@ use crate::dapi::team_box_score::TeamBoxScore;
 use crate::stats::game_display::GameDisplay;
 use crate::stats::id::Identity;
 use crate::stats::nba_kind::NBAStatKind;
-use crate::stats::stat_column::StatColumn::{GAME_DATE, MATCHUP};
+use crate::stats::stat_column::StatColumn::{GAME_DATE, MATCHUP, WL};
 use crate::stats::visiting::Visiting;
 use crate::types::matchup::home_and_away;
 use crate::types::GameResult::{Loss, Win};
@@ -49,6 +49,11 @@ impl GameObject {
 
         if id1.game_id != id2.game_id || id1.season_id != id2.season_id {
             panic!("💀 mismatched GameId's or SeasonId's in try_create.")
+        }
+
+        if game1.box_score().wl() != game2.box_score().wl() {
+            correction1.add_missing_field(WL, Null);
+            correction2.add_missing_field(WL, Null);
         }
 
         if id1.game_date != id2.game_date {
