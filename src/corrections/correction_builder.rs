@@ -70,11 +70,10 @@ impl CorrectionBuilder {
             ),
         };
 
-        dbg!((&self.correction).identity());
-
         println!("{}", display_string);
 
-        //if the correctionbuilder is provided as deleting it is from a source that needs to delete the data so we should not check again.
+        // if the correctionbuilder is provided as deleting it is from a source that needs to delete
+        // the data so we should not check again.
         if corrections.delete {
             println!("🗑️ deleting {}", corrections.identity());
 
