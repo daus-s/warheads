@@ -5,8 +5,8 @@ use crate::stats::id::Identity;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::stat_column::StatColumn::{GAME_DATE, MATCHUP, WL};
 use crate::stats::visiting::Visiting;
-use crate::types::matchup::home_and_away;
 use crate::types::GameResult::{Loss, Win};
+use crate::types::matchup::home_and_away;
 use crate::types::{GameDate, GameId, Matchup, SeasonId, TeamId};
 use serde::{Deserialize, Serialize};
 use serde_json::Value::Null;
@@ -51,7 +51,7 @@ impl GameObject {
             panic!("💀 mismatched GameId's or SeasonId's in try_create.")
         }
 
-        if game1.box_score().wl() != game2.box_score().wl() {
+        if game1.box_score().wl() == game2.box_score().wl() {
             correction1.add_missing_field(WL, Null);
             correction2.add_missing_field(WL, Null);
         }
@@ -83,12 +83,14 @@ impl GameObject {
             id1.game_date,
             None,
             game1.team_name(),
+            id1.game_id
         ));
         correction2.update_display(GameDisplay::new(
             matchup.clone(),
             id2.game_date,
             None,
             game2.team_name(),
+            id2.game_id
         ));
 
         if correction1.correcting() || correction2.correcting() {
@@ -124,26 +126,24 @@ impl GameObject {
     ) -> Self {
         match (team1.visiting(), team2.visiting()) {
             // team 1 is home, team 2 is away
-            (Visiting::Home, Visiting::Away) => {
-                GameObject {
-                    season_id,
-                    game_date,
-                    game_id,
-                    home: team1,
-                    away: team2,
-                }
-            }
+            (Visiting::Home, Visiting::Away) => GameObject {
+                season_id,
+                game_date,
+                game_id,
+                home: team1,
+                away: team2,
+            },
             // team 2 is home, team 1 is away
-            (Visiting::Away, Visiting::Home) => {
-                GameObject {
-                    season_id,
-                    game_date,
-                    game_id,
-                    home: team2,
-                    away: team1,
-                }
-            }
-            _ => panic!("💀 if this error is arising check that your input box scores have opposite field states to this function")
+            (Visiting::Away, Visiting::Home) => GameObject {
+                season_id,
+                game_date,
+                game_id,
+                home: team2,
+                away: team1,
+            },
+            _ => panic!(
+                "💀 if this error is arising check that your input box scores have opposite field states to this function"
+            ),
         }
     }
 
@@ -172,7 +172,9 @@ impl GameObject {
         } else if *away.wl() == Win && *home.wl() == Loss {
             self.away.team_id
         } else {
-            panic!("💀 if this error is arising check that your input box scores have opposite game result states to this function")
+            panic!(
+                "💀 if this error is arising check that your input box scores have opposite game result states to this function"
+            )
         }
     }
 }
