@@ -18,11 +18,12 @@ use crate::stats::nba_kind::NBAStatKind::{LineUp, Player, Team};
 use crate::stats::nba_stat::NBAStat;
 use crate::stats::stat_column::StatColumn;
 use crate::stats::stat_column::StatColumn::MATCHUP;
-use crate::types::matchup::is_matchup_for_team;
 use crate::types::SeasonId;
+use crate::types::matchup::is_matchup_for_team;
 use serde_json::Value::Null;
-use serde_json::{from_str, Value};
+use serde_json::{Value, from_str};
 use std::collections::HashMap;
+use crate::dapi::zip::headers_and_values_to_fields;
 
 pub fn fetch_and_process_nba_games(
     season_id: SeasonId,
@@ -93,9 +94,9 @@ fn process_nba_games(
 ) -> Result<Vec<(Identity, NBAStat)>, Vec<CorrectionBuilder>> {
     let file_path = nba_data_path(season_id, stat);
 
-    let json = &read_nba_file(file_path);
+    let json = read_nba_file(file_path);
 
-    let (rows, headers) = parse_season(from_str(json).expect(&format!(
+    let (rows, headers) = parse_season(serde_json::from_str(&json).expect(&format!(
         "💀 failed to parse a season json object for the {} {} ({})",
         season_fmt(season_id.year()),
         season_id.period(),
@@ -113,13 +114,9 @@ fn season(
     let mut season: Vec<(Identity, NBAStat)> = Vec::new();
     let mut corrections: Vec<CorrectionBuilder> = Vec::new();
 
-    for row in rows {
+    for row in rows.into_iter() {
         if let Some(row_data) = row.as_array() {
-            let fields: HashMap<StatColumn, Value> = headers
-                .iter()
-                .zip(row_data.iter())
-                .map(|(name, value)| (StatColumn::from(name.to_owned()), value.clone()))
-                .collect();
+            let fields = headers_and_values_to_fields(&headers, row_data);
 
             match stat {
                 Player => match fields_to_player_box_score(&fields) {
@@ -217,16 +214,20 @@ fn fields_to_team_box_score(
         .team_name()
         .expect("💀 couldn't get TeamName from map, which is necessary for GameMetaData. ");
 
-    let meta = GameDisplay::new(matchup.clone(), game_date, None, team_name.clone());
+    let display = GameDisplay::new(matchup.clone(), game_date, None, team_name.clone(), game_id);
 
-    correction_builder.update_display(meta);
+    correction_builder.update_display(display);
 
     record_stat(
         s.game_result(),
         &mut box_score_builder,
         &mut correction_builder,
     );
-    record_stat(s.minutes(), &mut box_score_builder, &mut correction_builder);
+    record_stat(
+        s.minutes(),
+        &mut box_score_builder,
+        &mut correction_builder
+    );
     record_stat(
         s.field_goal_makes(),
         &mut box_score_builder,
@@ -272,7 +273,10 @@ fn fields_to_team_box_score(
         &mut box_score_builder,
         &mut correction_builder,
     );
-    record_stat(s.assists(), &mut box_score_builder, &mut correction_builder);
+    record_stat(
+        s.assists(),
+        &mut box_score_builder,
+        &mut correction_builder);
     record_stat(s.steals(), &mut box_score_builder, &mut correction_builder);
     record_stat(s.blocks(), &mut box_score_builder, &mut correction_builder);
     record_stat(
@@ -293,7 +297,9 @@ fn fields_to_team_box_score(
     );
 
     if correction_builder.correcting() {
-        eprintln!("\n❌ failed to create a TeamBoxScore for {team_name}. id: {team_id} game id: {game_id}");
+        eprintln!(
+            "\n❌ failed to create a TeamBoxScore for {team_name}. id: {team_id} game id: {game_id}"
+        );
 
         Err(correction_builder)
     } else {
@@ -301,7 +307,9 @@ fn fields_to_team_box_score(
             .map_err(|e| format!("{e}"))
             .unwrap_or_else(|e| panic!("💀 failed to create TeamBoxScore: {e}\n💀 GameId: {game_id}\n💀 SeasonId: {season_id}\n💀 TeamId: {team_id}\n💀 TeamAbbreviation: {team_abbr}"));
 
-        println!("✅ successfully created TeamBoxScore for {team_name}. id: {team_id} game id: {game_id}");
+        println!(
+            "✅ successfully created TeamBoxScore for {team_name}. id: {team_id} game id: {game_id}"
+        );
 
         let team = TeamBoxScore::construct(team_abbr, team_name, team_id, visiting, box_score);
 
@@ -372,6 +380,7 @@ fn fields_to_player_box_score(
         game_date.clone(),
         Some(player_name.clone()),
         team_name.clone(),
+        game_id,
     );
 
     correction_builder.update_display(meta);
@@ -448,7 +457,9 @@ fn fields_to_player_box_score(
     );
 
     if correction_builder.correcting() {
-        eprintln!("\n❌ failed to create a PlayerBoxScore for {player_name}. id: {player_id} game id: {game_id}");
+        eprintln!(
+            "\n❌ failed to create a PlayerBoxScore for {player_name}. id: {player_id} game id: {game_id}"
+        );
 
         Err(correction_builder)
     } else {
@@ -456,12 +467,61 @@ fn fields_to_player_box_score(
             .map_err(|e| format!("{e}"))
             .unwrap_or_else(|e| panic!("💀 failed to create PlayerBoxScore: {e}\n💀 GameId: {game_id}\n💀 PlayerId: {player_id}\n💀 SeasonId: {season_id}\n💀 TeamId: {team_id}\n💀 TeamAbbreviation: {team_abbr}"));
 
-        let msg = format!("✅ successfully created PlayerBoxScore for {player_name}. id: {player_id} game id: {game_id}");
+        let msg = format!(
+            "✅ successfully created PlayerBoxScore for {player_name}. id: {player_id} game id: {game_id}"
+        );
 
         let player = PlayerBoxScore::construct(player_id, player_name, box_score);
 
         println!("{msg}");
 
         Ok((identity, player))
+    }
+}
+
+
+
+#[cfg(test)]
+mod test_read_team_source_data {
+    use std::fs;
+    use once_cell::sync::Lazy;
+    use crate::constants::paths::test;
+    use crate::dapi::parse::parse_season;
+    use crate::dapi::zip::headers_and_values_to_fields;
+    use super::*;
+
+    static TEST: Lazy<String> = Lazy::new(test);
+
+    #[test]
+    fn test_read_team_source_data() {
+        println!("starting test");
+
+        let path = format!("{}/tg.test.json", *TEST);
+
+        let contents = fs::read_to_string(&path).expect(&format!("💀 failed to read test file. path: {}", &path));
+
+        println!("{contents}");
+
+        let (rows, headers) = parse_season(match serde_json::from_str(&contents) {
+            Ok(s) => s,
+            Err(e) => panic!("💀 failed to parse JSON from test file. error: {e}")
+        });
+
+
+
+        for row in rows {
+            let fields = headers_and_values_to_fields(&headers, row.as_array().expect(&format!("💀 failed to read data as a JSON list.\nrow: {:#?}", row)));
+
+            match fields_to_team_box_score(&fields) {
+                Ok((id, game)) => {
+                    eprintln!("SUCCESS: {id}\n{:?}", game);
+                }
+                Err(correction) => {
+                    eprintln!("FAILURE: {:?}", correction);
+                }
+            }
+        }
+
+        println!("finished test");
     }
 }

@@ -2,7 +2,7 @@ use std::ops::Range;
 
 use chrono::Local;
 
-use crate::dapi::parse::{destructure_dt, DestructuredDateTime};
+use crate::dapi::parse::{DestructuredDateTime, destructure_dt};
 
 pub const BEGINNING: i32 = 1946; // 1946-47 is the first NBA season
 

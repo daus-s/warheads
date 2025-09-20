@@ -1,5 +1,5 @@
 use crate::stats::serde_enum::SerdeEnum;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// BoolInt is an int that is either 1 or 0
 /// to represent a boolean value

@@ -107,8 +107,40 @@ impl Identifiable for String {
         let columns = self.columns();
 
         match columns.as_slice() {
-            [season_id, player_id, _player_name, team_id, team_abbr, _team_name, game_id, game_date, _matchup, _wl, _min, _fgm, _fga, _fg_pct, _fg3m, _fg3a, _fg3_pct, _ftm, _fta, _ft_pct, _oreb, _dreb, _reb, _ast, _stl, _blk, _tov, _pf, _pts, _plus_minus, _fantasy_pts, _video_available] =>
-            {
+            [
+                season_id,
+                player_id,
+                _player_name,
+                team_id,
+                team_abbr,
+                _team_name,
+                game_id,
+                game_date,
+                _matchup,
+                _wl,
+                _min,
+                _fgm,
+                _fga,
+                _fg_pct,
+                _fg3m,
+                _fg3a,
+                _fg3_pct,
+                _ftm,
+                _fta,
+                _ft_pct,
+                _oreb,
+                _dreb,
+                _reb,
+                _ast,
+                _stl,
+                _blk,
+                _tov,
+                _pf,
+                _pts,
+                _plus_minus,
+                _fantasy_pts,
+                _video_available,
+            ] => {
                 let szn = season_id.replace('"', "").parse::<i32>().expect("💀 failed to parse season id as an i32 (pre-conversion) while identifying a player game. player");
 
                 let pid = player_id.replace('\"', "").parse::<u64>().expect(
@@ -135,8 +167,37 @@ impl Identifiable for String {
                     game_date: GameDate(date),
                 }
             }
-            [season_id, team_id, team_abbr, _team_name, game_id, game_date, _matchup, _wl, _min, _fgm, _fga, _fg_pct, _fg3m, _fg3a, _fg3_pct, _ftm, _fta, _ft_pct, _oreb, _dreb, _reb, _ast, _stl, _blk, _tov, _pf, _pts, _plus_minus, _video_available] =>
-            {
+            [
+                season_id,
+                team_id,
+                team_abbr,
+                _team_name,
+                game_id,
+                game_date,
+                _matchup,
+                _wl,
+                _min,
+                _fgm,
+                _fga,
+                _fg_pct,
+                _fg3m,
+                _fg3a,
+                _fg3_pct,
+                _ftm,
+                _fta,
+                _ft_pct,
+                _oreb,
+                _dreb,
+                _reb,
+                _ast,
+                _stl,
+                _blk,
+                _tov,
+                _pf,
+                _pts,
+                _plus_minus,
+                _video_available,
+            ] => {
                 let szn = season_id.replace('\"', "").parse::<i32>().expect("💀 failed to parse season id as an u64 (pre-conversion) while identifying a team game. ");
 
                 let tid = team_id
@@ -173,38 +234,97 @@ impl Identifiable for Value {
 
         match self.as_array().unwrap().as_slice() {
             //player game case
-            [Value::String(szn), Number(player_id), _, Number(team_id), Value::String(team_abbr), _, Value::String(game_id), Value::String(game_date), _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _] => {
-                Identity {
-                    season_id: SeasonId::from(
-                        szn.parse::<i32>()
-                            .expect("💀 expect szn column to be an i64 (i32)"),
-                    ),
-                    player_id: Some(PlayerId(
-                        player_id.as_u64().expect("💀 expect player id to be a u64"),
-                    )),
-                    team_id: TeamId(team_id.as_u64().expect("💀 expect team id to be a u64")),
-                    team_abbr: TeamAbbreviation(team_abbr.to_string()),
-                    game_id: GameId::from(game_id.to_owned()),
-                    game_date: GameDate(
-                        NaiveDate::parse_from_str(&*game_date, "%Y-%m-%d")
-                            .expect("💀 failed to parse game date as an chrono::NaiveDate. "),
-                    ),
-                }
-            }
-            [szn, Number(team_id), Value::String(team_abbr), _, Value::String(game_id), Value::String(game_date), _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _] => {
-                Identity {
-                    season_id: SeasonId::try_from(szn)
-                        .expect("💀 couldnt parse season_id from JSON value"),
-                    player_id: None,
-                    team_id: TeamId(team_id.as_u64().expect("💀 expect team id to be a u64")),
-                    team_abbr: TeamAbbreviation(team_abbr.to_string()),
-                    game_date: GameDate(
-                        NaiveDate::parse_from_str(&*game_date, "%Y-%m-%d")
-                            .expect("💀 failed to parse game date as an chrono::NaiveDate. "),
-                    ),
-                    game_id: GameId::from(game_id.to_owned()),
-                }
-            }
+            [
+                Value::String(szn),
+                Number(player_id),
+                _,
+                Number(team_id),
+                Value::String(team_abbr),
+                _,
+                Value::String(game_id),
+                Value::String(game_date),
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+            ] => Identity {
+                season_id: SeasonId::from(
+                    szn.parse::<i32>()
+                        .expect("💀 expect szn column to be an i64 (i32)"),
+                ),
+                player_id: Some(PlayerId(
+                    player_id.as_u64().expect("💀 expect player id to be a u64"),
+                )),
+                team_id: TeamId(team_id.as_u64().expect("💀 expect team id to be a u64")),
+                team_abbr: TeamAbbreviation(team_abbr.to_string()),
+                game_id: GameId::from(game_id.to_owned()),
+                game_date: GameDate(
+                    NaiveDate::parse_from_str(&*game_date, "%Y-%m-%d")
+                        .expect("💀 failed to parse game date as an chrono::NaiveDate. "),
+                ),
+            },
+            [
+                szn,
+                Number(team_id),
+                Value::String(team_abbr),
+                _,
+                Value::String(game_id),
+                Value::String(game_date),
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+            ] => Identity {
+                season_id: SeasonId::try_from(szn)
+                    .expect("💀 couldnt parse season_id from JSON value"),
+                player_id: None,
+                team_id: TeamId(team_id.as_u64().expect("💀 expect team id to be a u64")),
+                team_abbr: TeamAbbreviation(team_abbr.to_string()),
+                game_date: GameDate(
+                    NaiveDate::parse_from_str(&*game_date, "%Y-%m-%d")
+                        .expect("💀 failed to parse game date as an chrono::NaiveDate. "),
+                ),
+                game_id: GameId::from(game_id.to_owned()),
+            },
             _ => panic!("💀 unrecognized schema. could not match to a player or team stat"),
         }
     }

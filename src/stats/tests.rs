@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod test_column_indices {
-    use crate::stats::stat_column::player_column_index;
     use crate::stats::stat_column::StatColumn::*;
+    use crate::stats::stat_column::player_column_index;
 
     #[test]
     fn test_season_id_column() {

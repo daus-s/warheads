@@ -59,7 +59,9 @@ impl EloTracker {
         } else if game.winner() == game.away.team_id {
             step_home = -1 * (step_home as i64);
         } else {
-            panic!("💀 Game must have a winner. somehow passed the win/loss check in GameObject::try_create");
+            panic!(
+                "💀 Game must have a winner. somehow passed the win/loss check in GameObject::try_create"
+            );
         }
 
         for player in game.home.roster() {

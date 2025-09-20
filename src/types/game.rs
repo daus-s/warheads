@@ -1,7 +1,7 @@
 use crate::stats::serde_enum::SerdeEnum;
 use chrono::{Datelike, NaiveDate};
-use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
-use serde_json::{json, Value};
+use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
+use serde_json::{Value, json};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 

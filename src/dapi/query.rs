@@ -3,11 +3,11 @@ use crate::format::url_format::UrlFormatter;
 use crate::stats::nba_kind::NBAStatKind;
 
 use crate::types::SeasonId;
+use reqwest::Client;
 use reqwest::header::{
-    HeaderMap, HeaderName, HeaderValue, ACCEPT, ACCEPT_LANGUAGE, CACHE_CONTROL, CONNECTION, ORIGIN,
+    ACCEPT, ACCEPT_LANGUAGE, CACHE_CONTROL, CONNECTION, HeaderMap, HeaderName, HeaderValue, ORIGIN,
     PRAGMA, REFERER, USER_AGENT,
 };
-use reqwest::Client;
 use std::error::Error;
 use std::str::FromStr;
 

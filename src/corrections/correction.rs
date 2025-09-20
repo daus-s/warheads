@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::season_period::SeasonPeriod;
-use crate::stats::stat_column::{player_column_index, team_column_index, StatColumn};
+use crate::stats::stat_column::{StatColumn, player_column_index, team_column_index};
 
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
@@ -118,12 +118,75 @@ impl Correction {
 
         match (columns.as_slice(), self.kind) {
             (
-                [_season_id, _player_id, _player_name, _team_id, _team_abbreviation, _team_name, _game_id, _game_date, _matchup, _wl, _min, _fgm, _fga, _fg_pct, _fg3m, _fg3a, _fg3_pct, _ftm, _fta, _ft_pct, _oreb, _dreb, _reb, _ast, _stl, _blk, _tov, _pf, _pts, _plus_minus, _fantasy_pts, _video_available],
+                [
+                    _season_id,
+                    _player_id,
+                    _player_name,
+                    _team_id,
+                    _team_abbreviation,
+                    _team_name,
+                    _game_id,
+                    _game_date,
+                    _matchup,
+                    _wl,
+                    _min,
+                    _fgm,
+                    _fga,
+                    _fg_pct,
+                    _fg3m,
+                    _fg3a,
+                    _fg3_pct,
+                    _ftm,
+                    _fta,
+                    _ft_pct,
+                    _oreb,
+                    _dreb,
+                    _reb,
+                    _ast,
+                    _stl,
+                    _blk,
+                    _tov,
+                    _pf,
+                    _pts,
+                    _plus_minus,
+                    _fantasy_pts,
+                    _video_available,
+                ],
                 Player,
             ) => apply_corrections(&mut columns, &self.corrections, player_column_index).unwrap(),
 
             (
-                [_season_id, _team_id, _team_abbreviation, _team_name, _game_id, _game_date, _matchup, _wl, _min, _fgm, _fga, _fg_pct, _fg3m, _fg3a, _fg3_pct, _ftm, _fta, _ft_pct, _oreb, _dreb, _reb, _ast, _stl, _blk, _tov, _pf, _pts, _plus_minus, _video_available],
+                [
+                    _season_id,
+                    _team_id,
+                    _team_abbreviation,
+                    _team_name,
+                    _game_id,
+                    _game_date,
+                    _matchup,
+                    _wl,
+                    _min,
+                    _fgm,
+                    _fga,
+                    _fg_pct,
+                    _fg3m,
+                    _fg3a,
+                    _fg3_pct,
+                    _ftm,
+                    _fta,
+                    _ft_pct,
+                    _oreb,
+                    _dreb,
+                    _reb,
+                    _ast,
+                    _stl,
+                    _blk,
+                    _tov,
+                    _pf,
+                    _pts,
+                    _plus_minus,
+                    _video_available,
+                ],
                 Team,
             ) => apply_corrections(&mut columns, &self.corrections, team_column_index).unwrap(),
             (_ls, k) => {

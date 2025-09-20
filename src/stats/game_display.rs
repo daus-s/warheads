@@ -1,4 +1,4 @@
-use crate::types::{GameDate, Matchup, PlayerName, TeamName};
+use crate::types::{GameDate, GameId, Matchup, PlayerName, TeamName};
 use std::fmt::{Display, Formatter};
 
 #[derive(Clone, Debug)]
@@ -20,6 +20,8 @@ pub struct GameDisplay {
 
     /// team name (full)
     team_name: TeamName,
+
+    game_id: GameId,
 }
 
 impl GameDisplay {
@@ -28,12 +30,14 @@ impl GameDisplay {
         date: GameDate,
         player_name: Option<PlayerName>,
         team_name: TeamName,
+        game_id: GameId,
     ) -> Self {
         GameDisplay {
             matchup,
             date,
             player_name,
             team_name,
+            game_id,
         }
     }
 
@@ -54,10 +58,12 @@ impl Display for GameDisplay {
         let matchup = format!("{}", self.matchup);
         // matching on name's existence is the same as checking Player vs. Team box score
 
+        let url = format!("https://nba.com/game/{}", self.game_id);
+
         match &self.player_name {
             Some(s) => write!(
                 f,
-                "{} - {}\n{}:{}",
+                "{} - {}\n{}:{}\n{url}",
                 matchup,
                 self.date,
                 self.team_name.to_string(),
@@ -65,7 +71,7 @@ impl Display for GameDisplay {
             ),
             None => write!(
                 f,
-                "{} - {}\n{}",
+                "{} - {}\n{}\n{url}",
                 matchup,
                 self.date,
                 self.team_name.to_string()

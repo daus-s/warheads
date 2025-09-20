@@ -45,10 +45,23 @@ pub struct BoxScore {
 
 impl Display for BoxScore {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "pts:{}\tfgs:{}/{}\t3ps:{}/{}\tft: {}/{}\nast:{}\nreb:{} (off {},def {})\nstl: {}\t blk:{}\ttov:{}",
-               self.pts, self.fgm, self.fga,
-               self.fg3m, self.fg3a, self.ftm, self.fta, self.ast, self.reb, self.oreb, self.dreb,
-               self.stl, self.blk, self.tov
+        write!(
+            f,
+            "pts:{}\tfgs:{}/{}\t3ps:{}/{}\tft: {}/{}\nast:{}\nreb:{} (off {},def {})\nstl: {}\t blk:{}\ttov:{}",
+            self.pts,
+            self.fgm,
+            self.fga,
+            self.fg3m,
+            self.fg3a,
+            self.ftm,
+            self.fta,
+            self.ast,
+            self.reb,
+            self.oreb,
+            self.dreb,
+            self.stl,
+            self.blk,
+            self.tov
         )
     }
 }
@@ -348,7 +361,9 @@ impl BoxScore {
             | StatColumn::FG3_PCT
             | StatColumn::FT_PCT
             | StatColumn::MATCHUP => {
-                panic!("💀 illegal assignment operation on a box score. {col} is not a field of BoxScore")
+                panic!(
+                    "💀 illegal assignment operation on a box score. {col} is not a field of BoxScore"
+                )
             }
         }
     }

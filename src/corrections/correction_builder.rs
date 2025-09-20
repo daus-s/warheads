@@ -49,8 +49,8 @@ impl CorrectionBuilder {
         }
     }
 
-    pub fn update_display(&mut self, meta: GameDisplay) {
-        self.display = Some(meta);
+    pub fn update_display(&mut self, display: GameDisplay) {
+        self.display = Some(display);
     }
 
     pub fn add_missing_field(&mut self, col: StatColumn, val: Value) {
@@ -58,7 +58,7 @@ impl CorrectionBuilder {
     }
 
     pub fn create(&mut self) -> Correction {
-        use std::io::{stdout, Write};
+        use std::io::{Write, stdout};
 
         let (mut corrections, display_option) = (self.correction.clone(), self.display.clone());
 
@@ -72,7 +72,7 @@ impl CorrectionBuilder {
 
         println!("{}", display_string);
 
-        // if the correctionbuilder is provided as deleting it is from a source that needs to delete
+        // if the CorrectionBuilder is provided as deleting it is from a source that needs to delete
         // the data so we should not check again.
         if corrections.delete {
             println!("🗑️ deleting {}", corrections.identity());

@@ -16,3 +16,4 @@ pub mod season_manager;
 mod store;
 pub mod team_box_score;
 mod tests;
+pub mod zip;

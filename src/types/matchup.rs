@@ -1,12 +1,12 @@
+use crate::dapi::team_box_score::TeamBoxScore;
+use crate::stats::itemize::Itemize;
 use crate::stats::visiting::Visiting;
 use crate::stats::visiting::Visiting::{Away, Home};
 use crate::types::TeamAbbreviation;
-use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
+use serde_json::{Value, json};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
-use serde_json::{json, Value};
-use crate::dapi::team_box_score::TeamBoxScore;
-use crate::stats::itemize::Itemize;
 
 /// `MatchupString` is a String wrapper that is
 /// enforced by its `fn parse() -> Self`
@@ -32,8 +32,10 @@ impl Matchup {
             true => Ok(Home),
             false => match *team == *away {
                 true => Ok(Away),
-                false => Err(format!("❌ team abbreviation {team} is not one of the two teams in this matchup: {home}, {away}"))
-            }
+                false => Err(format!(
+                    "❌ team abbreviation {team} is not one of the two teams in this matchup: {home}, {away}"
+                )),
+            },
         }
     }
 
@@ -105,36 +107,48 @@ impl FromStr for Matchup {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.split_whitespace().collect::<Vec<&str>>().as_slice() {
-            [home, "vs." ,away] => Ok(Matchup {
+            [home, "vs.", away] => Ok(Matchup {
                 home: TeamAbbreviation(home.to_string()),
                 away: TeamAbbreviation(away.to_string()),
             }),
-            [away, "@" ,home] => Ok(Matchup {
-                    home: TeamAbbreviation(home.to_string()),
-                    away: TeamAbbreviation(away.to_string()),
-                }),
-            _ => Err(format!("❌ {} is not a valid matchup string. expected either:\n  • [tm1, @, tm2]\n  • [tm1, vs, tm2]", s )),
+            [away, "@", home] => Ok(Matchup {
+                home: TeamAbbreviation(home.to_string()),
+                away: TeamAbbreviation(away.to_string()),
+            }),
+            _ => Err(format!(
+                "❌ {} is not a valid matchup string. expected either:\n  • [tm1, @, tm2]\n  • [tm1, vs, tm2]",
+                s
+            )),
         }
     }
 }
 
 // this should be called after parsing a matchup
 pub fn is_matchup_for_team(matchup_as_string: &str, team_abbreviation: &TeamAbbreviation) -> bool {
-    match matchup_as_string.split_whitespace().collect::<Vec<&str>>().as_slice() {
+    match matchup_as_string
+        .split_whitespace()
+        .collect::<Vec<&str>>()
+        .as_slice()
+    {
         [home, "vs.", _away] => home == &team_abbreviation.0,
         [away, "@", _home] => away == &team_abbreviation.0,
-        _ => panic!("❌ {} is not a valid matchup string. expected either:\n  • [tm1, @, tm2]\n  • [tm1, vs, tm2]", matchup_as_string),
+        _ => panic!(
+            "❌ {} is not a valid matchup string. expected either:\n  • [tm1, @, tm2]\n  • [tm1, vs, tm2]",
+            matchup_as_string
+        ),
     }
 }
 
-pub fn home_and_away(team1: TeamBoxScore, team2: TeamBoxScore) -> Result<(TeamBoxScore, TeamBoxScore), (TeamBoxScore, TeamBoxScore)> {
+pub fn home_and_away(
+    team1: TeamBoxScore,
+    team2: TeamBoxScore,
+) -> Result<(TeamBoxScore, TeamBoxScore), (TeamBoxScore, TeamBoxScore)> {
     match (team1.visiting(), team2.visiting()) {
         (Home, Away) => Ok((team1, team2)),
         (Away, Home) => Ok((team2, team1)),
-        _ => Err((team1, team2))
+        _ => Err((team1, team2)),
     }
 }
-
 
 impl Itemize for (Matchup, TeamAbbreviation) {
     fn itemize(&self) -> Vec<Value> {
@@ -153,6 +167,5 @@ impl Itemize for (Matchup, TeamAbbreviation) {
         } else {
             panic!("💀 TeamAbbreviation is not in their given Matchup. ")
         }
-
     }
 }

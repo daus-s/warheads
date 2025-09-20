@@ -329,7 +329,9 @@ impl MapReader for HashMap<StatColumn, Value> {
                 if percent >= 0f32 && percent <= 1f32 {
                     Ok(FieldGoalPercentage(Some(f.as_f64().unwrap() as f32)))
                 } else {
-                    eprintln!("\tℹ️ FieldGoalPercent ({percent}) is not bounded by the constraint: [0., 1.]");
+                    eprintln!(
+                        "\tℹ️ FieldGoalPercent ({percent}) is not bounded by the constraint: [0., 1.]"
+                    );
 
                     Err(FG_PCT)
                 }
@@ -419,7 +421,9 @@ impl MapReader for HashMap<StatColumn, Value> {
                 if percent >= 0f32 && percent <= 1f32 {
                     Ok(ThreePointPercentage(Some(f.as_f64().unwrap() as f32)))
                 } else {
-                    eprintln!("\tℹ️ ThreePointPercentage ({percent}) is not bounded by the constraint: [0., 1.]");
+                    eprintln!(
+                        "\tℹ️ ThreePointPercentage ({percent}) is not bounded by the constraint: [0., 1.]"
+                    );
 
                     Err(FG3_PCT)
                 }
@@ -513,7 +517,9 @@ impl MapReader for HashMap<StatColumn, Value> {
                 if percent >= 0f32 && percent <= 1f32 {
                     Ok(FreeThrowPercentage(Some(f.as_f64().unwrap() as f32)))
                 } else {
-                    eprintln!("\tℹ️ FreeThrowPercentage ({percent}) is not bounded by the constraint: [0., 1.]");
+                    eprintln!(
+                        "\tℹ️ FreeThrowPercentage ({percent}) is not bounded by the constraint: [0., 1.]"
+                    );
 
                     Err(FT_PCT)
                 }
@@ -736,12 +742,16 @@ impl MapReader for HashMap<StatColumn, Value> {
                 Err(PF)
             }
             Value::Null => {
-                eprintln!("❕ PersonalFouls is a Null, but not typically permitted to be Null. Its value has been defaulted to 0.");
+                eprintln!(
+                    "❕ PersonalFouls is a Null, but not typically permitted to be Null. Its value has been defaulted to 0."
+                );
 
                 Ok(PersonalFouls(0))
             }
             _ => {
-                eprintln!("\tℹ️ PersonalFouls is not a Number when it is a non-optional field. (special null cases are permitted but emit warnings)");
+                eprintln!(
+                    "\tℹ️ PersonalFouls is not a Number when it is a non-optional field. (special null cases are permitted but emit warnings)"
+                );
 
                 Err(PF)
             }
