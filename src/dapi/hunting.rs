@@ -33,7 +33,7 @@ use std::error::Error;
 use std::path::PathBuf;
 use std::str::FromStr;
 
-const BEGINNING: i32 = 1946;
+pub const BEGINNING: i32 = 1946;
 
 pub fn load_nba_season_from_file(year: i32) -> Vec<(Identity, TeamBoxScore)> {
     let player_games = player_games(year);
