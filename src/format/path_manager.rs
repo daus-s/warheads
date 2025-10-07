@@ -84,3 +84,7 @@ pub fn nba_storage_file(id: (SeasonId, GameId)) -> PathBuf {
 
     path
 }
+
+pub fn nba_checksum_path() -> PathBuf {
+    PathBuf::from(format!("{}/nba/checksum/checksums.json", *DATA))
+}

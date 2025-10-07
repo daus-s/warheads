@@ -1,3 +1,4 @@
+use crate::checksum::sign::sign_nba;
 /*
     ITS HUNTING SEASON.
     PROFESSIONAL SPORTS LEAGUE SEASONS MANAGEMENT DONE HERE
@@ -13,7 +14,7 @@ use crate::dapi::gather;
 use crate::dapi::gather::{player_games, team_games};
 use crate::dapi::parse::{destructure_dt, DT};
 use crate::dapi::store::save_nba_season;
-use crate::format::path_manager::nba_data_path;
+use crate::format::path_manager::{nba_checksum_path, nba_data_path};
 use crate::format::season::season_fmt;
 use crate::format::url_format::UrlFormatter;
 use crate::stats::domain::Domain;
@@ -84,6 +85,17 @@ pub async fn observe_nba() {
             }
         }
     }
+
+    match sign_nba() {
+        Ok(_) => println!(
+            "✅ successfully signed nba data with checksums in {}",
+            nba_checksum_path().display()
+        ),
+        Err(_) => eprintln!(
+            "❌ failed to sign nba data with checksums in {}",
+            nba_checksum_path().display()
+        ),
+    };
 }
 
 pub async fn query_nba(season: SeasonId, stat_kind: NBAStatKind) -> Result<String, Box<dyn Error>> {

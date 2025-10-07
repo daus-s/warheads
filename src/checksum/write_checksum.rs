@@ -1,11 +1,7 @@
 use crate::checksum::checksum::checksum;
-use crate::format::path_manager::nba_data_path;
-use crate::stats::domain::Domain;
+use std::path::PathBuf;
 
-pub fn checksum_pair(domain: Domain) -> Result<u32, std::io::Error> {
-    let (season, kind) = domain;
-    let path = nba_data_path(season, kind);
-
+pub fn checksum_pair(path: &PathBuf) -> Result<u32, std::io::Error> {
     let data = std::fs::read(path)?;
 
     let checksum = checksum(&data);
