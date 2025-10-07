@@ -1,5 +1,5 @@
 use crate::checksum::checksum_map::ChecksumMap;
-use crate::checksum::write_checksum::checksum_pair;
+use crate::checksum::read_checksum::read_checksum;
 use crate::dapi::hunting::BEGINNING;
 use crate::dapi::parse::{destructure_dt, DT};
 use crate::format::path_manager::nba_data_path;
@@ -25,7 +25,7 @@ pub fn generate_checksums() -> ChecksumMap {
             //team
             let team_path = nba_data_path(era, NBAStatKind::Team);
 
-            let team_checksum = checksum_pair(&team_path);
+            let team_checksum = read_checksum(&team_path);
 
             if let Ok(checksum) = team_checksum {
                 checksums.insert(team_path, checksum);
@@ -36,7 +36,7 @@ pub fn generate_checksums() -> ChecksumMap {
             // player
             let player_path = nba_data_path(era, NBAStatKind::Player);
 
-            let player_checksum = checksum_pair(&player_path);
+            let player_checksum = read_checksum(&player_path);
 
             if let Ok(checksum) = player_checksum {
                 checksums.insert(player_path, checksum);

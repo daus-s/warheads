@@ -1,3 +1,5 @@
+use crate::checksum::checksum_map::ChecksumMap;
+use crate::checksum::read_checksum::read_checksum;
 use crate::checksum::sign::sign_nba;
 /*
     ITS HUNTING SEASON.
@@ -60,6 +62,8 @@ pub async fn chronicle_nba() {
 }
 
 pub async fn observe_nba() {
+    let checksums = ChecksumMap::load().expect("💀 failed to load checksums");
+
     let DT {
         year: curr_year,
         month,
@@ -76,13 +80,8 @@ pub async fn observe_nba() {
 
     for year in begin..curr_year + seasonal_depression {
         for era in minimum_spanning_era(year) {
-            if let Err(msg) = gather::fetch_and_save_nba_stats(era, Player).await {
-                eprintln!("{}", msg);
-            }
-
-            if let Err(msg) = gather::fetch_and_save_nba_stats(era, Team).await {
-                eprintln!("{}", msg);
-            }
+            compare_and_fetch(era, Player, &checksums).await;
+            compare_and_fetch(era, Team, &checksums).await;
         }
     }
 
@@ -96,6 +95,25 @@ pub async fn observe_nba() {
             nba_checksum_path().display()
         ),
     };
+}
+
+async fn compare_and_fetch(season_id: SeasonId, kind: NBAStatKind, checksums: &ChecksumMap) {
+    let path = nba_data_path(season_id, kind);
+    if !path.exists()
+        || read_checksum(&path).expect("💀 failed to read file data even though the path exists.")
+            != *checksums
+                .get(&path)
+                .expect("💀 failed to find checksum for path. all checksums should be initialized")
+    //this might fail on new records
+    {
+        if let Err(msg) = gather::fetch_and_save_nba_stats(season_id, kind).await {
+            println!("{}", msg);
+        } else {
+            println!("✅ successfully wrote {kind} data to file for the {season_id}");
+        }
+    } else {
+        println!("✅ bypassing fetching {kind} data for the {season_id}, checksums match. ");
+    }
 }
 
 pub async fn query_nba(season: SeasonId, stat_kind: NBAStatKind) -> Result<String, Box<dyn Error>> {

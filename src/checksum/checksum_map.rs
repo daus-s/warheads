@@ -1,5 +1,4 @@
-use crate::format::path_manager::{nba_checksum_path, nba_data_path};
-use crate::stats::domain::Domain;
+use crate::format::path_manager::nba_checksum_path;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::File;
@@ -30,6 +29,10 @@ impl ChecksumMap {
 
     pub fn insert(&mut self, path: PathBuf, checksum: u32) {
         self.map.insert(path, checksum);
+    }
+
+    pub fn get(&self, path: &PathBuf) -> Option<&u32> {
+        self.map.get(path)
     }
 
     pub fn verify_checksums(&self, other: &ChecksumMap) -> Vec<PathBuf> {
