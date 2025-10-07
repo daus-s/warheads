@@ -96,14 +96,15 @@ pub async fn observe_nba() {
         ),
     };
 }
-
+/// Compare the checksums of a NBA data source file and if it matches the expected checksum we can bypass refetching from
+/// [nba.com/stats](https://www.nba.com/stats). Otherwise we proceed fetching the data and saving the data to our source directory.
 async fn compare_and_fetch(season_id: SeasonId, kind: NBAStatKind, checksums: &ChecksumMap) {
     let path = nba_data_path(season_id, kind);
     if !path.exists()
         || read_checksum(&path).expect("💀 failed to read file data even though the path exists.")
             != *checksums
                 .get(&path)
-                .expect("💀 failed to find checksum for path. all checksums should be initialized")
+                .expect("💀 failed to find checksum for an existent path. all checksums should be initialized")
     //this might fail on new records
     {
         if let Err(msg) = gather::fetch_and_save_nba_stats(season_id, kind).await {
