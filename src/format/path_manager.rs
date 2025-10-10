@@ -1,6 +1,7 @@
 use crate::constants::paths::data;
 use crate::format::season::season_path;
 use crate::format::stat_path_formatter::StatPathFormatter as SPF;
+use crate::stats::id::Identity;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::nba_kind::NBAStatKind::{Player, Team};
 use crate::types::{GameId, PlayerId, SeasonId, TeamId};
@@ -87,4 +88,13 @@ pub fn nba_storage_file(id: (SeasonId, GameId)) -> PathBuf {
 
 pub fn nba_checksum_path() -> PathBuf {
     PathBuf::from(format!("{}/nba/checksum/checksums.json", *DATA))
+}
+
+pub fn correction_path_from_identity(identity: &Identity) -> PathBuf {
+    match identity.player_id {
+        Some(player_id) => {
+            nba_player_correction_file(identity.season_id, identity.game_id, player_id)
+        }
+        None => nba_team_correction_file(identity.season_id, identity.game_id, identity.team_id),
+    }
 }

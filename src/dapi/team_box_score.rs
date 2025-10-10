@@ -1,7 +1,7 @@
-use crate::dapi::player_box_score::PlayerBoxScore;
 use crate::stats::box_score::BoxScore;
 use crate::stats::visiting::Visiting;
 use crate::types::*;
+use crate::{corrections::correction::Correction, dapi::player_box_score::PlayerBoxScore};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -53,5 +53,13 @@ impl TeamBoxScore {
             box_score,
             roster: Vec::new(),
         }
+    }
+
+    pub fn roster_mut(&mut self) -> &mut Vec<PlayerBoxScore> {
+        &mut self.roster
+    }
+
+    pub fn correct_box_score(&mut self, correction: &mut Correction) {
+        correction.correct_box_score(&mut self.box_score);
     }
 }

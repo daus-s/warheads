@@ -40,7 +40,7 @@ impl Corrector for Vec<Correction> {
                 if correction.delete {
                     to_remove.push(id);
                 } else {
-                    *game = correction.correct_string(game.to_string());
+                    *game = correction.correct_source_data(game.to_string());
                 }
             }
         }

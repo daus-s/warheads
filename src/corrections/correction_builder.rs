@@ -57,7 +57,11 @@ impl CorrectionBuilder {
         self.correction.corrections.insert(col, val);
     }
 
-    pub fn create(&mut self) -> Correction {
+    pub fn remove(&mut self, col: StatColumn) {
+        self.correction.corrections.remove(&col);
+    }
+
+    pub fn create_and_save(&mut self) -> Correction {
         use std::io::{stdout, Write};
 
         let (mut corrections, display_option) = (self.correction.clone(), self.display.clone());
@@ -70,15 +74,13 @@ impl CorrectionBuilder {
             ),
         };
 
-        dbg!((&self.correction).identity());
-
         println!("{}", display_string);
 
         //if the correctionbuilder is provided as deleting it is from a source that needs to delete the data so we should not check again.
         if corrections.delete {
             println!("🗑️ deleting {}", corrections.identity());
 
-            save_correction_wrapper(&corrections);
+            save_correction(&corrections);
 
             return corrections.clone();
         } else {
@@ -89,7 +91,7 @@ impl CorrectionBuilder {
             if delete {
                 println!("🗑️ deleting {}", corrections.identity());
 
-                save_correction_wrapper(&corrections);
+                save_correction(&corrections);
 
                 return corrections.clone(); //if we are deleting we don't need any values for the corrections
             }
@@ -205,12 +207,13 @@ impl CorrectionBuilder {
                 println!("{}: {}", col, value); // New value
             }
         }
-        save_correction_wrapper(&corrections);
+        save_correction(&corrections);
 
         corrections
     }
 
-    pub fn correcting(&self) -> bool {
+    /// Returns whether the correction builder has any corrections to apply. It does not specify whether the record should be deleted.
+    pub fn has_corrections(&self) -> bool {
         self.correction.len() > 0
     }
 
@@ -219,7 +222,7 @@ impl CorrectionBuilder {
     }
 }
 
-fn save_correction_wrapper(correction: &Correction) {
+fn save_correction(correction: &Correction) {
     match correction.save() {
         Ok(_) => {
             println!(

@@ -69,10 +69,6 @@ pub fn team_games(
         })
         .collect();
 
-    // todo!("this cant correctly determine if a player was on the team before the player has been \
-    //  added to the team due to changes in the identity of the boxscore and its removal for memory \
-    //  concerns, the function likely needs to take a vector of identities and player box scores. ");
-
     // uh oh
     for (p_id, player_box_score) in roster.into_iter() {
         for (t_id, team_box_score) in &mut games {

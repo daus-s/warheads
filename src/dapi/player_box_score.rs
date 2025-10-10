@@ -1,4 +1,6 @@
-use crate::stats::box_score::BoxScore;
+use crate::corrections::correction::Correction;
+use crate::stats::id::Identity;
+use crate::stats::{box_score::BoxScore, id::Identifiable};
 use crate::types::*;
 use serde::{Deserialize, Serialize};
 use std::fmt::Formatter;
@@ -34,5 +36,9 @@ impl PlayerBoxScore {
             player_name,
             box_score,
         }
+    }
+
+    pub fn correct_box_score(&mut self, correction: &mut Correction) {
+        correction.correct_box_score(&mut self.box_score);
     }
 }
