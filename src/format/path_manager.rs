@@ -35,6 +35,16 @@ pub fn nba_data_path(season: SeasonId, kind: NBAStatKind) -> PathBuf {
     ))
 }
 
+pub fn universal_nba_data_path(season: SeasonId, kind: NBAStatKind) -> PathBuf {
+    PathBuf::from(format!(
+        "nba/data/{}/{}/{}_{}",
+        kind.path_specifier(),
+        season_path(season),
+        season.period().path_specifier(),
+        kind.ext()
+    ))
+}
+
 pub fn nba_correction_dir(season: SeasonId, kind: NBAStatKind) -> String {
     format!(
         "{}/nba/corrections/{}/{}/{}",

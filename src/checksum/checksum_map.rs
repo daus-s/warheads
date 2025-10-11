@@ -1,10 +1,10 @@
 use crate::format::path_manager::nba_checksum_path;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fs::File;
+use std::fs::{self, File};
 use std::path::PathBuf;
 
-#[derive(Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Deserialize, Serialize, PartialEq, Eq, Debug, Clone)]
 pub struct ChecksumMap {
     pub map: HashMap<PathBuf, u32>,
 }

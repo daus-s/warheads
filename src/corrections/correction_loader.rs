@@ -33,7 +33,10 @@ pub fn load_season_corrections(year: i32, kind: NBAStatKind) -> Result<Vec<Corre
     Ok(corrections)
 }
 
-pub fn load_corrections(season_id: SeasonId, kind: NBAStatKind) -> Result<Vec<Correction>, String> {
+pub fn load_corrections_by_season(
+    season_id: SeasonId,
+    kind: NBAStatKind,
+) -> Result<Vec<Correction>, String> {
     eprintln!("loading corrections for {}", season_id);
 
     let (year, period) = season_id.destructure();
