@@ -29,7 +29,7 @@ use reqwest::Client;
 use std::error::Error;
 use std::str::FromStr;
 
-pub const BEGINNING: i32 = 2005;
+pub const BEGINNING: i32 = 1946;
 
 pub fn load_nba_season_from_file(year: i32) -> Vec<(Identity, TeamBoxScore)> {
     let player_games = player_games(year);
