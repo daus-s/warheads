@@ -1,4 +1,5 @@
 pub mod archive;
+mod async_tests;
 mod box_score_builder;
 mod box_score_stat;
 pub mod extract;

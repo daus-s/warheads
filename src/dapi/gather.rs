@@ -26,13 +26,13 @@ pub fn read_nba_file(file_path: PathBuf) -> String {
     contents
 }
 
-pub fn write_games(file_path: PathBuf, raw_json: &str) -> io::Result<()> {
+pub fn write_games(file_path: &PathBuf, raw_json: &str) -> io::Result<()> {
     if let Some(parent) = file_path.parent() {
         //this creates the directory from the ground up.
         fs::create_dir_all(parent)?;
     }
 
-    fs::write(file_path, raw_json)
+    fs::write(&file_path, raw_json)
 }
 
 pub fn player_games(year: i32) -> Vec<(Identity, PlayerBoxScore)> {
@@ -82,24 +82,24 @@ pub fn team_games(
 }
 
 pub async fn fetch_and_save_nba_stats(season: SeasonId, stat: NBAStatKind) -> Result<(), String> {
-    let file_path = || nba_data_path(season, stat);
+    let file_path = nba_data_path(season, stat);
 
     let (year, _period) = season.destructure();
 
     match hunting::query_nba(season, stat).await {
-        Ok(response_data) => match write_games(file_path(), &response_data) {
+        Ok(response_data) => match write_games(&file_path, &response_data) {
             Ok(_) => {
                 println!(
                     "✅ successfully saved nba stats for {} season at file: {:?}",
                     season_fmt(season.year()),
-                    file_path()
+                    &file_path
                 );
                 Ok(())
             }
             Err(e) => Err(format!(
                 "❌ error saving nba stats for {} season at file {:?}: {}",
                 season_fmt(season.year()),
-                file_path(),
+                &file_path,
                 e
             )),
         },

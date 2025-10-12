@@ -25,8 +25,7 @@ use reqwest::header::{
     HeaderMap, HeaderName, HeaderValue, ACCEPT, ACCEPT_LANGUAGE, CACHE_CONTROL, CONNECTION, ORIGIN,
     PRAGMA, REFERER, USER_AGENT,
 };
-use reqwest::Client;
-use std::error::Error;
+use reqwest::{Client, Response};
 use std::str::FromStr;
 
 pub const BEGINNING: i32 = 1946;
@@ -93,9 +92,53 @@ async fn compare_and_fetch(season_id: SeasonId, kind: NBAStatKind, checksums: &C
     }
 }
 
-pub async fn query_nba(season: SeasonId, stat_kind: NBAStatKind) -> Result<String, Box<dyn Error>> {
+pub async fn query_nba(season: SeasonId, stat_kind: NBAStatKind) -> Result<String, String> {
+    // if more url-encoded characters are needed you can use `urlencoding` crate
+
+    let response = make_nba_request(season, stat_kind, None, None).await?;
+
+    if response.status().is_success() {
+        Ok(response
+            .text()
+            .await
+            .map_err(|e| format!("❌ request failed with error: {}", e))?)
+    } else {
+        Err(format!(
+            "❌ request failed with status: {}\nurl: {}",
+            response.status(),
+            response.url()
+        ))
+    }
+}
+
+//return url and headers for nba request given customizable parameters.
+// mainly for internal use.
+pub(crate) async fn make_nba_request(
+    season: SeasonId,
+    kind: NBAStatKind,
+    from: Option<String>,
+    to: Option<String>,
+) -> Result<Response, String> {
     let client = Client::new();
 
+    let url = build_url(
+        season,
+        kind,
+        from.unwrap_or_default(),
+        to.unwrap_or_default(),
+    );
+
+    let headers = build_headers();
+
+    client
+        .get(&url)
+        .headers(headers)
+        .send()
+        .await
+        .map_err(|e| format!("❌ request failed with error: {}", e))
+}
+
+fn build_headers() -> HeaderMap {
     let mut headers = HeaderMap::new();
 
     headers.insert(ACCEPT, HeaderValue::from_str("*/*").unwrap());
@@ -143,31 +186,23 @@ pub async fn query_nba(season: SeasonId, stat_kind: NBAStatKind) -> Result<Strin
         HeaderValue::from_str("macOS").unwrap(),
     );
 
-    // if more url-encoded characters are needed you can use `urlencoding` crate
-    let url = format!(
+    headers
+}
+
+fn build_url(season: SeasonId, kind: NBAStatKind, from: String, to: String) -> String {
+    format!(
         "\
-        https://stats.nba.com/stats/leaguegamelog?Counter=1000&DateFrom=&DateTo=&\
+        https://stats.nba.com/stats/leaguegamelog?Counter=1000&DateFrom={}&DateTo={}&\
         Direction=DESC&ISTRound=&\
         LeagueID=00&\
         PlayerOrTeam={}&\
         Season={}&\
         SeasonType={}&\
         Sorter=DATE",
-        stat_kind.url(),
+        from,
+        to,
+        kind.url(),
         season.year().url(),
         season.period().url()
-    );
-
-    let response = client.get(&url).headers(headers).send().await?;
-
-    if response.status().is_success() {
-        Ok(response.text().await?)
-    } else {
-        Err(format!(
-            "❌ request failed with status: {}\nurl: {}",
-            response.status(),
-            &url
-        )
-        .into())
-    }
+    )
 }
