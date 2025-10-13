@@ -1,0 +1,20 @@
+#!/bin/bash
+
+find "$1" 1>/dev/null
+
+find_status=$?
+
+if [ 1 = $find_status ]; then
+  echo "couldn't find \"$1\". exiting..."
+  exit
+fi
+
+
+dst=$2
+
+if [ "" = "$2" ]; then
+  dst="compact_$1"
+fi
+
+echo "compacted at |$(pwd)/$dst|"
+jq  . -c "$1" > "tmp" && mv "tmp" "$dst"
