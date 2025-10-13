@@ -57,8 +57,6 @@ pub fn load_corrections_by_season(
         ));
     }
 
-    dbg!(&corrections);
-
     Ok(corrections)
 }
 
