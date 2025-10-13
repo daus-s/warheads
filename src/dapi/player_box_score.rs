@@ -1,6 +1,5 @@
 use crate::corrections::correction::Correction;
-use crate::stats::id::Identity;
-use crate::stats::{box_score::BoxScore, id::Identifiable};
+use crate::stats::box_score::BoxScore;
 use crate::types::*;
 use serde::{Deserialize, Serialize};
 use std::fmt::Formatter;

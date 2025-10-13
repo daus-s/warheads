@@ -26,7 +26,7 @@ mod test_download {
         let to = String::from("04/30/2025");
 
         // TEAM //////////////////////////////////////////////////////////
-        let team_path = PathBuf::from(format!("{}/data/tg.json", *TEST));
+        let team_path = PathBuf::from(format!("{}/data/data/tg.json", *TEST));
 
         let team_response = make_nba_request(
             season,
@@ -73,7 +73,7 @@ mod test_download {
         .await
         .expect("💀 failed to make request to nba.com/stats (Player)");
 
-        let player_path = PathBuf::from(format!("{}/data/pg.json", *TEST));
+        let player_path = PathBuf::from(format!("{}/data/data/pg.json", *TEST));
 
         assert!(gather::write_games(
             &player_path,
