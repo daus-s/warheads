@@ -1,13 +1,13 @@
 use crate::corrections::correction_builder::CorrectionBuilder;
 use crate::corrections::correction_loader::load_single_correction;
-use crate::dapi::extract::record_stat;
-use crate::dapi::gather::read_nba_file;
 use crate::dapi::map_reader::MapReader;
-use crate::dapi::parse::*;
 use crate::dapi::player_box_score::PlayerBoxScore;
 use crate::dapi::team_box_score::TeamBoxScore;
+use crate::format::extract::record_stat;
+use crate::format::parse::*;
 use crate::format::path_manager::nba_data_path;
 use crate::format::season::season_fmt;
+use crate::proc::gather::read_nba_file;
 use crate::stats::box_score::BoxScoreBuilder;
 use crate::stats::game_display::GameDisplay;
 use crate::stats::id::Identity;

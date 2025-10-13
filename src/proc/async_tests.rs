@@ -8,8 +8,8 @@ mod test_download {
 
     use crate::constants::paths::test;
 
-    use crate::dapi::gather;
-    use crate::dapi::hunting::make_nba_request;
+    use crate::proc::gather;
+    use crate::proc::hunting::make_nba_request;
     use crate::stats::nba_kind::NBAStatKind;
     use crate::stats::season_period::SeasonPeriod;
     use crate::types::SeasonId;

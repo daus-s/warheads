@@ -1,4 +1,4 @@
-use crate::dapi::extract::{get_result_set, get_rows, headers};
+use crate::format::extract::{get_result_set, get_rows, headers};
 use chrono::{DateTime, Datelike, Local, NaiveDate};
 use serde_json::Value;
 
@@ -28,8 +28,8 @@ pub struct DT {
 }
 
 pub fn parse_season(value: Value) -> (Vec<Value>, Vec<String>) {
-    let set =
-        get_result_set(&value).unwrap_or_else(|err| panic!("💀 could not unwrap result set: {err}"));
+    let set = get_result_set(&value)
+        .unwrap_or_else(|err| panic!("💀 could not unwrap result set: {err}"));
 
     let headers: Vec<String> =
         headers(&set).unwrap_or_else(|err| panic!("💀 could not unwrap headers from set: {err}"));

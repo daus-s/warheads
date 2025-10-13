@@ -1,10 +1,14 @@
 use crate::checksum::checksum_map::ChecksumMap;
 use crate::checksum::read_checksum::read_checksum;
-use crate::dapi::hunting::BEGINNING;
-use crate::dapi::parse::{destructure_dt, DT};
+
+use crate::format::parse::{destructure_dt, DT};
 use crate::format::path_manager::{nba_data_path, universal_nba_data_path};
+
+use crate::proc::hunting::BEGINNING;
+
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::season_period::minimum_spanning_era;
+
 use chrono::Local;
 
 pub fn generate_checksums() -> ChecksumMap {

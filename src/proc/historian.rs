@@ -1,8 +1,8 @@
 use chrono::Local;
 
-use crate::dapi::hunting::BEGINNING;
-use crate::dapi::parse::{destructure_dt, DT};
-use crate::dapi::store::save_nba_season;
+use crate::format::parse::{destructure_dt, DT};
+use crate::proc::hunting::BEGINNING;
+use crate::proc::store::save_nba_season;
 
 /// this module contains functions for writing the history of the nba stats
 /// you can build around this function but not from it... this is the one function to start the nba into memory then iterate over elo.

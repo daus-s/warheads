@@ -1,9 +1,13 @@
 use crate::corrections::correction::Correction;
 use crate::corrections::overwrite;
+
 use crate::dapi::archive::Archive;
-use crate::dapi::extract::json_to_hashmap;
+
+use crate::format::extract::json_to_hashmap;
+
 use crate::stats::domain::Domain;
 use crate::stats::id::{Identifiable, Identity};
+
 use std::collections::HashMap;
 
 pub trait Corrector {

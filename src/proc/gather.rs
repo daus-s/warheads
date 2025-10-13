@@ -1,9 +1,9 @@
-use crate::dapi::hunting;
 use crate::dapi::player_box_score::PlayerBoxScore;
-use crate::dapi::rip::fetch_and_process_nba_games;
 use crate::dapi::team_box_score::TeamBoxScore;
 use crate::format::path_manager::nba_data_path;
 use crate::format::season::season_fmt;
+use crate::proc::hunting;
+use crate::proc::rip::fetch_and_process_nba_games;
 use crate::stats::id::Identity;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::nba_stat::NBAStat::{Player, Team};

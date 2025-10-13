@@ -1,5 +1,5 @@
-use warheads::dapi::historian::chronicle_nba;
-use warheads::dapi::hunting::observe_nba;
+use warheads::proc::historian::chronicle_nba;
+use warheads::proc::hunting::observe_nba;
 
 #[tokio::main]
 async fn main() {

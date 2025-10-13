@@ -1,32 +1,40 @@
 use crate::checksum::checksum_map::ChecksumMap;
 use crate::checksum::read_checksum::read_checksum;
 use crate::checksum::sign::sign_nba;
+
+use crate::dapi::team_box_score::TeamBoxScore;
+
+use crate::format::parse::{destructure_dt, DT};
+use crate::format::path_manager::{nba_checksum_path, nba_data_path};
+use crate::format::url_format::UrlFormatter;
+
+use crate::proc::gather;
+use crate::proc::gather::{player_games, team_games};
+
+use crate::stats::id::Identity;
+use crate::stats::nba_kind::NBAStatKind;
+use crate::stats::nba_kind::NBAStatKind::{Player, Team};
+use crate::stats::season_period::minimum_spanning_era;
+
+use crate::types::SeasonId;
+
+use chrono;
+use chrono::Local;
+
+use reqwest::header::{
+    HeaderMap, HeaderName, HeaderValue, ACCEPT, ACCEPT_LANGUAGE, CACHE_CONTROL, CONNECTION, ORIGIN,
+    PRAGMA, REFERER, USER_AGENT,
+};
+use reqwest::{Client, Response};
+
+use std::str::FromStr;
+
 /*
     ITS HUNTING SEASON.
     PROFESSIONAL SPORTS LEAGUE SEASONS MANAGEMENT DONE HERE
 
     GOOD WILL HUNTING
 */
-use crate::dapi::team_box_score::TeamBoxScore;
-
-use crate::dapi::gather;
-use crate::dapi::gather::{player_games, team_games};
-use crate::dapi::parse::{destructure_dt, DT};
-use crate::format::path_manager::{nba_checksum_path, nba_data_path};
-use crate::format::url_format::UrlFormatter;
-use crate::stats::id::Identity;
-use crate::stats::nba_kind::NBAStatKind;
-use crate::stats::nba_kind::NBAStatKind::{Player, Team};
-use crate::stats::season_period::minimum_spanning_era;
-use crate::types::SeasonId;
-use chrono;
-use chrono::Local;
-use reqwest::header::{
-    HeaderMap, HeaderName, HeaderValue, ACCEPT, ACCEPT_LANGUAGE, CACHE_CONTROL, CONNECTION, ORIGIN,
-    PRAGMA, REFERER, USER_AGENT,
-};
-use reqwest::{Client, Response};
-use std::str::FromStr;
 
 pub const BEGINNING: i32 = 1946;
 
