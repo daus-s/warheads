@@ -1,39 +1,15 @@
 use crate::dapi::player_box_score::PlayerBoxScore;
 use crate::dapi::team_box_score::TeamBoxScore;
+use crate::dapi::write::write_games;
 use crate::format::path_manager::nba_data_path;
 use crate::format::season::season_fmt;
 use crate::proc::hunting;
-use crate::proc::rip::fetch_and_process_nba_games;
+use crate::proc::rip::read_and_process_nba_games;
 use crate::stats::id::Identity;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::nba_stat::NBAStat::{Player, Team};
 use crate::stats::season_period::minimum_spanning_era;
 use crate::types::SeasonId;
-use std::fs::File;
-use std::io::Read;
-use std::path::PathBuf;
-use std::{fs, io};
-
-pub fn read_nba_file(file_path: PathBuf) -> String {
-    let mut file =
-        File::open(&file_path).expect(format!("Failed to open {}", file_path.display()).as_str());
-
-    let mut contents = String::new();
-
-    file.read_to_string(&mut contents)
-        .expect(format!("Failed to read {}", file_path.display()).as_str());
-
-    contents
-}
-
-pub fn write_games(file_path: &PathBuf, raw_json: &str) -> io::Result<()> {
-    if let Some(parent) = file_path.parent() {
-        //this creates the directory from the ground up.
-        fs::create_dir_all(parent)?;
-    }
-
-    fs::write(&file_path, raw_json)
-}
 
 pub fn player_games(year: i32) -> Vec<(Identity, PlayerBoxScore)> {
     let minimum_spanning_era = minimum_spanning_era(year);
@@ -41,7 +17,7 @@ pub fn player_games(year: i32) -> Vec<(Identity, PlayerBoxScore)> {
     minimum_spanning_era
         .iter()
         .flat_map(|&season| {
-            fetch_and_process_nba_games(season, NBAStatKind::Player)
+            read_and_process_nba_games(season, NBAStatKind::Player)
                 .into_iter()
                 .filter_map(|(id, stat)| match stat {
                     Player(p) => Some((id, p)),
@@ -60,7 +36,7 @@ pub fn team_games(
     let mut games: Vec<(Identity, TeamBoxScore)> = minimum_spanning_era
         .iter()
         .flat_map(|&season| {
-            fetch_and_process_nba_games(season, NBAStatKind::Team)
+            read_and_process_nba_games(season, NBAStatKind::Team)
                 .into_iter()
                 .filter_map(|stat| match stat {
                     (tid, Team(t)) => Some((tid, t)),

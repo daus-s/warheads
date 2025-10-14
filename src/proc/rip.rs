@@ -1,13 +1,15 @@
 use crate::corrections::correction_builder::CorrectionBuilder;
 use crate::corrections::correction_loader::load_single_correction;
+
 use crate::dapi::map_reader::MapReader;
 use crate::dapi::player_box_score::PlayerBoxScore;
 use crate::dapi::team_box_score::TeamBoxScore;
+
 use crate::format::extract::record_stat;
 use crate::format::parse::*;
 use crate::format::path_manager::nba_data_path;
 use crate::format::season::season_fmt;
-use crate::proc::gather::read_nba_file;
+
 use crate::stats::box_score::BoxScoreBuilder;
 use crate::stats::game_display::GameDisplay;
 use crate::stats::id::Identity;
@@ -16,17 +18,37 @@ use crate::stats::nba_kind::NBAStatKind::{LineUp, Player, Team};
 use crate::stats::nba_stat::NBAStat;
 use crate::stats::stat_column::StatColumn;
 use crate::stats::stat_column::StatColumn::MATCHUP;
+
 use crate::types::matchup::is_matchup_for_team;
 use crate::types::SeasonId;
+
 use serde_json::Value::Null;
 use serde_json::{from_str, Value};
-use std::collections::HashMap;
 
-pub fn fetch_and_process_nba_games(
+use std::collections::HashMap;
+use std::fs::File;
+use std::io::Read;
+use std::path::PathBuf;
+
+//TODO: implement the return as a result marking complete failure vs just needing to return corrections.
+pub fn read_and_process_nba_games(
     season_id: SeasonId,
     kind: NBAStatKind,
 ) -> Vec<(Identity, NBAStat)> {
-    match process_nba_games(season_id, kind) {
+    // read
+    let file_path = nba_data_path(season_id, kind);
+
+    let json = read_nba_file(file_path);
+
+    let (rows, headers) = parse_season(from_str(&json).expect(&format!(
+        "💀 failed to parse a season json object for the {} {} ({})",
+        season_fmt(season_id.year()),
+        season_id.period(),
+        kind
+    )));
+
+    // process
+    match process_nba_games(rows, headers, kind) {
         Ok(games) => games,
 
         // handle corrections, maybe use something other than `result` in the future
@@ -53,9 +75,21 @@ pub fn fetch_and_process_nba_games(
                 }
             }
 
-            fetch_and_process_nba_games(season_id, kind)
+            read_and_process_nba_games(season_id, kind)
         }
     }
+}
+
+fn read_nba_file(file_path: PathBuf) -> String {
+    let mut file =
+        File::open(&file_path).expect(format!("Failed to open {}", file_path.display()).as_str());
+
+    let mut contents = String::new();
+
+    file.read_to_string(&mut contents)
+        .expect(format!("Failed to read {}", file_path.display()).as_str());
+
+    contents
 }
 
 ///
@@ -63,25 +97,13 @@ pub fn fetch_and_process_nba_games(
 /// return a Result of Ok(Vec<NBAStat>) or Err(Vec<Correction>). it is important to remember
 /// an NBAStat is a BoxScore.
 ///
-/// process games will crash if the JSON is poorly shaped.
-///
 
 fn process_nba_games(
-    season_id: SeasonId,
-    stat: NBAStatKind,
+    rows: Vec<Value>,
+    headers: Vec<String>,
+    kind: NBAStatKind,
 ) -> Result<Vec<(Identity, NBAStat)>, Vec<CorrectionBuilder>> {
-    let file_path = nba_data_path(season_id, stat);
-
-    let json = &read_nba_file(file_path);
-
-    let (rows, headers) = parse_season(from_str(json).expect(&format!(
-        "💀 failed to parse a season json object for the {} {} ({})",
-        season_fmt(season_id.year()),
-        season_id.period(),
-        stat
-    )));
-
-    season(rows, headers, stat)
+    season(rows, headers, kind)
 }
 
 fn season(

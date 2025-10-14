@@ -5,3 +5,4 @@ pub mod hunting;
 mod revise;
 pub mod rip;
 mod store;
+mod tests;

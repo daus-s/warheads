@@ -5,7 +5,7 @@ use crate::checksum::sign::sign_nba;
 use crate::dapi::team_box_score::TeamBoxScore;
 
 use crate::format::parse::{destructure_dt, DT};
-use crate::format::path_manager::{nba_checksum_path, nba_data_path};
+use crate::format::path_manager::{nba_checksum_path, universal_nba_data_path};
 use crate::format::url_format::UrlFormatter;
 
 use crate::proc::gather;
@@ -26,6 +26,7 @@ use reqwest::header::{
     PRAGMA, REFERER, USER_AGENT,
 };
 use reqwest::{Client, Response};
+use serde_json::{json, Value};
 
 use std::str::FromStr;
 
@@ -38,7 +39,7 @@ use std::str::FromStr;
 
 pub const BEGINNING: i32 = 1946;
 
-pub fn load_nba_season_from_file(year: i32) -> Vec<(Identity, TeamBoxScore)> {
+pub fn load_nba_season_from_source(year: i32) -> Vec<(Identity, TeamBoxScore)> {
     let player_games = player_games(year);
 
     team_games(year, player_games)
@@ -82,11 +83,11 @@ pub async fn observe_nba() {
 /// Compare the checksums of a NBA data source file and if it matches the expected checksum we can bypass refetching from
 /// [nba.com/stats](https://www.nba.com/stats). Otherwise we proceed fetching the data and saving the data to our source directory.
 async fn compare_and_fetch(season_id: SeasonId, kind: NBAStatKind, checksums: &ChecksumMap) {
-    let path = nba_data_path(season_id, kind);
-    if !path.exists()
-        || read_checksum(&path).expect("💀 failed to read file data even though the path exists.")
+    let checksum_path = universal_nba_data_path(season_id, kind);
+    if !checksum_path.exists()
+        || read_checksum(&checksum_path).expect("💀 failed to read file data even though the path exists.")
             != *checksums
-                .get(&path)
+                .get(&checksum_path)
                 .expect("💀 failed to find checksum for an existent path. all checksums should be initialized")
     //this might fail on new records
     {
@@ -100,16 +101,21 @@ async fn compare_and_fetch(season_id: SeasonId, kind: NBAStatKind, checksums: &C
     }
 }
 
-pub async fn query_nba(season: SeasonId, stat_kind: NBAStatKind) -> Result<String, String> {
+pub async fn query_nba(season: SeasonId, stat_kind: NBAStatKind) -> Result<Value, String> {
     // if more url-encoded characters are needed you can use `urlencoding` crate
 
     let response = make_nba_request(season, stat_kind, None, None).await?;
 
     if response.status().is_success() {
-        Ok(response
+        let json_text = response
             .text()
             .await
-            .map_err(|e| format!("❌ request failed with error: {}", e))?)
+            .map_err(|e| format!("❌ request failed with error: {}", e))?;
+
+        let json = serde_json::from_str(&json_text)
+            .map_err(|e| format!("❌ failed to parse JSON: {}", e))?;
+
+        Ok(json)
     } else {
         Err(format!(
             "❌ request failed with status: {}\nurl: {}",

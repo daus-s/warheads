@@ -7,7 +7,7 @@ use crate::dapi::team_box_score::TeamBoxScore;
 
 use crate::format::season::season_fmt;
 
-use crate::proc::hunting::load_nba_season_from_file;
+use crate::proc::hunting::load_nba_season_from_source;
 use crate::proc::revise::revise_nba_season;
 
 use crate::stats::domain::Domain;
@@ -23,7 +23,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 pub async fn save_nba_season(year: i32) {
-    let mut team_games = load_nba_season_from_file(year);
+    let mut team_games = load_nba_season_from_source(year);
 
     match revise_nba_season(year, &mut team_games) {
         Ok(_) => {
@@ -62,7 +62,7 @@ pub async fn save_nba_season(year: i32) {
                 .apply(&mut domain_archive)
                 .expect("💀 failed to apply corrections to team data.");
 
-            pair_off(load_nba_season_from_file(year))
+            pair_off(load_nba_season_from_source(year))
                 .expect("💀 applied corrections successfully but did not resolve the issue.")
         }
         Ok(games) => games,

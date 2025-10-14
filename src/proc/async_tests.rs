@@ -5,10 +5,11 @@ mod test_download {
     use std::path::PathBuf;
 
     use once_cell::sync::Lazy;
+    use serde_json::json;
 
     use crate::constants::paths::test;
 
-    use crate::proc::gather;
+    use crate::dapi::write::write_games;
     use crate::proc::hunting::make_nba_request;
     use crate::stats::nba_kind::NBAStatKind;
     use crate::stats::season_period::SeasonPeriod;
@@ -37,14 +38,15 @@ mod test_download {
         .await
         .expect("💀 failed to make request to nba.com/stats (Team)");
 
-        assert!(gather::write_games(
-            &team_path,
-            &(team_response
-                .text()
-                .await
-                .expect("💀 failed to get text from nba team response. check the response data.")),
-        )
-        .is_ok());
+        let team_body = team_response
+            .text()
+            .await
+            .expect("💀 failed to get body of nba team response. ");
+
+        let team_json = serde_json::from_str(&team_body)
+            .expect("💀 failed to parse json from nba team response");
+
+        assert!(write_games(&team_path, &team_json,).is_ok());
 
         let expected_team_file =
             fs::read_to_string(PathBuf::from(format!("{}/data/expected_tg.json", *TEST))).expect(
@@ -57,7 +59,7 @@ mod test_download {
         let actual_team_file =
             fs::read_to_string(&team_path).expect("💀 failed to read fetched team directory");
 
-        assert_eq!(
+        pretty_assertions::assert_eq!(
             expected_team_file.trim_end(),
             actual_team_file,
             "💀 team data download failed"
@@ -73,15 +75,17 @@ mod test_download {
         .await
         .expect("💀 failed to make request to nba.com/stats (Player)");
 
+        let player_body = player_response
+            .text()
+            .await
+            .expect("💀 failed to get body of nba team response. ");
+
+        let player_json = serde_json::from_str(&player_body)
+            .expect("💀 failed to parse json from nba team response");
+
         let player_path = PathBuf::from(format!("{}/data/data/pg.json", *TEST));
 
-        assert!(gather::write_games(
-            &player_path,
-            &(player_response.text().await.expect(
-                "💀 failed to get text from nba player response. check the response data."
-            )),
-        )
-        .is_ok());
+        assert!(write_games(&player_path, &player_json).is_ok());
 
         let expected_player_file =
             fs::read_to_string(PathBuf::from(format!("{}/data/expected_pg.json", *TEST))).expect(
@@ -94,6 +98,6 @@ mod test_download {
         let actual_player_file =
             fs::read_to_string(&player_path).expect("💀 failed to read fetched player directory");
 
-        assert_eq!(expected_player_file.trim_end(), actual_player_file);
+        pretty_assertions::assert_eq!(expected_player_file.trim_end(), actual_player_file);
     }
 }
