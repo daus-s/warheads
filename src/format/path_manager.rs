@@ -76,6 +76,16 @@ pub fn nba_team_correction_file(season: SeasonId, game_id: GameId, team_id: Team
         team_id
     ))
 }
+
+pub fn correction_path_from_identity(identity: &Identity) -> PathBuf {
+    match identity.player_id {
+        Some(player_id) => {
+            nba_player_correction_file(identity.season_id, identity.game_id, player_id)
+        }
+        None => nba_team_correction_file(identity.season_id, identity.game_id, identity.team_id),
+    }
+}
+
 /// `nba_storage_path` returns the PathBuf to the location of the processed nba data for storage on
 /// disk.
 pub fn nba_storage_path(season_id: SeasonId) -> PathBuf {
@@ -98,13 +108,4 @@ pub fn nba_storage_file(id: (SeasonId, GameId)) -> PathBuf {
 
 pub fn nba_checksum_path() -> PathBuf {
     PathBuf::from(format!("{}/nba/checksum/checksums.json", *DATA))
-}
-
-pub fn correction_path_from_identity(identity: &Identity) -> PathBuf {
-    match identity.player_id {
-        Some(player_id) => {
-            nba_player_correction_file(identity.season_id, identity.game_id, player_id)
-        }
-        None => nba_team_correction_file(identity.season_id, identity.game_id, identity.team_id),
-    }
 }

@@ -105,9 +105,9 @@ async fn sub_save(season: Vec<GameObject>) {
     pb.finish_with_message(format!("saved {} season.", season_fmt(szn)));
 }
 
-type TeamGame = (Identity, TeamBoxScore);
+pub(crate) type TeamGame = (Identity, TeamBoxScore);
 
-fn pair_off(games: Vec<TeamGame>) -> Result<Vec<GameObject>, Vec<CorrectionBuilder>> {
+pub(crate) fn pair_off(games: Vec<TeamGame>) -> Result<Vec<GameObject>, Vec<CorrectionBuilder>> {
     let mut pairs = HashMap::<GameId, (Option<TeamGame>, Option<TeamGame>)>::new();
     let mut corrections: Vec<CorrectionBuilder> = Vec::new();
 

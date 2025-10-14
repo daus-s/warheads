@@ -16,7 +16,7 @@ impl std::fmt::Display for PlayerBoxScore {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{}\n{}fantasy: {}\n",
+            "{}\n{}\nfantasy: {}",
             self.player_name,
             self.box_score,
             self.box_score.calculate_fantasy()

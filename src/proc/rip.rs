@@ -7,15 +7,14 @@ use crate::dapi::team_box_score::TeamBoxScore;
 
 use crate::format::extract::record_stat;
 use crate::format::parse::*;
-use crate::format::path_manager::nba_data_path;
-use crate::format::season::season_fmt;
 
+use crate::proc::error::ReadProcessError;
 use crate::stats::box_score::BoxScoreBuilder;
 use crate::stats::game_display::GameDisplay;
 use crate::stats::id::Identity;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::nba_kind::NBAStatKind::{LineUp, Player, Team};
-use crate::stats::nba_stat::NBAStat;
+use crate::stats::nba_stat::NBABoxScore;
 use crate::stats::stat_column::StatColumn;
 use crate::stats::stat_column::StatColumn::MATCHUP;
 
@@ -27,29 +26,25 @@ use serde_json::{from_str, Value};
 
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::Read;
+use std::io::{self, Read};
 use std::path::PathBuf;
 
 //TODO: implement the return as a result marking complete failure vs just needing to return corrections.
 pub fn read_and_process_nba_games(
-    season_id: SeasonId,
+    season: SeasonId,
     kind: NBAStatKind,
-) -> Vec<(Identity, NBAStat)> {
+    path: &PathBuf,
+) -> Result<Vec<(Identity, NBABoxScore)>, ReadProcessError> {
     // read
-    let file_path = nba_data_path(season_id, kind);
+    let json_str = read_nba_file(path).map_err(|e| ReadProcessError::IOError(e))?;
 
-    let json = read_nba_file(file_path);
+    let json = from_str(&json_str).map_err(|e| ReadProcessError::JSONParseError(e))?;
 
-    let (rows, headers) = parse_season(from_str(&json).expect(&format!(
-        "💀 failed to parse a season json object for the {} {} ({})",
-        season_fmt(season_id.year()),
-        season_id.period(),
-        kind
-    )));
+    let (rows, headers) = parse_season(json); //this also can fail
 
     // process
     match process_nba_games(rows, headers, kind) {
-        Ok(games) => games,
+        Ok(games) => Ok(games),
 
         // handle corrections, maybe use something other than `result` in the future
         Err(correction_builders) => {
@@ -59,7 +54,7 @@ pub fn read_and_process_nba_games(
                 "ℹ️  there are {} {} corrections to make for the {}",
                 correction_builders.len(),
                 kind,
-                season_id
+                season
             );
 
             for mut correction_builder in correction_builders {
@@ -75,21 +70,19 @@ pub fn read_and_process_nba_games(
                 }
             }
 
-            read_and_process_nba_games(season_id, kind)
+            read_and_process_nba_games(season, kind, path)
         }
     }
 }
 
-fn read_nba_file(file_path: PathBuf) -> String {
-    let mut file =
-        File::open(&file_path).expect(format!("Failed to open {}", file_path.display()).as_str());
+fn read_nba_file(file_path: &PathBuf) -> Result<String, io::Error> {
+    let mut file = File::open(file_path)?;
 
     let mut contents = String::new();
 
-    file.read_to_string(&mut contents)
-        .expect(format!("Failed to read {}", file_path.display()).as_str());
+    file.read_to_string(&mut contents)?;
 
-    contents
+    Ok(contents)
 }
 
 ///
@@ -102,7 +95,7 @@ fn process_nba_games(
     rows: Vec<Value>,
     headers: Vec<String>,
     kind: NBAStatKind,
-) -> Result<Vec<(Identity, NBAStat)>, Vec<CorrectionBuilder>> {
+) -> Result<Vec<(Identity, NBABoxScore)>, Vec<CorrectionBuilder>> {
     season(rows, headers, kind)
 }
 
@@ -110,8 +103,8 @@ fn season(
     rows: Vec<Value>,
     headers: Vec<String>,
     stat: NBAStatKind,
-) -> Result<Vec<(Identity, NBAStat)>, Vec<CorrectionBuilder>> {
-    let mut season: Vec<(Identity, NBAStat)> = Vec::new();
+) -> Result<Vec<(Identity, NBABoxScore)>, Vec<CorrectionBuilder>> {
+    let mut season: Vec<(Identity, NBABoxScore)> = Vec::new();
     let mut corrections: Vec<CorrectionBuilder> = Vec::new();
 
     for row in rows {
@@ -125,7 +118,7 @@ fn season(
             match stat {
                 Player => match fields_to_player_box_score(&fields) {
                     Ok(Some((id, box_score))) => {
-                        season.push((id, NBAStat::Player(box_score)));
+                        season.push((id, NBABoxScore::Player(box_score)));
                     }
                     Ok(None) => {} //dont create a box score if it needs to be deleted
                     Err(correction) => {
@@ -134,7 +127,7 @@ fn season(
                 },
                 Team => match fields_to_team_box_score(&fields) {
                     Ok(Some((id, box_score))) => {
-                        season.push((id, NBAStat::Team(box_score)));
+                        season.push((id, NBABoxScore::Team(box_score)));
                     }
                     Ok(None) => {} //dont create a box score if it needs to be deleted
                     Err(correction) => {

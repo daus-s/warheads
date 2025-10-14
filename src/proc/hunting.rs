@@ -5,7 +5,7 @@ use crate::checksum::sign::sign_nba;
 use crate::dapi::team_box_score::TeamBoxScore;
 
 use crate::format::parse::{destructure_dt, DT};
-use crate::format::path_manager::{nba_checksum_path, universal_nba_data_path};
+use crate::format::path_manager::{nba_checksum_path, nba_data_path, universal_nba_data_path};
 use crate::format::url_format::UrlFormatter;
 
 use crate::proc::gather;
@@ -26,7 +26,7 @@ use reqwest::header::{
     PRAGMA, REFERER, USER_AGENT,
 };
 use reqwest::{Client, Response};
-use serde_json::{json, Value};
+use serde_json::Value;
 
 use std::str::FromStr;
 
@@ -40,9 +40,34 @@ use std::str::FromStr;
 pub const BEGINNING: i32 = 1946;
 
 pub fn load_nba_season_from_source(year: i32) -> Vec<(Identity, TeamBoxScore)> {
-    let player_games = player_games(year);
+    let mut team_games_vec = Vec::new();
 
-    team_games(year, player_games)
+    for period in minimum_spanning_era(year) {
+        let player_path = nba_data_path(period, Player);
+
+        let player_games_of_period = player_games(period, &player_path).unwrap_or_else(|e| {
+            panic!(
+                "{e}\n\
+                💀 failed to load and parse player games as JSON.\n\
+                run `cargo test checksum::assert_checksums`"
+            );
+        });
+
+        let team_path = nba_data_path(period, Team);
+
+        let team_games_of_period = team_games(period, &team_path, player_games_of_period)
+            .unwrap_or_else(|e| {
+                panic!(
+                    "{e}\n\
+                    💀 failed to load and parse team games as JSON.\n\
+                    run `cargo test checksum::assert_checksums`"
+                );
+            });
+
+        team_games_vec.extend(team_games_of_period);
+    }
+
+    team_games_vec
 }
 
 pub async fn observe_nba() {

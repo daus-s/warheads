@@ -5,7 +5,6 @@ mod test_download {
     use std::path::PathBuf;
 
     use once_cell::sync::Lazy;
-    use serde_json::json;
 
     use crate::constants::paths::test;
 
