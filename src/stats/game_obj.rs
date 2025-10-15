@@ -10,7 +10,7 @@ use crate::types::{GameDate, GameId, Matchup, SeasonId};
 use serde::{Deserialize, Serialize};
 use serde_json::Value::Null;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 pub struct GameObject {
     season_id: SeasonId,
     game_date: GameDate,

@@ -2,7 +2,7 @@ use crate::stats::statify::SafetyValve;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct PlusMinus(pub Option<i16>);
 
 impl Display for PlusMinus {
