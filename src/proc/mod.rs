@@ -1,4 +1,3 @@
-mod async_tests;
 pub mod error;
 pub mod gather;
 pub mod historian;
