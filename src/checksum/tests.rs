@@ -40,6 +40,6 @@ mod assert_checksums {
 
         let actual_map = generate_checksums();
 
-        assert_eq!(expected_map, actual_map);
+        pretty_assertions::assert_eq!(expected_map, actual_map);
     }
 }
