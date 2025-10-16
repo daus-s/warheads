@@ -1,4 +1,5 @@
 use crate::corrections::correction::Correction;
+use crate::corrections::correction_loader::load_single_correction;
 use crate::stats::game_display::GameDisplay;
 use crate::stats::id::Identifiable;
 use crate::stats::nba_kind::NBAStatKind;
@@ -73,6 +74,10 @@ impl CorrectionBuilder {
                 String::from("GENERIC DELETE"),
             ),
         };
+
+        if let Ok(preexisting) = load_single_correction(&self.correction.identity()) {
+            corrections.merge(preexisting);
+        }
 
         println!("{}", display_string);
 

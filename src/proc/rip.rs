@@ -1,7 +1,7 @@
 use crate::corrections::correction_builder::CorrectionBuilder;
 use crate::corrections::correction_loader::load_single_correction;
 
-use crate::dapi::map_reader::MapReader;
+use crate::dapi::from_value::FromValue;
 use crate::dapi::player_box_score::PlayerBoxScore;
 use crate::dapi::team_box_score::TeamBoxScore;
 
@@ -205,7 +205,7 @@ fn fields_to_team_box_score(
         correction_builder.add_missing_field(MATCHUP, Null);
     }
 
-    let visiting = matchup
+    let mut visiting = matchup
         .home_or_away(&team_abbr)
         .expect("💀 expected TeamBoxScore's matchup to contain itself. ");
 
@@ -291,6 +291,8 @@ fn fields_to_team_box_score(
     let mut delete: bool = false;
     //take the preexisting corrections and apply them to the box score builder
     if let Ok(mut correction) = load_single_correction(&identity) {
+        correction.correct_matchup(&mut visiting, &team_abbr);
+
         correction.correct_box_score_builder(&mut box_score_builder, &mut correction_builder);
 
         delete = correction.delete;

@@ -37,6 +37,8 @@ pub fn revise_nba_season(year: i32, games: &mut Vec<(Identity, TeamBoxScore)>) -
 
     for (identity, game) in games.iter_mut() {
         if let Some(correction) = team_corrections.get_mut(&identity) {
+            game.reorient(correction);
+
             game.correct_box_score(correction);
         }
 
@@ -47,6 +49,8 @@ pub fn revise_nba_season(year: i32, games: &mut Vec<(Identity, TeamBoxScore)>) -
             player_identity.player_id = Some(player.player_id());
 
             if let Some(correction) = player_corrections.get_mut(&player_identity) {
+                player.reorient(correction);
+
                 player.correct_box_score(correction);
             }
         }
