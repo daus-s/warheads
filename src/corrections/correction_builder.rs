@@ -1,4 +1,5 @@
 use crate::corrections::correction::Correction;
+use crate::corrections::correction_loader::load_single_correction;
 use crate::stats::game_display::GameDisplay;
 use crate::stats::id::Identifiable;
 use crate::stats::nba_kind::NBAStatKind;
@@ -57,7 +58,11 @@ impl CorrectionBuilder {
         self.correction.corrections.insert(col, val);
     }
 
-    pub fn create(&mut self) -> Correction {
+    pub fn remove(&mut self, col: StatColumn) {
+        self.correction.corrections.remove(&col);
+    }
+
+    pub fn create_and_save(&mut self) -> Correction {
         use std::io::{stdout, Write};
 
         let (mut corrections, display_option) = (self.correction.clone(), self.display.clone());
@@ -70,7 +75,9 @@ impl CorrectionBuilder {
             ),
         };
 
-        dbg!((&self.correction).identity());
+        if let Ok(preexisting) = load_single_correction(&self.correction.identity()) {
+            corrections.merge(preexisting);
+        }
 
         println!("{}", display_string);
 
@@ -78,7 +85,7 @@ impl CorrectionBuilder {
         if corrections.delete {
             println!("🗑️ deleting {}", corrections.identity());
 
-            save_correction_wrapper(&corrections);
+            save_correction(&corrections);
 
             return corrections.clone();
         } else {
@@ -89,7 +96,7 @@ impl CorrectionBuilder {
             if delete {
                 println!("🗑️ deleting {}", corrections.identity());
 
-                save_correction_wrapper(&corrections);
+                save_correction(&corrections);
 
                 return corrections.clone(); //if we are deleting we don't need any values for the corrections
             }
@@ -205,12 +212,13 @@ impl CorrectionBuilder {
                 println!("{}: {}", col, value); // New value
             }
         }
-        save_correction_wrapper(&corrections);
+        save_correction(&corrections);
 
         corrections
     }
 
-    pub fn correcting(&self) -> bool {
+    /// Returns whether the correction builder has any corrections to apply. It does not specify whether the record should be deleted.
+    pub fn has_corrections(&self) -> bool {
         self.correction.len() > 0
     }
 
@@ -219,7 +227,7 @@ impl CorrectionBuilder {
     }
 }
 
-fn save_correction_wrapper(correction: &Correction) {
+fn save_correction(correction: &Correction) {
     match correction.save() {
         Ok(_) => {
             println!(

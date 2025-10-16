@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fmt::{Display, Formatter};
 
-#[derive(Clone, Debug, Serialize, Deserialize, Builder)]
+#[derive(Clone, Debug, Serialize, Deserialize, Builder, PartialEq, Eq)]
 pub struct BoxScore {
     wl: GameResult,
 

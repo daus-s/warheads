@@ -10,7 +10,7 @@ use crate::types::{GameDate, GameId, Matchup, SeasonId};
 use serde::{Deserialize, Serialize};
 use serde_json::Value::Null;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 pub struct GameObject {
     season_id: SeasonId,
     game_date: GameDate,
@@ -85,7 +85,7 @@ impl GameObject {
             game2.team_name(),
         ));
 
-        if correction1.correcting() || correction2.correcting() {
+        if correction1.has_corrections() || correction2.has_corrections() {
             Err(vec![correction1, correction2])
         } else {
             let (home, away) = game

@@ -4,7 +4,6 @@ mod correct_columns {
     use crate::stats::nba_kind::NBAStatKind;
     use crate::stats::season_period::SeasonPeriod;
     use crate::stats::stat_column::StatColumn;
-    use crate::stats::stat_value::StatValue;
     use crate::types::{GameDate, GameId, PlayerId, SeasonId, TeamAbbreviation, TeamId};
     use serde_json::json;
     use std::collections::HashMap;
@@ -18,7 +17,7 @@ mod correct_columns {
         correction.corrections.insert(StatColumn::PTS, json!(10));
 
         assert_eq!(
-            correction.correct_string(data),
+            correction.correct_source_data(data),
             r#"["20024",23,"Tested McNutsack",151,"LOL","Los Orleans Losers","123","0024-03-31","LOL vs. DOT","W",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10,0,0,0]"#
         )
     }
@@ -32,7 +31,7 @@ mod correct_columns {
         correction.corrections.insert(StatColumn::MIN, json!(10));
 
         assert_eq!(
-            correction.correct_string(data),
+            correction.correct_source_data(data),
             r#"["20024",23,"Tested McNutsack",151,"LOL","Los Orleans Losers","123","0024-03-31","LOL vs. DOT","W",10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"#
         )
     }
@@ -46,7 +45,7 @@ mod correct_columns {
         correction.corrections.insert(StatColumn::FGM, json!(10));
 
         assert_eq!(
-            correction.correct_string(data),
+            correction.correct_source_data(data),
             r#"["20024",23,"Tested McNutsack",151,"LOL","Los Orleans Losers","123","0024-03-31","LOL vs. DOT","W",0,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"#
         )
     }
@@ -60,7 +59,7 @@ mod correct_columns {
         correction.corrections.insert(StatColumn::FGA, json!(10));
 
         assert_eq!(
-            correction.correct_string(data),
+            correction.correct_source_data(data),
             r#"["20024",23,"Tested McNutsack",151,"LOL","Los Orleans Losers","123","0024-03-31","LOL vs. DOT","W",0,0,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"#
         )
     }
@@ -76,7 +75,7 @@ mod correct_columns {
             .insert(StatColumn::FG_PCT, json!(0.500000));
 
         assert_eq!(
-            correction.correct_string(data),
+            correction.correct_source_data(data),
             r#"["20024",23,"Tested McNutsack",151,"LOL","Los Orleans Losers","123","0024-03-31","LOL vs. DOT","W",0,0,0,0.500000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"#
         )
     }
@@ -90,7 +89,7 @@ mod correct_columns {
         correction.corrections.insert(StatColumn::FG3M, json!(10));
 
         assert_eq!(
-            correction.correct_string(data),
+            correction.correct_source_data(data),
             r#"["20024",23,"Tested McNutsack",151,"LOL","Los Orleans Losers","123","0024-03-31","LOL vs. DOT","W",0,0,0,0,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"#
         )
     }
@@ -104,7 +103,7 @@ mod correct_columns {
         correction.corrections.insert(StatColumn::FG3A, json!(10));
 
         assert_eq!(
-            correction.correct_string(data),
+            correction.correct_source_data(data),
             r#"["20024",23,"Tested McNutsack",151,"LOL","Los Orleans Losers","123","0024-03-31","LOL vs. DOT","W",0,0,0,0,0,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"#
         )
     }
@@ -120,7 +119,7 @@ mod correct_columns {
             .insert(StatColumn::FG3_PCT, json!(0.500000));
 
         assert_eq!(
-            correction.correct_string(data),
+            correction.correct_source_data(data),
             r#"["20024",23,"Tested McNutsack",151,"LOL","Los Orleans Losers","123","0024-03-31","LOL vs. DOT","W",0,0,0,0,0,0,0.500000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"#
         )
     }
@@ -134,7 +133,7 @@ mod correct_columns {
         correction.corrections.insert(StatColumn::FTM, json!(10));
 
         assert_eq!(
-            correction.correct_string(data),
+            correction.correct_source_data(data),
             r#"["20024",23,"Tested McNutsack",151,"LOL","Los Orleans Losers","123","0024-03-31","LOL vs. DOT","W",0,0,0,0,0,0,0,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"#
         )
     }
@@ -148,7 +147,7 @@ mod correct_columns {
         correction.corrections.insert(StatColumn::FTA, json!(10));
 
         assert_eq!(
-            correction.correct_string(data),
+            correction.correct_source_data(data),
             r#"["20024",23,"Tested McNutsack",151,"LOL","Los Orleans Losers","123","0024-03-31","LOL vs. DOT","W",0,0,0,0,0,0,0,0,10,0,0,0,0,0,0,0,0,0,0,0,0,0]"#
         )
     }
@@ -164,7 +163,7 @@ mod correct_columns {
             .insert(StatColumn::FT_PCT, json!(0.500000));
 
         assert_eq!(
-            correction.correct_string(data),
+            correction.correct_source_data(data),
             r#"["20024",23,"Tested McNutsack",151,"LOL","Los Orleans Losers","123","0024-03-31","LOL vs. DOT","W",0,0,0,0,0,0,0,0,0,0.500000,0,0,0,0,0,0,0,0,0,0,0,0]"#
         )
     }
@@ -178,7 +177,7 @@ mod correct_columns {
         correction.corrections.insert(StatColumn::OREB, json!(10));
 
         assert_eq!(
-            correction.correct_string(data),
+            correction.correct_source_data(data),
             r#"["20024",23,"Tested McNutsack",151,"LOL","Los Orleans Losers","123","0024-03-31","LOL vs. DOT","W",0,0,0,0,0,0,0,0,0,0,10,0,0,0,0,0,0,0,0,0,0,0]"#
         )
     }
@@ -192,7 +191,7 @@ mod correct_columns {
         correction.corrections.insert(StatColumn::DREB, json!(10));
 
         assert_eq!(
-            correction.correct_string(data),
+            correction.correct_source_data(data),
             r#"["20024",23,"Tested McNutsack",151,"LOL","Los Orleans Losers","123","0024-03-31","LOL vs. DOT","W",0,0,0,0,0,0,0,0,0,0,0,10,0,0,0,0,0,0,0,0,0,0]"#
         )
     }
@@ -206,7 +205,7 @@ mod correct_columns {
         correction.corrections.insert(StatColumn::REB, json!(10));
 
         assert_eq!(
-            correction.correct_string(data),
+            correction.correct_source_data(data),
             r#"["20024",23,"Tested McNutsack",151,"LOL","Los Orleans Losers","123","0024-03-31","LOL vs. DOT","W",0,0,0,0,0,0,0,0,0,0,0,0,10,0,0,0,0,0,0,0,0,0]"#
         )
     }
@@ -220,7 +219,7 @@ mod correct_columns {
         correction.corrections.insert(StatColumn::AST, json!(10));
 
         assert_eq!(
-            correction.correct_string(data),
+            correction.correct_source_data(data),
             r#"["20024",23,"Tested McNutsack",151,"LOL","Los Orleans Losers","123","0024-03-31","LOL vs. DOT","W",0,0,0,0,0,0,0,0,0,0,0,0,0,10,0,0,0,0,0,0,0,0]"#
         )
     }
@@ -234,7 +233,7 @@ mod correct_columns {
         correction.corrections.insert(StatColumn::STL, json!(10));
 
         assert_eq!(
-            correction.correct_string(data),
+            correction.correct_source_data(data),
             r#"["20024",23,"Tested McNutsack",151,"LOL","Los Orleans Losers","123","0024-03-31","LOL vs. DOT","W",0,0,0,0,0,0,0,0,0,0,0,0,0,0,10,0,0,0,0,0,0,0]"#
         )
     }
@@ -248,7 +247,7 @@ mod correct_columns {
         correction.corrections.insert(StatColumn::BLK, json!(10));
 
         assert_eq!(
-            correction.correct_string(data),
+            correction.correct_source_data(data),
             r#"["20024",23,"Tested McNutsack",151,"LOL","Los Orleans Losers","123","0024-03-31","LOL vs. DOT","W",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10,0,0,0,0,0,0]"#
         )
     }
@@ -262,7 +261,7 @@ mod correct_columns {
         correction.corrections.insert(StatColumn::TOV, json!(10));
 
         assert_eq!(
-            correction.correct_string(data),
+            correction.correct_source_data(data),
             r#"["20024",23,"Tested McNutsack",151,"LOL","Los Orleans Losers","123","0024-03-31","LOL vs. DOT","W",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10,0,0,0,0,0]"#
         )
     }
@@ -276,7 +275,7 @@ mod correct_columns {
         correction.corrections.insert(StatColumn::PF, json!(5));
 
         assert_eq!(
-            correction.correct_string(data),
+            correction.correct_source_data(data),
             r#"["20024",23,"Tested McNutsack",151,"LOL","Los Orleans Losers","123","0024-03-31","LOL vs. DOT","W",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0]"#
         )
     }
@@ -290,7 +289,7 @@ mod correct_columns {
         correction.corrections.insert(StatColumn::PTS, json!(10));
 
         assert_eq!(
-            correction.correct_string(data),
+            correction.correct_source_data(data),
             r#"["20024",23,"Tested McNutsack",151,"LOL","Los Orleans Losers","123","0024-03-31","LOL vs. DOT","W",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10,0,0,0]"#
         )
     }
@@ -306,7 +305,7 @@ mod correct_columns {
             .insert(StatColumn::PLUS_MINUS, json!(-10));
 
         assert_eq!(
-            correction.correct_string(data),
+            correction.correct_source_data(data),
             r#"["20024",23,"Tested McNutsack",151,"LOL","Los Orleans Losers","123","0024-03-31","LOL vs. DOT","W",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-10,0,0]"#
         )
     }
@@ -322,7 +321,7 @@ mod correct_columns {
             .insert(StatColumn::PLUS_MINUS, json!(10));
 
         assert_eq!(
-            correction.correct_string(data),
+            correction.correct_source_data(data),
             r#"["20024",23,"Tested McNutsack",151,"LOL","Los Orleans Losers","123","0024-03-31","LOL vs. DOT","W",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10,0,0]"#
         )
     }
@@ -338,7 +337,7 @@ mod correct_columns {
             .insert(StatColumn::FANTASY_PTS, json!(69.420)); //assert that the value is being truncated properly
 
         assert_eq!(
-            correction.correct_string(data),
+            correction.correct_source_data(data),
             r#"["20024",23,"Tested McNutsack",151,"LOL","Los Orleans Losers","123","0024-03-31","LOL vs. DOT","W",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,69.4,0]"#
         )
     }
@@ -354,7 +353,7 @@ mod correct_columns {
             .insert(StatColumn::VIDEO_AVAILABLE, json!(1));
 
         assert_eq!(
-            correction.correct_string(data),
+            correction.correct_source_data(data),
             r#"["20024",23,"Tested McNutsack",151,"LOL","Los Orleans Losers","123","0024-03-31","LOL vs. DOT","W",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1]"#
         )
     }

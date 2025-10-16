@@ -1,65 +1,64 @@
 use crate::corrections::correction_builder::CorrectionBuilder;
-use crate::corrections::correction_loader::load_corrections;
-use crate::corrections::corrector::Corrector;
-use crate::dapi::archive::domain_archive_pair;
-use crate::dapi::extract::record_stat;
-use crate::dapi::gather::read_nba_file;
-use crate::dapi::map_reader::MapReader;
-use crate::dapi::parse::*;
+use crate::corrections::correction_loader::load_single_correction;
+
+use crate::dapi::from_value::FromValue;
 use crate::dapi::player_box_score::PlayerBoxScore;
 use crate::dapi::team_box_score::TeamBoxScore;
-use crate::format::path_manager::nba_data_path;
-use crate::format::season::season_fmt;
+
+use crate::format::extract::record_stat;
+use crate::format::parse::*;
+
+use crate::proc::error::ReadProcessError;
 use crate::stats::box_score::BoxScoreBuilder;
 use crate::stats::game_display::GameDisplay;
 use crate::stats::id::Identity;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::nba_kind::NBAStatKind::{LineUp, Player, Team};
-use crate::stats::nba_stat::NBAStat;
+use crate::stats::nba_stat::NBABoxScore;
 use crate::stats::stat_column::StatColumn;
 use crate::stats::stat_column::StatColumn::MATCHUP;
+
 use crate::types::matchup::is_matchup_for_team;
 use crate::types::SeasonId;
+
 use serde_json::Value::Null;
 use serde_json::{from_str, Value};
-use std::collections::HashMap;
 
-pub fn fetch_and_process_nba_games(
-    season_id: SeasonId,
+use std::collections::HashMap;
+use std::fs::File;
+use std::io::{self, Read};
+use std::path::PathBuf;
+
+//TODO: implement the return as a result marking complete failure vs just needing to return corrections.
+pub fn read_and_process_nba_games(
+    season: SeasonId,
     kind: NBAStatKind,
-) -> Vec<(Identity, NBAStat)> {
-    match process_nba_games(season_id, kind) {
-        Ok(games) => games,
+    path: &PathBuf,
+) -> Result<Vec<(Identity, NBABoxScore)>, ReadProcessError> {
+    // read
+    let json_str = read_nba_file(path).map_err(|e| ReadProcessError::IOError(e))?;
+
+    let json = from_str(&json_str).map_err(|e| ReadProcessError::JSONParseError(e))?;
+
+    let (rows, headers) = parse_season(json); //this also can fail
+
+    // process
+    match process_nba_games(rows, headers, kind) {
+        Ok(games) => Ok(games),
 
         // handle corrections, maybe use something other than `result` in the future
         Err(correction_builders) => {
-            //check if the corrections exist?
-            println!(
-                "checking if corrections for the {} exist.",
-                season_fmt(season_id.year())
-            );
-
             let mut corrections = Vec::new();
 
-            if let Ok(mut preexisting_corrections) = load_corrections(season_id, kind) {
-                println!(
-                    "ℹ️  {} {} corrections already exist for the {}",
-                    preexisting_corrections.len(),
-                    kind,
-                    season_id
-                );
-
-                corrections.append(&mut preexisting_corrections);
-            }
-
             println!(
-                "ℹ️ there are {} {} corrections to make for the {}",
+                "ℹ️  there are {} {} corrections to make for the {}",
                 correction_builders.len(),
                 kind,
-                season_id
+                season
             );
+
             for mut correction_builder in correction_builders {
-                let correction = correction_builder.create();
+                let correction = correction_builder.create_and_save();
 
                 for loaded_correction in corrections.iter() {
                     if loaded_correction == &correction {
@@ -71,12 +70,19 @@ pub fn fetch_and_process_nba_games(
                 }
             }
 
-            corrections
-                .apply(&mut domain_archive_pair(season_id, kind))
-                .map(|_| fetch_and_process_nba_games(season_id, kind))
-                .unwrap_or_else(|e| panic!("💀 failed to apply corrections: {}", e))
+            read_and_process_nba_games(season, kind, path)
         }
     }
+}
+
+fn read_nba_file(file_path: &PathBuf) -> Result<String, io::Error> {
+    let mut file = File::open(file_path)?;
+
+    let mut contents = String::new();
+
+    file.read_to_string(&mut contents)?;
+
+    Ok(contents)
 }
 
 ///
@@ -84,33 +90,21 @@ pub fn fetch_and_process_nba_games(
 /// return a Result of Ok(Vec<NBAStat>) or Err(Vec<Correction>). it is important to remember
 /// an NBAStat is a BoxScore.
 ///
-/// process games will crash if the JSON is poorly shaped.
-///
 
 fn process_nba_games(
-    season_id: SeasonId,
-    stat: NBAStatKind,
-) -> Result<Vec<(Identity, NBAStat)>, Vec<CorrectionBuilder>> {
-    let file_path = nba_data_path(season_id, stat);
-
-    let json = &read_nba_file(file_path);
-
-    let (rows, headers) = parse_season(from_str(json).expect(&format!(
-        "💀 failed to parse a season json object for the {} {} ({})",
-        season_fmt(season_id.year()),
-        season_id.period(),
-        stat
-    )));
-
-    season(rows, headers, stat)
+    rows: Vec<Value>,
+    headers: Vec<String>,
+    kind: NBAStatKind,
+) -> Result<Vec<(Identity, NBABoxScore)>, Vec<CorrectionBuilder>> {
+    season(rows, headers, kind)
 }
 
 fn season(
     rows: Vec<Value>,
     headers: Vec<String>,
     stat: NBAStatKind,
-) -> Result<Vec<(Identity, NBAStat)>, Vec<CorrectionBuilder>> {
-    let mut season: Vec<(Identity, NBAStat)> = Vec::new();
+) -> Result<Vec<(Identity, NBABoxScore)>, Vec<CorrectionBuilder>> {
+    let mut season: Vec<(Identity, NBABoxScore)> = Vec::new();
     let mut corrections: Vec<CorrectionBuilder> = Vec::new();
 
     for row in rows {
@@ -123,17 +117,19 @@ fn season(
 
             match stat {
                 Player => match fields_to_player_box_score(&fields) {
-                    Ok((id, box_score)) => {
-                        season.push((id, NBAStat::Player(box_score)));
+                    Ok(Some((id, box_score))) => {
+                        season.push((id, NBABoxScore::Player(box_score)));
                     }
+                    Ok(None) => {} //dont create a box score if it needs to be deleted
                     Err(correction) => {
                         corrections.push(correction);
                     }
                 },
                 Team => match fields_to_team_box_score(&fields) {
-                    Ok((id, box_score)) => {
-                        season.push((id, NBAStat::Team(box_score)));
+                    Ok(Some((id, box_score))) => {
+                        season.push((id, NBABoxScore::Team(box_score)));
                     }
+                    Ok(None) => {} //dont create a box score if it needs to be deleted
                     Err(correction) => {
                         corrections.push(correction);
                     }
@@ -152,7 +148,7 @@ fn season(
 
 fn fields_to_team_box_score(
     s: &HashMap<StatColumn, Value>,
-) -> Result<(Identity, TeamBoxScore), CorrectionBuilder> {
+) -> Result<Option<(Identity, TeamBoxScore)>, CorrectionBuilder> {
     //if it fails to parse the identifier then it will crash
 
     let mut box_score_builder = BoxScoreBuilder::default();
@@ -209,7 +205,7 @@ fn fields_to_team_box_score(
         correction_builder.add_missing_field(MATCHUP, Null);
     }
 
-    let visiting = matchup
+    let mut visiting = matchup
         .home_or_away(&team_abbr)
         .expect("💀 expected TeamBoxScore's matchup to contain itself. ");
 
@@ -292,7 +288,19 @@ fn fields_to_team_box_score(
         &mut correction_builder,
     );
 
-    if correction_builder.correcting() {
+    let mut delete: bool = false;
+    //take the preexisting corrections and apply them to the box score builder
+    if let Ok(mut correction) = load_single_correction(&identity) {
+        correction.correct_matchup(&mut visiting, &team_abbr);
+
+        correction.correct_box_score_builder(&mut box_score_builder, &mut correction_builder);
+
+        delete = correction.delete;
+    };
+
+    if delete {
+        Ok(None)
+    } else if correction_builder.has_corrections() {
         eprintln!("\n❌ failed to create a TeamBoxScore for {team_name}. id: {team_id} game id: {game_id}");
 
         Err(correction_builder)
@@ -305,7 +313,7 @@ fn fields_to_team_box_score(
 
         let team = TeamBoxScore::construct(team_abbr, team_name, team_id, visiting, box_score);
 
-        Ok((identity, team))
+        Ok(Some((identity, team)))
     }
 }
 
@@ -317,7 +325,7 @@ fn fields_to_team_box_score(
 ///
 fn fields_to_player_box_score(
     s: &HashMap<StatColumn, Value>,
-) -> Result<(Identity, PlayerBoxScore), CorrectionBuilder> {
+) -> Result<Option<(Identity, PlayerBoxScore)>, CorrectionBuilder> {
     //if it fails to parse the identifier then it will crash
 
     let mut box_score_builder = BoxScoreBuilder::default();
@@ -447,7 +455,17 @@ fn fields_to_player_box_score(
         &mut correction_builder,
     );
 
-    if correction_builder.correcting() {
+    let mut delete = false;
+    //take the preexisting corrections and apply them to the box score builder
+    if let Ok(mut correction) = load_single_correction(&identity) {
+        correction.correct_box_score_builder(&mut box_score_builder, &mut correction_builder);
+
+        delete = correction.delete;
+    };
+
+    if delete {
+        Ok(None)
+    } else if correction_builder.has_corrections() {
         eprintln!("\n❌ failed to create a PlayerBoxScore for {player_name}. id: {player_id} game id: {game_id}");
 
         Err(correction_builder)
@@ -462,6 +480,6 @@ fn fields_to_player_box_score(
 
         println!("{msg}");
 
-        Ok((identity, player))
+        Ok(Some((identity, player)))
     }
 }

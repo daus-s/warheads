@@ -1,11 +1,16 @@
 #[cfg(test)]
 mod test_serde_type_support {
     use crate::stats::percent::PercentageFormatter;
-    use crate::stats::visiting::Visiting::{Away, Home};
     use crate::types::fantasy_points::FantasyFormatter;
-    use crate::types::*;
+    use crate::types::{
+        Assists, Blocks, DefensiveRebounds, FantasyPoints, FieldGoalAttempts, FieldGoalMakes,
+        FieldGoalPercentage, FreeThrowAttempts, FreeThrowMakes, GameDate, GameId, GameResult,
+        Minutes, OffensiveRebounds, PersonalFouls, PlayerId, PlayerName, PlusMinus, Points,
+        Rebounds, SeasonId, Steals, TeamAbbreviation, TeamId, TeamName, ThreePointAttempts,
+        ThreePointMakes, ThreePointPercentage, Turnovers,
+    };
     use chrono::NaiveDate;
-    use serde::{Serialize, Serializer};
+    use serde::Serialize;
     use std::str::FromStr;
 
     #[test]

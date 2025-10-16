@@ -3,7 +3,7 @@ use std::fmt::{Display, Formatter};
 
 /// `PlayerName` is a  StringWrapper for player names. Included only as a String Wrapper,
 /// no added functionality is provided.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct PlayerName(pub String);
 
 impl Display for PlayerName {

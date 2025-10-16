@@ -1,39 +1,58 @@
 use crate::corrections::correction::Correction;
 use crate::corrections::correction_builder::{self, CorrectionBuilder};
 use crate::corrections::corrector::Corrector;
+
 use crate::dapi::archive::typed_domain_archive_pairs;
-use crate::dapi::hunting::load_nba_season_from_file;
 use crate::dapi::team_box_score::TeamBoxScore;
+
 use crate::format::season::season_fmt;
+
+use crate::proc::hunting::load_nba_season_from_source;
+use crate::proc::revise::revise_nba_season;
+
 use crate::stats::domain::Domain;
 use crate::stats::game_obj::GameObject;
 use crate::stats::id::Identity;
 use crate::stats::nba_kind::NBAStatKind::{Player, Team};
+
 use crate::types::GameId;
+
 use indicatif::{ProgressBar, ProgressStyle};
+
 use std::collections::HashMap;
 use std::path::PathBuf;
 
 pub async fn save_nba_season(year: i32) {
-    let team_games = load_nba_season_from_file(year);
+    let mut team_games = load_nba_season_from_source(year);
+
+    match revise_nba_season(year, &mut team_games) {
+        Ok(_) => {
+            println!(
+                "✅ corrections for the {} NBA season have been written successfully.",
+                season_fmt(year)
+            );
+        }
+        Err(_) => {
+            eprintln!(
+                "❌ corrections for the {} NBA season have failed to save.",
+                season_fmt(year)
+            );
+        }
+    };
 
     //correct any issues with pairing off
     let games = match pair_off(team_games) {
         Err(mut correction_builders) => {
             println!(
-                "ℹ️ there are {} {} corrections to make for the {} season.",
+                "ℹ️  there are {} {} corrections to make for the {} season.",
                 correction_builders.len(),
                 Team,
                 season_fmt(year)
             );
 
-            // for cs in correction_builders.iter() {
-            //     dbg!(cs);
-            // }
-
             let corrections: Vec<Correction> = correction_builders
                 .iter_mut()
-                .map(|corr| corr.create())
+                .map(|corr| corr.create_and_save())
                 .collect();
 
             let mut domain_archive: HashMap<Domain, PathBuf> =
@@ -43,7 +62,7 @@ pub async fn save_nba_season(year: i32) {
                 .apply(&mut domain_archive)
                 .expect("💀 failed to apply corrections to team data.");
 
-            pair_off(load_nba_season_from_file(year))
+            pair_off(load_nba_season_from_source(year))
                 .expect("💀 applied corrections successfully but did not resolve the issue.")
         }
         Ok(games) => games,
@@ -86,9 +105,9 @@ async fn sub_save(season: Vec<GameObject>) {
     pb.finish_with_message(format!("saved {} season.", season_fmt(szn)));
 }
 
-type TeamGame = (Identity, TeamBoxScore);
+pub(crate) type TeamGame = (Identity, TeamBoxScore);
 
-fn pair_off(games: Vec<TeamGame>) -> Result<Vec<GameObject>, Vec<CorrectionBuilder>> {
+pub(crate) fn pair_off(games: Vec<TeamGame>) -> Result<Vec<GameObject>, Vec<CorrectionBuilder>> {
     let mut pairs = HashMap::<GameId, (Option<TeamGame>, Option<TeamGame>)>::new();
     let mut corrections: Vec<CorrectionBuilder> = Vec::new();
 

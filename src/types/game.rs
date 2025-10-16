@@ -2,13 +2,23 @@ use crate::stats::serde_enum::SerdeEnum;
 use chrono::{Datelike, NaiveDate};
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{json, Value};
-use std::fmt::{Display, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 use std::str::FromStr;
 
 /// `GameDate`is a `chrono::NaiveDate` wrapper that implements the necessary traits to work
 /// interchangeably in the code base.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
+#[derive(Clone, Copy, Eq, PartialEq, Hash)]
 pub struct GameDate(pub NaiveDate);
+
+impl FromStr for GameDate {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, String> {
+        let date = NaiveDate::parse_from_str(s, "%Y-%m-%d").map_err(|e| e.to_string())?;
+
+        Ok(GameDate(date))
+    }
+}
 
 impl<'de> Deserialize<'de> for GameDate {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
@@ -23,9 +33,19 @@ impl<'de> Deserialize<'de> for GameDate {
     }
 }
 
+impl Debug for GameDate {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let formatted_date = self.0.format("%Y-%m-%d").to_string();
+
+        write!(f, "{}", formatted_date)
+    }
+}
+
 impl Display for GameDate {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        let formatted_date = self.0.format("%m/%d/%Y").to_string();
+
+        write!(f, "{}", formatted_date)
     }
 }
 
@@ -92,7 +112,7 @@ impl Serialize for GameId {
 /// `GameResult` is an enum that represents the result of a game a Win, Loss or a Draw (NFL only.)
 /// implements SerdeEnum as well as functions for `to_str` and `from_str`
 ///
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum GameResult {
     Win,
     Loss,

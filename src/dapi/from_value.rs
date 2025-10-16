@@ -1,4 +1,4 @@
-use crate::dapi::parse::value_to_date;
+use crate::format::parse::value_to_date;
 use crate::stats::stat_column::StatColumn;
 use crate::stats::stat_column::StatColumn::*;
 use crate::stats::types::BoolInt;
@@ -7,7 +7,7 @@ use serde_json::{Number, Value};
 use std::collections::HashMap;
 use std::str::FromStr;
 
-impl MapReader for HashMap<StatColumn, Value> {
+impl FromValue for HashMap<StatColumn, Value> {
     fn season_id(&self) -> Result<SeasonId, StatColumn> {
         match self.get(&SEASON_ID) {
             Some(v) => match SeasonId::try_from(v) {
@@ -848,7 +848,7 @@ impl MapReader for HashMap<StatColumn, Value> {
             let u = num.as_u64().unwrap();
 
             if u == 0 || u == 1 {
-                Some(BoolInt(u as u8))
+                Some(BoolInt::from(u as u8))
             } else {
                 None
             }
@@ -877,7 +877,7 @@ impl MapReader for HashMap<StatColumn, Value> {
 ///
 /// The identity functions will panic if it fails to generate a correct identity.
 ///
-pub trait MapReader {
+pub trait FromValue {
     fn season_id(&self) -> Result<SeasonId, StatColumn>; //identity
     fn player_id(&self) -> Result<PlayerId, StatColumn>; //identity
     fn player_name(&self) -> Result<PlayerName, StatColumn>;

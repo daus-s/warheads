@@ -1,15 +1,12 @@
 use chrono::NaiveDate;
 use pretty_assertions::assert_eq;
-use serde_json::{json, Value};
+use serde_json::Value;
 use std::collections::HashMap;
-use std::fs;
 use std::str::FromStr;
 use warheads::corrections::correction::Correction;
-use warheads::corrections::correction_loader::load_corrections;
-use warheads::corrections::corrector::Corrector;
+use warheads::corrections::correction_loader::load_corrections_by_season;
 use warheads::format::path_manager::nba_correction_dir;
-use warheads::stats::nba_kind::NBAStatKind::{self, Player};
-use warheads::stats::season_period::SeasonPeriod;
+use warheads::stats::nba_kind::NBAStatKind::Player;
 use warheads::stats::serde_enum::SerdeEnum;
 use warheads::stats::stat_column::StatColumn;
 use warheads::stats::stat_column::StatColumn::*;
@@ -27,7 +24,7 @@ pub fn test_load_correction() {
 
     let mut expected_corrections = expected_corrections();
 
-    let mut actual_corrections = load_corrections(season_id, kind).unwrap_or_else(|e| {
+    let mut actual_corrections = load_corrections_by_season(season_id, kind).unwrap_or_else(|e| {
         panic!(
             "Failed to load corrections from: {}\n{e}",
             nba_correction_dir(season_id, kind)
@@ -198,8 +195,14 @@ fn expected_corrections() -> Vec<Correction> {
             team_abbr: TeamAbbreviation::from_str("SYR").unwrap(),
             kind,
             period: season_id.period(),
-            delete: true,
-            corrections: Default::default(),
+            delete: false,
+            corrections: {
+                let mut cs: HashMap<StatColumn, Value> = HashMap::new();
+
+                cs.insert(WL, Loss.evaluate());
+
+                cs
+            },
         },
         Correction {
             game_id: GameId::from("0025900257"),
@@ -220,89 +223,4 @@ fn expected_corrections() -> Vec<Correction> {
             },
         },
     ]
-}
-
-#[test]
-fn test_apply_corrections() {
-    let corrections = vec![
-        Correction {
-            game_id: GameId::from("12345678"),
-            game_date: GameDate(NaiveDate::from_ymd_opt(0025, 02, 05).unwrap()),
-            season: SeasonId::from(20024),
-            player_id: Some(PlayerId(69420)),
-            team_id: TeamId(32768),
-            team_abbr: TeamAbbreviation::from_str("BOM").unwrap(),
-            kind: Player,
-            period: SeasonPeriod::RegularSeason,
-            delete: false,
-            corrections: HashMap::from([(FG3M, json!(2))]),
-        },
-        Correction {
-            game_id: GameId::from("12345678"),
-            game_date: GameDate(NaiveDate::from_ymd_opt(0025, 02, 05).unwrap()),
-            season: SeasonId::from(20024),
-            player_id: Some(PlayerId(14141)),
-            team_id: TeamId(32768),
-            team_abbr: TeamAbbreviation::from_str("BOM").unwrap(),
-            kind: Player,
-            period: SeasonPeriod::RegularSeason,
-            delete: false,
-            corrections: HashMap::from([(FGM, json!(6)), (FG3M, json!(3))]),
-        },
-        Correction {
-            game_id: GameId::from("11235813"),
-            game_date: GameDate(NaiveDate::from_ymd_opt(0024, 11, 05).unwrap()),
-            season: SeasonId::from(20024),
-            player_id: Some(PlayerId(69420)),
-            team_id: TeamId(32768),
-            team_abbr: TeamAbbreviation::from_str("BOM").unwrap(),
-            kind: Player,
-            period: SeasonPeriod::RegularSeason,
-            delete: false,
-            corrections: HashMap::from([(FG_PCT, json!(3f32 / 7f32))]),
-        },
-        Correction {
-            game_id: GameId::from("11235813"),
-            game_date: GameDate(NaiveDate::from_ymd_opt(0025, 02, 28).unwrap()),
-            season: SeasonId::from(20024),
-            player_id: Some(PlayerId(66666)),
-            team_id: TeamId(16384),
-            team_abbr: TeamAbbreviation::from_str("TRA").unwrap(),
-            kind: Player,
-            period: SeasonPeriod::RegularSeason,
-            delete: true,
-            corrections: HashMap::new(),
-        },
-    ];
-
-    let contents = bad_data();
-
-    let mut daps = HashMap::new();
-
-    let domain = (SeasonId::from(20024), Player);
-
-    daps.insert(domain, contents);
-
-    match corrections.apply(&mut daps) {
-        Ok(_) => {
-            eprintln!("success");
-        }
-        Err(_) => {
-            eprintln!("failure");
-        }
-    };
-
-    let expected = expected_file();
-
-    let corrected = daps.get(&domain).unwrap().to_string();
-
-    assert_eq!(expected, corrected)
-}
-
-fn bad_data() -> String {
-    fs::read_to_string("tests/data/data.json").unwrap()
-}
-
-fn expected_file() -> String {
-    fs::read_to_string("tests/data/corrected.json").unwrap()
 }

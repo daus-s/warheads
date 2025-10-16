@@ -240,8 +240,6 @@ mod test_serialize_game_obj {
     static TEST: Lazy<String> = Lazy::new(test);
     #[test]
     fn test_de_serialize_game_obj() {
-        let s = format!("{}/data/0020500673_SEA", *TEST);
-
         let home = serde_json::from_str(
             &fs::read_to_string(format!("{}/data/0020500673_SEA.json", *TEST))
                 .expect("failed to read seattle box score"),
@@ -263,9 +261,12 @@ mod test_serialize_game_obj {
         let expected = fs::read_to_string(format!("{}/data/game_object.json", *TEST))
             .expect("failed to read test file for GameObjectSerialization");
 
-        assert_eq!(
+        pretty_assertions::assert_eq!(
             expected,
-            serde_json::to_string_pretty(&game_object).expect("couldn't serialize game object")
+            format!(
+                "{}\n",
+                serde_json::to_string_pretty(&game_object).expect("couldn't serialize game object")
+            )
         )
     }
 }

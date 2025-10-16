@@ -25,7 +25,6 @@ mod test_urls {
             season.period().url()
         );
 
-
         assert_eq!(exp, act)
     }
     #[test]
@@ -47,7 +46,6 @@ mod test_urls {
             season.year().url(),
             season.period().url()
         );
-
 
         assert_eq!(exp, act)
     }
@@ -71,7 +69,6 @@ mod test_urls {
             season.period().url()
         );
 
-
         assert_eq!(exp, act)
     }
     #[test]
@@ -93,7 +90,6 @@ mod test_urls {
             season.year().url(),
             season.period().url()
         );
-
 
         assert_eq!(exp, act)
     }
@@ -117,7 +113,6 @@ mod test_urls {
             season.period().url()
         );
 
-
         assert_eq!(exp, act)
     }
     #[test]
@@ -139,7 +134,6 @@ mod test_urls {
             season.year().url(),
             season.period().url()
         );
-
 
         assert_eq!(exp, act)
     }
@@ -163,7 +157,6 @@ mod test_urls {
             season.period().url()
         );
 
-
         assert_eq!(exp, act)
     }
     #[test]
@@ -185,7 +178,6 @@ mod test_urls {
             season.year().url(),
             season.period().url()
         );
-
 
         assert_eq!(exp, act)
     }

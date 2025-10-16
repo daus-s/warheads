@@ -1,9 +1,13 @@
 use crate::corrections::correction::Correction;
 use crate::corrections::overwrite;
+
 use crate::dapi::archive::Archive;
-use crate::dapi::extract::json_to_hashmap;
+
+use crate::format::extract::json_to_hashmap;
+
 use crate::stats::domain::Domain;
 use crate::stats::id::{Identifiable, Identity};
+
 use std::collections::HashMap;
 
 pub trait Corrector {
@@ -40,7 +44,7 @@ impl Corrector for Vec<Correction> {
                 if correction.delete {
                     to_remove.push(id);
                 } else {
-                    *game = correction.correct_string(game.to_string());
+                    *game = correction.correct_source_data(game.to_string());
                 }
             }
         }
