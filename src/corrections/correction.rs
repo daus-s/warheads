@@ -1,9 +1,10 @@
 use crate::corrections::correction_builder::CorrectionBuilder;
-use crate::dapi::map_reader::MapReader;
+use crate::dapi::from_value::FromValue;
 use crate::format::language::Columnizable;
 use crate::format::path_manager::{
     nba_correction_dir, nba_player_correction_file, nba_team_correction_file,
 };
+use crate::stats::visiting::Visiting;
 
 use serde::{Deserialize, Serialize};
 
@@ -19,7 +20,7 @@ use crate::stats::nba_kind::NBAStatKind::{LineUp, Player, Team};
 use crate::stats::statify::StatPair;
 use crate::types::{GameDate, GameId, PlayerId, SeasonId, TeamAbbreviation, TeamId};
 use serde_json::Value;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::{fs, io};
 
 #[derive(Serialize, Deserialize, Clone, Eq, PartialEq)]
@@ -301,6 +302,36 @@ impl Correction {
                     panic!("💀 {column} is requireed for generating a unique identifier for the game and cannot be corrected in the BoxScore. ")
                 }
             }
+        }
+    }
+
+    //consume the other correction and merge the fields into the self.
+    pub fn merge(&mut self, other: Correction) {
+        let other_fields = other.corrections;
+
+        for (k, v) in other_fields {
+            self.corrections.insert(k, v);
+        }
+    }
+
+    pub fn correct_matchup(&mut self, visiting: &mut Visiting, team_abbr: &TeamAbbreviation) {
+        if let Some(corrected_matchup) = self.corrections.get(&StatColumn::MATCHUP) {
+            if let Ok(matchup) = corrected_matchup.matchup() {
+                match matchup.home_or_away(team_abbr) {
+                    Ok(v) => {
+                        *visiting = v;
+                        self.corrections.remove(&StatColumn::MATCHUP);
+                    }
+                    Err(_) => {}
+                }
+            }
+        };
+    }
+
+    pub fn file_path(&self) -> PathBuf {
+        match self.player_id {
+            Some(pid) => nba_player_correction_file(self.season, self.game_id, pid),
+            None => nba_team_correction_file(self.season, self.game_id, self.team_id),
         }
     }
 }

@@ -4,18 +4,21 @@ use serde_json::{json, Value};
 /// BoolInt is an int that is either 1 or 0
 /// to represent a boolean value
 
-pub struct BoolInt(pub u8);
+pub struct BoolInt(u8);
 
 impl BoolInt {
     // Constructor that validates the input
-    pub fn new(value: u8) -> Self {
+    pub fn from(value: u8) -> Self {
         if value != 0 && value != 1 {
             panic!("BoolInt can only be 0 or 1");
         }
         BoolInt(value)
     }
-    pub fn get(&self) -> u8 {
+    pub fn as_int(&self) -> u8 {
         self.0
+    }
+    pub fn as_bool(&self) -> bool {
+        self.0 == 1
     }
 }
 

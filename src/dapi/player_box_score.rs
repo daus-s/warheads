@@ -1,7 +1,12 @@
-use crate::corrections::correction::Correction;
+use crate::{corrections::correction::Correction, dapi::from_value::FromValue};
+
 use crate::stats::box_score::BoxScore;
+use crate::stats::stat_column::StatColumn::*;
+
 use crate::types::*;
+
 use serde::{Deserialize, Serialize};
+
 use std::fmt::Formatter;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -39,5 +44,27 @@ impl PlayerBoxScore {
 
     pub fn correct_box_score(&mut self, correction: &mut Correction) {
         correction.correct_box_score(&mut self.box_score);
+    }
+
+    pub(crate) fn reorient(&mut self, correction: &mut Correction) {
+        correction.corrections.retain(|key, value| match key {
+            PLAYER_ID => {
+                if let Ok(player_id) = value.player_id() {
+                    self.player_id = player_id;
+                    false
+                } else {
+                    true
+                }
+            }
+            PLAYER_NAME => {
+                if let Ok(player_name) = value.player_name() {
+                    self.player_name = player_name;
+                    false
+                } else {
+                    true
+                }
+            }
+            _ => true,
+        });
     }
 }

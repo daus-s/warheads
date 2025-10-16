@@ -1,7 +1,14 @@
+use crate::corrections::correction::Correction;
+
+use crate::dapi::from_value::FromValue;
+use crate::dapi::player_box_score::PlayerBoxScore;
+
 use crate::stats::box_score::BoxScore;
+use crate::stats::stat_column::StatColumn::*;
 use crate::stats::visiting::Visiting;
+
 use crate::types::*;
-use crate::{corrections::correction::Correction, dapi::player_box_score::PlayerBoxScore};
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -61,6 +68,58 @@ impl TeamBoxScore {
 
     pub fn correct_box_score(&mut self, correction: &mut Correction) {
         correction.correct_box_score(&mut self.box_score);
+    }
+
+    pub(crate) fn reorient(&mut self, correction: &mut Correction) {
+        /*
+         *
+         * pub team_abbreviation: TeamAbbreviation,
+         * pub team_name: TeamName,
+         * home or away
+         * pub visiting: Visiting,
+         */
+        let correction_file = correction.file_path();
+
+        correction.corrections.retain(|key, value| match key {
+            TEAM_ID => {
+                if let Ok(team_id) = value.team_id() {
+                    self.team_id = team_id;
+                    false
+                } else {
+                    true
+                }
+            }
+            TEAM_ABBREVIATION => {
+                if let Ok(team_abbr) = value.team_abbreviation() {
+                    self.team_abbreviation = team_abbr;
+                    false
+                } else {
+                    true
+                }
+            }
+            TEAM_NAME => {
+                if let Ok(team_name) = value.team_name() {
+                    self.team_name = team_name;
+                    false
+                } else {
+                    true
+                }
+            }
+            MATCHUP => {
+                if let Ok(matchup) = value.matchup() {
+                    //with new matchup, calculate visiting
+                    if let Ok(visiting) = matchup.home_or_away(&self.team_abbreviation) {
+                        self.visiting = visiting;
+                        false
+                    } else {
+                        panic!("💀 matchup string provided by correction doesn't match team identity.\nfile:{}", correction_file.display())
+                    }
+                } else {
+                    true
+                }
+            }
+            _ => true,
+        });
     }
 }
 
