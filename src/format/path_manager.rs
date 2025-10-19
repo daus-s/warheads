@@ -97,7 +97,7 @@ pub fn nba_storage_path(season_id: SeasonId) -> PathBuf {
 }
 
 pub fn nba_storage_file(season_id: SeasonId, game_id: GameId) -> PathBuf {
-    let s = format!("{}", game_id);
+    let s = format!("{}", game_id); // 24600001 -> 0024600001
 
     let mut path = nba_storage_path(season_id);
 

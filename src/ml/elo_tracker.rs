@@ -1,17 +1,24 @@
+use crate::constants::paths::data;
+
+use crate::dapi::season_manager::nba_lifespan;
+
+use crate::ml::cdf::prob;
+use crate::ml::elo::{self, Elo};
+
+use crate::stats::game_obj::GameObject;
+use crate::stats::season_period::minimum_spanning_era;
+
+use crate::storage::read_disk::read_nba_season;
+
+use crate::types::PlayerId;
+
+use csv::Writer;
+
+use once_cell::sync::Lazy;
+
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
-
-use crate::constants::paths::data;
-use crate::dapi::season_manager::nba_lifespan;
-use crate::ml::cdf::prob;
-use crate::ml::elo::{self, Elo};
-use crate::stats::game_obj::GameObject;
-use crate::stats::season_period::minimum_spanning_era;
-use crate::storage::read_disk::read_nba_season;
-use crate::types::PlayerId;
-use csv::Writer;
-use once_cell::sync::Lazy;
 
 pub struct EloTracker {
     historical_ratings: Vec<Elo>,
