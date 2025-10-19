@@ -13,6 +13,8 @@ use crate::proc::store::save_nba_season;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::season_period::minimum_spanning_era;
 
+use std::time::Instant;
+
 pub async fn observe_nba() {
     let checksums = ChecksumMap::load().expect("💀 failed to load checksums");
 
@@ -46,10 +48,31 @@ pub async fn chronicle_nba() {
 pub fn rate_nba() {
     let mut tracker = EloTracker::new();
 
-    tracker.process_elo();
+    let start_process = Instant::now();
+
+    match tracker.process_elo() {
+        Ok(_) => println!("✅  Elo data processed successfully"),
+        Err(_) => println!("❌  Error processing elo data"),
+    }
+
+    let end_process = Instant::now();
+
+    println!(
+        "⏱️  Elo processing took {}ms",
+        end_process.duration_since(start_process).as_millis()
+    );
+
+    let start_save = Instant::now();
 
     match tracker.save() {
         Ok(_) => println!("✅  Elo data saved successfully"),
         Err(e) => println!("❌  Error saving elo data: {}", e),
-    }
+    };
+
+    let end_save = Instant::now();
+
+    println!(
+        "⏱️  Elo saving took {}ms",
+        end_save.duration_since(start_save).as_millis()
+    );
 }

@@ -1,5 +1,8 @@
+use serde::{Deserialize, Serialize};
+
 use crate::types::{GameId, PlayerId};
 
+#[derive(Copy, Clone, Serialize, Deserialize)]
 pub struct Elo {
     pub player_id: PlayerId,
     pub game_id: GameId,

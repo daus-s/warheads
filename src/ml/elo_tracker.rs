@@ -1,12 +1,11 @@
 use crate::constants::paths::data;
 
-use crate::dapi::season_manager::nba_lifespan;
+use crate::dapi::season_manager::{nba_lifespan, nba_lifespan_period};
 
 use crate::ml::cdf::prob;
 use crate::ml::elo::{self, Elo};
 
 use crate::stats::game_obj::GameObject;
-use crate::stats::season_period::minimum_spanning_era;
 
 use crate::storage::read_disk::read_nba_season;
 
@@ -33,22 +32,16 @@ impl EloTracker {
         }
     }
 
-    pub fn process_elo(&mut self) {
+    pub fn process_elo(&mut self) -> Result<(), ()> {
         // todo: assign elo values to players on a game by game basis
-        for year in nba_lifespan() {
-            let mut season_games = Vec::new();
-            for period in minimum_spanning_era(year) {
-                match read_nba_season(period) {
-                    Ok(games) => {
-                        season_games.extend(games);
-                    }
-                    Err(e) => {
-                        eprintln!("Failed to read season {period}: {e}");
-                    }
-                }
+        for period in nba_lifespan_period() {
+            let mut games = read_nba_season(period).map_err(|e| println!("NBAReadError: {}", e))?;
+
+            if !games.is_sorted_by_key(|game| game.game_date.0) {
+                games.sort_by_key(|game| game.game_date.0);
             }
 
-            for game in season_games {
+            for game in games {
                 let home_rating = game
                     .home
                     .get_normalized_team_rating(&mut self.current_ratings);
@@ -63,17 +56,19 @@ impl EloTracker {
                 self.update_ratings(&game, delta);
             }
         }
+
+        Ok(())
     }
 
     //todo: implement a rating share function as a parameter
     fn update_ratings(&mut self, game: &GameObject, delta: f64) {
-        let mut step_home = (elo::K as f64 * (1.0 - prob(delta))) as i64; //this is the winners step, the losers step is -step
-        let mut step_away = (elo::K as f64 * (1.0 - prob(-1f64 * delta))) as i64;
+        let mut home_step = (elo::K as f64 * (1.0 - prob(delta))) as i64; //this is the winners step, the losers step is -step
+        let mut away_step = (elo::K as f64 * (1.0 - prob(-1f64 * delta))) as i64;
 
         if game.winner() == game.home.team_id {
-            step_away = -1 * (step_away as i64);
+            away_step = -1 * (away_step as i64);
         } else if game.winner() == game.away.team_id {
-            step_home = -1 * (step_home as i64);
+            home_step = -1 * (home_step as i64);
         } else {
             panic!("💀 Game must have a winner. somehow passed the win/loss check in GameObject::try_create");
         }
@@ -83,7 +78,7 @@ impl EloTracker {
 
             self.current_ratings
                 .entry(id)
-                .and_modify(|rating| *rating += step_home)
+                .and_modify(|rating| *rating += home_step)
                 .or_insert(elo::INITIAL_RATING);
 
             self.historical_ratings.push(Elo {
@@ -97,7 +92,7 @@ impl EloTracker {
 
             self.current_ratings
                 .entry(id)
-                .and_modify(|rating| *rating += step_away)
+                .and_modify(|rating| *rating += away_step)
                 .or_insert(elo::INITIAL_RATING);
 
             self.historical_ratings.push(Elo {
@@ -135,29 +130,8 @@ impl EloTracker {
         };
 
         for elo in &self.historical_ratings {
-            let Elo {
-                game_id,
-                player_id,
-                rating,
-            } = *elo;
-
             //todo: implement this to have each row have a same
-            match writer.serialize(&[game_id.0 as i64, player_id.0 as i64, rating]) {
-                Ok(_) => {
-                    eprintln!(
-                        "✅ successfully wrote record for {player_id} in {game_id}: {}{rating}",
-                        match rating < 0 {
-                            true => "",
-                            false => "+",
-                        }
-                    );
-                }
-                Err(e) => {
-                    return Err(format!(
-                        "❌ failed to write record for {player_id} in {game_id}: {e}"
-                    ));
-                }
-            };
+            let _ = writer.serialize(&elo);
         }
 
         Ok(())
