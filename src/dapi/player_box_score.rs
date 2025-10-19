@@ -1,3 +1,4 @@
+use crate::format::box_score_formatter::format_player_box_score;
 use crate::{corrections::correction::Correction, dapi::from_value::FromValue};
 
 use crate::stats::box_score::BoxScore;
@@ -19,27 +20,29 @@ pub struct PlayerBoxScore {
 
 impl std::fmt::Display for PlayerBoxScore {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}\n{}\nfantasy: {}",
-            self.player_name,
-            self.box_score,
-            self.box_score.calculate_fantasy()
-        )
+        format_player_box_score(f, self)
     }
 }
 
 impl PlayerBoxScore {
-    pub fn player_id(&self) -> PlayerId {
-        self.player_id
-    }
-
     pub fn construct(player_id: PlayerId, player_name: PlayerName, box_score: BoxScore) -> Self {
         PlayerBoxScore {
             player_id,
             player_name,
             box_score,
         }
+    }
+
+    pub fn player_id(&self) -> PlayerId {
+        self.player_id
+    }
+
+    pub fn player_name(&self) -> &PlayerName {
+        &self.player_name
+    }
+
+    pub fn box_score(&self) -> &BoxScore {
+        &self.box_score
     }
 
     pub fn correct_box_score(&mut self, correction: &mut Correction) {

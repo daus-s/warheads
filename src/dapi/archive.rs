@@ -1,4 +1,4 @@
-use crate::format::path_manager::nba_data_path;
+use crate::format::path_manager::nba_source_path;
 use crate::stats::domain::Domain;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::nba_kind::NBAStatKind::{Player, Team};
@@ -62,8 +62,8 @@ pub fn domain_archive_pairs(year: i32) -> HashMap<Domain, PathBuf> {
     let mut dap: HashMap<Domain, PathBuf> = HashMap::new();
 
     for season_id in eras {
-        dap.insert((season_id, Player), nba_data_path(season_id, Player));
-        dap.insert((season_id, Team), nba_data_path(season_id, Team));
+        dap.insert((season_id, Player), nba_source_path(season_id, Player));
+        dap.insert((season_id, Team), nba_source_path(season_id, Team));
     }
 
     dap
@@ -75,7 +75,7 @@ pub fn typed_domain_archive_pairs(year: i32, kind: NBAStatKind) -> HashMap<Domai
     let mut dap: HashMap<Domain, PathBuf> = HashMap::new();
 
     for season_id in eras {
-        dap.insert((season_id, kind), nba_data_path(season_id, kind));
+        dap.insert((season_id, kind), nba_source_path(season_id, kind));
     }
 
     dap
@@ -88,7 +88,7 @@ pub fn domain_archive_pair(season_id: SeasonId, kind: NBAStatKind) -> HashMap<Do
 
     let domain = (season_id, kind);
 
-    dap.insert(domain, nba_data_path(season_id, kind));
+    dap.insert(domain, nba_source_path(season_id, kind));
 
     dap
 }

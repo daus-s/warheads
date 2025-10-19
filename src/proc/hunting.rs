@@ -1,11 +1,9 @@
 use crate::checksum::checksum_map::ChecksumMap;
 use crate::checksum::read_checksum::read_checksum;
-use crate::checksum::sign::sign_nba;
 
-use crate::dapi::season_manager::nba_lifespan;
 use crate::dapi::team_box_score::TeamBoxScore;
 
-use crate::format::path_manager::{nba_checksum_path, nba_data_path, universal_nba_data_path};
+use crate::format::path_manager::{nba_source_path, universal_nba_source_path};
 
 use crate::proc::gather;
 use crate::proc::gather::{player_games, team_games};
@@ -28,7 +26,7 @@ pub fn load_nba_season_from_source(year: i32) -> Vec<(Identity, TeamBoxScore)> {
     let mut team_games_vec = Vec::new();
 
     for period in minimum_spanning_era(year) {
-        let player_path = nba_data_path(period, Player);
+        let player_path = nba_source_path(period, Player);
 
         let player_games_of_period = player_games(period, &player_path).unwrap_or_else(|e| {
             panic!(
@@ -38,7 +36,7 @@ pub fn load_nba_season_from_source(year: i32) -> Vec<(Identity, TeamBoxScore)> {
             );
         });
 
-        let team_path = nba_data_path(period, Team);
+        let team_path = nba_source_path(period, Team);
 
         let team_games_of_period = team_games(period, &team_path, player_games_of_period)
             .unwrap_or_else(|e| {
@@ -55,32 +53,15 @@ pub fn load_nba_season_from_source(year: i32) -> Vec<(Identity, TeamBoxScore)> {
     team_games_vec
 }
 
-pub async fn observe_nba() {
-    let checksums = ChecksumMap::load().expect("💀 failed to load checksums");
-
-    for year in nba_lifespan() {
-        for era in minimum_spanning_era(year) {
-            compare_and_fetch(era, Player, &checksums).await;
-            compare_and_fetch(era, Team, &checksums).await;
-        }
-    }
-
-    match sign_nba() {
-        Ok(_) => println!(
-            "✅ successfully signed nba data with checksums in {}",
-            nba_checksum_path().display()
-        ),
-        Err(_) => eprintln!(
-            "❌ failed to sign nba data with checksums in {}",
-            nba_checksum_path().display()
-        ),
-    };
-}
 /// Compare the checksums of a NBA data source file and if it matches the expected checksum we can bypass refetching from
 /// [nba.com/stats](https://www.nba.com/stats). Otherwise we proceed fetching the data and saving the data to our source directory.
-async fn compare_and_fetch(season_id: SeasonId, kind: NBAStatKind, checksums: &ChecksumMap) {
-    let source_path = nba_data_path(season_id, kind);
-    let checksum_path = universal_nba_data_path(season_id, kind);
+pub(crate) async fn compare_and_fetch(
+    season_id: SeasonId,
+    kind: NBAStatKind,
+    checksums: &ChecksumMap,
+) {
+    let source_path = nba_source_path(season_id, kind);
+    let checksum_path = universal_nba_source_path(season_id, kind);
     if !source_path.exists()
         || read_checksum(&source_path).expect("💀 failed to read file data even though the path exists.")
             != *checksums

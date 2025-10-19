@@ -145,7 +145,7 @@ impl Serialize for SeasonId {
             NBACup => 20_000,
             AllStarGame => 30_000,
             PostSeason => 40_000,
-            PlayIn => 60_000,
+            PlayIn => 50_000,
         } + self.year;
 
         serializer.serialize_str(&format!("{}", sum))

@@ -328,8 +328,9 @@ mod tests {
 
         team_games_vec.extend(team_games_of_period);
 
-        let games =
-            pair_off(team_games_vec).expect("💀 created test games with no corrections to make.");
+        let games = pair_off(team_games_vec).expect(
+            "💀 failed to create test games from test data. unexpectedly created corrections",
+        );
 
         for game in games.iter() {
             let path = storage_file(game.game_id());

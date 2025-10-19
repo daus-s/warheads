@@ -1,5 +1,4 @@
-use warheads::proc::historian::chronicle_nba;
-use warheads::proc::hunting::observe_nba;
+use warheads::proc::historian::{chronicle_nba, observe_nba, rate_nba};
 
 #[tokio::main]
 async fn main() {
@@ -8,4 +7,6 @@ async fn main() {
     observe_nba().await;
 
     chronicle_nba().await;
+
+    rate_nba();
 }

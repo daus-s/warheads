@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use crate::format::box_score_formatter::format_team_box_score;
 use crate::{corrections::correction::Correction, ml::elo};
 
 use crate::dapi::from_value::FromValue;
@@ -153,15 +154,6 @@ impl TeamBoxScore {
 
 impl std::fmt::Display for TeamBoxScore {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "TeamBoxScore {{")?;
-        writeln!(f, "    team_id: {}", self.team_id)?;
-        writeln!(f, "    team_abbreviation: {}", self.team_abbreviation)?;
-        writeln!(f, "    team_name: {}", self.team_name)?;
-        writeln!(f, "    visiting: {}", self.visiting)?;
-        writeln!(f, "    box_score: {}", self.box_score)?;
-        for pbs in &self.roster {
-            writeln!(f, "    roster: {:?}", pbs)?;
-        }
-        writeln!(f, "}}")
+        format_team_box_score(f, self)
     }
 }

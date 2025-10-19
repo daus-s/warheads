@@ -5,7 +5,6 @@ use std::path::PathBuf;
 use crate::constants::paths::data;
 use crate::dapi::season_manager::nba_lifespan;
 use crate::ml::cdf::prob;
-use crate::ml::elo::Elo;
 use crate::ml::elo::{self, Elo};
 use crate::stats::game_obj::GameObject;
 use crate::stats::season_period::minimum_spanning_era;
@@ -29,8 +28,6 @@ impl EloTracker {
 
     pub fn process_elo(&mut self) {
         // todo: assign elo values to players on a game by game basis
-
-        // todo: load season by season, don't nuke the memory will all the history
         for year in nba_lifespan() {
             let mut season_games = Vec::new();
             for period in minimum_spanning_era(year) {

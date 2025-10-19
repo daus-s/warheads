@@ -4,7 +4,7 @@ use crate::dapi::player_box_score::PlayerBoxScore;
 use crate::dapi::team_box_score::TeamBoxScore;
 use crate::dapi::write::write_games;
 
-use crate::format::path_manager::nba_data_path;
+use crate::format::path_manager::nba_source_path;
 use crate::format::season::season_fmt;
 
 use crate::proc::error::ReadProcessError;
@@ -60,7 +60,7 @@ pub fn team_games(
 }
 
 pub async fn fetch_and_save_nba_stats(season: SeasonId, stat: NBAStatKind) -> Result<(), String> {
-    let file_path = nba_data_path(season, stat);
+    let file_path = nba_source_path(season, stat);
 
     let (year, _period) = season.destructure();
 

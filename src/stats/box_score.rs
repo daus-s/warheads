@@ -1,3 +1,4 @@
+use crate::format::box_score_formatter::format_statistical_box_score;
 use crate::stats::schema::Schema;
 use crate::stats::stat_column::StatColumn;
 use crate::types::{
@@ -45,11 +46,7 @@ pub struct BoxScore {
 
 impl Display for BoxScore {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "pts:{}\tfgs:{}/{}\t3ps:{}/{}\tft: {}/{}\nast:{}\nreb:{} (off {},def {})\nstl: {}\t blk:{}\ttov:{}",
-               self.pts, self.fgm, self.fga,
-               self.fg3m, self.fg3a, self.ftm, self.fta, self.ast, self.reb, self.oreb, self.dreb,
-               self.stl, self.blk, self.tov
-        )
+        format_statistical_box_score(f, self)
     }
 }
 

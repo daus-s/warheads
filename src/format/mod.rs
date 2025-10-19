@@ -1,3 +1,4 @@
+pub mod box_score_formatter;
 pub mod extract;
 pub mod language;
 pub mod parse;

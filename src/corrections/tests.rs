@@ -380,3 +380,55 @@ mod correct_columns {
         r#"["20024",23,"Tested McNutsack",151,"LOL","Los Orleans Losers","123","0024-03-31","LOL vs. DOT","W",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"#.to_string()
     }
 }
+
+#[cfg(test)]
+mod serialize_corrections {
+    use crate::constants::paths::test;
+
+    use crate::corrections::correction::Correction;
+
+    use crate::stats::nba_kind::NBAStatKind;
+    use crate::stats::season_period::SeasonPeriod;
+    use crate::stats::serde_enum::SerdeEnum;
+    use crate::stats::stat_column::StatColumn;
+
+    use crate::types::GameResult::Loss;
+    use crate::types::{GameId, PlayerId, SeasonId, TeamId};
+
+    use std::collections::HashMap;
+    use std::fs;
+
+    use once_cell::sync::Lazy;
+    use serde_json::Value;
+
+    static TEST: Lazy<String> = Lazy::new(test);
+
+    #[test]
+    pub fn serialize_correction() {
+        let correction = Correction {
+            game_id: GameId::from("0025900253"),
+            game_date: "2000-02-05".parse().unwrap(),
+            season: SeasonId::from(22000),
+            player_id: Some(PlayerId(69420)),
+            team_id: TeamId::from(1610612755),
+            team_abbr: "SEA".parse().unwrap(),
+            kind: NBAStatKind::Player,
+            delete: false,
+            corrections: {
+                let mut cs: HashMap<StatColumn, Value> = HashMap::new();
+
+                cs.insert(StatColumn::WL, Loss.evaluate());
+
+                cs
+            },
+            period: SeasonPeriod::RegularSeason,
+        };
+
+        let serialized = serde_json::to_string_pretty(&correction).unwrap();
+
+        let expected = fs::read_to_string(format!("{}/data/corrections/expected.json", *TEST))
+            .expect("💀 failed to read test file");
+
+        pretty_assertions::assert_eq!(serialized, expected.trim_end());
+    }
+}

@@ -51,7 +51,7 @@ impl GameObject {
             panic!("💀 mismatched GameId's or SeasonId's in try_create.")
         }
 
-        if game1.box_score().wl() != game2.box_score().wl() {
+        if game1.box_score().wl() == game2.box_score().wl() {
             correction1.add_missing_field(WL, Null);
             correction2.add_missing_field(WL, Null);
         }

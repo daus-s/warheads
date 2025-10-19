@@ -1,5 +1,7 @@
 use warheads::format::extract::{get_result_set, get_rows};
-use warheads::format::path_manager::{nba_correction_dir, nba_data_path, nba_team_correction_file};
+use warheads::format::path_manager::{
+    nba_correction_dir, nba_source_path, nba_team_correction_file,
+};
 
 use warheads::stats::nba_kind::NBAStatKind::Team;
 use warheads::stats::season_period::minimum_spanning_era;
@@ -71,7 +73,7 @@ fn zip_dates() {
 }
 
 fn rows_as_values(s: SeasonId) -> Vec<Value> {
-    let file = nba_data_path(s, Team);
+    let file = nba_source_path(s, Team);
 
     let contents = fs::read_to_string(file).expect("unable to read file provided in test. ");
 
