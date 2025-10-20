@@ -1,22 +1,20 @@
 use crate::constants::paths::data;
 
-use crate::dapi::season_manager::{nba_lifespan, nba_lifespan_period};
+use crate::dapi::season_manager::nba_lifespan_period;
 
 use crate::ml::cdf::prob;
 use crate::ml::elo::{self, Elo};
 
+use crate::ml::elo_writer::EloWriter;
 use crate::stats::game_obj::GameObject;
 
 use crate::storage::read_disk::read_nba_season;
 
 use crate::types::PlayerId;
 
-use csv::Writer;
-
 use once_cell::sync::Lazy;
 
 use std::collections::HashMap;
-use std::fs;
 use std::path::PathBuf;
 
 pub struct EloTracker {
@@ -111,27 +109,10 @@ impl EloTracker {
 
         let filename = Self::save_path(&format!("{model_name}.csv"));
 
-        let mut writer = match Writer::from_path(&filename) {
-            Ok(writer) => writer,
-            Err(e) => {
-                eprintln!("❌ failed to open a writer for {}: {e}", filename.display());
+        let mut writer = EloWriter::new(filename).expect("💀 failed to create EloWriter");
 
-                fs::create_dir_all(filename.parent().unwrap()).map_err(|e| {
-                    format!(
-                        "❌ failed to create directory for {}: {e}",
-                        filename.display()
-                    )
-                })?;
-
-                Writer::from_path(&filename).map_err(|e| {
-                    format!("❌ failed to open a writer for {}: {e}", filename.display())
-                })?
-            }
-        };
-
-        for elo in &self.historical_ratings {
-            //todo: implement this to have each row have a same
-            let _ = writer.serialize(&elo);
+        for record in &self.historical_ratings {
+            let _ = writer.serialize_elo(&record);
         }
 
         Ok(())
