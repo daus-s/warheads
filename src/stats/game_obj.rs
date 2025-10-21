@@ -1,4 +1,5 @@
 use crate::corrections::correction_builder::CorrectionBuilder;
+use crate::dapi::player_box_score::PlayerBoxScore;
 use crate::dapi::team_box_score::TeamBoxScore;
 use crate::stats::game_display::GameDisplay;
 use crate::stats::id::Identity;
@@ -17,8 +18,8 @@ pub struct GameObject {
     pub game_date: GameDate,
     pub game_id: GameId,
 
-    pub home: TeamBoxScore,
-    pub away: TeamBoxScore,
+    home: TeamBoxScore,
+    away: TeamBoxScore,
 }
 
 impl GameObject {
@@ -174,5 +175,29 @@ impl GameObject {
         } else {
             panic!("💀 if this error is arising check that your input box scores have opposite game result states to this function")
         }
+    }
+
+    pub fn home(&self) -> &TeamBoxScore {
+        &self.home
+    }
+
+    pub fn away(&self) -> &TeamBoxScore {
+        &self.away
+    }
+
+    pub fn home_team_id(&self) -> TeamId {
+        self.home.team_id
+    }
+
+    pub fn away_team_id(&self) -> TeamId {
+        self.away.team_id
+    }
+
+    pub fn home_roster(&self) -> &Vec<PlayerBoxScore> {
+        self.home.roster()
+    }
+
+    pub fn away_roster(&self) -> &Vec<PlayerBoxScore> {
+        self.away.roster()
     }
 }

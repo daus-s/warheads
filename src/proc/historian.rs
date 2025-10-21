@@ -13,8 +13,6 @@ use crate::proc::store::save_nba_season;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::season_period::minimum_spanning_era;
 
-use std::time::Instant;
-
 pub async fn observe_nba() {
     let checksums = ChecksumMap::load().expect("💀 failed to load checksums");
 

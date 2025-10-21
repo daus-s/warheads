@@ -6,6 +6,8 @@ use crate::ml::cdf::prob;
 use crate::ml::elo::{self, Elo};
 
 use crate::ml::elo_writer::EloWriter;
+use crate::ml::log_loss::LogLossTracker;
+use crate::ml::measurement::Measurement;
 use crate::stats::game_obj::GameObject;
 
 use crate::storage::read_disk::read_nba_season;
@@ -20,6 +22,7 @@ use std::path::PathBuf;
 pub struct EloTracker {
     historical_ratings: Vec<Elo>,
     current_ratings: HashMap<PlayerId, i64>,
+    log_loss: LogLossTracker,
 }
 
 impl EloTracker {
@@ -27,6 +30,7 @@ impl EloTracker {
         Self {
             historical_ratings: Vec::new(),
             current_ratings: HashMap::new(),
+            log_loss: LogLossTracker::new(),
         }
     }
 
@@ -41,10 +45,10 @@ impl EloTracker {
 
             for game in games {
                 let home_rating = game
-                    .home
+                    .home()
                     .get_normalized_team_rating(&mut self.current_ratings);
                 let away_rating = game
-                    .away
+                    .away()
                     .get_normalized_team_rating(&mut self.current_ratings);
 
                 let delta = home_rating - away_rating;
@@ -52,6 +56,7 @@ impl EloTracker {
                 //R'=R+K∙(S-E) where s is the score and e is the expected (1 for win - win prob)
 
                 self.update_ratings(&game, delta);
+                self.track_log_loss(&game, delta);
             }
         }
 
@@ -63,15 +68,15 @@ impl EloTracker {
         let mut home_step = (elo::K as f64 * (1.0 - prob(delta))) as i64; //this is the winners step, the losers step is -step
         let mut away_step = (elo::K as f64 * (1.0 - prob(-1f64 * delta))) as i64;
 
-        if game.winner() == game.home.team_id {
+        if game.winner() == game.home_team_id() {
             away_step = -1 * (away_step as i64);
-        } else if game.winner() == game.away.team_id {
+        } else if game.winner() == game.away_team_id() {
             home_step = -1 * (home_step as i64);
         } else {
-            panic!("💀 Game must have a winner. somehow passed the win/loss check in GameObject::try_create");
+            panic!("💀 Game must have a winner that was a participant. Somehow passed the win/loss check in GameObject::try_create");
         }
 
-        for player in game.home.roster() {
+        for player in game.away_roster() {
             let id = player.player_id();
 
             self.current_ratings
@@ -85,7 +90,7 @@ impl EloTracker {
                 rating: self.current_ratings[&id],
             });
         }
-        for player in game.away.roster() {
+        for player in game.away_roster() {
             let id = player.player_id();
 
             self.current_ratings
@@ -99,6 +104,22 @@ impl EloTracker {
                 rating: self.current_ratings[&id],
             });
         }
+    }
+
+    fn track_log_loss(&mut self, game: &GameObject, delta: f64) {
+        let p = prob(delta);
+
+        let a = if game.winner() == game.home_team_id() {
+            1
+        } else if game.winner() == game.away_team_id() {
+            0
+        } else {
+            panic!("💀  game doesnt have a winner that participated in the game.");
+        };
+
+        let m = Measurement::new(a, p);
+
+        self.log_loss.add_measurement(m);
     }
 
     // SERIALIZATION

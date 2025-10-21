@@ -1,5 +1,4 @@
 pub mod archive;
-pub mod box_score_builder;
 pub mod box_score_stat;
 pub mod from_value;
 pub mod player_box_score;
