@@ -53,22 +53,29 @@ pub(crate) async fn compare_and_fetch(
     season_id: SeasonId,
     kind: NBAStatKind,
     checksums: &ChecksumMap,
-) {
+) -> u8 {
     let source_path = nba_source_path(season_id, kind);
     let checksum_path = universal_nba_source_path(season_id, kind);
+
+    let checksum = read_checksum(&source_path).expect(
+        "💀 failed to read source data file. check that the program was initialized correctly",
+    );
+    let expected_checksum = checksums.get(&checksum_path);
+
     if !source_path.exists()
-        || read_checksum(&source_path).expect("💀 failed to read file data even though the path exists.")
-            != *checksums
-                .get(&checksum_path)
-                .expect("💀 failed to find checksum for an existent path. all checksums should be initialized")
+        || expected_checksum.is_none()
+        || checksum != *expected_checksum.unwrap()
     //this might fail on new records
     {
         if let Err(msg) = gather::fetch_and_save_nba_stats(season_id, kind).await {
             println!("{}", msg);
+            return 1;
         } else {
             println!("✅ successfully wrote {kind} data to file for the {season_id}");
+            return 1;
         }
     } else {
         println!("✅ bypassing fetching {kind} data for the {season_id}, checksums match. ");
+        return 0;
     }
 }

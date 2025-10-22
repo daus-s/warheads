@@ -1,5 +1,5 @@
 use crate::corrections::correction_builder::CorrectionBuilder;
-use crate::corrections::correction_loader::load_single_correction;
+use crate::corrections::correction_loader::{load_single_correction, CorrectionLoadingError};
 
 use crate::dapi::from_value::FromValue;
 use crate::dapi::player_box_score::PlayerBoxScore;
@@ -279,7 +279,6 @@ fn fields_to_team_box_score(
     let mut delete: bool = false;
     //take the preexisting corrections and apply them to the box score builder
     if let Ok(mut correction) = load_single_correction(&identity) {
-        println!("{:?}", correction);
         correction.correct_matchup(&mut visiting, &team_abbr);
 
         correction.correct_box_score_builder(&mut box_score_builder, &mut correction_builder);
@@ -289,16 +288,9 @@ fn fields_to_team_box_score(
 
     if delete {
         let file = nba_storage_file(identity.season_id, identity.game_id);
-        println!("{}", file.display());
 
         if file.exists() {
-            let res = fs::remove_file(&file);
-
-            if res.is_err() {
-                eprintln!("⚠️  failed to delete file {}", file.display());
-            } else {
-                eprintln!("✅ successfully deleted file {}", file.display());
-            }
+            let _ = fs::remove_file(&file);
         };
 
         Ok(None)

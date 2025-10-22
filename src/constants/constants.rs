@@ -1,1 +1,1 @@
-pub const BEGINNING: i32 = 2007;
+pub const BEGINNING: i32 = 1946;

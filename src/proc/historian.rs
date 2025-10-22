@@ -16,33 +16,35 @@ use crate::stats::season_period::minimum_spanning_era;
 pub async fn observe_nba() {
     let checksums = ChecksumMap::load().expect("💀 failed to load checksums");
 
+    let mut errors = 0;
+
     for year in nba_lifespan() {
         for era in minimum_spanning_era(year) {
-            compare_and_fetch(era, NBAStatKind::Player, &checksums).await;
-            compare_and_fetch(era, NBAStatKind::Team, &checksums).await;
+            errors += compare_and_fetch(era, NBAStatKind::Player, &checksums).await;
+            errors += compare_and_fetch(era, NBAStatKind::Team, &checksums).await;
         }
     }
 
-    match sign_nba() {
-        Ok(_) => println!(
-            "✅ successfully signed nba data with checksums in {}",
-            nba_checksum_path().display()
-        ),
-        Err(_) => eprintln!(
-            "❌ failed to sign nba data with checksums in {}",
-            nba_checksum_path().display()
-        ),
-    };
+    if errors > 0 {
+        match sign_nba() {
+            Ok(_) => println!(
+                "✅ successfully signed nba data with checksums in {}",
+                nba_checksum_path().display()
+            ),
+            Err(_) => eprintln!(
+                "❌ failed to sign nba data with checksums in {}",
+                nba_checksum_path().display()
+            ),
+        };
+    }
 }
 
 /// this module contains functions for writing the history of the nba stats
 /// you can build around this function but not from it... this is the one function to start the nba into memory then iterate over elo.
 pub fn chronicle_nba() {
-    store_nba_season(2007)
-
-    // for szn in nba_lifespan() {
-    //     save_nba_season(szn);
-    // }
+    for szn in nba_lifespan() {
+        store_nba_season(szn);
+    }
 }
 
 pub fn rate_nba() {
