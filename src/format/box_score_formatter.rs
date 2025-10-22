@@ -38,24 +38,10 @@ pub fn format_team_box_score(
     for pbs in box_score.roster() {
         writeln!(f, "{}", pbs)?;
     }
-    writeln!(
-        f,
-        "{}",
-        "=".repeat(
-            COL_NAME
-                + COL_PTS
-                + COL_FGS
-                + COL_3PS
-                + COL_FT
-                + COL_AST
-                + COL_REB
-                + COL_STL
-                + COL_BLK
-                + COL_TOV
-                + COL_FPTS
-                + 11 * 2
-        )
-    )?;
+    if box_score.roster().len() == 0 {
+        writeln!(f, "\n{}no player records\n", whitespace_n((WIDTH - 17) / 2))?;
+    }
+    writeln!(f, "{}", "=".repeat(WIDTH))?;
     writeln!(
         f,
         "totals:{}{}",
@@ -77,6 +63,19 @@ pub fn format_player_box_score(
         box_score.box_score().calculate_fantasy()
     )
 }
+
+const WIDTH: usize = COL_NAME
+    + COL_PTS
+    + COL_FGS
+    + COL_3PS
+    + COL_FT
+    + COL_AST
+    + COL_REB
+    + COL_STL
+    + COL_BLK
+    + COL_TOV
+    + COL_FPTS
+    + 11 * 2;
 
 const COL_NAME: usize = 25;
 const COL_PTS: usize = 8;

@@ -351,7 +351,7 @@ impl Debug for Correction {
                 LineUp => "lineup",
             },
             match self.delete {
-                true => "del".to_string(),
+                true => "to be deleted".to_string(),
                 false => format!(
                     "corrections: {}",
                     self.corrections

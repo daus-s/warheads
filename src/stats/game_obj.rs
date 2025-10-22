@@ -1,18 +1,24 @@
 use crate::corrections::correction_builder::CorrectionBuilder;
+
 use crate::dapi::player_box_score::PlayerBoxScore;
 use crate::dapi::team_box_score::TeamBoxScore;
+
+use crate::format::game_object_formatter::GameIdentity;
 use crate::stats::game_display::GameDisplay;
 use crate::stats::id::Identity;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::stat_column::StatColumn::{GAME_DATE, MATCHUP, WL};
 use crate::stats::visiting::Visiting;
+
 use crate::types::matchup::home_and_away;
 use crate::types::GameResult::{Loss, Win};
 use crate::types::{GameDate, GameId, Matchup, SeasonId, TeamId};
+
 use serde::{Deserialize, Serialize};
+
 use serde_json::Value::Null;
 
-#[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct GameObject {
     pub season_id: SeasonId,
     pub game_date: GameDate,
@@ -60,6 +66,13 @@ impl GameObject {
         if id1.game_date != id2.game_date {
             correction1.add_missing_field(GAME_DATE, Null);
             correction2.add_missing_field(GAME_DATE, Null);
+        }
+
+        //draconian yes, but if there isn't a roster for the team we're not gonna study it.
+        if game1.roster().len() == 0 || game2.roster().len() == 0 {
+            println!("No roster data available for one or both teams. {id1:?}, {id2:?}");
+            correction1.set_delete(true);
+            correction2.set_delete(true);
         }
 
         let mut matchup: Matchup = Default::default();
@@ -199,5 +212,27 @@ impl GameObject {
 
     pub fn away_roster(&self) -> &Vec<PlayerBoxScore> {
         self.away.roster()
+    }
+
+    pub fn game_identity(&self) -> GameIdentity {
+        let home = Identity {
+            season_id: self.season(),
+            player_id: None,
+            team_id: self.home_team_id(),
+            team_abbr: self.home().team_abbr(),
+            game_id: self.game_id(),
+            game_date: self.game_date,
+        };
+
+        let away = Identity {
+            season_id: self.season(),
+            player_id: None,
+            team_id: self.away_team_id(),
+            team_abbr: self.away().team_abbr(),
+            game_id: self.game_id(),
+            game_date: self.game_date,
+        };
+
+        GameIdentity::new(home, away)
     }
 }

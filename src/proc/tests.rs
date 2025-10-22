@@ -5,17 +5,23 @@ use crate::constants::paths::test;
 
 use crate::dapi::write::write_games;
 
+use crate::format::parse::parse_season;
+
 use crate::proc::gather::{player_games, team_games};
 use crate::proc::query::make_nba_request;
-use crate::proc::store::pair_off;
+use crate::proc::rip::season;
+use crate::proc::store::{pair_off, TeamGame};
 
 use crate::stats::game_obj::GameObject;
+use crate::stats::id::Identity;
 use crate::stats::nba_kind::NBAStatKind;
+use crate::stats::nba_stat::NBABoxScore;
 use crate::stats::season_period::SeasonPeriod;
 
 use crate::types::{GameId, SeasonId};
 
-use std::fs;
+use std::fs::{self, File};
+use std::io::Read;
 use std::path::PathBuf;
 use std::sync::Mutex;
 
@@ -25,7 +31,9 @@ static TEST: Lazy<String> = Lazy::new(test);
 static TEST_MUTEX: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
 
 #[cfg(test)]
-mod async_tests {
+mod test_injest {
+    use crate::dapi::team_box_score::TeamBoxScore;
+
     use super::*;
 
     #[tokio::test]
@@ -73,7 +81,7 @@ mod async_tests {
 
         pretty_assertions::assert_eq!(
             expected_team_file.trim_end(),
-            actual_team_file,
+            actual_team_file.trim_end(),
             "💀 team data download failed"
         );
 
@@ -110,13 +118,12 @@ mod async_tests {
         let actual_player_file =
             fs::read_to_string(&player_path).expect("💀 failed to read fetched player directory");
 
-        pretty_assertions::assert_eq!(expected_player_file.trim_end(), actual_player_file);
+        pretty_assertions::assert_eq!(
+            expected_player_file.trim_end(),
+            actual_player_file.trim_end(),
+            "💀 player data download failed"
+        );
     }
-}
-
-#[cfg(test)]
-mod test_injest {
-    use super::*;
 
     #[tokio::test]
     async fn test_workflow() {
@@ -143,7 +150,7 @@ mod test_injest {
         let to = String::from("04/30/2025");
 
         // TEAM //////////////////////////////////////////////////////////
-        let team_path = PathBuf::from(format!("{}/data/data/tg.json", *TEST));
+        let team_path = team_source_path();
 
         let team_response = make_nba_request(
             season,
@@ -167,7 +174,7 @@ mod test_injest {
         let expected_team_file =
             fs::read_to_string(PathBuf::from(format!("{}/data/expected_tg.json", *TEST))).expect(
                 &format!(
-                    "💀 failed to read test team data string: {}/data/expected_tg.json",
+                    "💀 failed to read expected team data string: {}/data/expected_tg.json",
                     *TEST,
                 ),
             );
@@ -199,14 +206,14 @@ mod test_injest {
         let player_json = serde_json::from_str(&player_body)
             .expect("💀 failed to parse json from nba team response");
 
-        let player_path = PathBuf::from(format!("{}/data/data/pg.json", *TEST));
+        let player_path = player_source_path();
 
-        assert!(write_games(&player_path, &player_json).is_ok());
+        let _ = write_games(&player_path, &player_json);
 
         let expected_player_file =
             fs::read_to_string(PathBuf::from(format!("{}/data/expected_pg.json", *TEST))).expect(
                 &format!(
-                    "💀 failed to read test player data string: {}/data/expected_pg.json",
+                    "💀 failed to read expected player data string: {}/data/expected_pg.json",
                     *TEST,
                 ),
             );
@@ -218,32 +225,38 @@ mod test_injest {
     }
 
     fn serialize() {
-        let period = SeasonId::from((2024, SeasonPeriod::PostSeason));
-
         let mut team_games_vec = Vec::new();
 
         let player_path = player_source_path();
 
-        let player_games_of_period = player_games(period, &player_path).unwrap_or_else(|e| {
-            panic!(
-                "{e}\n\
-                    💀 failed to load and parse player games as JSON.\n\
-                    run `cargo test checksum::assert_checksums`"
-            );
-        });
+        let player_games = get_season(&player_path, NBAStatKind::Player)
+            .into_iter()
+            .filter_map(|(id, box_score)| match box_score {
+                NBABoxScore::Player(player_box_score) => Some((id, player_box_score)),
+                NBABoxScore::Team(_team_box_score) => None,
+            });
 
         let team_path = team_source_path();
 
-        let team_games_of_period = team_games(period, &team_path, player_games_of_period)
-            .unwrap_or_else(|e| {
-                panic!(
-                    "{e}\n\
-                        💀 failed to load and parse team games as JSON.\n\
-                        run `cargo test checksum::assert_checksums`"
-                );
-            });
+        let mut team_games = get_season(&team_path, NBAStatKind::Team)
+            .into_iter()
+            .filter_map(|(id, box_score)| match box_score {
+                NBABoxScore::Team(team_box_score) => Some((id, team_box_score)),
+                NBABoxScore::Player(_player_box_score) => None,
+            })
+            .collect::<Vec<(Identity, TeamBoxScore)>>();
 
-        team_games_vec.extend(team_games_of_period);
+        for (player_identity, player_box_score) in player_games.into_iter() {
+            for (team_identity, team_box_score) in team_games.iter_mut() {
+                if player_identity.game_id == team_identity.game_id
+                    && player_identity.team_id == team_identity.team_id
+                {
+                    team_box_score.add_player_stats(player_box_score.clone());
+                }
+            }
+        }
+
+        team_games_vec.extend(team_games);
 
         let games =
             pair_off(team_games_vec).expect("💀 created test games with no corrections to make.");
@@ -296,41 +309,49 @@ mod test_injest {
 
 #[cfg(test)]
 mod tests {
+    use crate::dapi::team_box_score::TeamBoxScore;
+
     use super::*;
 
     #[test]
     fn test_serialize() {
         let _guard = TEST_MUTEX.lock().unwrap();
-        let period = SeasonId::from((2024, SeasonPeriod::PostSeason));
 
         let mut team_games_vec = Vec::new();
 
         let player_path = player_source_path();
 
-        let player_games_of_period = player_games(period, &player_path).unwrap_or_else(|e| {
-            panic!(
-                "{e}\n\
-                    💀 failed to load and parse player games as JSON.\n\
-                    run `cargo test checksum::assert_checksums`"
-            );
-        });
+        let player_games = get_season(&player_path, NBAStatKind::Player)
+            .into_iter()
+            .filter_map(|(id, box_score)| match box_score {
+                NBABoxScore::Player(player_box_score) => Some((id, player_box_score)),
+                NBABoxScore::Team(_team_box_score) => None,
+            });
 
         let team_path = team_source_path();
 
-        let team_games_of_period = team_games(period, &team_path, player_games_of_period)
-            .unwrap_or_else(|e| {
-                panic!(
-                    "{e}\n\
-                        💀 failed to load and parse team games as JSON.\n\
-                        run `cargo test checksum::assert_checksums`"
-                );
-            });
+        let mut team_games = get_season(&team_path, NBAStatKind::Team)
+            .into_iter()
+            .filter_map(|(id, box_score)| match box_score {
+                NBABoxScore::Team(team_box_score) => Some((id, team_box_score)),
+                NBABoxScore::Player(_player_box_score) => None,
+            })
+            .collect::<Vec<(Identity, TeamBoxScore)>>();
 
-        team_games_vec.extend(team_games_of_period);
+        for (player_identity, player_box_score) in player_games.into_iter() {
+            for (team_identity, team_box_score) in team_games.iter_mut() {
+                if player_identity.game_id == team_identity.game_id
+                    && player_identity.team_id == team_identity.team_id
+                {
+                    team_box_score.add_player_stats(player_box_score.clone());
+                }
+            }
+        }
 
-        let games = pair_off(team_games_vec).expect(
-            "💀 failed to create test games from test data. unexpectedly created corrections",
-        );
+        team_games_vec.extend(team_games);
+
+        let games =
+            pair_off(team_games_vec).expect("💀 created test games with no corrections to make.");
 
         for game in games.iter() {
             let path = storage_file(game.game_id());
@@ -419,4 +440,20 @@ fn read_directory(path: &PathBuf) -> Result<Vec<GameObject>, String> {
     }
 
     Ok(games)
+}
+
+fn get_season(path: &PathBuf, kind: NBAStatKind) -> Vec<(Identity, NBABoxScore)> {
+    let mut file = File::open(path).expect("failed to open test file");
+
+    let mut contents = String::new();
+
+    file.read_to_string(&mut contents)
+        .expect("failed to read test file to strings");
+
+    let json = serde_json::from_str(&contents).expect("failed to parse json");
+
+    let (rows, headers) = parse_season(json);
+
+    season(rows, headers, kind)
+        .expect("season has corrections when none are expected for this test data.")
 }

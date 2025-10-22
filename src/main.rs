@@ -6,7 +6,7 @@ async fn main() {
 
     // observe_nba().await;
 
-    // chronicle_nba().await;
+    chronicle_nba();
 
-    rate_nba();
+    // rate_nba();
 }

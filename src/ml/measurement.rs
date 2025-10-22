@@ -20,4 +20,14 @@ impl Measurement {
             * (self.actual as f64 * self.prob.ln()
                 + (1f64 - self.actual as f64) * (1f64 - self.prob).ln())
     }
+
+    pub fn classification_success(&self) -> bool {
+        if self.actual == 1 && self.prob > 0.5 || self.actual == 0 && self.prob < 0.5 {
+            true
+        } else if self.prob == 0.5 {
+            false //dont reward not making a prediction
+        } else {
+            false
+        }
+    }
 }

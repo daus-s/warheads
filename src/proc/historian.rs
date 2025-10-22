@@ -8,7 +8,7 @@ use crate::format::path_manager::nba_checksum_path;
 use crate::ml::elo_tracker::EloTracker;
 
 use crate::proc::hunting::compare_and_fetch;
-use crate::proc::store::save_nba_season;
+use crate::proc::store::store_nba_season;
 
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::season_period::minimum_spanning_era;
@@ -37,10 +37,12 @@ pub async fn observe_nba() {
 
 /// this module contains functions for writing the history of the nba stats
 /// you can build around this function but not from it... this is the one function to start the nba into memory then iterate over elo.
-pub async fn chronicle_nba() {
-    for szn in nba_lifespan() {
-        save_nba_season(szn).await;
-    }
+pub fn chronicle_nba() {
+    store_nba_season(2007)
+
+    // for szn in nba_lifespan() {
+    //     save_nba_season(szn);
+    // }
 }
 
 pub fn rate_nba() {

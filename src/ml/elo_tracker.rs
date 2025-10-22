@@ -17,6 +17,7 @@ use crate::types::PlayerId;
 use once_cell::sync::Lazy;
 
 use std::collections::HashMap;
+use std::fs;
 use std::path::PathBuf;
 
 pub struct EloTracker {
@@ -50,6 +51,10 @@ impl EloTracker {
                 let away_rating = game
                     .away()
                     .get_normalized_team_rating(&mut self.current_ratings);
+
+                if home_rating.is_nan() || away_rating.is_nan() {
+                    println!("{game:?}")
+                }
 
                 let delta = home_rating - away_rating;
 
@@ -126,22 +131,38 @@ impl EloTracker {
 
     //todo: add correct formating s.t. every row is the same number of characters for easy indexing
     pub fn save(&self) -> Result<(), String> {
-        let model_name = "elo";
+        let model_name = self.get_model_name();
 
-        let filename = Self::save_path(&format!("{model_name}.csv"));
+        let records_filename = Self::records_path(&format!("{model_name}.csv"));
 
-        let mut writer = EloWriter::new(filename).expect("💀 failed to create EloWriter");
+        let mut writer = EloWriter::new(records_filename).expect("💀 failed to create EloWriter");
 
         for record in &self.historical_ratings {
             let _ = writer.serialize_elo(&record);
         }
 
+        let results_filename = Self::results_path(&format!("{model_name}_results"));
+
+        let _ = fs::write(results_filename, format!("{}", self.log_loss));
+
         Ok(())
     }
 
-    fn save_path(filename: &str) -> PathBuf {
+    fn records_path(filename: &str) -> PathBuf {
         static DATA: Lazy<String> = Lazy::new(data);
 
-        PathBuf::from(format!("{}/nba/elo/{}", *DATA, filename))
+        PathBuf::from(format!("{}/nba/elo/records/{}", *DATA, filename))
+    }
+
+    /// results_path generates the path to where the model accuracy is stored.
+    fn results_path(filename: &str) -> PathBuf {
+        static DATA: Lazy<String> = Lazy::new(data);
+
+        PathBuf::from(format!("{}/nba/elo/results/{}", *DATA, filename))
+    }
+
+    //todo: implement get_model_name for custom models
+    fn get_model_name(&self) -> String {
+        "elo".to_string()
     }
 }

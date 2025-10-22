@@ -22,7 +22,7 @@ use indicatif::{ProgressBar, ProgressStyle};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-pub async fn save_nba_season(year: i32) {
+pub fn store_nba_season(year: i32) {
     let mut team_games = load_nba_season_from_source(year);
 
     match revise_nba_season(year, &mut team_games) {
@@ -40,38 +40,29 @@ pub async fn save_nba_season(year: i32) {
         }
     };
 
-    //correct any issues with pairing off
-    let games = match pair_off(team_games) {
-        Err(mut correction_builders) => {
-            println!(
-                "ℹ️  there are {} {} corrections to make for the {} season.",
-                correction_builders.len(),
-                Team,
-                season_fmt(year)
-            );
+    let pairs = pair_off(team_games);
 
-            let corrections: Vec<Correction> = correction_builders
-                .iter_mut()
-                .map(|corr| corr.create_and_save())
-                .collect();
+    if let Err(mut correction_builders) = pairs {
+        println!(
+            "ℹ️  there are {} {} corrections to make for the {} season.",
+            correction_builders.len(),
+            Team,
+            season_fmt(year)
+        );
 
-            let mut domain_archive: HashMap<Domain, PathBuf> =
-                typed_domain_archive_pairs(year, Team);
+        let _ = correction_builders
+            .iter_mut()
+            .map(|corr| corr.create_and_save());
 
-            corrections
-                .apply(&mut domain_archive)
-                .expect("💀 failed to apply corrections to team data.");
-
-            pair_off(load_nba_season_from_source(year))
-                .expect("💀 applied corrections successfully but did not resolve the issue.")
-        }
-        Ok(games) => games,
-    };
-
-    sub_save(games).await;
+        store_nba_season(year);
+    } else if let Ok(games) = pairs {
+        sub_save(games);
+    } else {
+        unreachable!("💀 ")
+    }
 }
 
-async fn sub_save(season: Vec<GameObject>) {
+fn sub_save(season: Vec<GameObject>) {
     // let client = crate::storage::client::create().await;
 
     let num_games = season.len();

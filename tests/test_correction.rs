@@ -4,7 +4,7 @@ use serde_json::Value;
 use std::collections::HashMap;
 use std::str::FromStr;
 use warheads::corrections::correction::Correction;
-use warheads::corrections::correction_loader::load_corrections_by_season;
+use warheads::corrections::correction_loader::load_season_corrections;
 use warheads::format::path_manager::nba_correction_dir;
 use warheads::stats::nba_kind::NBAStatKind::Player;
 use warheads::stats::serde_enum::SerdeEnum;
@@ -24,12 +24,13 @@ pub fn test_load_correction() {
 
     let mut expected_corrections = expected_corrections();
 
-    let mut actual_corrections = load_corrections_by_season(season_id, kind).unwrap_or_else(|e| {
-        panic!(
-            "Failed to load corrections from: {}\n{e}",
-            nba_correction_dir(season_id, kind)
-        )
-    });
+    let mut actual_corrections =
+        load_season_corrections(season_id.year(), kind).unwrap_or_else(|e| {
+            panic!(
+                "Failed to load corrections from: {}\n{e}",
+                nba_correction_dir(season_id, kind)
+            )
+        });
 
     expected_corrections.sort_by_key(|c| (c.game_id.clone(), c.player_id));
     actual_corrections.sort_by_key(|c| (c.game_id.clone(), c.player_id));
@@ -39,6 +40,7 @@ pub fn test_load_correction() {
 
 fn expected_corrections() -> Vec<Correction> {
     let season_id = SeasonId::from(21959);
+    let postseason_id = SeasonId::from(41959);
     let kind = Player;
 
     vec![
@@ -218,6 +220,24 @@ fn expected_corrections() -> Vec<Correction> {
                 let mut cs: HashMap<StatColumn, Value> = HashMap::new();
 
                 cs.insert(WL, Loss.evaluate());
+
+                cs
+            },
+        },
+        Correction {
+            game_id: GameId::from("0045900321"),
+            game_date: GameDate(NaiveDate::from_ymd_opt(1960, 03, 16).unwrap()),
+            season: postseason_id,
+            player_id: Some(PlayerId(77954)),
+            team_id: TeamId::from(1610612738),
+            team_abbr: "BOS".parse().unwrap(),
+            kind: kind,
+            period: postseason_id.period(),
+            delete: false,
+            corrections: {
+                let mut cs: HashMap<StatColumn, Value> = HashMap::new();
+
+                cs.insert(WL, Win.evaluate());
 
                 cs
             },

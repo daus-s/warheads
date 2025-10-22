@@ -10,7 +10,6 @@ use crate::proc::gather::{player_games, team_games};
 
 use crate::stats::id::Identity;
 use crate::stats::nba_kind::NBAStatKind;
-use crate::stats::nba_kind::NBAStatKind::{Player, Team};
 use crate::stats::season_period::minimum_spanning_era;
 
 use crate::types::SeasonId;
@@ -26,9 +25,7 @@ pub fn load_nba_season_from_source(year: i32) -> Vec<(Identity, TeamBoxScore)> {
     let mut team_games_vec = Vec::new();
 
     for period in minimum_spanning_era(year) {
-        let player_path = nba_source_path(period, Player);
-
-        let player_games_of_period = player_games(period, &player_path).unwrap_or_else(|e| {
+        let player_games_of_period = player_games(period).unwrap_or_else(|e| {
             panic!(
                 "{e}\n\
                 💀 failed to load and parse player games as JSON.\n\
@@ -36,16 +33,13 @@ pub fn load_nba_season_from_source(year: i32) -> Vec<(Identity, TeamBoxScore)> {
             );
         });
 
-        let team_path = nba_source_path(period, Team);
-
-        let team_games_of_period = team_games(period, &team_path, player_games_of_period)
-            .unwrap_or_else(|e| {
-                panic!(
-                    "{e}\n\
+        let team_games_of_period = team_games(period, player_games_of_period).unwrap_or_else(|e| {
+            panic!(
+                "{e}\n\
                     💀 failed to load and parse team games as JSON.\n\
                     run `cargo test checksum::assert_checksums`"
-                );
-            });
+            );
+        });
 
         team_games_vec.extend(team_games_of_period);
     }

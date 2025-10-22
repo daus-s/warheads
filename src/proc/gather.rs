@@ -17,29 +17,22 @@ use crate::stats::nba_stat::NBABoxScore::{Player, Team};
 
 use crate::types::SeasonId;
 
-pub fn player_games(
-    season: SeasonId,
-    path: &PathBuf,
-) -> Result<Vec<(Identity, PlayerBoxScore)>, ReadProcessError> {
-    Ok(
-        read_and_process_nba_games(season, NBAStatKind::Player, path)
-            .map_err(|e| e)?
-            .into_iter()
-            .filter_map(|(id, stat)| match stat {
-                Player(box_score) => Some((id, box_score)),
-                _ => None,
-            })
-            .collect::<Vec<(Identity, PlayerBoxScore)>>(),
-    )
+pub fn player_games(season: SeasonId) -> Result<Vec<(Identity, PlayerBoxScore)>, ReadProcessError> {
+    Ok(read_and_process_nba_games(season, NBAStatKind::Player)?
+        .into_iter()
+        .filter_map(|(id, stat)| match stat {
+            Player(box_score) => Some((id, box_score)),
+            _ => None,
+        })
+        .collect::<Vec<(Identity, PlayerBoxScore)>>())
 }
 
 pub fn team_games(
     season: SeasonId,
-    path: &PathBuf,
     roster: Vec<(Identity, PlayerBoxScore)>,
 ) -> Result<Vec<(Identity, TeamBoxScore)>, ReadProcessError> {
     let mut games: Vec<(Identity, TeamBoxScore)> =
-        read_and_process_nba_games(season, NBAStatKind::Team, path)?
+        read_and_process_nba_games(season, NBAStatKind::Team)?
             .into_iter()
             .filter_map(|(id, stat)| match stat {
                 Team(t) => Some((id, t)),
