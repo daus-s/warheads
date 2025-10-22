@@ -52,10 +52,6 @@ impl EloTracker {
                     .away()
                     .get_normalized_team_rating(&mut self.current_ratings);
 
-                if home_rating.is_nan() || away_rating.is_nan() {
-                    println!("{game:?}")
-                }
-
                 let delta = home_rating - away_rating;
 
                 //R'=R+K∙(S-E) where s is the score and e is the expected (1 for win - win prob)
