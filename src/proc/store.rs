@@ -1,8 +1,5 @@
-use crate::corrections::correction::Correction;
 use crate::corrections::correction_builder::{self, CorrectionBuilder};
-use crate::corrections::corrector::Corrector;
 
-use crate::dapi::archive::typed_domain_archive_pairs;
 use crate::dapi::team_box_score::TeamBoxScore;
 
 use crate::format::season::season_fmt;
@@ -10,7 +7,6 @@ use crate::format::season::season_fmt;
 use crate::proc::hunting::load_nba_season_from_source;
 use crate::proc::revise::revise_nba_season;
 
-use crate::stats::domain::Domain;
 use crate::stats::game_obj::GameObject;
 use crate::stats::id::Identity;
 use crate::stats::nba_kind::NBAStatKind::{Player, Team};
@@ -49,7 +45,7 @@ pub fn store_nba_season(year: i32) {
             season_fmt(year)
         );
 
-        for mut correction in correction_builders {
+        for correction in correction_builders.iter_mut() {
             correction.create_and_save();
         }
 

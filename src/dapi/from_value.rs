@@ -182,7 +182,7 @@ impl FromValue for HashMap<StatColumn, Value> {
 
         match GameResult::from_str(s) {
             Ok(g) => Ok(g),
-            Err(e) => Err(WL),
+            Err(_) => Err(WL),
         }
     }
 

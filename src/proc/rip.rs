@@ -1,5 +1,5 @@
 use crate::corrections::correction_builder::CorrectionBuilder;
-use crate::corrections::correction_loader::{load_single_correction, CorrectionLoadingError};
+use crate::corrections::correction_loader::load_single_correction;
 
 use crate::dapi::from_value::FromValue;
 use crate::dapi::player_box_score::PlayerBoxScore;
