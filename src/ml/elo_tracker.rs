@@ -46,19 +46,7 @@ impl EloTracker {
             }
 
             for game in games {
-                let home_rating = game
-                    .home()
-                    .get_normalized_team_rating(&mut self.current_ratings);
-                let away_rating = game
-                    .away()
-                    .get_normalized_team_rating(&mut self.current_ratings);
-
-                let delta = home_rating - away_rating;
-
-                //R'=R+K∙(S-E) where s is the score and e is the expected (1 for win - win prob)
-
-                self.update_ratings(&game, delta);
-                self.track_log_loss(&game, delta);
+                self.update_ratings(&game);
             }
         }
 
@@ -66,10 +54,22 @@ impl EloTracker {
     }
 
     //todo: implement a rating share function as a parameter
-    fn update_ratings(&mut self, game: &GameObject, delta: f64) {
-        let mut home_step = (elo::K as f64 * (1.0 - prob(delta))) as i64; //this is the winners step, the losers step is -step
+    fn update_ratings(&mut self, game: &GameObject) {
+        let home_rating = game
+            .home()
+            .get_normalized_team_rating(&mut self.current_ratings);
+        let away_rating = game
+            .away()
+            .get_normalized_team_rating(&mut self.current_ratings);
+
+        let delta = home_rating - away_rating;
+
+        //R'=R+K∙(S-E) where s is the score and e is the expected (1 for win, 0 for loss - win probability)
+
+        let mut home_step = (elo::K as f64 * (1.0 - prob(delta))) as i64;
         let mut away_step = (elo::K as f64 * (1.0 - prob(-1f64 * delta))) as i64;
 
+        //this is the winners step, the losers step is -step
         if game.winner() == game.home_team_id() {
             away_step = -1 * (away_step as i64);
         } else if game.winner() == game.away_team_id() {
@@ -78,7 +78,7 @@ impl EloTracker {
             panic!("💀 Game must have a winner that was a participant. Somehow passed the win/loss check in GameObject::try_create");
         }
 
-        for player in game.away_roster() {
+        for player in game.home_roster() {
             let id = player.player_id();
 
             self.current_ratings
@@ -106,6 +106,8 @@ impl EloTracker {
                 rating: self.current_ratings[&id],
             });
         }
+
+        self.track_log_loss(game, delta);
     }
 
     fn track_log_loss(&mut self, game: &GameObject, delta: f64) {
@@ -126,7 +128,6 @@ impl EloTracker {
 
     // SERIALIZATION
 
-    //todo: add correct formating s.t. every row is the same number of characters for easy indexing
     pub fn save(&self) -> Result<(), String> {
         let model_name = self.get_model_name();
 
