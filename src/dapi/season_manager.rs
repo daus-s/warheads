@@ -111,3 +111,33 @@ pub fn nba_lifespan_period() -> Vec<SeasonId> {
 
     seasons
 }
+
+pub fn get_current_era() -> SeasonId {
+    let DestructuredDateTime {
+        year: curr_year,
+        month,
+        day,
+    } = destructure_dt(Local::now());
+
+    let prev_year = curr_year - 1;
+
+    match month {
+        1 => SeasonId::from((prev_year, RegularSeason)),
+        2 => SeasonId::from((prev_year, RegularSeason)),
+        3 => SeasonId::from((prev_year, RegularSeason)),
+        4 => match day {
+            1..=14 => SeasonId::from((prev_year, RegularSeason)),
+            15..=17 => SeasonId::from((prev_year, PlayIn)),
+            18..=30 => SeasonId::from((prev_year, PostSeason)),
+            _ => unreachable!("💀 30 days in April"),
+        },
+        5..=9 => SeasonId::from((prev_year, PostSeason)),
+        10 => match day {
+            1..=20 => SeasonId::from((curr_year, PreSeason)),
+            21..=31 => SeasonId::from((curr_year, RegularSeason)),
+            _ => unreachable!("💀 31 days in October."),
+        },
+        11..=12 => SeasonId::from((curr_year, PreSeason)),
+        _ => unreachable!("💀 12 months in a year."),
+    }
+}
