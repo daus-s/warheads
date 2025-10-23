@@ -1,28 +1,41 @@
 use crate::checksum::checksum_map::ChecksumMap;
 use crate::checksum::sign::sign_nba;
 
-use crate::dapi::season_manager::nba_lifespan;
+use crate::dapi::currency::source_data_current;
+use crate::dapi::season_manager::{nba_lifespan, nba_lifespan_period};
 
 use crate::format::path_manager::nba_checksum_path;
 
 use crate::ml::elo_tracker::EloTracker;
 
+use crate::proc::gather::fetch_and_save_nba_stats;
 use crate::proc::hunting::compare_and_fetch;
 use crate::proc::store::store_nba_season;
 
 use crate::stats::nba_kind::NBAStatKind;
-use crate::stats::season_period::minimum_spanning_era;
 
 pub async fn observe_nba() {
     let checksums = ChecksumMap::load().expect("💀 failed to load checksums");
 
     let mut errors = 0;
 
-    for year in nba_lifespan() {
-        for era in minimum_spanning_era(year) {
-            errors += compare_and_fetch(era, NBAStatKind::Player, &checksums).await;
-            errors += compare_and_fetch(era, NBAStatKind::Team, &checksums).await;
-        }
+    let eras = nba_lifespan_period();
+
+    println!("Eras: {:?}", eras);
+
+    for era in &eras[0..eras.len() - 1] {
+        errors += compare_and_fetch(*era, NBAStatKind::Player, &checksums).await;
+        errors += compare_and_fetch(*era, NBAStatKind::Team, &checksums).await;
+    }
+
+    let current_era = eras[eras.len() - 1];
+
+    if !source_data_current() {
+        let _ = fetch_and_save_nba_stats(current_era, NBAStatKind::Player).await;
+        let _ = fetch_and_save_nba_stats(current_era, NBAStatKind::Team).await;
+
+        errors += 1;
+        errors += 1;
     }
 
     if errors > 0 {

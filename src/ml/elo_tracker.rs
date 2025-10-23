@@ -38,7 +38,8 @@ impl EloTracker {
     pub fn process_elo(&mut self) -> Result<(), ()> {
         // todo: assign elo values to players on a game by game basis
         for period in nba_lifespan_period() {
-            let mut games = read_nba_season(period).map_err(|e| println!("NBAReadError: {}", e))?;
+            let mut games =
+                read_nba_season(period).map_err(|e| println!("❗ NBAReadError:\n{}", e))?;
 
             if !games.is_sorted_by_key(|game| game.game_date.0) {
                 games.sort_by_key(|game| game.game_date.0);

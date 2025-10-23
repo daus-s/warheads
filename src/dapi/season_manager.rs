@@ -92,11 +92,11 @@ pub fn nba_lifespan_period() -> Vec<SeasonId> {
                     seasons.push(SeasonId::from((curr_year, PreSeason)));
                 }
                 21..=31 => {
+                    seasons.push(SeasonId::from((curr_year, PreSeason)));
                     seasons.push(SeasonId::from((curr_year, RegularSeason)));
                 }
                 _ => unreachable!("💀 31 days in April."),
             }
-            seasons.push(SeasonId::from((curr_year, PreSeason)));
         }
         11..=12 => {
             seasons.push(SeasonId::from((prev_year, PreSeason)));

@@ -4,6 +4,7 @@
 use std::fs;
 
 use crate::stats::nba_kind::NBAStatKind;
+use crate::types::GameDate;
 use crate::{dapi::season_manager::get_current_era, format::path_manager::nba_source_path};
 
 pub fn source_data_current() -> bool {
@@ -15,8 +16,7 @@ pub fn source_data_current() -> bool {
     let team_contents = fs::read_to_string(team_path);
     let player_contents = fs::read_to_string(player_path);
 
-    let today = chrono::Utc::now().date_naive().to_string(); // yyyy-mm-dd
-    println!("searching source file for date: {}", today);
+    let today = GameDate::today().to_string(); // yyyy-mm-dd
 
     if let Err(_) = team_contents {
         return false;
