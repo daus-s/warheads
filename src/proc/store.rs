@@ -20,7 +20,6 @@ use crate::types::GameId;
 use indicatif::{ProgressBar, ProgressStyle};
 
 use std::collections::HashMap;
-use std::path::PathBuf;
 
 pub fn store_nba_season(year: i32) {
     let mut team_games = load_nba_season_from_source(year);
@@ -50,9 +49,9 @@ pub fn store_nba_season(year: i32) {
             season_fmt(year)
         );
 
-        let _ = correction_builders
-            .iter_mut()
-            .map(|corr| corr.create_and_save());
+        for mut correction in correction_builders {
+            correction.create_and_save();
+        }
 
         store_nba_season(year);
     } else if let Ok(games) = pairs {
@@ -74,6 +73,8 @@ fn sub_save(season: Vec<GameObject>) {
     let szn = season[0].season().year();
 
     let pb = ProgressBar::new(num_games as u64);
+
+    // todo: add status like (loading, parsing, correcting, compiling, saving)
 
     pb.set_style(
         ProgressStyle::default_bar()
@@ -124,7 +125,7 @@ pub(crate) fn pair_off(games: Vec<TeamGame>) -> Result<Vec<GameObject>, Vec<Corr
     for (id, pair) in pairs.iter() {
         match pair {
             (Some(game), None) | (None, Some(game)) => {
-                eprintln!(
+                println!(
                     "⚠️ unpaired game: {} season: {}",
                     id,
                     pair.0.as_ref().unwrap().0.season_id
