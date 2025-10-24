@@ -55,7 +55,7 @@ pub async fn fetch_and_save_nba_stats(season: SeasonId, stat: NBAStatKind) -> Re
 
     let (year, _period) = season.destructure();
 
-    match query::query_nba(season, stat).await {
+    match query::query_nba_history(season, stat).await {
         Ok(response_data) => match write_games(&file_path, &response_data) {
             Ok(_) => {
                 println!(

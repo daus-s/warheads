@@ -41,6 +41,18 @@ impl<'de> Deserialize<'de> for GameDate {
     }
 }
 
+impl From<&str> for GameDate {
+    fn from(s: &str) -> Self {
+        if let Ok(date) = NaiveDate::parse_from_str(s, "%Y-%m-%d") {
+            GameDate(date)
+        } else if let Ok(date) = NaiveDate::parse_from_str(s, "%m/%d/%Y") {
+            GameDate(date)
+        } else {
+            GameDate(NaiveDate::MIN)
+        }
+    }
+}
+
 impl Debug for GameDate {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let formatted_date = self.0.format("%Y-%m-%d").to_string();

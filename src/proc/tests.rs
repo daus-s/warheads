@@ -8,7 +8,7 @@ use crate::dapi::write::write_games;
 use crate::format::parse::parse_season;
 
 use crate::proc::gather::{player_games, team_games};
-use crate::proc::query::make_nba_request;
+use crate::proc::query::make_nba_history_request;
 use crate::proc::rip::season;
 use crate::proc::store::{pair_off, TeamGame};
 
@@ -32,7 +32,7 @@ static TEST_MUTEX: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
 
 #[cfg(test)]
 mod test_injest {
-    use crate::dapi::team_box_score::TeamBoxScore;
+    use crate::{dapi::team_box_score::TeamBoxScore, types::GameDate};
 
     use super::*;
 
@@ -43,13 +43,13 @@ mod test_injest {
         // test request info
         // url: https://www.nba.com/stats/teams/boxscores?Season=2024-25&SeasonType=Playoffs&DateFrom=04%2F26%2F2025&DateTo=04%2F30%2F2025
 
-        let from = String::from("04/26/2025");
-        let to = String::from("04/30/2025");
+        let from = GameDate::from("04/26/2025");
+        let to = GameDate::from("04/30/2025");
 
         // TEAM //////////////////////////////////////////////////////////
         let team_path = PathBuf::from(format!("{}/data/data/tg.json", *TEST));
 
-        let team_response = make_nba_request(
+        let team_response = make_nba_history_request(
             season,
             NBAStatKind::Team,
             Some(from.clone()),
@@ -86,7 +86,7 @@ mod test_injest {
         );
 
         // PLAYER //////////////////////////////////////////////////////////
-        let player_response = make_nba_request(
+        let player_response = make_nba_history_request(
             season,
             NBAStatKind::Player,
             Some(from.clone()),
@@ -146,13 +146,13 @@ mod test_injest {
         // test request info
         // url: https://www.nba.com/stats/teams/boxscores?Season=2024-25&SeasonType=Playoffs&DateFrom=04%2F26%2F2025&DateTo=04%2F30%2F2025
 
-        let from = String::from("04/26/2025");
-        let to = String::from("04/30/2025");
+        let from = GameDate::from("04/26/2025");
+        let to = GameDate::from("04/30/2025");
 
         // TEAM //////////////////////////////////////////////////////////
         let team_path = team_source_path();
 
-        let team_response = make_nba_request(
+        let team_response = make_nba_history_request(
             season,
             NBAStatKind::Team,
             Some(from.clone()),
@@ -189,7 +189,7 @@ mod test_injest {
         );
 
         // PLAYER //////////////////////////////////////////////////////////
-        let player_response = make_nba_request(
+        let player_response = make_nba_history_request(
             season,
             NBAStatKind::Player,
             Some(from.clone()),

@@ -1,5 +1,6 @@
 **/target/
 **/.env
+**/headers.json
 **/Cargo.lock
 
 #s3 utils that are unneeded in the repo
