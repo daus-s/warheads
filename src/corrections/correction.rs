@@ -65,9 +65,6 @@ impl Correction {
 
     /// Saves the correction to the file:
     /// `corrections/{season_file}/{NBAStatType}/{}.json`
-    ///
-    /// This is a private function and is called when `fn create ->` is completed.
-    ///
     pub fn save(&self) -> io::Result<()> {
         let path = nba_correction_dir(self.season, self.kind);
 
@@ -354,7 +351,7 @@ impl Debug for Correction {
                 LineUp => "lineup",
             },
             match self.delete {
-                true => "del".to_string(),
+                true => "to be deleted".to_string(),
                 false => format!(
                     "corrections: {}",
                     self.corrections

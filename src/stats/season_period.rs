@@ -4,14 +4,14 @@ use crate::types::SeasonId;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Formatter};
 
-#[derive(Clone, Copy, PartialEq, Serialize, Deserialize, Eq, Hash, Debug)]
+#[derive(Clone, Copy, PartialEq, PartialOrd, Serialize, Deserialize, Eq, Hash, Debug)]
 #[serde(rename_all = "PascalCase")]
 pub enum SeasonPeriod {
     PreSeason,
     RegularSeason,
-    PostSeason,
+    NBACup, //hopefully ignore
     PlayIn, //todo
-    NBACup,
+    PostSeason,
     AllStarGame, //ignore
 }
 
@@ -21,7 +21,7 @@ impl SeasonPeriod {
             SeasonPeriod::PreSeason => 10_000,
             SeasonPeriod::RegularSeason => 20_000,
             SeasonPeriod::PostSeason => 40_000,
-            SeasonPeriod::PlayIn => 60_000,
+            SeasonPeriod::PlayIn => 50_000,
             SeasonPeriod::NBACup => 20_000,
             SeasonPeriod::AllStarGame => 30_000,
         }

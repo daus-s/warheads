@@ -23,10 +23,10 @@ static DATA: Lazy<String> = Lazy::new(data);
 ///
 /// **returns**
 ///
-/// `data/nba/data/{team or players}/{year}/{period}_{team or player}.json`
-pub fn nba_data_path(season: SeasonId, kind: NBAStatKind) -> PathBuf {
+/// `data/nba/source/{team or players}/{year}/{period}_{team or player}.json`
+pub fn nba_source_path(season: SeasonId, kind: NBAStatKind) -> PathBuf {
     PathBuf::from(format!(
-        "{}/nba/data/{}/{}/{}_{}",
+        "{}/nba/source/{}/{}/{}_{}",
         *DATA,
         kind.path_specifier(),
         season_path(season),
@@ -35,9 +35,9 @@ pub fn nba_data_path(season: SeasonId, kind: NBAStatKind) -> PathBuf {
     ))
 }
 
-pub fn universal_nba_data_path(season: SeasonId, kind: NBAStatKind) -> PathBuf {
+pub fn universal_nba_source_path(season: SeasonId, kind: NBAStatKind) -> PathBuf {
     PathBuf::from(format!(
-        "nba/data/{}/{}/{}_{}",
+        "nba/source/{}/{}/{}_{}",
         kind.path_specifier(),
         season_path(season),
         season.period().path_specifier(),
@@ -96,10 +96,10 @@ pub fn nba_storage_path(season_id: SeasonId) -> PathBuf {
     PathBuf::from(s)
 }
 
-pub fn nba_storage_file(id: (SeasonId, GameId)) -> PathBuf {
-    let s = format!("{}", id.1);
+pub fn nba_storage_file(season_id: SeasonId, game_id: GameId) -> PathBuf {
+    let s = format!("{}", game_id); // 24600001 -> 0024600001
 
-    let mut path = nba_storage_path(id.0);
+    let mut path = nba_storage_path(season_id);
 
     path.push(s);
 

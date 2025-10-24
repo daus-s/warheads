@@ -10,6 +10,14 @@ use std::str::FromStr;
 #[derive(Clone, Copy, Eq, PartialEq, Hash)]
 pub struct GameDate(pub NaiveDate);
 
+impl GameDate {
+    pub(crate) fn today() -> Self {
+        let naive_date = chrono::Utc::now().date_naive();
+
+        GameDate(naive_date)
+    }
+}
+
 impl FromStr for GameDate {
     type Err = String;
 

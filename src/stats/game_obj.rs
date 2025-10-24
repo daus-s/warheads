@@ -1,20 +1,28 @@
 use crate::corrections::correction_builder::CorrectionBuilder;
+
+use crate::dapi::player_box_score::PlayerBoxScore;
 use crate::dapi::team_box_score::TeamBoxScore;
+
+use crate::format::game_object_formatter::GameIdentity;
 use crate::stats::game_display::GameDisplay;
 use crate::stats::id::Identity;
 use crate::stats::nba_kind::NBAStatKind;
-use crate::stats::stat_column::StatColumn::{GAME_DATE, MATCHUP};
+use crate::stats::stat_column::StatColumn::{GAME_DATE, MATCHUP, WL};
 use crate::stats::visiting::Visiting;
+
 use crate::types::matchup::home_and_away;
-use crate::types::{GameDate, GameId, Matchup, SeasonId};
+use crate::types::GameResult::{Loss, Win};
+use crate::types::{GameDate, GameId, Matchup, SeasonId, TeamId};
+
 use serde::{Deserialize, Serialize};
+
 use serde_json::Value::Null;
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct GameObject {
-    season_id: SeasonId,
-    game_date: GameDate,
-    game_id: GameId,
+    pub season_id: SeasonId,
+    pub game_date: GameDate,
+    pub game_id: GameId,
 
     home: TeamBoxScore,
     away: TeamBoxScore,
@@ -50,9 +58,21 @@ impl GameObject {
             panic!("💀 mismatched GameId's or SeasonId's in try_create.")
         }
 
+        if game1.box_score().wl() == game2.box_score().wl() {
+            correction1.add_missing_field(WL, Null);
+            correction2.add_missing_field(WL, Null);
+        }
+
         if id1.game_date != id2.game_date {
             correction1.add_missing_field(GAME_DATE, Null);
             correction2.add_missing_field(GAME_DATE, Null);
+        }
+
+        //draconian yes, but if there isn't a roster for the team we're not gonna study it.
+        if game1.roster().len() == 0 || game2.roster().len() == 0 {
+            println!("No roster data available for one or both teams. {id1:?}, {id2:?}");
+            correction1.set_delete(true);
+            correction2.set_delete(true);
         }
 
         let mut matchup: Matchup = Default::default();
@@ -153,5 +173,66 @@ impl GameObject {
     /// returns the moment (season and game) of the specific game.
     pub fn moment(&self) -> (SeasonId, GameId) {
         (self.season_id, self.game_id)
+    }
+
+    pub fn winner(&self) -> TeamId {
+        let home = self.home.box_score();
+        let away = self.away.box_score();
+
+        assert_ne!(home.wl(), away.wl());
+
+        if *home.wl() == Win && *away.wl() == Loss {
+            self.home.team_id
+        } else if *away.wl() == Win && *home.wl() == Loss {
+            self.away.team_id
+        } else {
+            panic!("💀 if this error is arising check that your input box scores have opposite game result states to this function")
+        }
+    }
+
+    pub fn home(&self) -> &TeamBoxScore {
+        &self.home
+    }
+
+    pub fn away(&self) -> &TeamBoxScore {
+        &self.away
+    }
+
+    pub fn home_team_id(&self) -> TeamId {
+        self.home.team_id
+    }
+
+    pub fn away_team_id(&self) -> TeamId {
+        self.away.team_id
+    }
+
+    pub fn home_roster(&self) -> &Vec<PlayerBoxScore> {
+        self.home.roster()
+    }
+
+    pub fn away_roster(&self) -> &Vec<PlayerBoxScore> {
+        self.away.roster()
+    }
+
+    pub fn game_identity(&self) -> GameIdentity {
+        let home = Identity {
+            season_id: self.season(),
+            player_id: None,
+            team_id: self.home_team_id(),
+            team_abbr: self.home().team_abbr(),
+            game_id: self.game_id(),
+            game_date: self.game_date,
+        };
+
+        let away = Identity {
+            season_id: self.season(),
+            player_id: None,
+            team_id: self.away_team_id(),
+            team_abbr: self.away().team_abbr(),
+            game_id: self.game_id(),
+            game_date: self.game_date,
+        };
+
+        GameIdentity::new(home, away)
     }
 }

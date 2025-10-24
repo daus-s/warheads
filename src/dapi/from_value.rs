@@ -14,19 +14,13 @@ impl FromValue for HashMap<StatColumn, Value> {
                 Ok(season_id) => Ok(season_id),
                 Err(_) => Err(SEASON_ID),
             },
-            None => {
-                eprintln!("\tℹ️ failed to get a SeasonId from the stat map.");
-
-                Err(SEASON_ID)
-            }
+            None => Err(SEASON_ID),
         }
     }
     fn player_id(&self) -> Result<PlayerId, StatColumn> {
         let value = match self.get(&PLAYER_ID) {
             Some(x) => x,
             None => {
-                eprintln!("\tℹ️ failed to get a PlayerId from the stat map.");
-
                 return Err(PLAYER_ID);
             }
         };
@@ -34,8 +28,6 @@ impl FromValue for HashMap<StatColumn, Value> {
         let u = match value.as_u64() {
             Some(u) => u,
             None => {
-                eprintln!("\tℹ️ PlayerId is not a JSON Number (u64).");
-
                 return Err(PLAYER_ID);
             }
         };
@@ -47,8 +39,6 @@ impl FromValue for HashMap<StatColumn, Value> {
         let value = match self.get(&PLAYER_NAME) {
             Some(x) => x,
             None => {
-                eprintln!("\tℹ️ failed to get a PlayerName from the stat map.");
-
                 return Err(PLAYER_NAME);
             }
         };
@@ -56,8 +46,6 @@ impl FromValue for HashMap<StatColumn, Value> {
         let s = match value.as_str() {
             Some(x) => x,
             None => {
-                eprintln!("\tℹ️ PlayerName is not a JSON String.");
-
                 return Err(PLAYER_NAME);
             }
         };
@@ -69,8 +57,6 @@ impl FromValue for HashMap<StatColumn, Value> {
         let value = match self.get(&TEAM_ID) {
             Some(v) => v,
             None => {
-                eprintln!("\tℹ️ failed to get a TeamId from the stat map.");
-
                 return Err(TEAM_ID);
             }
         };
@@ -78,8 +64,6 @@ impl FromValue for HashMap<StatColumn, Value> {
         let u = match value.as_u64() {
             Some(u) => u,
             None => {
-                eprintln!("\tℹ️ TeamId is not an unsigned JSON number.");
-
                 return Err(TEAM_ID);
             }
         };
@@ -91,8 +75,6 @@ impl FromValue for HashMap<StatColumn, Value> {
         let value = match self.get(&TEAM_ABBREVIATION) {
             Some(v) => v,
             None => {
-                eprintln!("\tℹ️ failed to get a TeamAbbreviation from the stat map.");
-
                 return Err(TEAM_ABBREVIATION);
             }
         };
@@ -100,8 +82,6 @@ impl FromValue for HashMap<StatColumn, Value> {
         let s = match value.as_str() {
             Some(s) => s,
             None => {
-                eprintln!("\tℹ️ TeamAbbreviation is not a JSON String.");
-
                 return Err(TEAM_ABBREVIATION);
             }
         };
@@ -113,8 +93,6 @@ impl FromValue for HashMap<StatColumn, Value> {
         let value = match self.get(&TEAM_NAME) {
             Some(v) => v,
             None => {
-                eprintln!("\tℹ️ failed to get a TeamName from the stat map.");
-
                 return Err(TEAM_NAME);
             }
         };
@@ -122,19 +100,13 @@ impl FromValue for HashMap<StatColumn, Value> {
         match value {
             Value::Null => Err(TEAM_NAME),
             Value::String(s) => Ok(TeamName(s.to_owned())),
-            _ => {
-                eprintln!("\tℹ️ TeamName is not a JSON String.");
-
-                Err(TEAM_NAME)
-            }
+            _ => Err(TEAM_NAME),
         }
     }
 
     fn game_id(&self) -> Result<GameId, StatColumn> {
         let value = match self.get(&GAME_ID) {
             None => {
-                eprintln!("\tℹ️ failed to get a GameId from the stat map.");
-
                 return Err(GAME_ID);
             }
             Some(v) => v,
@@ -143,8 +115,6 @@ impl FromValue for HashMap<StatColumn, Value> {
         let s = match value.as_str() {
             Some(s) => s,
             None => {
-                eprintln!("\tℹ️ GameId is not a JSON String.");
-
                 return Err(GAME_ID);
             }
         };
@@ -160,8 +130,6 @@ impl FromValue for HashMap<StatColumn, Value> {
         let value = match self.get(&GAME_DATE) {
             Some(x) => x,
             None => {
-                eprintln!("\tℹ️ failed to get a GameDate from the stat map.");
-
                 return Err(GAME_DATE);
             }
         };
@@ -169,8 +137,6 @@ impl FromValue for HashMap<StatColumn, Value> {
         let d = match value_to_date(value) {
             Some(x) => x,
             None => {
-                eprintln!("\tℹ️ failed to parse GameDate from the JSON String.");
-
                 return Err(GAME_DATE);
             }
         };
@@ -182,8 +148,6 @@ impl FromValue for HashMap<StatColumn, Value> {
         let value = match self.get(&MATCHUP) {
             Some(x) => x,
             None => {
-                eprintln!("\tℹ️ failed to get a MatchupString from the stat map.");
-
                 return Err(MATCHUP);
             }
         };
@@ -191,19 +155,13 @@ impl FromValue for HashMap<StatColumn, Value> {
         let s = match value.as_str() {
             Some(x) => x,
             None => {
-                eprintln!("\tℹ️ MatchupString is not a JSON String.");
-
                 return Err(MATCHUP);
             }
         };
 
         match s.parse::<Matchup>() {
             Ok(s) => Ok(s),
-            Err(_) => {
-                eprintln!("\tℹ️ failed to parse MatchupString from the JSON String.");
-
-                Err(MATCHUP)
-            }
+            Err(_) => Err(MATCHUP),
         }
     }
 
@@ -211,8 +169,6 @@ impl FromValue for HashMap<StatColumn, Value> {
         let value = match self.get(&WL) {
             Some(x) => x,
             None => {
-                eprintln!("\tℹ️ failed to get a GameResult from the stat map.");
-
                 return Err(WL);
             }
         };
@@ -220,19 +176,13 @@ impl FromValue for HashMap<StatColumn, Value> {
         let s = match value.as_str() {
             Some(x) => x,
             None => {
-                eprintln!("\tℹ️ GameResult is not a JSON String.");
-
                 return Err(WL);
             }
         };
 
         match GameResult::from_str(s) {
             Ok(g) => Ok(g),
-            Err(e) => {
-                eprintln!("\tℹ️ failed to parse a GameResult from the JSON String: {e}");
-
-                Err(WL)
-            }
+            Err(_) => Err(WL),
         }
     }
 
@@ -240,8 +190,6 @@ impl FromValue for HashMap<StatColumn, Value> {
         let value = match self.get(&MIN) {
             Some(x) => x,
             None => {
-                eprintln!("\tℹ️ failed to get a Minutes from the stat map.");
-
                 return Err(MIN);
             }
         };
@@ -249,11 +197,7 @@ impl FromValue for HashMap<StatColumn, Value> {
         match value.as_u64() {
             Some(u) => Ok(Minutes(u as u8)), // this cast is safe, the longest NBA game was 78 minutes. source:
             // https://www.guinnessworldrecords.com/world-records/428821-longest-nba-basketball-game
-            None => {
-                eprintln!("\tℹ️ Minutes is not a JSON Number.");
-
-                Err(MIN)
-            }
+            None => Err(MIN),
         }
     }
 
@@ -261,24 +205,14 @@ impl FromValue for HashMap<StatColumn, Value> {
         let value = match self.get(&FGM) {
             Some(x) => x,
             None => {
-                eprintln!("\tℹ️ failed to get a FieldGoalMakes from the stat map.");
-
                 return Err(FGM);
             }
         };
 
         match value {
             Value::Number(u) if u.is_u64() => Ok(FieldGoalMakes(u.as_u64().unwrap() as u8)),
-            Value::Number(u) if !u.is_u64() => {
-                eprintln!("\tℹ️ FieldGoalMakes is a number but not a unsigned int.");
-
-                Err(FGM)
-            }
-            _ => {
-                eprintln!("\tℹ️ FieldGoalMakes is not a JSON Number.");
-
-                Err(FGM)
-            }
+            Value::Number(u) if !u.is_u64() => Err(FGM),
+            _ => Err(FGM),
         }
     }
 
@@ -286,8 +220,6 @@ impl FromValue for HashMap<StatColumn, Value> {
         let value = match self.get(&FGA) {
             Some(x) => x,
             None => {
-                eprintln!("\tℹ️ failed to get a FieldGoalAttempts from the stat map.");
-
                 return Err(FGA);
             }
         };
@@ -296,19 +228,9 @@ impl FromValue for HashMap<StatColumn, Value> {
             Value::Number(u) if u.is_u64() => {
                 Ok(FieldGoalAttempts(Some(u.as_u64().unwrap() as u8)))
             }
-            Value::Number(u) if !u.is_u64() => {
-                eprintln!(
-                    "\tℹ️ Could not parse an unsigned int from FieldGoalAttempts JSON Number."
-                );
-
-                Err(FGA)
-            }
+            Value::Number(u) if !u.is_u64() => Err(FGA),
             Value::Null => Ok(FieldGoalAttempts(None)),
-            _ => {
-                eprintln!("\tℹ️ FieldGoalAttempts is null. Field goals are always recorded. ");
-
-                Err(FGA)
-            }
+            _ => Err(FGA),
         }
     }
 
@@ -316,8 +238,6 @@ impl FromValue for HashMap<StatColumn, Value> {
         let value = match self.get(&FG_PCT) {
             Some(x) => x,
             None => {
-                eprintln!("\tℹ️ failed to get a FieldGoalPercentage from the stat map.");
-
                 return Err(FG_PCT);
             }
         };
@@ -329,22 +249,12 @@ impl FromValue for HashMap<StatColumn, Value> {
                 if percent >= 0f32 && percent <= 1f32 {
                     Ok(FieldGoalPercentage(Some(f.as_f64().unwrap() as f32)))
                 } else {
-                    eprintln!("\tℹ️ FieldGoalPercent ({percent}) is not bounded by the constraint: [0., 1.]");
-
                     Err(FG_PCT)
                 }
             }
-            Value::Number(f) if !f.is_f64() => {
-                eprintln!("\tℹ️ FieldGoalPercent is a JSON Number but not a float.");
-
-                Err(FG_PCT)
-            }
+            Value::Number(f) if !f.is_f64() => Err(FG_PCT),
             Value::Null => Ok(FieldGoalPercentage(None)),
-            _ => {
-                eprintln!("\tℹ️ FieldGoalPercent is not a Number (u8) or Null (null).");
-
-                Err(FG_PCT)
-            }
+            _ => Err(FG_PCT),
         }
     }
 
@@ -352,25 +262,15 @@ impl FromValue for HashMap<StatColumn, Value> {
         let value = match self.get(&FG3M) {
             Some(x) => x,
             None => {
-                eprintln!("\tℹ️ failed to get a ThreePointMakes from the stat map.");
-
                 return Err(FG3M);
             }
         };
 
         match value {
             Value::Number(u) if u.is_u64() => Ok(ThreePointMakes(Some(u.as_u64().unwrap() as u8))),
-            Value::Number(u) if !u.is_u64() => {
-                eprintln!("\tℹ️ ThreePointMakes is a Number but not unsigned or integral: {u}");
-
-                Err(FG3M)
-            }
+            Value::Number(u) if !u.is_u64() => Err(FG3M),
             Value::Null => Ok(ThreePointMakes(None)),
-            _ => {
-                eprintln!("\tℹ️ ThreePointMakes is not a Number (u8) or Null (null).");
-
-                Err(FG3M)
-            }
+            _ => Err(FG3M),
         }
     }
 
@@ -378,8 +278,6 @@ impl FromValue for HashMap<StatColumn, Value> {
         let value = match self.get(&FG3A) {
             Some(x) => x,
             None => {
-                eprintln!("\tℹ️ failed to get a ThreePointAttempts from the stat map.");
-
                 return Err(FG3A);
             }
         };
@@ -388,17 +286,9 @@ impl FromValue for HashMap<StatColumn, Value> {
             Value::Number(u) if u.is_u64() => {
                 Ok(ThreePointAttempts(Some(u.as_u64().unwrap() as u8)))
             }
-            Value::Number(u) if !u.is_u64() => {
-                eprintln!("\tℹ️ ThreePointAttempts is a Number but not unsigned or integral: {u}");
-
-                Err(FG3A)
-            }
+            Value::Number(u) if !u.is_u64() => Err(FG3A),
             Value::Null => Ok(ThreePointAttempts(None)),
-            _ => {
-                eprintln!("\tℹ️ ThreePointAttempts is not a Number (u8) or Null (null).");
-
-                Err(FG3A)
-            }
+            _ => Err(FG3A),
         }
     }
 
@@ -406,8 +296,6 @@ impl FromValue for HashMap<StatColumn, Value> {
         let value = match self.get(&FG3_PCT) {
             Some(x) => x,
             None => {
-                eprintln!("\tℹ️ failed to get a ThreePointPercentage from the stat map.");
-
                 return Err(FG3_PCT);
             }
         };
@@ -419,22 +307,12 @@ impl FromValue for HashMap<StatColumn, Value> {
                 if percent >= 0f32 && percent <= 1f32 {
                     Ok(ThreePointPercentage(Some(f.as_f64().unwrap() as f32)))
                 } else {
-                    eprintln!("\tℹ️ ThreePointPercentage ({percent}) is not bounded by the constraint: [0., 1.]");
-
                     Err(FG3_PCT)
                 }
             }
-            Value::Number(f) if !f.is_f64() => {
-                eprintln!("\tℹ️ ThreePointPercentage is a JSON Number but not a float.");
-
-                Err(FG3_PCT)
-            }
+            Value::Number(f) if !f.is_f64() => Err(FG3_PCT),
             Value::Null => Ok(ThreePointPercentage(None)),
-            _ => {
-                eprintln!("\tℹ️ ThreePointPercentage is not a Number (u8) or Null (null).");
-
-                Err(FG3_PCT)
-            }
+            _ => Err(FG3_PCT),
         }
     }
 
@@ -442,31 +320,15 @@ impl FromValue for HashMap<StatColumn, Value> {
         let value = match self.get(&FTM) {
             Some(x) => x,
             None => {
-                eprintln!("\tℹ️ failed to get a FreeThrowMakes from the stat map.");
-
                 return Err(FTM);
             }
         };
 
         match value {
             Value::Number(u) if u.is_u64() => Ok(FreeThrowMakes(u.as_u64().unwrap() as u8)),
-            Value::Number(u) if !u.is_u64() => {
-                eprintln!("\tℹ️ FreeThrowMakes is a Number but not unsigned or integral: {u}");
-
-                Err(FTM)
-            }
-            Value::Null => {
-                eprintln!(
-                    "\tℹ️ FreeThrowMakes is null when it is a non-optional field in the JSON."
-                );
-
-                Err(FTM)
-            }
-            _ => {
-                eprintln!("\tℹ️ FreeThrowMakes is not a Number (u8) or Null (null).");
-
-                Err(FTM)
-            }
+            Value::Number(u) if !u.is_u64() => Err(FTM),
+            Value::Null => Err(FTM),
+            _ => Err(FTM),
         }
     }
 
@@ -474,8 +336,6 @@ impl FromValue for HashMap<StatColumn, Value> {
         let value = match self.get(&FTA) {
             Some(x) => x,
             None => {
-                eprintln!("\tℹ️ failed to get a FreeThrowAttempts from the stat map.");
-
                 return Err(FTA);
             }
         };
@@ -483,16 +343,8 @@ impl FromValue for HashMap<StatColumn, Value> {
         match value {
             Value::Number(u) if u.is_u64() => Ok(FreeThrowAttempts(u.as_u64().map(|u| u as u8))),
             Value::Null => Ok(FreeThrowAttempts(None)),
-            Value::Number(u) if !u.is_u64() => {
-                eprintln!("\tℹ️ FreeThrowAttempts is a Number but not unsigned or integral: {u}");
-
-                Err(FTA)
-            }
-            _ => {
-                eprintln!("\tℹ️ FreeThrowAttempts is the wrong type.");
-
-                Err(FTA)
-            }
+            Value::Number(u) if !u.is_u64() => Err(FTA),
+            _ => Err(FTA),
         }
     }
 
@@ -500,8 +352,6 @@ impl FromValue for HashMap<StatColumn, Value> {
         let value = match self.get(&FT_PCT) {
             Some(x) => x,
             None => {
-                eprintln!("\tℹ️ failed to get a FreeThrowPercentage from the stat map.");
-
                 return Err(FT_PCT);
             }
         };
@@ -513,22 +363,12 @@ impl FromValue for HashMap<StatColumn, Value> {
                 if percent >= 0f32 && percent <= 1f32 {
                     Ok(FreeThrowPercentage(Some(f.as_f64().unwrap() as f32)))
                 } else {
-                    eprintln!("\tℹ️ FreeThrowPercentage ({percent}) is not bounded by the constraint: [0., 1.]");
-
                     Err(FT_PCT)
                 }
             }
-            Value::Number(f) if !f.is_f64() => {
-                eprintln!("\tℹ️ FreeThrowPercentage is a JSON Number but not a float.");
-
-                Err(FT_PCT)
-            }
+            Value::Number(f) if !f.is_f64() => Err(FT_PCT),
             Value::Null => Ok(FreeThrowPercentage(None)),
-            _ => {
-                eprintln!("\tℹ️ FreeThrowPercentage is not a Number (u8) or Null (null).");
-
-                Err(FT_PCT)
-            }
+            _ => Err(FT_PCT),
         }
     }
 
@@ -536,8 +376,6 @@ impl FromValue for HashMap<StatColumn, Value> {
         let value = match self.get(&OREB) {
             Some(x) => x,
             None => {
-                eprintln!("\tℹ️ failed to get a OffensiveRebounds from the stat map.");
-
                 return Err(OREB);
             }
         };
@@ -547,16 +385,8 @@ impl FromValue for HashMap<StatColumn, Value> {
             Value::Number(u) if u.is_u64() => {
                 Ok(OffensiveRebounds(Some(u.as_u64().unwrap() as u8)))
             }
-            Value::Number(u) if !u.is_u64() => {
-                eprintln!("\tℹ️ OffensiveRebounds is a Number but not unsigned or integral.");
-
-                Err(OREB)
-            }
-            _ => {
-                eprintln!("\tℹ️ OffensiveRebounds is not a Number (u8) or Null (null).");
-
-                Err(OREB)
-            }
+            Value::Number(u) if !u.is_u64() => Err(OREB),
+            _ => Err(OREB),
         }
     }
 
@@ -564,8 +394,6 @@ impl FromValue for HashMap<StatColumn, Value> {
         let value = match self.get(&DREB) {
             Some(x) => x,
             None => {
-                eprintln!("\tℹ️ failed to get a DefensiveRebounds from the stat map.");
-
                 return Err(DREB);
             }
         };
@@ -575,16 +403,8 @@ impl FromValue for HashMap<StatColumn, Value> {
             Value::Number(u) if u.is_u64() => {
                 Ok(DefensiveRebounds(Some(u.as_u64().unwrap() as u8)))
             }
-            Value::Number(u) if !u.is_u64() => {
-                eprintln!("\tℹ️ DefensiveRebounds is a Number but not unsigned or integral.");
-
-                Err(OREB)
-            }
-            _ => {
-                eprintln!("\tℹ️ DefensiveRebounds is not a Number (u8) or Null (null).");
-
-                Err(OREB)
-            }
+            Value::Number(u) if !u.is_u64() => Err(OREB),
+            _ => Err(OREB),
         }
     }
 
@@ -592,8 +412,6 @@ impl FromValue for HashMap<StatColumn, Value> {
         let value = match self.get(&REB) {
             Some(x) => x,
             None => {
-                eprintln!("\tℹ️ failed to get a Rebounds from the stat map.");
-
                 return Err(REB);
             }
         };
@@ -601,16 +419,8 @@ impl FromValue for HashMap<StatColumn, Value> {
         match value {
             Value::Null => Ok(Rebounds(None)),
             Value::Number(u) if u.is_u64() => Ok(Rebounds(Some(u.as_u64().unwrap() as u8))),
-            Value::Number(u) if !u.is_u64() => {
-                eprintln!("\tℹ️ Rebounds is a Number but not unsigned or integral.");
-
-                Err(REB)
-            }
-            _ => {
-                eprintln!("\tℹ️ Rebounds is not a Number (u8) or Null (null).");
-
-                Err(REB)
-            }
+            Value::Number(u) if !u.is_u64() => Err(REB),
+            _ => Err(REB),
         }
     }
 
@@ -618,8 +428,6 @@ impl FromValue for HashMap<StatColumn, Value> {
         let value = match self.get(&AST) {
             Some(x) => x,
             None => {
-                eprintln!("\tℹ️ failed to get a Assists from the stat map.");
-
                 return Err(AST);
             }
         };
@@ -627,16 +435,8 @@ impl FromValue for HashMap<StatColumn, Value> {
         match value {
             Value::Null => Ok(Assists(None)),
             Value::Number(u) if u.is_u64() => Ok(Assists(Some(u.as_u64().unwrap() as u8))),
-            Value::Number(u) if !u.is_u64() => {
-                eprintln!("\tℹ️ Assists is a Number but not unsigned or integral.");
-
-                Err(AST)
-            }
-            _ => {
-                eprintln!("\tℹ️ Assists is not a Number (u8) or Null (null).");
-
-                Err(AST)
-            }
+            Value::Number(u) if !u.is_u64() => Err(AST),
+            _ => Err(AST),
         }
     }
 
@@ -644,8 +444,6 @@ impl FromValue for HashMap<StatColumn, Value> {
         let value = match self.get(&STL) {
             Some(x) => x,
             None => {
-                eprintln!("\tℹ️ failed to get a Steals from the stat map.");
-
                 return Err(STL);
             }
         };
@@ -653,16 +451,8 @@ impl FromValue for HashMap<StatColumn, Value> {
         match value {
             Value::Null => Ok(Steals(None)),
             Value::Number(u) if u.is_u64() => Ok(Steals(Some(u.as_u64().unwrap() as u8))),
-            Value::Number(u) if !u.is_u64() => {
-                eprintln!("\tℹ️ Steals is a Number but not unsigned or integral.");
-
-                Err(STL)
-            }
-            _ => {
-                eprintln!("\tℹ️ Steals is not a Number (u8) or Null (null).");
-
-                Err(STL)
-            }
+            Value::Number(u) if !u.is_u64() => Err(STL),
+            _ => Err(STL),
         }
     }
 
@@ -670,8 +460,6 @@ impl FromValue for HashMap<StatColumn, Value> {
         let value = match self.get(&BLK) {
             Some(x) => x,
             None => {
-                eprintln!("\tℹ️ failed to get a Blocks from the stat map.");
-
                 return Err(BLK);
             }
         };
@@ -679,16 +467,8 @@ impl FromValue for HashMap<StatColumn, Value> {
         match value {
             Value::Null => Ok(Blocks(None)),
             Value::Number(u) if u.is_u64() => Ok(Blocks(Some(u.as_u64().unwrap() as u8))),
-            Value::Number(u) if !u.is_u64() => {
-                eprintln!("\tℹ️ Blocks is a Number but not unsigned or integral.");
-
-                Err(BLK)
-            }
-            _ => {
-                eprintln!("\tℹ️ Blocks is not a Number (u8) or Null (null).");
-
-                Err(BLK)
-            }
+            Value::Number(u) if !u.is_u64() => Err(BLK),
+            _ => Err(BLK),
         }
     }
 
@@ -696,8 +476,6 @@ impl FromValue for HashMap<StatColumn, Value> {
         let value = match self.get(&TOV) {
             Some(x) => x,
             None => {
-                eprintln!("\tℹ️ failed to get a Turnovers from the stat map.");
-
                 return Err(TOV);
             }
         };
@@ -705,16 +483,8 @@ impl FromValue for HashMap<StatColumn, Value> {
         match value {
             Value::Null => Ok(Turnovers(None)),
             Value::Number(u) if u.is_u64() => Ok(Turnovers(Some(u.as_u64().unwrap() as u8))),
-            Value::Number(u) if !u.is_u64() => {
-                eprintln!("\tℹ️ Turnovers is a Number but not unsigned or integral.");
-
-                Err(TOV)
-            }
-            _ => {
-                eprintln!("\tℹ️ Turnovers is not a Number (u8) or Null (null).");
-
-                Err(TOV)
-            }
+            Value::Number(u) if !u.is_u64() => Err(TOV),
+            _ => Err(TOV),
         }
     }
 
@@ -722,29 +492,15 @@ impl FromValue for HashMap<StatColumn, Value> {
         let value = match self.get(&PF) {
             Some(x) => x,
             None => {
-                eprintln!("\tℹ️ failed to get a PersonalFouls from the stat map.");
-
                 return Err(PF);
             }
         };
 
         match value {
             Value::Number(u) if u.is_u64() => Ok(PersonalFouls(u.as_u64().unwrap() as u8)),
-            Value::Number(u) if !u.is_u64() => {
-                eprintln!("\tℹ️ PersonalFouls is a Number but not unsigned or integral.");
-
-                Err(PF)
-            }
-            Value::Null => {
-                eprintln!("❕ PersonalFouls is a Null, but not typically permitted to be Null. Its value has been defaulted to 0.");
-
-                Ok(PersonalFouls(0))
-            }
-            _ => {
-                eprintln!("\tℹ️ PersonalFouls is not a Number when it is a non-optional field. (special null cases are permitted but emit warnings)");
-
-                Err(PF)
-            }
+            Value::Number(u) if !u.is_u64() => Err(PF),
+            Value::Null => Ok(PersonalFouls(0)),
+            _ => Err(PF),
         }
     }
 
@@ -752,24 +508,14 @@ impl FromValue for HashMap<StatColumn, Value> {
         let value = match self.get(&PTS) {
             Some(x) => x,
             None => {
-                eprintln!("\tℹ️ failed to get a Points from the stat map.");
-
                 return Err(PTS);
             }
         };
 
         match value {
             Value::Number(u) if u.is_u64() => Ok(Points(u.as_u64().unwrap() as u8)),
-            Value::Number(u) if !u.is_u64() => {
-                eprintln!("\tℹ️ Points is a Number but not unsigned or integral.");
-
-                Err(PTS)
-            }
-            _ => {
-                eprintln!("\tℹ️ Points is not a Number when it is a non-optional field.");
-
-                Err(PTS)
-            }
+            Value::Number(u) if !u.is_u64() => Err(PTS),
+            _ => Err(PTS),
         }
     }
 
@@ -777,8 +523,6 @@ impl FromValue for HashMap<StatColumn, Value> {
         let value = match self.get(&PLUS_MINUS) {
             Some(x) => x,
             None => {
-                eprintln!("\tℹ️ failed to get a Points from the stat map.");
-
                 return Err(PLUS_MINUS);
             }
         };
@@ -786,16 +530,8 @@ impl FromValue for HashMap<StatColumn, Value> {
         match value {
             Value::Number(i) if i.is_i64() => Ok(PlusMinus(Some(i.as_i64().unwrap() as i16))),
             Value::Null => Ok(PlusMinus(None)),
-            Value::Number(i) if !i.is_i64() => {
-                eprintln!("\tℹ️ PlusMinus is a Number but not integral.");
-
-                Err(PLUS_MINUS)
-            }
-            _ => {
-                eprintln!("\tℹ️ PlusMinus is not a Number (i64) or Null (null).");
-
-                Err(PLUS_MINUS)
-            }
+            Value::Number(i) if !i.is_i64() => Err(PLUS_MINUS),
+            _ => Err(PLUS_MINUS),
         }
     }
 
@@ -806,27 +542,15 @@ impl FromValue for HashMap<StatColumn, Value> {
         let value = match self.get(&FANTASY_PTS) {
             Some(x) => x,
             None => {
-                eprintln!("\tℹ️ failed to get a FantasyPoints from the stat map.");
-
                 return Err(FANTASY_PTS);
             }
         };
 
         match value {
             Value::Number(f) if f.is_f64() => Ok(FantasyPoints(Some(f.as_f64().unwrap() as f32))),
-            Value::Number(f) if !f.is_f64() => {
-                eprintln!(
-                    "\tℹ️ FantasyPoints is a Number but not a floating point (or subset of *f*)."
-                );
-
-                Err(FANTASY_PTS)
-            }
+            Value::Number(f) if !f.is_f64() => Err(FANTASY_PTS),
             Value::Null => Ok(FantasyPoints(None)),
-            _ => {
-                eprintln!("\tℹ️ FantasyPoints is not a Number (f64) or Null (null).");
-
-                Err(FANTASY_PTS)
-            }
+            _ => Err(FANTASY_PTS),
         }
     }
 
@@ -834,8 +558,6 @@ impl FromValue for HashMap<StatColumn, Value> {
         let value = match self.get(&VIDEO_AVAILABLE) {
             Some(x) => x,
             None => {
-                eprintln!("\tℹ️ failed to get a VideoAvailable from the stat map.");
-
                 return Err(VIDEO_AVAILABLE);
             }
         };
@@ -859,11 +581,7 @@ impl FromValue for HashMap<StatColumn, Value> {
                 Some(b) => Ok(b),
                 None => Err(VIDEO_AVAILABLE),
             },
-            _ => {
-                eprintln!("\tℹ️ VideoAvailable is not Number or in the domain x∈{{0,1}}");
-
-                Err(VIDEO_AVAILABLE)
-            }
+            _ => Err(VIDEO_AVAILABLE),
         }
     }
 }

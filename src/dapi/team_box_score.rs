@@ -3,6 +3,10 @@ use crate::corrections::correction::Correction;
 use crate::dapi::from_value::FromValue;
 use crate::dapi::player_box_score::PlayerBoxScore;
 
+use crate::format::box_score_formatter::format_team_box_score;
+
+use crate::ml::elo;
+
 use crate::stats::box_score::BoxScore;
 use crate::stats::stat_column::StatColumn::*;
 use crate::stats::visiting::Visiting;
@@ -10,6 +14,8 @@ use crate::stats::visiting::Visiting;
 use crate::types::*;
 
 use serde::{Deserialize, Serialize};
+
+use std::collections::HashMap;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct TeamBoxScore {
@@ -64,6 +70,14 @@ impl TeamBoxScore {
 
     pub fn roster_mut(&mut self) -> &mut Vec<PlayerBoxScore> {
         &mut self.roster
+    }
+
+    pub fn box_score(&self) -> &BoxScore {
+        &self.box_score
+    }
+
+    pub fn roster(&self) -> &Vec<PlayerBoxScore> {
+        &self.roster
     }
 
     pub fn correct_box_score(&mut self, correction: &mut Correction) {
@@ -121,19 +135,28 @@ impl TeamBoxScore {
             _ => true,
         });
     }
+
+    pub fn get_team_rating(&self, ratings: &mut HashMap<PlayerId, i64>) -> i64 {
+        let mut rating = 0;
+        for player in self.roster() {
+            if let Some(i) = ratings.get(&player.player_id()) {
+                rating += *i;
+            } else {
+                ratings.insert(player.player_id(), elo::INITIAL_RATING);
+                rating += elo::INITIAL_RATING;
+            }
+        }
+        rating
+    }
+
+    pub fn get_normalized_team_rating(&self, ratings: &mut HashMap<PlayerId, i64>) -> f64 {
+        let rating = self.get_team_rating(ratings);
+        rating as f64 / self.roster().len() as f64
+    }
 }
 
 impl std::fmt::Display for TeamBoxScore {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "TeamBoxScore {{")?;
-        writeln!(f, "    team_id: {}", self.team_id)?;
-        writeln!(f, "    team_abbreviation: {}", self.team_abbreviation)?;
-        writeln!(f, "    team_name: {}", self.team_name)?;
-        writeln!(f, "    visiting: {}", self.visiting)?;
-        writeln!(f, "    box_score: {}", self.box_score)?;
-        for pbs in &self.roster {
-            writeln!(f, "    roster: {:?}", pbs)?;
-        }
-        writeln!(f, "}}")
+        format_team_box_score(f, self)
     }
 }

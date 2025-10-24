@@ -33,7 +33,7 @@ use std::fmt::{Display, Formatter};
 ///
 /// assert_eq!(SeasonId::from((1946, RegularSeason)), s_id)
 ///```
-#[derive(Clone, Debug, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, Copy, PartialEq, Eq, PartialOrd, Hash)]
 pub struct SeasonId {
     year: i32,
     period: SeasonPeriod,
@@ -145,7 +145,7 @@ impl Serialize for SeasonId {
             NBACup => 20_000,
             AllStarGame => 30_000,
             PostSeason => 40_000,
-            PlayIn => 60_000,
+            PlayIn => 50_000,
         } + self.year;
 
         serializer.serialize_str(&format!("{}", sum))

@@ -1,14 +1,12 @@
-use std::path::PathBuf;
-
 use crate::dapi::player_box_score::PlayerBoxScore;
 use crate::dapi::team_box_score::TeamBoxScore;
 use crate::dapi::write::write_games;
 
-use crate::format::path_manager::nba_data_path;
+use crate::format::path_manager::nba_source_path;
 use crate::format::season::season_fmt;
 
 use crate::proc::error::ReadProcessError;
-use crate::proc::hunting;
+use crate::proc::query;
 use crate::proc::rip::read_and_process_nba_games;
 
 use crate::stats::id::Identity;
@@ -17,29 +15,22 @@ use crate::stats::nba_stat::NBABoxScore::{Player, Team};
 
 use crate::types::SeasonId;
 
-pub fn player_games(
-    season: SeasonId,
-    path: &PathBuf,
-) -> Result<Vec<(Identity, PlayerBoxScore)>, ReadProcessError> {
-    Ok(
-        read_and_process_nba_games(season, NBAStatKind::Player, path)
-            .map_err(|e| e)?
-            .into_iter()
-            .filter_map(|(id, stat)| match stat {
-                Player(box_score) => Some((id, box_score)),
-                _ => None,
-            })
-            .collect::<Vec<(Identity, PlayerBoxScore)>>(),
-    )
+pub fn player_games(season: SeasonId) -> Result<Vec<(Identity, PlayerBoxScore)>, ReadProcessError> {
+    Ok(read_and_process_nba_games(season, NBAStatKind::Player)?
+        .into_iter()
+        .filter_map(|(id, stat)| match stat {
+            Player(box_score) => Some((id, box_score)),
+            _ => None,
+        })
+        .collect::<Vec<(Identity, PlayerBoxScore)>>())
 }
 
 pub fn team_games(
     season: SeasonId,
-    path: &PathBuf,
     roster: Vec<(Identity, PlayerBoxScore)>,
 ) -> Result<Vec<(Identity, TeamBoxScore)>, ReadProcessError> {
     let mut games: Vec<(Identity, TeamBoxScore)> =
-        read_and_process_nba_games(season, NBAStatKind::Team, path)?
+        read_and_process_nba_games(season, NBAStatKind::Team)?
             .into_iter()
             .filter_map(|(id, stat)| match stat {
                 Team(t) => Some((id, t)),
@@ -60,11 +51,11 @@ pub fn team_games(
 }
 
 pub async fn fetch_and_save_nba_stats(season: SeasonId, stat: NBAStatKind) -> Result<(), String> {
-    let file_path = nba_data_path(season, stat);
+    let file_path = nba_source_path(season, stat);
 
     let (year, _period) = season.destructure();
 
-    match hunting::query_nba(season, stat).await {
+    match query::query_nba(season, stat).await {
         Ok(response_data) => match write_games(&file_path, &response_data) {
             Ok(_) => {
                 println!(

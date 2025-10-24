@@ -12,16 +12,27 @@ pub fn value_to_date(value: &Value) -> Option<NaiveDate> {
         }
     }
 }
-//
-pub fn destructure_dt(dt: DateTime<Local>) -> DT {
-    DT {
+/// # returns
+///
+/// - month:
+///   -  Returns the month number starting from 1.
+///   -  The return value ranges from 1 to 12.
+/// ________________________________________________
+/// - day:
+///   -  Returns the day of month starting from 1.
+///   -  The return value ranges from 1 to 31. (The last day of month differs by months.)
+/// ________________________________________________
+/// - year:
+///   -  Returns the year number in the calendar date.
+pub fn destructure_dt(dt: DateTime<Local>) -> DestructuredDateTime {
+    DestructuredDateTime {
         year: dt.year(),
         month: dt.month(),
         day: dt.day(),
     }
 }
 
-pub struct DT {
+pub struct DestructuredDateTime {
     pub year: i32,
     pub month: u32,
     pub day: u32,

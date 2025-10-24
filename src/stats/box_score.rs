@@ -1,3 +1,4 @@
+use crate::format::box_score_formatter::format_statistical_box_score;
 use crate::stats::schema::Schema;
 use crate::stats::stat_column::StatColumn;
 use crate::types::{
@@ -45,11 +46,7 @@ pub struct BoxScore {
 
 impl Display for BoxScore {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "pts:{}\tfgs:{}/{}\t3ps:{}/{}\tft: {}/{}\nast:{}\nreb:{} (off {},def {})\nstl: {}\t blk:{}\ttov:{}",
-               self.pts, self.fgm, self.fga,
-               self.fg3m, self.fg3a, self.ftm, self.fta, self.ast, self.reb, self.oreb, self.dreb,
-               self.stl, self.blk, self.tov
-        )
+        format_statistical_box_score(f, self)
     }
 }
 
@@ -366,5 +363,60 @@ impl BoxScore {
                 Err(())
             }
         }
+    }
+
+    pub fn wl(&self) -> &GameResult {
+        &self.wl
+    }
+    pub fn min(&self) -> &Minutes {
+        &self.min
+    }
+    pub fn fgm(&self) -> &FieldGoalMakes {
+        &self.fgm
+    }
+    pub fn fga(&self) -> &FieldGoalAttempts {
+        &self.fga
+    }
+    pub fn fg3m(&self) -> &ThreePointMakes {
+        &self.fg3m
+    }
+    pub fn fg3a(&self) -> &ThreePointAttempts {
+        &self.fg3a
+    }
+    pub fn ftm(&self) -> &FreeThrowMakes {
+        &self.ftm
+    }
+    pub fn fta(&self) -> &FreeThrowAttempts {
+        &self.fta
+    }
+    pub fn oreb(&self) -> &OffensiveRebounds {
+        &self.oreb
+    }
+    pub fn dreb(&self) -> &DefensiveRebounds {
+        &self.dreb
+    }
+    pub fn reb(&self) -> &Rebounds {
+        &self.reb
+    }
+    pub fn ast(&self) -> &Assists {
+        &self.ast
+    }
+    pub fn stl(&self) -> &Steals {
+        &self.stl
+    }
+    pub fn blk(&self) -> &Blocks {
+        &self.blk
+    }
+    pub fn tov(&self) -> &Turnovers {
+        &self.tov
+    }
+    pub fn pf(&self) -> &PersonalFouls {
+        &self.pf
+    }
+    pub fn pts(&self) -> &Points {
+        &self.pts
+    }
+    pub fn plus_minus(&self) -> &PlusMinus {
+        &self.plus_minus
     }
 }

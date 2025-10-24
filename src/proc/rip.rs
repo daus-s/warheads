@@ -7,8 +7,10 @@ use crate::dapi::team_box_score::TeamBoxScore;
 
 use crate::format::extract::record_stat;
 use crate::format::parse::*;
+use crate::format::path_manager::{nba_source_path, nba_storage_file};
 
 use crate::proc::error::ReadProcessError;
+
 use crate::stats::box_score::BoxScoreBuilder;
 use crate::stats::game_display::GameDisplay;
 use crate::stats::id::Identity;
@@ -25,25 +27,25 @@ use serde_json::Value::Null;
 use serde_json::{from_str, Value};
 
 use std::collections::HashMap;
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::{self, Read};
 use std::path::PathBuf;
 
 //TODO: implement the return as a result marking complete failure vs just needing to return corrections.
 pub fn read_and_process_nba_games(
-    season: SeasonId,
+    season_id: SeasonId,
     kind: NBAStatKind,
-    path: &PathBuf,
 ) -> Result<Vec<(Identity, NBABoxScore)>, ReadProcessError> {
-    // read
-    let json_str = read_nba_file(path).map_err(|e| ReadProcessError::IOError(e))?;
+    let path = nba_source_path(season_id, kind);
+
+    let json_str = read_nba_file(&path).map_err(|e| ReadProcessError::IOError(e))?;
 
     let json = from_str(&json_str).map_err(|e| ReadProcessError::JSONParseError(e))?;
 
     let (rows, headers) = parse_season(json); //this also can fail
 
     // process
-    match process_nba_games(rows, headers, kind) {
+    match season(rows, headers, kind) {
         Ok(games) => Ok(games),
 
         // handle corrections, maybe use something other than `result` in the future
@@ -54,7 +56,7 @@ pub fn read_and_process_nba_games(
                 "ℹ️  there are {} {} corrections to make for the {}",
                 correction_builders.len(),
                 kind,
-                season
+                season_id
             );
 
             for mut correction_builder in correction_builders {
@@ -70,7 +72,7 @@ pub fn read_and_process_nba_games(
                 }
             }
 
-            read_and_process_nba_games(season, kind, path)
+            read_and_process_nba_games(season_id, kind)
         }
     }
 }
@@ -85,21 +87,7 @@ fn read_nba_file(file_path: &PathBuf) -> Result<String, io::Error> {
     Ok(contents)
 }
 
-///
-/// rips through the json using the header provided as per NBA apis convention/schema.
-/// return a Result of Ok(Vec<NBAStat>) or Err(Vec<Correction>). it is important to remember
-/// an NBAStat is a BoxScore.
-///
-
-fn process_nba_games(
-    rows: Vec<Value>,
-    headers: Vec<String>,
-    kind: NBAStatKind,
-) -> Result<Vec<(Identity, NBABoxScore)>, Vec<CorrectionBuilder>> {
-    season(rows, headers, kind)
-}
-
-fn season(
+pub(crate) fn season(
     rows: Vec<Value>,
     headers: Vec<String>,
     stat: NBAStatKind,
@@ -299,6 +287,12 @@ fn fields_to_team_box_score(
     };
 
     if delete {
+        let file = nba_storage_file(identity.season_id, identity.game_id);
+
+        if file.exists() {
+            let _ = fs::remove_file(&file);
+        };
+
         Ok(None)
     } else if correction_builder.has_corrections() {
         eprintln!("\n❌ failed to create a TeamBoxScore for {team_name}. id: {team_id} game id: {game_id}");
@@ -309,7 +303,7 @@ fn fields_to_team_box_score(
             .map_err(|e| format!("{e}"))
             .unwrap_or_else(|e| panic!("💀 failed to create TeamBoxScore: {e}\n💀 GameId: {game_id}\n💀 SeasonId: {season_id}\n💀 TeamId: {team_id}\n💀 TeamAbbreviation: {team_abbr}"));
 
-        println!("✅ successfully created TeamBoxScore for {team_name}. id: {team_id} game id: {game_id}");
+        // println!("✅ successfully created TeamBoxScore for {team_name}. id: {team_id} game id: {game_id}");
 
         let team = TeamBoxScore::construct(team_abbr, team_name, team_id, visiting, box_score);
 
@@ -466,7 +460,7 @@ fn fields_to_player_box_score(
     if delete {
         Ok(None)
     } else if correction_builder.has_corrections() {
-        eprintln!("\n❌ failed to create a PlayerBoxScore for {player_name}. id: {player_id} game id: {game_id}");
+        eprintln!("\n❌ failed to create a PlayerBoxScore for {player_name}. id: {player_id} game id: {game_id}.");
 
         Err(correction_builder)
     } else {
@@ -474,11 +468,7 @@ fn fields_to_player_box_score(
             .map_err(|e| format!("{e}"))
             .unwrap_or_else(|e| panic!("💀 failed to create PlayerBoxScore: {e}\n💀 GameId: {game_id}\n💀 PlayerId: {player_id}\n💀 SeasonId: {season_id}\n💀 TeamId: {team_id}\n💀 TeamAbbreviation: {team_abbr}"));
 
-        let msg = format!("✅ successfully created PlayerBoxScore for {player_name}. id: {player_id} game id: {game_id}");
-
         let player = PlayerBoxScore::construct(player_id, player_name, box_score);
-
-        println!("{msg}");
 
         Ok(Some((identity, player)))
     }

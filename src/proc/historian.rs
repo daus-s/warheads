@@ -1,23 +1,75 @@
-use chrono::Local;
+use crate::checksum::checksum_map::ChecksumMap;
+use crate::checksum::sign::sign_nba;
 
-use crate::format::parse::{destructure_dt, DT};
-use crate::proc::hunting::BEGINNING;
-use crate::proc::store::save_nba_season;
+use crate::dapi::currency::source_data_current;
+use crate::dapi::season_manager::{nba_lifespan, nba_lifespan_period};
+
+use crate::format::path_manager::nba_checksum_path;
+
+use crate::ml::elo_tracker::EloTracker;
+
+use crate::proc::gather::fetch_and_save_nba_stats;
+use crate::proc::hunting::compare_and_fetch;
+use crate::proc::store::store_nba_season;
+
+use crate::stats::nba_kind::NBAStatKind;
+
+pub async fn observe_nba() {
+    let checksums = ChecksumMap::load().expect("💀 failed to load checksums");
+
+    let mut errors = 0;
+
+    let eras = nba_lifespan_period();
+
+    println!("Eras: {:?}", eras);
+
+    for era in &eras[0..eras.len() - 1] {
+        errors += compare_and_fetch(*era, NBAStatKind::Player, &checksums).await;
+        errors += compare_and_fetch(*era, NBAStatKind::Team, &checksums).await;
+    }
+
+    let current_era = eras[eras.len() - 1];
+
+    if !source_data_current() {
+        let _ = fetch_and_save_nba_stats(current_era, NBAStatKind::Player).await;
+        let _ = fetch_and_save_nba_stats(current_era, NBAStatKind::Team).await;
+
+        errors += 1;
+        errors += 1;
+    }
+
+    if errors > 0 {
+        match sign_nba() {
+            Ok(_) => println!(
+                "✅ successfully signed nba data with checksums in {}",
+                nba_checksum_path().display()
+            ),
+            Err(_) => eprintln!(
+                "❌ failed to sign nba data with checksums in {}",
+                nba_checksum_path().display()
+            ),
+        };
+    }
+}
 
 /// this module contains functions for writing the history of the nba stats
 /// you can build around this function but not from it... this is the one function to start the nba into memory then iterate over elo.
-pub async fn chronicle_nba() {
-    let DT { year, month, day } = destructure_dt(Local::now());
-
-    let seasonal_depression = if month > 8 || month == 8 && day >= 14 {
-        1
-    } else {
-        0
-    }; // august14th
-
-    let begin = BEGINNING; //first year of the nba in record is 1946-1947 szn
-
-    for szn in begin..year + seasonal_depression {
-        save_nba_season(szn).await;
+pub fn chronicle_nba() {
+    for szn in nba_lifespan() {
+        store_nba_season(szn);
     }
+}
+
+pub fn rate_nba() {
+    let mut tracker = EloTracker::new();
+
+    match tracker.process_elo() {
+        Ok(_) => println!("✅  Elo data processed successfully"),
+        Err(_) => println!("❌  Error processing elo data"),
+    }
+
+    match tracker.save() {
+        Ok(_) => println!("✅  Elo data saved successfully"),
+        Err(e) => println!("❌  Error saving elo data: {}", e),
+    };
 }

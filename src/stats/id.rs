@@ -1,9 +1,11 @@
 use crate::format::language::Columnizable;
+use crate::format::path_manager::{nba_player_correction_file, nba_team_correction_file};
 use crate::stats::domain::Domain;
 use crate::stats::game_data::GameData;
-use crate::stats::nba_kind::NBAStatKind::{Player, Team};
+use crate::stats::nba_kind::NBAStatKind::{self, Player, Team};
 use crate::types::{GameDate, GameId, PlayerId, SeasonId, TeamAbbreviation, TeamId};
 use chrono::NaiveDate;
+use serde::Serialize;
 use serde_json::Value;
 use serde_json::Value::Number;
 use std::fmt::{Debug, Display, Formatter};
@@ -53,40 +55,6 @@ impl Identity {
 
     pub fn team_abbr(&self) -> TeamAbbreviation {
         self.team_abbr.to_owned()
-    }
-}
-
-impl Debug for Identity {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self.player_id {
-            Some(id) => write!(
-                f,
-                "player_id: {}\nteam: {}\nteam_id: {}\nyear: {}\ngame: {}",
-                id, self.team_abbr, self.team_id, self.season_id, self.game_id
-            ),
-            None => write!(
-                f,
-                "team: {}\nteam_id: {}\nyear: {}\ngame: {}",
-                self.team_abbr, self.team_id, self.season_id, self.game_id
-            ),
-        }
-    }
-}
-
-impl Display for Identity {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self.player_id {
-            Some(id) => write!(
-                f,
-                "player_id: {}\nteam: {}\nyear: {}\ngame: {}",
-                id, self.team_abbr, self.season_id, self.game_id
-            ),
-            None => write!(
-                f,
-                "team: {}\nyear: {}\ngame: {}",
-                self.team_abbr, self.season_id, self.game_id
-            ),
-        }
     }
 }
 
@@ -207,5 +175,63 @@ impl Identifiable for Value {
             }
             _ => panic!("💀 unrecognized schema. could not match to a player or team stat"),
         }
+    }
+}
+
+impl Display for Identity {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self.player_id {
+            Some(id) => write!(
+                f,
+                "player_id: {}\nteam: {}\nyear: {}\ngame: {}",
+                id, self.team_abbr, self.season_id, self.game_id
+            ),
+            None => write!(
+                f,
+                "team: {}\nyear: {}\ngame: {}",
+                self.team_abbr, self.season_id, self.game_id
+            ),
+        }
+    }
+}
+
+impl Debug for Identity {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let data = serde_json::to_string_pretty(self).map_err(|_| std::fmt::Error)?;
+        let file_path = match self.player_id {
+            Some(id) => nba_player_correction_file(self.season_id, self.game_id, id),
+            None => nba_team_correction_file(self.season_id, self.game_id, self.team_id),
+        };
+
+        write!(f, "{}\n{}", file_path.display(), data)
+    }
+}
+
+//should not be deserializable. this struct shouldn't get saved.
+impl Serialize for Identity {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeStruct;
+
+        let mut state = serializer.serialize_struct("Identity", 9)?;
+        state.serialize_field("team_id", &self.team_id)?;
+        state.serialize_field("team_abbr", &self.team_abbr())?;
+        state.serialize_field("player_id", &self.player_id)?;
+        state.serialize_field(
+            "kind",
+            if let Some(_) = self.player_id {
+                &NBAStatKind::Player
+            } else {
+                &NBAStatKind::Team
+            },
+        )?;
+        state.serialize_field("game_id", &self.game_id.to_string())?;
+        state.serialize_field("season", &self.season_id)?;
+        state.serialize_field("period", &self.season_id.period())?;
+        state.serialize_field("game_date", &self.game_date)?;
+
+        state.end()
     }
 }

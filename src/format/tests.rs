@@ -34,7 +34,7 @@ mod test_path_manager {
 
         let game_id = GameId(42424343);
 
-        let actual_file = nba_storage_file((szn, game_id));
+        let actual_file = nba_storage_file(szn, game_id);
         let actual_path = nba_storage_path(szn);
 
         assert_eq!(expected_path, actual_path);

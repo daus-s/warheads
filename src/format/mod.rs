@@ -1,4 +1,6 @@
+pub mod box_score_formatter;
 pub mod extract;
+pub mod game_object_formatter;
 pub mod language;
 pub mod parse;
 pub mod path_manager;

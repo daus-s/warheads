@@ -219,7 +219,7 @@ impl CorrectionBuilder {
 
     /// Returns whether the correction builder has any corrections to apply. It does not specify whether the record should be deleted.
     pub fn has_corrections(&self) -> bool {
-        self.correction.len() > 0
+        self.correction.len() > 0 || self.correction.delete
     }
 
     pub fn set_delete(&mut self, delete: bool) {

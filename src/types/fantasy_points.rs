@@ -1,4 +1,3 @@
-use crate::stats::statify::SafetyValve;
 use serde::{Deserialize, Serialize, Serializer};
 use std::fmt::{Display, Formatter};
 use std::io;
@@ -8,7 +7,7 @@ pub struct FantasyPoints(pub Option<f32>);
 
 impl Display for FantasyPoints {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0.unwrap_fmt("null"))
+        write!(f, "{:>5.1}", self.0.unwrap_or(0.0))
     }
 }
 

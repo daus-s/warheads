@@ -1,39 +1,34 @@
-use crate::corrections::correction::Correction;
-use crate::corrections::correction_loader::load_season_corrections;
+use std::fs;
+
+use crate::corrections::correction_loader::load_season_correction_maps;
 
 use crate::dapi::team_box_score::TeamBoxScore;
 
-use crate::format::season::season_fmt;
-
+use crate::format::path_manager::nba_storage_file;
 use crate::stats::id::{Identifiable, Identity};
-use crate::stats::nba_kind::NBAStatKind;
-
-use std::collections::HashMap;
 
 pub fn revise_nba_season(year: i32, games: &mut Vec<(Identity, TeamBoxScore)>) -> Result<(), ()> {
-    let mut player_corrections = load_season_corrections(year, NBAStatKind::Player)
-        .map_err(|msg| {
-            eprintln!(
-                "{msg}\n❌ failed to load player corrections for the {} season:",
-                season_fmt(year)
-            );
-            ()
-        })?
-        .into_iter()
-        .map(|correction| (correction.identity(), correction))
-        .collect::<HashMap<Identity, Correction>>();
+    let (mut player_corrections, mut team_corrections) =
+        load_season_correction_maps(year).map_err(|_e| ())?;
 
-    let mut team_corrections = load_season_corrections(year, NBAStatKind::Team)
-        .map_err(|msg| {
-            eprintln!(
-                "{msg}\n❌ failed to load team corrections for the {} season:",
-                season_fmt(year)
-            );
-            ()
-        })?
-        .into_iter()
-        .map(|correction| (correction.identity(), correction))
-        .collect::<HashMap<Identity, Correction>>();
+    //only delete if the team correction says the game shouldnt be recorded
+    for correction in team_corrections.values() {
+        if correction.delete {
+            let id = correction.identity();
+
+            let file = nba_storage_file(id.season_id, id.game_id);
+
+            if file.exists() {
+                if let Err(e) = fs::remove_file(&file) {
+                    eprintln!(
+                        "{}\n❗ failed to remove record on disk in the file {}",
+                        e,
+                        file.display()
+                    );
+                }
+            }
+        }
+    }
 
     for (identity, game) in games.iter_mut() {
         if let Some(correction) = team_corrections.get_mut(&identity) {
