@@ -6,5 +6,6 @@ pub mod player_box_score;
 pub mod season_manager;
 pub mod stat_builder;
 pub mod team_box_score;
+mod test_season_manager;
 mod tests;
 pub mod write;

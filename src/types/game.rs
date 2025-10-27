@@ -16,6 +16,20 @@ impl GameDate {
 
         GameDate(naive_date)
     }
+
+    /// destructure GameDate object into (y, m, d) tuple. year is an integer,
+    /// years before the big JC was born are negative
+    ///
+    /// returns month and day as unsigned. both are 1-indexed. (month [1..12]) (day [1..31])
+    pub fn destructure(&self) -> (i32, u32, u32) {
+        let (year, month, day) = (
+            self.0.year_ce().1 as i32 * (if self.0.year_ce().0 { 1i32 } else { -1i32 }),
+            self.0.month0() + 1,
+            self.0.day0() + 1,
+        );
+
+        (year, month, day)
+    }
 }
 
 impl From<NaiveDate> for GameDate {

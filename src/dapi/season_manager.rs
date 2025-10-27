@@ -7,7 +7,7 @@ use crate::constants::constants::BEGINNING;
 use crate::stats::season_period::{minimum_spanning_era, SeasonPeriod::*};
 
 use crate::format::parse::{destructure_dt, DestructuredDateTime};
-use crate::types::SeasonId;
+use crate::types::{GameDate, SeasonId};
 
 pub fn nba_lifespan() -> Range<i32> {
     let DestructuredDateTime {
@@ -113,13 +113,15 @@ pub fn nba_lifespan_period() -> Vec<SeasonId> {
 }
 
 pub fn get_current_era() -> SeasonId {
-    let DestructuredDateTime {
-        year: curr_year,
-        month,
-        day,
-    } = destructure_dt(Local::now());
+    let today = GameDate::today();
 
-    let prev_year = curr_year - 1;
+    get_era_by_date(today)
+}
+
+pub fn get_era_by_date(date: GameDate) -> SeasonId {
+    let (year, month, day) = date.destructure();
+
+    let prev_year = year - 1;
 
     match month {
         1 => SeasonId::from((prev_year, RegularSeason)),
@@ -133,11 +135,11 @@ pub fn get_current_era() -> SeasonId {
         },
         5..=9 => SeasonId::from((prev_year, PostSeason)),
         10 => match day {
-            1..=20 => SeasonId::from((curr_year, PreSeason)),
-            21..=31 => SeasonId::from((curr_year, RegularSeason)),
+            1..=20 => SeasonId::from((year, PreSeason)),
+            21..=31 => SeasonId::from((year, RegularSeason)),
             _ => unreachable!("💀 31 days in October."),
         },
-        11..=12 => SeasonId::from((curr_year, PreSeason)),
+        11..=12 => SeasonId::from((year, RegularSeason)),
         _ => unreachable!("💀 12 months in a year."),
     }
 }
