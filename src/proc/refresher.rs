@@ -1,12 +1,57 @@
+use crate::checksum::sign::sign_nba;
+use crate::dapi::season_manager::get_current_era;
 use crate::format::parse::parse_gamecards;
 
+use crate::proc::gather::fetch_and_save_nba_stats;
 use crate::proc::query::{daily_gamecard_json, NBAQueryError};
 
 use crate::stats::gamecard::GameCard;
+use crate::stats::nba_kind::NBAStatKind;
 use crate::types::GameDate;
 
+/// check whether todays gamecards have been completed and if not query and update the source data.
+///
+/// ### returns
+/// true if the source data was updated, false otherwise.
+pub async fn update_source_data() -> bool {
+    let gamecards = get_daily_gamecard().await;
+
+    if let Ok(gamecards) = gamecards {
+        if !check_source_data_for_games(&gamecards) {
+            let current_era = get_current_era();
+
+            match fetch_and_save_nba_stats(current_era, NBAStatKind::Player).await {
+                Ok(_) => println!("✅ updated player source data for the {}", current_era),
+                Err(e) => println!(
+                    "{e}\n❌ failed to fetch and update NBA player source data for the {}",
+                    current_era
+                ),
+            };
+
+            match fetch_and_save_nba_stats(current_era, NBAStatKind::Team).await {
+                Ok(_) => println!("✅ updated team source data for the {}", current_era),
+                Err(e) => println!(
+                    "{e}\n❌ failed to fetch and update NBA team source data for the {}",
+                    current_era
+                ),
+            };
+
+            match sign_nba() {
+                Ok(_) => println!("✅ updated NBA source data checksums. "),
+                Err(_) => println!("❌ failed to update NBA source data checksum"),
+            };
+
+            true
+        } else {
+            false
+        }
+    } else {
+        false
+    }
+}
+
 // game schedule tracker
-pub async fn get_daily_gamecard() -> Result<Vec<GameCard>, NBAQueryError> {
+async fn get_daily_gamecard() -> Result<Vec<GameCard>, NBAQueryError> {
     let response = daily_gamecard_json(GameDate::today()).await?;
 
     let gamecards =
@@ -15,7 +60,7 @@ pub async fn get_daily_gamecard() -> Result<Vec<GameCard>, NBAQueryError> {
     Ok(gamecards)
 }
 
-pub fn check_source_data_for_games(gamecards: &[GameCard]) -> bool {
+fn check_source_data_for_games(gamecards: &[GameCard]) -> bool {
     let mut present = true;
 
     for gamecard in gamecards {
