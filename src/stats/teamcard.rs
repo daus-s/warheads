@@ -30,6 +30,14 @@ impl TeamCard {
     fn source_search_query(&self) -> String {
         format!("team_id:{}", self.team_id)
     }
+
+    pub fn team_abbr(&self) -> &TeamAbbreviation {
+        &self.team_abbr
+    }
+
+    pub fn team_id(&self) -> TeamId {
+        self.team_id
+    }
 }
 
 impl Display for TeamCard {

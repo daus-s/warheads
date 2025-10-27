@@ -95,7 +95,7 @@ fn parse_card(value: &Value) -> Option<GameCard> {
 
     gamecard_builder.game_id(game_id);
 
-    let game_time = card.get("gameTimeUtc")?.as_str()?;
+    let game_time = card.get("gameTimeEastern")?.as_str()?;
 
     let date = chrono::NaiveDateTime::parse_from_str(game_time, "%Y-%m-%dT%H:%M:%SZ")
         .ok()?

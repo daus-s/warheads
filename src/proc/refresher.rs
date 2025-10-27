@@ -15,8 +15,14 @@ pub async fn get_daily_gamecard() -> Result<Vec<GameCard>, NBAQueryError> {
     Ok(gamecards)
 }
 
-pub fn check_source_data_for_games(_gamecards: &[GameCard]) -> bool {
-    todo!()
+pub fn check_source_data_for_games(gamecards: &[GameCard]) -> bool {
+    let mut present = true;
+
+    for gamecard in gamecards {
+        present &= gamecard.check_source_data();
+    }
+
+    present
 }
 
 #[cfg(test)]
@@ -45,6 +51,8 @@ mod test_get_daily_gamecard {
             .await
             .unwrap_or_else(|err| panic!("💀 failed to get daily gamecard: {}", err));
 
+        dbg!(&json_response);
+
         let mut gamecards = parse_gamecards(json_response)
             .unwrap_or_else(|err| panic!("💀 failed to parse gamecards: {}", err));
 
@@ -55,7 +63,7 @@ mod test_get_daily_gamecard {
 
     fn expected_gamecards() -> Vec<GameCard> {
         let day1 = NaiveDate::from_ymd_opt(2025, 10, 21).unwrap();
-        let day2 = NaiveDate::from_ymd_opt(2025, 10, 22).unwrap(); //fuck timezones
+        let day2 = NaiveDate::from_ymd_opt(2025, 10, 21).unwrap(); //fuck timezones
 
         let tc1h = TeamCard::new(
             TeamId(1610612760),
@@ -90,5 +98,16 @@ mod test_get_daily_gamecard {
         let g2 = GameCard::new(GameId(22500002), day2.into(), tc2h, tc2a);
 
         vec![g1, g2]
+    }
+
+    #[test]
+    fn test_check_source_data() {
+        let mut present = true;
+
+        for gamecard in expected_gamecards() {
+            present &= gamecard.check_source_data();
+        }
+
+        assert!(present);
     }
 }
