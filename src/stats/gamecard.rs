@@ -9,7 +9,7 @@ use crate::format::path_manager::nba_source_path;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::teamcard::TeamCard;
 use crate::stats::visiting::Visiting;
-use crate::types::{team, GameDate, GameId};
+use crate::types::{GameDate, GameId};
 
 #[derive(Builder, Clone, Debug, PartialEq)]
 pub struct GameCard {

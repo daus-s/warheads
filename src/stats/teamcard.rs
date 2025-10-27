@@ -26,11 +26,6 @@ impl TeamCard {
         }
     }
 
-    //todo change this to return what would be needed to find this game (maybe put this on gamcard?)
-    fn source_search_query(&self) -> String {
-        format!("team_id:{}", self.team_id)
-    }
-
     pub fn team_abbr(&self) -> &TeamAbbreviation {
         &self.team_abbr
     }
