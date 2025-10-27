@@ -7,7 +7,7 @@ use crate::stats::nba_kind::NBAStatKind;
 use crate::types::GameDate;
 use crate::{dapi::season_manager::get_current_era, format::path_manager::nba_source_path};
 
-pub fn source_data_current() -> bool {
+pub async fn source_data_current() -> bool {
     let era = get_current_era();
 
     let team_path = nba_source_path(era, NBAStatKind::Team);
@@ -32,7 +32,7 @@ pub fn source_data_current() -> bool {
     false
 }
 
-#[test]
-fn test_source_data_current() {
-    println!("source_data_current(): {}", source_data_current());
+#[tokio::test]
+async fn test_source_data_current() {
+    println!("source_data_current(): {}", source_data_current().await);
 }

@@ -3,6 +3,7 @@ pub mod gather;
 pub mod historian;
 pub mod hunting;
 pub mod query;
+pub mod refresher;
 mod revise;
 pub mod rip;
 mod store;

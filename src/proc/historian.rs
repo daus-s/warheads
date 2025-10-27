@@ -30,7 +30,7 @@ pub async fn observe_nba() {
 
     let current_era = eras[eras.len() - 1];
 
-    if !source_data_current() {
+    if !source_data_current().await {
         let _ = fetch_and_save_nba_stats(current_era, NBAStatKind::Player).await;
         let _ = fetch_and_save_nba_stats(current_era, NBAStatKind::Team).await;
 

@@ -452,7 +452,8 @@ fn get_season(path: &PathBuf, kind: NBAStatKind) -> Vec<(Identity, NBABoxScore)>
 
     let json = serde_json::from_str(&contents).expect("failed to parse json");
 
-    let (rows, headers) = parse_season(json);
+    let (rows, headers) =
+        parse_season(json).expect("failed to parse season from test json object.");
 
     season(rows, headers, kind)
         .expect("season has corrections when none are expected for this test data.")

@@ -1,34 +1,38 @@
+use crate::constants::header_manager::HEADER_MANAGER;
+
+use crate::format::url_format::UrlFormatter;
+
+use crate::format::parse;
+
+use crate::stats::nba_kind::NBAStatKind;
+
+use crate::types::{GameDate, SeasonId};
+
+use std::fmt::{Debug, Display};
+
 use reqwest::{Client, Response};
+
 use serde_json::Value;
 
-use crate::{
-    constants::header_manager::HEADER_MANAGER,
-    format::url_format::UrlFormatter,
-    stats::nba_kind::NBAStatKind,
-    types::{GameDate, SeasonId},
-};
+use thiserror::Error;
 
-pub async fn query_nba_history(season: SeasonId, stat_kind: NBAStatKind) -> Result<Value, String> {
+pub async fn nba_history_json(
+    season: SeasonId,
+    stat_kind: NBAStatKind,
+) -> Result<Value, NBAQueryError> {
     // if more url-encoded characters are needed you can use `urlencoding` crate
 
     let response = make_nba_history_request(season, stat_kind, None, None).await?;
 
     if response.status().is_success() {
-        let json_text = response
-            .text()
+        let json = response
+            .json()
             .await
-            .map_err(|e| format!("❌ request failed with error: {}", e))?;
-
-        let json = serde_json::from_str(&json_text)
-            .map_err(|e| format!("❌ failed to parse JSON: {}", e))?;
+            .map_err(|e| NBAQueryError::FormatError(e))?;
 
         Ok(json)
     } else {
-        Err(format!(
-            "❌ request failed with status: {}\nurl: {}",
-            response.status(),
-            response.url()
-        ))
+        Err(NBAQueryError::ResponseError(response))
     }
 }
 
@@ -39,7 +43,7 @@ pub(crate) async fn make_nba_history_request(
     kind: NBAStatKind,
     from: Option<GameDate>,
     to: Option<GameDate>,
-) -> Result<Response, String> {
+) -> Result<Response, NBAQueryError> {
     let client = Client::new();
 
     let url = build_nba_history_url(season, kind, from, to);
@@ -49,20 +53,7 @@ pub(crate) async fn make_nba_history_request(
         .headers(HEADER_MANAGER.history_request_headers())
         .send()
         .await
-        .map_err(|e| format!("❌ request failed with error: {}", e))
-}
-
-pub async fn make_nba_gamecard_request(date: GameDate) -> Result<Response, String> {
-    let client = Client::new();
-
-    let url = build_nba_gamecard_url(date);
-
-    client
-        .get(&url)
-        .headers(HEADER_MANAGER.gamecard_request_headers())
-        .send()
-        .await
-        .map_err(|e| format!("❌ request failed with error: {}", e))
+        .map_err(|e| NBAQueryError::RequestError(e))
 }
 
 fn build_nba_history_url(
@@ -88,6 +79,34 @@ fn build_nba_history_url(
     )
 }
 
+pub async fn daily_gamecard_json(date: GameDate) -> Result<Value, NBAQueryError> {
+    let response = make_nba_gamecard_request(date).await?;
+
+    let json = response
+        .json()
+        .await
+        .map_err(|e| NBAQueryError::FormatError(e))?;
+
+    Ok(json)
+}
+
+pub(crate) async fn make_nba_gamecard_request(date: GameDate) -> Result<Response, NBAQueryError> {
+    let client = Client::builder()
+        .gzip(true)
+        .brotli(true)
+        .build()
+        .map_err(|e| NBAQueryError::ClientError(e))?;
+
+    let url = build_nba_gamecard_url(date);
+
+    client
+        .get(&url)
+        .headers(HEADER_MANAGER.gamecard_request_headers())
+        .send()
+        .await
+        .map_err(|e| NBAQueryError::RequestError(e))
+}
+
 fn build_nba_gamecard_url(date: GameDate) -> String {
     format!(
         "https://core-api.nba.com/cp/api/v1.9/feeds/gamecardfeed?gamedate={}&platform=web",
@@ -95,10 +114,50 @@ fn build_nba_gamecard_url(date: GameDate) -> String {
     )
 }
 
+#[derive(Error)]
+pub enum NBAQueryError {
+    ClientError(reqwest::Error),
+    RequestError(reqwest::Error),
+    ResponseError(reqwest::Response),
+    FormatError(reqwest::Error),
+    ObjectStructureError(parse::ParseError),
+}
+
+impl Debug for NBAQueryError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            NBAQueryError::RequestError(e) => {
+                write!(f, "{}\n❌ request failed with error", e)
+            }
+            NBAQueryError::ResponseError(res) => {
+                write!(
+                    f,
+                    "❌ {}\n❌ request succeed but failed with code {}",
+                    res.status(),
+                    res.url()
+                )
+            }
+            NBAQueryError::ClientError(error) => {
+                write!(f, "{}\n❌ failed to construct client", error)
+            }
+            NBAQueryError::FormatError(error) => {
+                write!(f, "{}\n❌ failed to parse response as json.", error)
+            }
+            NBAQueryError::ObjectStructureError(error) => {
+                write!(f, "{}\n❌ unexpected json object structure.", error)
+            }
+        }
+    }
+}
+
+impl Display for NBAQueryError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
 #[cfg(test)]
 mod test_queries {
-    use std::str::FromStr;
-
     use super::*;
 
     #[tokio::test]

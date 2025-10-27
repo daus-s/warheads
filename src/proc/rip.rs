@@ -42,7 +42,8 @@ pub fn read_and_process_nba_games(
 
     let json = from_str(&json_str).map_err(|e| ReadProcessError::JSONParseError(e))?;
 
-    let (rows, headers) = parse_season(json); //this also can fail
+    let (rows, headers) =
+        parse_season(json).map_err(|e| ReadProcessError::ObjectStructureError(e))?;
 
     // process
     match season(rows, headers, kind) {

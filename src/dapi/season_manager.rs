@@ -1,4 +1,3 @@
-use std::error::Error;
 use std::ops::Range;
 
 use chrono::Local;
@@ -141,10 +140,4 @@ pub fn get_current_era() -> SeasonId {
         11..=12 => SeasonId::from((curr_year, PreSeason)),
         _ => unreachable!("💀 12 months in a year."),
     }
-}
-
-struct GameCard {}
-// game schedule tracker
-pub fn get_daily_gamecard() -> Result<Vec<GameCard>, Box<dyn Error>> {
-    todo!()
 }

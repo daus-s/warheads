@@ -22,10 +22,6 @@ impl HeaderManager {
 
         let headers: HashMap<String, String> = serde_json::from_str(&contents).expect("💀 failed to parse headers.json as json. check the configuration in .../warheads/headers.json");
 
-        for key in headers.keys() {
-            println!("Key: {}", key);
-        }
-
         assert!(!headers.is_empty(), "💀 headers.json is empty");
         assert!(
             headers.contains_key("User-Agent"),

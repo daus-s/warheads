@@ -1,6 +1,17 @@
+use crate::dapi::from_value::FromValue;
 use crate::format::extract::{get_result_set, get_rows, headers};
+use crate::stats::gamecard::GameCard;
+use crate::stats::record::Record;
+use crate::stats::teamcard::TeamCard;
+
 use chrono::{DateTime, Datelike, Local, NaiveDate};
+
 use serde_json::Value;
+
+use std::fmt::Debug;
+use std::fmt::{self, Display};
+
+use thiserror::Error;
 
 pub fn value_to_date(value: &Value) -> Option<NaiveDate> {
     match value {
@@ -38,15 +49,130 @@ pub struct DestructuredDateTime {
     pub day: u32,
 }
 
-pub fn parse_season(value: Value) -> (Vec<Value>, Vec<String>) {
-    let set = get_result_set(&value)
-        .unwrap_or_else(|err| panic!("💀 could not unwrap result set: {err}"));
+pub fn parse_season(value: Value) -> Result<(Vec<Value>, Vec<String>), ParseError> {
+    let set = get_result_set(&value).map_err(|_| ParseError::ResultSetError)?;
 
-    let headers: Vec<String> =
-        headers(&set).unwrap_or_else(|err| panic!("💀 could not unwrap headers from set: {err}"));
+    let headers: Vec<String> = headers(&set).map_err(|_| ParseError::HeaderRowError)?;
 
-    let rows: Vec<Value> =
-        get_rows(&set).unwrap_or_else(|err| panic!("💀 could not unwrap rows from set: {err}"));
+    let rows: Vec<Value> = get_rows(&set).map_err(|_| ParseError::BoxScoreRowsError)?;
 
-    (rows, headers)
+    Ok((rows, headers))
+}
+
+pub fn parse_gamecards(value: Value) -> Result<Vec<GameCard>, ParseError> {
+    let modules = value.get("modules").ok_or(ParseError::ModulesError)?;
+
+    let modules_array = modules.as_array().ok_or(ParseError::ModuleListError)?;
+
+    let head = modules_array[0]
+        .as_object()
+        .ok_or(ParseError::ModuleListError)?;
+
+    let cards = head.get("cards").ok_or(ParseError::CardError)?;
+
+    let cards_array = cards.as_array().ok_or(ParseError::CardListError)?;
+
+    let mut gamecards = Vec::new();
+
+    for card_json in cards_array {
+        if let Some(card) = parse_card(card_json) {
+            gamecards.push(card);
+        } else {
+            return Err(ParseError::CardParseError);
+        }
+    }
+
+    Ok(gamecards)
+}
+
+fn parse_card(value: &Value) -> Option<GameCard> {
+    let card = value.as_object()?.get("cardData")?;
+
+    let game_id = card.get("gameId")?.game_id().ok()?;
+
+    let mut gamecard = GameCard::game_id(game_id);
+
+    let game_time = card.get("gameTimeUtc")?.as_str()?;
+
+    let date: chrono::NaiveDate =
+        chrono::NaiveDateTime::parse_from_str(game_time, "%Y-%m-%dT%H:%M:%SZ")
+            .ok()?
+            .date();
+
+    gamecard.set_date(date);
+
+    let home_team = card.get("homeTeam")?;
+    let away_team = card.get("awayTeam")?;
+
+    let home = parse_team(home_team.as_object()?)?;
+    let away = parse_team(away_team.as_object()?)?;
+
+    gamecard.add_home_team(home);
+    gamecard.add_away_team(away);
+
+    Some(gamecard)
+}
+
+fn parse_team(team: &serde_json::Map<String, Value>) -> Option<TeamCard> {
+    let team_id = team.get("teamId")?.team_id().ok()?;
+
+    let team_name = team.get("teamName")?.team_name().ok()?;
+
+    let team_abbr = team.get("teamTricode")?.team_abbreviation().ok()?;
+
+    let wins = team.get("wins")?.as_u64()?;
+    let losses = team.get("losses")?.as_u64()?;
+
+    let record = Record::wl(wins, losses);
+
+    Some(TeamCard::new(team_id, team_name, team_abbr, record))
+}
+
+#[derive(Error)]
+pub enum ParseError {
+    ResultSetError,
+    HeaderRowError,
+    BoxScoreRowsError,
+    ModulesError,
+    ModuleListError,
+    CardError,
+    CardListError,
+    CardParseError,
+}
+
+impl Debug for ParseError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ParseError::ResultSetError => {
+                write!(f, "❌  missing result set from GameLog request. ")
+            }
+            ParseError::HeaderRowError => {
+                write!(f, "❌  missing headers from GameLog request. ")
+            }
+            ParseError::BoxScoreRowsError => {
+                write!(f, "❌  missing box scores from GameLog request. ")
+            }
+            ParseError::ModulesError => {
+                write!(f, "❌  missing modules field on GameCard request.")
+            }
+            ParseError::ModuleListError => {
+                write!(f, "❌  module field is not an array.")
+            }
+            ParseError::CardError => {
+                write!(f, "❌  missing cards field in module list.")
+            }
+            ParseError::CardListError => {
+                write!(f, "❌  card field is not an array.")
+            }
+            ParseError::CardParseError => {
+                write!(f, "❌  failed to parse game card.")
+            }
+        }
+    }
+}
+
+impl Display for ParseError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
