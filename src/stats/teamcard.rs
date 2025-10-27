@@ -3,7 +3,7 @@ use std::fmt::Display;
 use crate::stats::record::Record;
 use crate::types::{TeamAbbreviation, TeamId, TeamName};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TeamCard {
     team_id: TeamId,
     team_name: TeamName,
@@ -39,5 +39,16 @@ impl Display for TeamCard {
             "{} ({}) - {}",
             self.team_name, self.team_abbr, self.record
         )
+    }
+}
+
+impl PartialEq for TeamCard {
+    fn eq(&self, other: &Self) -> bool {
+        self.team_id == other.team_id
+            && self.team_name == other.team_name
+            && self.team_abbr == other.team_abbr
+
+        // am i sure?
+        // omit checking the record as the record MAY? update with the season progression
     }
 }

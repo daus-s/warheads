@@ -1,6 +1,6 @@
 use std::{fmt::Display, str::FromStr};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Record {
     pub wins: u8,
     pub losses: u8,

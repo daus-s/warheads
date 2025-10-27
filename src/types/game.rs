@@ -18,6 +18,12 @@ impl GameDate {
     }
 }
 
+impl From<NaiveDate> for GameDate {
+    fn from(date: NaiveDate) -> Self {
+        GameDate(date)
+    }
+}
+
 impl FromStr for GameDate {
     type Err = String;
 

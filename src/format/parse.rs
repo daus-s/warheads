@@ -1,8 +1,9 @@
 use crate::dapi::from_value::FromValue;
 use crate::format::extract::{get_result_set, get_rows, headers};
-use crate::stats::gamecard::GameCard;
+use crate::stats::gamecard::{GameCard, GameCardBuilder};
 use crate::stats::record::Record;
 use crate::stats::teamcard::TeamCard;
+use crate::types::GameDate;
 
 use chrono::{DateTime, Datelike, Local, NaiveDate};
 
@@ -90,16 +91,17 @@ fn parse_card(value: &Value) -> Option<GameCard> {
 
     let game_id = card.get("gameId")?.game_id().ok()?;
 
-    let mut gamecard = GameCard::game_id(game_id);
+    let mut gamecard_builder = GameCardBuilder::default();
+
+    gamecard_builder.game_id(game_id);
 
     let game_time = card.get("gameTimeUtc")?.as_str()?;
 
-    let date: chrono::NaiveDate =
-        chrono::NaiveDateTime::parse_from_str(game_time, "%Y-%m-%dT%H:%M:%SZ")
-            .ok()?
-            .date();
+    let date = chrono::NaiveDateTime::parse_from_str(game_time, "%Y-%m-%dT%H:%M:%SZ")
+        .ok()?
+        .date();
 
-    gamecard.set_date(date);
+    gamecard_builder.date(date.into());
 
     let home_team = card.get("homeTeam")?;
     let away_team = card.get("awayTeam")?;
@@ -107,8 +109,10 @@ fn parse_card(value: &Value) -> Option<GameCard> {
     let home = parse_team(home_team.as_object()?)?;
     let away = parse_team(away_team.as_object()?)?;
 
-    gamecard.add_home_team(home);
-    gamecard.add_away_team(away);
+    gamecard_builder.home(home);
+    gamecard_builder.away(away);
+
+    let gamecard = gamecard_builder.build().ok()?;
 
     Some(gamecard)
 }
