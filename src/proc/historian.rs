@@ -21,8 +21,6 @@ pub async fn observe_nba() {
 
     let eras = nba_lifespan_period();
 
-    println!("Eras: {:?}", eras);
-
     for era in &eras[0..eras.len() - 1] {
         errors += compare_and_fetch(*era, NBAStatKind::Player, &checksums).await;
         errors += compare_and_fetch(*era, NBAStatKind::Team, &checksums).await;

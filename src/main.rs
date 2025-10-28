@@ -16,8 +16,11 @@ async fn main() {
         let time = chrono::Utc::now();
 
         if time.minute() == 0 {
-            if update_source_data().await {};
-            //update_ratings();
+            //update games at the top of the hour
+            if update_source_data().await {
+
+                //update_ratings();
+            };
         }
     }
 }

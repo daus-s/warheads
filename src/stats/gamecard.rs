@@ -29,6 +29,7 @@ impl GameCard {
         }
     }
 
+    //is this seach inefficient reading the file each time for each game?
     pub fn check_source_data(&self) -> bool {
         let era = get_era_by_date(self.date);
 
