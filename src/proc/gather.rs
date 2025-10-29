@@ -12,7 +12,7 @@ use crate::stats::id::Identity;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::nba_stat::NBABoxScore::{Player, Team};
 
-use crate::storage::write::write_games;
+use crate::storage::write::write_with_directory;
 
 use crate::types::SeasonId;
 
@@ -57,7 +57,7 @@ pub async fn fetch_and_save_nba_stats(season: SeasonId, stat: NBAStatKind) -> Re
     let (year, _period) = season.destructure();
 
     match query::nba_history_json(season, stat).await {
-        Ok(response_data) => match write_games(&file_path, &response_data) {
+        Ok(response_data) => match write_with_directory(&file_path, &response_data) {
             Ok(_) => {
                 println!(
                     "✅ successfully saved nba stats for {} season at file: {:?}",

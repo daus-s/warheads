@@ -5,6 +5,7 @@ use crate::dapi::team_box_score::TeamBoxScore;
 
 use crate::format::game_object_formatter::GameIdentity;
 use crate::stats::game_display::GameDisplay;
+use crate::stats::gamecard::GameCard;
 use crate::stats::id::Identity;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::stat_column::StatColumn::{GAME_DATE, MATCHUP, WL};
@@ -21,10 +22,13 @@ use serde_json::Value::Null;
 #[derive(Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct GameObject {
     pub season_id: SeasonId,
+
     pub game_date: GameDate,
+
     pub game_id: GameId,
 
     home: TeamBoxScore,
+
     away: TeamBoxScore,
 }
 
@@ -175,6 +179,14 @@ impl GameObject {
         (self.season_id, self.game_id)
     }
 
+    pub fn winning_side(&self) -> Visiting {
+        match self.winner() {
+            team_id if team_id == self.home.team_id => Visiting::Home,
+            team_id if team_id == self.away.team_id => Visiting::Away,
+            _ => panic!("💀 if this error is arising check that your input box scores have opposite field states to this function"),
+        }
+    }
+
     pub fn winner(&self) -> TeamId {
         let home = self.home.box_score();
         let away = self.away.box_score();
@@ -234,5 +246,16 @@ impl GameObject {
         };
 
         GameIdentity::new(home, away)
+    }
+
+    /// prove that you are a card carrying member of the national
+    /// basketball association.
+    pub fn card(&self) -> GameCard {
+        GameCard::new(
+            self.game_id,
+            self.game_date,
+            self.home().card(),
+            self.away().card(),
+        )
     }
 }

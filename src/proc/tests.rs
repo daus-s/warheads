@@ -16,7 +16,7 @@ use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::nba_stat::NBABoxScore;
 use crate::stats::season_period::SeasonPeriod;
 
-use crate::storage::write::write_games;
+use crate::storage::write::write_with_directory;
 
 use crate::types::{GameId, SeasonId};
 
@@ -68,7 +68,7 @@ mod test_injest {
         let team_json: serde_json::Value = serde_json::from_str(&team_body)
             .expect("💀 failed to parse json from nba team response");
 
-        assert!(write_games(&team_path, &team_json).is_ok());
+        assert!(write_with_directory(&team_path, &team_json).is_ok());
 
         let expected_team_file =
             fs::read_to_string(PathBuf::from(format!("{}/data/expected_tg.json", *TEST))).expect(
@@ -107,7 +107,7 @@ mod test_injest {
 
         let player_path = PathBuf::from(format!("{}/data/data/pg.json", *TEST));
 
-        assert!(write_games(&player_path, &player_json).is_ok());
+        assert!(write_with_directory(&player_path, &player_json).is_ok());
 
         let expected_player_file =
             fs::read_to_string(PathBuf::from(format!("{}/data/expected_pg.json", *TEST))).expect(
@@ -171,7 +171,7 @@ mod test_injest {
         let team_json: Value = serde_json::from_str(&team_body)
             .expect("💀 failed to parse json from nba team response");
 
-        assert!(write_games(&team_path, &team_json).is_ok());
+        assert!(write_with_directory(&team_path, &team_json).is_ok());
 
         let expected_team_file =
             fs::read_to_string(PathBuf::from(format!("{}/data/expected_tg.json", *TEST))).expect(
@@ -210,7 +210,7 @@ mod test_injest {
 
         let player_path = player_source_path();
 
-        let _ = write_games(&player_path, &player_json);
+        let _ = write_with_directory(&player_path, &player_json);
 
         let expected_player_file =
             fs::read_to_string(PathBuf::from(format!("{}/data/expected_pg.json", *TEST))).expect(

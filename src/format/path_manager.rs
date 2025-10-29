@@ -4,7 +4,7 @@ use crate::format::stat_path_formatter::StatPathFormatter as SPF;
 use crate::stats::id::Identity;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::nba_kind::NBAStatKind::{Player, Team};
-use crate::types::{GameId, PlayerId, SeasonId, TeamId};
+use crate::types::{GameDate, GameId, PlayerId, SeasonId, TeamId};
 use once_cell::sync::Lazy;
 use std::path::PathBuf;
 
@@ -108,4 +108,29 @@ pub fn nba_storage_file(season_id: SeasonId, game_id: GameId) -> PathBuf {
 
 pub fn nba_checksum_path() -> PathBuf {
     PathBuf::from(format!("{}/nba/checksum/checksums.json", *DATA))
+}
+
+pub fn nba_timeline_path(season_id: SeasonId) -> PathBuf {
+    let (_year, period) = season_id.destructure();
+
+    let s = format!(
+        "{}/nba/timeline/{}/{}/",
+        *DATA,
+        season_path(season_id),
+        period
+    );
+
+    PathBuf::from(s)
+}
+
+pub fn nba_timeline_file(season_id: SeasonId, game_date: GameDate) -> PathBuf {
+    let mut path = nba_timeline_path(season_id);
+
+    let (y, m, d) = game_date.destructure();
+
+    let file = format!("{y}_{m:02}_{d:02}.game",); // 2025_10_28.game
+
+    path.push(file);
+
+    path
 }

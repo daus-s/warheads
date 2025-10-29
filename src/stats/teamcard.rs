@@ -35,6 +35,14 @@ impl TeamCard {
     pub fn team_id(&self) -> TeamId {
         self.team_id
     }
+
+    pub fn add_win(&mut self) {
+        self.record.wins += 1;
+    }
+
+    pub fn add_loss(&mut self) {
+        self.record.losses += 1;
+    }
 }
 
 impl Display for TeamCard {

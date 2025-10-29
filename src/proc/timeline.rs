@@ -1,23 +1,77 @@
 use crate::dapi::season_manager::nba_lifespan_period;
 
+use crate::format::path_manager::nba_timeline_file;
 use crate::stats::gamecard::GameCard;
 
+use crate::stats::visiting::Visiting;
 use crate::storage::read_disk::read_nba_season;
 
+use crate::storage::write::write_with_directory;
 use crate::types::GameDate;
 
 use std::collections::HashMap;
 
-pub fn sequence_nba() -> Result<(), ()> {
+pub fn sequence_nba() -> Result<(), Box<dyn std::error::Error>> {
     // create chronological timeline of all game events
-    for szn in nba_lifespan_period() {
-        let dates = HashMap::<GameDate, Vec<GameCard>>::new();
+    for era in nba_lifespan_period() {
+        let mut dates = HashMap::<GameDate, Vec<GameCard>>::new();
 
-        let games = read_nba_season(szn).map_err(|_| ())?;
+        let mut games = read_nba_season(era)?;
+
+        games.sort_by_key(|game| game.game_id);
+
+        for game in games.iter() {
+            let date = game.game_date;
+            dates.entry(date).or_insert_with(Vec::new).push(game.card());
+        }
+
+        for game in games {
+            let date = game.game_date;
+
+            let winner = game.winning_side();
+
+            let cards = dates.get_mut(&date).unwrap(); //it must be in here if we added it. i think u can prove this wont unwrap
+
+            let gc = cards
+                .iter_mut()
+                .find(|card| card.game_id() == game.game_id())
+                .unwrap(); //same protective level for this unwrap as before
+
+            match winner {
+                Visiting::Home => {
+                    gc.mut_home().add_win();
+                    gc.mut_away().add_loss();
+                }
+                Visiting::Away => {
+                    gc.mut_away().add_win();
+                    gc.mut_home().add_loss();
+                }
+            }
+        }
+
+        for (date, cards) in dates.iter() {
+            let json = serde_json::to_string(cards).unwrap();
+            let path = nba_timeline_file(era, *date);
+
+            write_with_directory(&path, &json)?;
+        }
     }
 
     Ok(())
 
     // todo: add checksums for each era.
     // chronologica
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_sequence_nba() {
+        match sequence_nba() {
+            Ok(_) => println!("✅ sequence_nba completed successfully"),
+            Err(err) => panic!("{err}\n❌ error with nba sequencing."),
+        };
+    }
 }

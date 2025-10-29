@@ -105,7 +105,22 @@ impl Serialize for GameDate {
     }
 }
 
+/// ## GameId
+///
+/// ### Ordering & Properties
+/// `GameId` is the unique ordered id for the game. In a given season era
+/// (`SeasonId`) the gameids are ordered.
+///
+/// However, gameids are not ordered across seasons as any game id from 2025
+/// or other early 21st century years (see `(2000..=min(present, 2046))`)
+/// comes before the earliest nba seasons of the 1940s.
+///
+/// However, this leaves us with the fact that GameId and SeasonId can form a basis
+/// for ordering games across seasons.
+///
+/// ### Serialization & Deserialization
 /// `GameId` is a number represented in the NBA data by a JSON String, but we will use it as an int.
+///
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Ord, PartialOrd)]
 pub struct GameId(pub u64);
 

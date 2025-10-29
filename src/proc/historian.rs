@@ -56,10 +56,13 @@ pub async fn observe_nba() {
 pub fn chronicle_nba() {
     for szn in nba_lifespan() {
         store_nba_season(szn);
+        // todo: add checksums for each era.
     }
 
-    // todo: add checksums for each era.
-    sequence_nba();
+    match sequence_nba() {
+        Ok(_) => println!("✅ successfully created chronological timeline for NBA Chronology. "),
+        Err(_) => eprintln!("❌ failed to create a chronological timeline for NBA Chronology"),
+    };
 }
 
 pub fn rate_nba() {

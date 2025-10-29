@@ -81,10 +81,26 @@ impl Display for GameCard {
         )
     }
 }
-
+// getters and setters
 impl GameCard {
     pub fn game_id(&self) -> GameId {
         self.game_id
+    }
+
+    pub fn home(&self) -> &TeamCard {
+        &self.home
+    }
+
+    pub fn away(&self) -> &TeamCard {
+        &self.away
+    }
+
+    pub fn mut_home(&mut self) -> &mut TeamCard {
+        &mut self.home
+    }
+
+    pub fn mut_away(&mut self) -> &mut TeamCard {
+        &mut self.away
     }
 }
 
