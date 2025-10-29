@@ -2,6 +2,7 @@ pub mod error;
 pub mod gather;
 pub mod historian;
 pub mod hunting;
+pub mod predict;
 pub mod query;
 pub mod refresher;
 mod revise;

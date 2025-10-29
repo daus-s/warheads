@@ -6,7 +6,7 @@ use crate::stats::gamecard::GameCard;
 use crate::stats::visiting::Visiting;
 use crate::storage::read_disk::read_nba_season;
 
-use crate::storage::write::write_with_directory;
+use crate::storage::write::write_serializable_with_directory;
 use crate::types::GameDate;
 
 use std::collections::HashMap;
@@ -50,10 +50,9 @@ pub fn sequence_nba() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         for (date, cards) in dates.iter() {
-            let json = serde_json::to_string(cards).unwrap();
             let path = nba_timeline_file(era, *date);
 
-            write_with_directory(&path, &json)?;
+            write_serializable_with_directory(&path, &cards)?;
         }
     }
 

@@ -3,7 +3,7 @@ use std::{fs, io};
 
 use serde::Serialize;
 
-pub fn write_with_directory<S: Serialize, T: AsRef<Path>>(
+pub fn write_serializable_with_directory<S: Serialize, T: AsRef<Path>>(
     file_path: T,
     content: &S,
 ) -> io::Result<()> {

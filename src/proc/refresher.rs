@@ -84,8 +84,6 @@ mod test_get_daily_gamecard {
             .await
             .unwrap_or_else(|err| panic!("💀 failed to get daily gamecard: {}", err));
 
-        dbg!(&json_response);
-
         let mut gamecards = parse_gamecards(json_response)
             .unwrap_or_else(|err| panic!("💀 failed to parse gamecards: {}", err));
 

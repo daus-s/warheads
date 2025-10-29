@@ -67,6 +67,8 @@ impl From<&str> for GameDate {
             GameDate(date)
         } else if let Ok(date) = NaiveDate::parse_from_str(s, "%m/%d/%Y") {
             GameDate(date)
+        } else if let Ok(date) = NaiveDate::parse_from_str(s, "%Y_%m_%d") {
+            GameDate(date)
         } else {
             GameDate(NaiveDate::MIN)
         }
