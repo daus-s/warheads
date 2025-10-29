@@ -1,6 +1,5 @@
 use crate::dapi::player_box_score::PlayerBoxScore;
 use crate::dapi::team_box_score::TeamBoxScore;
-use crate::dapi::write::write_games;
 
 use crate::format::path_manager::nba_source_path;
 use crate::format::season::season_fmt;
@@ -12,6 +11,8 @@ use crate::proc::rip::read_and_process_nba_games;
 use crate::stats::id::Identity;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::nba_stat::NBABoxScore::{Player, Team};
+
+use crate::storage::write::write_games;
 
 use crate::types::SeasonId;
 

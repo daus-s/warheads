@@ -3,6 +3,7 @@ use std::fs;
 
 use derive_builder::Builder;
 use regex::Regex;
+use serde::{Deserialize, Serialize};
 
 use crate::dapi::season_manager::get_era_by_date;
 use crate::format::path_manager::nba_source_path;
@@ -11,7 +12,7 @@ use crate::stats::teamcard::TeamCard;
 use crate::stats::visiting::Visiting;
 use crate::types::{GameDate, GameId};
 
-#[derive(Builder, Clone, Debug, PartialEq)]
+#[derive(Builder, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GameCard {
     game_id: GameId,
     date: GameDate,

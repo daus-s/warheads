@@ -3,8 +3,6 @@
 
 use crate::constants::paths::test;
 
-use crate::dapi::write::write_games;
-
 use crate::format::parse::parse_season;
 
 use crate::proc::gather::{player_games, team_games};
@@ -17,6 +15,8 @@ use crate::stats::id::Identity;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::nba_stat::NBABoxScore;
 use crate::stats::season_period::SeasonPeriod;
+
+use crate::storage::write::write_games;
 
 use crate::types::{GameId, SeasonId};
 
@@ -32,6 +32,8 @@ static TEST_MUTEX: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
 
 #[cfg(test)]
 mod test_injest {
+    use serde_json::Value;
+
     use crate::{dapi::team_box_score::TeamBoxScore, types::GameDate};
 
     use super::*;
@@ -63,7 +65,7 @@ mod test_injest {
             .await
             .expect("💀 failed to get body of nba team response. ");
 
-        let team_json = serde_json::from_str(&team_body)
+        let team_json: serde_json::Value = serde_json::from_str(&team_body)
             .expect("💀 failed to parse json from nba team response");
 
         assert!(write_games(&team_path, &team_json).is_ok());
@@ -100,7 +102,7 @@ mod test_injest {
             .await
             .expect("💀 failed to get body of nba team response. ");
 
-        let player_json = serde_json::from_str(&player_body)
+        let player_json: serde_json::Value = serde_json::from_str(&player_body)
             .expect("💀 failed to parse json from nba team response");
 
         let player_path = PathBuf::from(format!("{}/data/data/pg.json", *TEST));
@@ -166,7 +168,7 @@ mod test_injest {
             .await
             .expect("💀 failed to get body of nba team response. ");
 
-        let team_json = serde_json::from_str(&team_body)
+        let team_json: Value = serde_json::from_str(&team_body)
             .expect("💀 failed to parse json from nba team response");
 
         assert!(write_games(&team_path, &team_json).is_ok());
@@ -203,7 +205,7 @@ mod test_injest {
             .await
             .expect("💀 failed to get body of nba team response. ");
 
-        let player_json = serde_json::from_str(&player_body)
+        let player_json: Value = serde_json::from_str(&player_body)
             .expect("💀 failed to parse json from nba team response");
 
         let player_path = player_source_path();

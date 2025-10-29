@@ -12,6 +12,7 @@ use crate::proc::gather::fetch_and_save_nba_stats;
 use crate::proc::hunting::compare_and_fetch;
 use crate::proc::store::store_nba_season;
 
+use crate::proc::timeline::sequence_nba;
 use crate::stats::nba_kind::NBAStatKind;
 
 pub async fn observe_nba() {
@@ -56,6 +57,9 @@ pub fn chronicle_nba() {
     for szn in nba_lifespan() {
         store_nba_season(szn);
     }
+
+    // todo: add checksums for each era.
+    sequence_nba();
 }
 
 pub fn rate_nba() {

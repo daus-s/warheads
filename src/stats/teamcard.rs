@@ -1,9 +1,11 @@
 use std::fmt::Display;
 
+use serde::{Deserialize, Serialize};
+
 use crate::stats::record::Record;
 use crate::types::{TeamAbbreviation, TeamId, TeamName};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TeamCard {
     team_id: TeamId,
     team_name: TeamName,
