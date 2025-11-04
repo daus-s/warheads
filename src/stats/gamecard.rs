@@ -1,15 +1,16 @@
 use crate::dapi::season_manager::get_era_by_date;
 
-use crate::format::path_manager::nba_source_path;
+use crate::format::path_manager::{nba_source_path, nba_storage_file};
 
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::teamcard::TeamCard;
 use crate::stats::visiting::Visiting;
 
-use crate::types::{GameDate, GameId};
+use crate::types::{GameDate, GameId, SeasonId};
 
 use std::fmt::Display;
 use std::fs;
+use std::path::PathBuf;
 
 use derive_builder::Builder;
 
@@ -20,15 +21,23 @@ use serde::{Deserialize, Serialize};
 #[derive(Builder, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GameCard {
     game_id: GameId,
+    season_id: SeasonId,
     date: GameDate,
     home: TeamCard,
     away: TeamCard,
 }
 
 impl GameCard {
-    pub fn new(game_id: GameId, date: GameDate, home: TeamCard, away: TeamCard) -> Self {
+    pub fn new(
+        game_id: GameId,
+        season_id: SeasonId,
+        date: GameDate,
+        home: TeamCard,
+        away: TeamCard,
+    ) -> Self {
         GameCard {
             game_id,
+            season_id,
             date,
             home,
             away,
@@ -50,6 +59,15 @@ impl GameCard {
         let away_regex = self.away_regex();
 
         home_regex.is_match(&contents) && away_regex.is_match(&contents)
+    }
+
+    pub fn get_storage_path(&self) -> PathBuf {
+        // let era = get_era_by_date(self.date);
+        //this would lowkey smart except its not guaranteed to work on edge cases you maybe have to look else weher
+
+        let team_source_path = nba_storage_file(self.season_id, self.game_id());
+
+        team_source_path
     }
 
     pub fn home_regex(&self) -> Regex {
@@ -75,8 +93,13 @@ impl GameCard {
 
         re
     }
+
+    pub fn date(&self) -> GameDate {
+        self.date
+    }
 }
 
+//todo: get this all squared as in shaped like even rows even columns for tui display
 impl Display for GameCard {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
@@ -138,19 +161,25 @@ mod test_gamecard {
 
         let tch = TeamCard::new(
             TeamId(1610612747),
-            TeamName("Lakers".to_owned()),
+            TeamName("Los Angeles Lakers".to_owned()),
             TeamAbbreviation("LAL".to_owned()),
             Record { wins: 0, losses: 1 },
         );
 
         let tca = TeamCard::new(
             TeamId(1610612744),
-            TeamName("Warriors".to_owned()),
+            TeamName("Golden State Warriors".to_owned()),
             TeamAbbreviation("GSW".to_owned()),
             Record { wins: 1, losses: 0 },
         );
 
-        let gc = GameCard::new(GameId(22500002), day.into(), tch, tca);
+        let gc = GameCard::new(
+            GameId(22500002),
+            SeasonId::from(22025),
+            day.into(),
+            tch,
+            tca,
+        );
 
         gc
     }
@@ -161,35 +190,47 @@ mod test_gamecard {
 
         let tc1h = TeamCard::new(
             TeamId(1610612760),
-            TeamName("Thunder".to_owned()),
+            TeamName("Oklahoma City Thunder".to_owned()),
             TeamAbbreviation("OKC".to_owned()),
             Record { wins: 1, losses: 0 },
         );
 
         let tc1a = TeamCard::new(
             TeamId(1610612745),
-            TeamName("Rockets".to_owned()),
+            TeamName("Houston Rockets".to_owned()),
             TeamAbbreviation("HOU".to_owned()),
-            Record { wins: 1, losses: 0 },
+            Record { wins: 0, losses: 1 },
         );
 
-        let g1 = GameCard::new(GameId(22500001), day1.into(), tc1h, tc1a);
+        let g1 = GameCard::new(
+            GameId(22500001),
+            SeasonId::from(22025),
+            day1.into(),
+            tc1h,
+            tc1a,
+        );
 
         let tc2h = TeamCard::new(
             TeamId(1610612747),
-            TeamName("Lakers".to_owned()),
+            TeamName("Los Angeles Lakers".to_owned()),
             TeamAbbreviation("LAL".to_owned()),
             Record { wins: 0, losses: 1 },
         );
 
         let tc2a = TeamCard::new(
             TeamId(1610612744),
-            TeamName("Warriors".to_owned()),
+            TeamName("Golden State Warriors".to_owned()),
             TeamAbbreviation("GSW".to_owned()),
             Record { wins: 1, losses: 0 },
         );
 
-        let g2 = GameCard::new(GameId(22500002), day2.into(), tc2h, tc2a);
+        let g2 = GameCard::new(
+            GameId(22500002),
+            SeasonId::from(22025),
+            day2.into(),
+            tc2h,
+            tc2a,
+        );
 
         vec![g1, g2]
     }
@@ -198,28 +239,22 @@ mod test_gamecard {
     fn test_serialization() {
         let gc = test_gamecard();
 
-        let expected = r#"{"game_id":"0022500002","date":"2025-10-21","home":{"team_id":1610612747,"team_name":"Lakers","team_abbr":"LAL","record":"0-1"},"away":{"team_id":1610612744,"team_name":"Warriors","team_abbr":"GSW","record":"1-0"}}"#;
+        let expected = r#"{"game_id":"0022500002","season_id":"22025","date":"2025-10-21","home":{"team_id":1610612747,"team_name":"Los Angeles Lakers","team_abbr":"LAL","record":"0-1"},"away":{"team_id":1610612744,"team_name":"Golden State Warriors","team_abbr":"GSW","record":"1-0"}}"#;
 
         let actual = serde_json::to_string(&gc)
             .expect("failed to serialize struct that is specified serializable");
 
-        assert_eq!(expected, actual);
+        pretty_assertions::assert_eq!(expected, actual);
     }
 
     #[test]
     fn test_vec_serialization() {
         let vec = expected_gamecards();
 
-        let expected = r#"[{"game_id":"0022500001","date":"2025-10-21","home":{"team_id":1610612760,"team_name":"Thunder","team_abbr":"OKC","record":"1-0"},"away":{"team_id":1610612745,"team_name":"Rockets","team_abbr":"HOU","record":"1-0"}},{"game_id":"0022500002","date":"2025-10-21","home":{"team_id":1610612747,"team_name":"Lakers","team_abbr":"LAL","record":"0-1"},"away":{"team_id":1610612744,"team_name":"Warriors","team_abbr":"GSW","record":"1-0"}}]"#;
-
-        // println!(
-        //     "[{},{}]",
-        //     serde_json::to_string(&vec[0]).unwrap(),
-        //     serde_json::to_string(&vec[1]).unwrap()
-        // );
+        let expected = r#"[{"game_id":"0022500001","season_id":"22025","date":"2025-10-21","home":{"team_id":1610612760,"team_name":"Oklahoma City Thunder","team_abbr":"OKC","record":"1-0"},"away":{"team_id":1610612745,"team_name":"Houston Rockets","team_abbr":"HOU","record":"0-1"}},{"game_id":"0022500002","season_id":"22025","date":"2025-10-21","home":{"team_id":1610612747,"team_name":"Los Angeles Lakers","team_abbr":"LAL","record":"0-1"},"away":{"team_id":1610612744,"team_name":"Golden State Warriors","team_abbr":"GSW","record":"1-0"}}]"#;
 
         let actual = serde_json::to_string(&vec).unwrap();
 
-        assert_eq!(expected, actual);
+        pretty_assertions::assert_eq!(expected, actual);
     }
 }

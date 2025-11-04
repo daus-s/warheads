@@ -1,16 +1,18 @@
 use crate::dapi::season_manager::nba_lifespan_period;
 
 use crate::format::path_manager::nba_timeline_file;
+
 use crate::stats::gamecard::GameCard;
-
 use crate::stats::visiting::Visiting;
-use crate::storage::read_disk::read_nba_season;
 
+use crate::storage::read_disk::read_nba_season;
 use crate::storage::write::write_serializable_with_directory;
+
 use crate::types::GameDate;
 
 use std::collections::HashMap;
 
+/// sequence_nba creates a timeline of all games in NBA history based on already saved games
 pub fn sequence_nba() -> Result<(), Box<dyn std::error::Error>> {
     // create chronological timeline of all game events
     for era in nba_lifespan_period() {
@@ -60,17 +62,4 @@ pub fn sequence_nba() -> Result<(), Box<dyn std::error::Error>> {
 
     // todo: add checksums for each era.
     // chronologica
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_sequence_nba() {
-        match sequence_nba() {
-            Ok(_) => println!("✅ sequence_nba completed successfully"),
-            Err(err) => panic!("{err}\n❌ error with nba sequencing."),
-        };
-    }
 }

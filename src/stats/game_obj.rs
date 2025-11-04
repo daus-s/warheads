@@ -253,6 +253,7 @@ impl GameObject {
     pub fn card(&self) -> GameCard {
         GameCard::new(
             self.game_id,
+            self.season_id,
             self.game_date,
             self.home().card(),
             self.away().card(),

@@ -60,7 +60,7 @@ pub fn chronicle_nba() {
     }
 
     match sequence_nba() {
-        Ok(_) => println!("✅ successfully created chronological timeline for NBA Chronology. "),
+        Ok(_) => println!("✅ successfully saved historical NBA schedule. "),
         Err(_) => eprintln!("❌ failed to create a chronological timeline for NBA Chronology"),
     };
 }

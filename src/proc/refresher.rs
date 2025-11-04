@@ -65,7 +65,7 @@ mod test_get_daily_gamecard {
 
     use crate::stats::record::Record;
     use crate::stats::teamcard::TeamCard;
-    use crate::types::{GameDate, GameId, TeamAbbreviation, TeamId, TeamName};
+    use crate::types::{GameDate, GameId, SeasonId, TeamAbbreviation, TeamId, TeamName};
 
     use super::*;
 
@@ -110,7 +110,13 @@ mod test_get_daily_gamecard {
             Record { wins: 1, losses: 0 },
         );
 
-        let g1 = GameCard::new(GameId(22500001), day1.into(), tc1h, tc1a);
+        let g1 = GameCard::new(
+            GameId(22500001),
+            SeasonId::from(22025),
+            day1.into(),
+            tc1h,
+            tc1a,
+        );
 
         let tc2h = TeamCard::new(
             TeamId(1610612747),
@@ -126,7 +132,13 @@ mod test_get_daily_gamecard {
             Record { wins: 1, losses: 0 },
         );
 
-        let g2 = GameCard::new(GameId(22500002), day2.into(), tc2h, tc2a);
+        let g2 = GameCard::new(
+            GameId(22500002),
+            SeasonId::from(22025),
+            day2.into(),
+            tc2h,
+            tc2a,
+        );
 
         vec![g1, g2]
     }

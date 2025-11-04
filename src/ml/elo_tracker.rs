@@ -8,8 +8,10 @@ use crate::ml::elo::{self, Elo};
 use crate::ml::elo_writer::EloWriter;
 use crate::ml::log_loss::LogLossTracker;
 use crate::ml::measurement::Measurement;
+use crate::ml::model::Model;
 use crate::stats::game_obj::GameObject;
 
+use crate::stats::gamecard::GameCard;
 use crate::storage::read_disk::read_nba_season;
 
 use crate::types::PlayerId;
@@ -131,7 +133,7 @@ impl EloTracker {
     pub fn save(&self) -> Result<(), String> {
         let model_name = self.get_model_name();
 
-        let records_filename = Self::records_path(&format!("{model_name}.csv"));
+        let records_filename = self.records_path(&format!("{model_name}.csv"));
 
         let mut writer = EloWriter::new(records_filename).expect("💀 failed to create EloWriter");
 
@@ -139,27 +141,41 @@ impl EloTracker {
             let _ = writer.serialize_elo(&record);
         }
 
-        let results_filename = Self::results_path(&format!("{model_name}_results"));
+        let results_filename = self.results_path(&format!("{model_name}_results"));
 
         let _ = fs::write(results_filename, format!("{}", self.log_loss));
 
         Ok(())
     }
 
-    fn records_path(filename: &str) -> PathBuf {
+    fn records_path(&self, filename: &str) -> PathBuf {
         static DATA: Lazy<String> = Lazy::new(data);
 
-        PathBuf::from(format!("{}/nba/elo/records/{}", *DATA, filename))
+        PathBuf::from(format!(
+            "{}/nba/{}/records/{}",
+            *DATA,
+            self.get_model_name(),
+            filename
+        ))
     }
 
     /// results_path generates the path to where the model accuracy is stored.
-    fn results_path(filename: &str) -> PathBuf {
+    fn results_path(&self, filename: &str) -> PathBuf {
         static DATA: Lazy<String> = Lazy::new(data);
 
-        PathBuf::from(format!("{}/nba/elo/results/{}", *DATA, filename))
+        PathBuf::from(format!(
+            "{}/nba/{}/results/{}",
+            *DATA,
+            self.get_model_name(),
+            filename
+        ))
+    }
+}
+impl Model for EloTracker {
+    fn predict(&self, card: &GameCard) -> f64 {
+        todo!()
     }
 
-    //todo: implement get_model_name for custom models
     fn get_model_name(&self) -> String {
         "elo".to_string()
     }

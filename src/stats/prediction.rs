@@ -10,3 +10,12 @@ pub struct Prediction {
     /// away win = 0
     probability: f64,
 }
+
+impl Prediction {
+    pub fn new(card: &GameCard, probability: f64) -> Self {
+        Prediction {
+            card: card.clone(),
+            probability,
+        }
+    }
+}

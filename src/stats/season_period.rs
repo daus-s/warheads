@@ -1,8 +1,12 @@
 use crate::format::stat_path_formatter::StatPathFormatter;
 use crate::format::url_format::UrlFormatter;
+
 use crate::types::SeasonId;
+
 use serde::{Deserialize, Serialize};
+
 use std::fmt::{Debug, Display, Formatter};
+use std::str::FromStr;
 
 #[derive(Clone, Copy, PartialEq, PartialOrd, Serialize, Deserialize, Eq, Hash, Debug)]
 #[serde(rename_all = "PascalCase")]
@@ -93,5 +97,21 @@ impl UrlFormatter for SeasonPeriod {
         };
 
         s.to_string()
+    }
+}
+
+impl FromStr for SeasonPeriod {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "PreSeason" => Ok(SeasonPeriod::PreSeason),
+            "RegularSeason" | "Regular Season" => Ok(SeasonPeriod::RegularSeason),
+            "Playoffs" | "PostSeason" | "Post Season" => Ok(SeasonPeriod::PostSeason),
+            "PlayIn" => Ok(SeasonPeriod::PlayIn),
+            "IST" | "NBA Cup" => Ok(SeasonPeriod::NBACup),
+            "AllStar" | "All Star Game" => Ok(SeasonPeriod::AllStarGame),
+            _ => Err(()),
+        }
     }
 }

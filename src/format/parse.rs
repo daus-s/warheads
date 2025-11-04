@@ -2,8 +2,9 @@ use crate::dapi::from_value::FromValue;
 use crate::format::extract::{get_result_set, get_rows, headers};
 use crate::stats::gamecard::{GameCard, GameCardBuilder};
 use crate::stats::record::Record;
+use crate::stats::season_period::SeasonPeriod;
 use crate::stats::teamcard::TeamCard;
-use crate::types::GameDate;
+use crate::types::{GameDate, SeasonId};
 
 use chrono::{DateTime, Datelike, Local, NaiveDate};
 
@@ -89,6 +90,8 @@ pub fn parse_gamecards(value: Value) -> Result<Vec<GameCard>, ParseError> {
 fn parse_card(value: &Value) -> Option<GameCard> {
     let card = value.as_object()?.get("cardData")?;
 
+    // println!("{}", serde_json::to_string_pretty(&card).unwrap());
+
     let game_id = card.get("gameId")?.game_id().ok()?;
 
     let mut gamecard_builder = GameCardBuilder::default();
@@ -111,6 +114,18 @@ fn parse_card(value: &Value) -> Option<GameCard> {
 
     gamecard_builder.home(home);
     gamecard_builder.away(away);
+
+    let season_year = card.get("seasonYear")?.as_str()?;
+    let season_type = card.get("seasonType")?.as_str()?;
+
+    let year = season_year.split('-').next()?.parse::<i32>().ok()?;
+    println!("{}", year);
+    let season_period = season_type.parse::<SeasonPeriod>().ok()?;
+    println!("{}", season_period);
+
+    let season_id = SeasonId::from((year, season_period));
+
+    gamecard_builder.season_id(season_id);
 
     let gamecard = gamecard_builder.build().ok()?;
 

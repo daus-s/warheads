@@ -165,7 +165,7 @@ mod test_queries {
         let response =
             make_nba_history_request(SeasonId::from(22022), NBAStatKind::Player, None, None)
                 .await
-                .unwrap();
+                .expect("💀 failed to fetch nba history records. ");
 
         assert!(response.status().is_success());
     }
@@ -174,7 +174,7 @@ mod test_queries {
     async fn test_gamecard_query() {
         let response = make_nba_gamecard_request(GameDate::from("10/21/2025"))
             .await
-            .unwrap();
+            .expect("💀 failed to fetch nba timeline records. ");
 
         assert!(response.status().is_success());
     }

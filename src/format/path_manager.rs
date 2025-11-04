@@ -19,7 +19,7 @@ use std::path::PathBuf;
 
 static DATA: Lazy<String> = Lazy::new(data);
 
-/// `nba_data_path` returns the PathBuf to the location of the raw nba data for its relevant domain.
+/// `nba_source_path` returns the PathBuf to the location of the raw nba data for its relevant domain.
 ///
 /// **returns**
 ///

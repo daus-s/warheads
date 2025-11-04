@@ -1,4 +1,5 @@
 pub mod error;
+pub mod forecast;
 pub mod gather;
 pub mod historian;
 pub mod hunting;

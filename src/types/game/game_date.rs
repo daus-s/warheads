@@ -1,9 +1,10 @@
-use std::str::FromStr;
+use chrono::{Datelike, NaiveDate};
+
+use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 
 use std::fmt::{Debug, Display, Formatter};
 
-use chrono::{Datelike, NaiveDate};
-use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
+use std::str::FromStr;
 
 /// `GameDate`is a `chrono::NaiveDate` wrapper that implements the necessary traits to work
 /// interchangeably in the code base.
@@ -11,7 +12,7 @@ use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 pub struct GameDate(pub NaiveDate);
 
 impl GameDate {
-    pub(crate) fn today() -> Self {
+    pub fn today() -> Self {
         let naive_date = chrono::Utc::now().date_naive();
 
         GameDate(naive_date)
@@ -29,6 +30,13 @@ impl GameDate {
         );
 
         (year, month, day)
+    }
+
+
+    pub fn next(&self) -> Self {
+        let naive_date = self.0.succ_opt().unwrap();
+
+        GameDate(naive_date)
     }
 }
 
