@@ -10,4 +10,3 @@ mod revise;
 pub mod rip;
 mod store;
 mod tests;
-pub mod timeline;

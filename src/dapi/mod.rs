@@ -8,4 +8,5 @@ pub mod stat_builder;
 pub mod team_box_score;
 mod test_season_manager;
 mod tests;
+pub mod timeline;
 pub mod timeline_manager;

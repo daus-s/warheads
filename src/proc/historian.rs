@@ -12,7 +12,7 @@ use crate::proc::gather::fetch_and_save_nba_stats;
 use crate::proc::hunting::compare_and_fetch;
 use crate::proc::store::store_nba_season;
 
-use crate::proc::timeline::sequence_nba;
+use crate::dapi::timeline::nba_timeline;
 use crate::stats::nba_kind::NBAStatKind;
 
 pub async fn observe_nba() {
@@ -59,7 +59,7 @@ pub fn chronicle_nba() {
         // todo: add checksums for each era.
     }
 
-    match sequence_nba() {
+    match nba_timeline() {
         Ok(_) => println!("✅ successfully saved historical NBA schedule. "),
         Err(_) => eprintln!("❌ failed to create a chronological timeline for NBA Chronology"),
     };
