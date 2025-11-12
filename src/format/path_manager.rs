@@ -111,9 +111,11 @@ pub fn nba_checksum_file() -> PathBuf {
 }
 
 pub fn nba_prediction_file(date: GameDate) -> PathBuf {
-    let d = format!("{:?}", date); // Dec 20, 2022 -> 2022_12_20
+    let d = date.to_filename();
 
-    let path = PathBuf::from(format!("{}/nba/predictions/{d}", *DATA));
+    let mut path = PathBuf::from(format!("{}/nba/predictions", *DATA));
+
+    path.push(d);
 
     path
 }

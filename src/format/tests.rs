@@ -14,7 +14,7 @@ mod test_extract {
 mod test_path_manager {
     use crate::constants::paths::data;
     use crate::format::path_manager::{
-        nba_storage_file, nba_storage_path, nba_team_correction_file,
+        nba_prediction_file, nba_storage_file, nba_storage_path, nba_team_correction_file,
     };
     use crate::types::{GameDate, GameId, SeasonId, TeamId};
     use once_cell::sync::Lazy;
@@ -57,6 +57,39 @@ mod test_path_manager {
         let team_id = TeamId::from(1610612743);
 
         let actual_file = nba_team_correction_file(szn, game_id, team_id);
+
+        assert_eq!(expected_file, actual_file);
+    }
+
+    #[test]
+    fn test_nba_prediction_file() {
+        static DATA: Lazy<String> = Lazy::new(data);
+
+        let expected_file = PathBuf::from(format!("{}/nba/predictions/2025_04_30", *DATA));
+
+        let actual_file = nba_prediction_file(GameDate::ymd(2025, 4, 30).unwrap());
+
+        assert_eq!(expected_file, actual_file);
+    }
+
+    #[test]
+    fn test_nba_prediction_file_short_day() {
+        static DATA: Lazy<String> = Lazy::new(data);
+
+        let expected_file = PathBuf::from(format!("{}/nba/predictions/2025_04_09", *DATA));
+
+        let actual_file = nba_prediction_file(GameDate::ymd(2025, 4, 9).unwrap());
+
+        assert_eq!(expected_file, actual_file);
+    }
+
+    #[test]
+    fn test_nba_prediction_file_short_month() {
+        static DATA: Lazy<String> = Lazy::new(data);
+
+        let expected_file = PathBuf::from(format!("{}/nba/predictions/2025_01_09", *DATA));
+
+        let actual_file = nba_prediction_file(GameDate::ymd(2025, 1, 9).unwrap());
 
         assert_eq!(expected_file, actual_file);
     }

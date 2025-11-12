@@ -4,6 +4,7 @@ use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 
 use std::fmt::{Debug, Display, Formatter};
 
+use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 /// `GameDate`is a `chrono::NaiveDate` wrapper that implements the necessary traits to work
@@ -36,6 +37,22 @@ impl GameDate {
         let naive_date = self.0.succ_opt().unwrap();
 
         GameDate(naive_date)
+    }
+
+    pub fn ymd(year: i32, month: u8, day: u8) -> Option<Self> {
+        let nd = NaiveDate::from_ymd_opt(year, month as u32, day as u32);
+
+        nd.map(|date| GameDate(date))
+    }
+
+    /// returns a PathBuf representing the filename for the game date formatted as "YYYY_MM_DD"
+    ///
+    /// ### Example
+    /// Dec 21, 2022 -> 2022_12_21
+    pub fn to_filename(&self) -> PathBuf {
+        let s = self.0.format("%Y_%m_%d").to_string();
+
+        PathBuf::from(s)
     }
 }
 
@@ -109,7 +126,7 @@ impl From<&str> for GameDate {
 ////////////////////////////////////////////////////////////////////////////////////////
 impl Debug for GameDate {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let formatted_date = self.0.format("%Y_%m_%d").to_string();
+        let formatted_date = self.0.format("%Y-%m-%d").to_string();
 
         write!(f, "{}", formatted_date)
     }
