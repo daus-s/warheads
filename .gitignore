@@ -8,7 +8,8 @@ services/*/
 
 #jetbrains config
 .idea/
-
+#zed config
+*.zed/
 
 # ignore as to not upload sensitive data to any repos, store locally with backups
 data/
