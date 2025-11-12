@@ -16,9 +16,12 @@ mod test_path_manager {
     use crate::format::path_manager::{
         nba_prediction_file, nba_storage_file, nba_storage_path, nba_team_correction_file,
     };
+    use crate::ml::model::Model;
     use crate::types::{GameDate, GameId, SeasonId, TeamId};
     use once_cell::sync::Lazy;
     use std::path::PathBuf;
+
+    const MODEL: &'static str = "test_model";
 
     #[test]
     fn test_nba_storage_path() {
@@ -65,9 +68,10 @@ mod test_path_manager {
     fn test_nba_prediction_file() {
         static DATA: Lazy<String> = Lazy::new(data);
 
-        let expected_file = PathBuf::from(format!("{}/nba/predictions/2025_04_30", *DATA));
+        let expected_file =
+            PathBuf::from(format!("{}/nba/{}/predictions/2025_04_30", *DATA, MODEL));
 
-        let actual_file = nba_prediction_file(GameDate::ymd(2025, 4, 30).unwrap());
+        let actual_file = nba_prediction_file(&TestModel, GameDate::ymd(2025, 4, 30).unwrap());
 
         assert_eq!(expected_file, actual_file);
     }
@@ -76,9 +80,10 @@ mod test_path_manager {
     fn test_nba_prediction_file_short_day() {
         static DATA: Lazy<String> = Lazy::new(data);
 
-        let expected_file = PathBuf::from(format!("{}/nba/predictions/2025_04_09", *DATA));
+        let expected_file =
+            PathBuf::from(format!("{}/nba/{}/predictions/2025_04_09", *DATA, MODEL));
 
-        let actual_file = nba_prediction_file(GameDate::ymd(2025, 4, 9).unwrap());
+        let actual_file = nba_prediction_file(&TestModel, GameDate::ymd(2025, 4, 9).unwrap());
 
         assert_eq!(expected_file, actual_file);
     }
@@ -87,10 +92,23 @@ mod test_path_manager {
     fn test_nba_prediction_file_short_month() {
         static DATA: Lazy<String> = Lazy::new(data);
 
-        let expected_file = PathBuf::from(format!("{}/nba/predictions/2025_01_09", *DATA));
+        let expected_file =
+            PathBuf::from(format!("{}/nba/{}/predictions/2025_01_09", *DATA, MODEL));
 
-        let actual_file = nba_prediction_file(GameDate::ymd(2025, 1, 9).unwrap());
+        let actual_file = nba_prediction_file(&TestModel, GameDate::ymd(2025, 1, 9).unwrap());
 
         assert_eq!(expected_file, actual_file);
+    }
+
+    struct TestModel;
+
+    impl Model for TestModel {
+        fn model_name(&self) -> String {
+            "test_model".to_owned()
+        }
+
+        fn predict(&mut self, obj: &crate::stats::game_obj::GameObject) -> f64 {
+            todo!()
+        }
     }
 }
