@@ -1,4 +1,5 @@
-use crate::corrections::correction::Correction;
+use crate::stats::record::Record;
+use crate::{corrections::correction::Correction, stats::teamcard::TeamCard};
 
 use crate::dapi::from_value::FromValue;
 use crate::dapi::player_box_score::PlayerBoxScore;
@@ -37,6 +38,15 @@ pub struct TeamBoxScore {
 impl TeamBoxScore {
     pub fn add_player_stats(&mut self, value: PlayerBoxScore) {
         self.roster.push(value);
+    }
+
+    pub fn card(&self) -> TeamCard {
+        TeamCard::new(
+            self.team_id,
+            self.team_name.clone(),
+            self.team_abbreviation.clone(),
+            Record { wins: 0, losses: 0 },
+        )
     }
 
     pub fn team_abbr(&self) -> TeamAbbreviation {

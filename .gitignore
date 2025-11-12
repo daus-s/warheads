@@ -1,5 +1,6 @@
 **/target/
 **/.env
+**/headers.json
 **/Cargo.lock
 
 #s3 utils that are unneeded in the repo
@@ -7,7 +8,8 @@ services/*/
 
 #jetbrains config
 .idea/
-
+#zed config
+*.zed/
 
 # ignore as to not upload sensitive data to any repos, store locally with backups
 data/

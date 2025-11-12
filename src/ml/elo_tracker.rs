@@ -1,24 +1,25 @@
-use crate::constants::paths::data;
-
 use crate::dapi::season_manager::nba_lifespan_period;
+
+use crate::format::path_manager::{records_path, results_path};
 
 use crate::ml::cdf::prob;
 use crate::ml::elo::{self, Elo};
-
 use crate::ml::elo_writer::EloWriter;
 use crate::ml::log_loss::LogLossTracker;
 use crate::ml::measurement::Measurement;
+use crate::ml::model::Model;
+
+use crate::proc::prophet::write_predictions;
+
 use crate::stats::game_obj::GameObject;
 
+use crate::stats::prediction::Prediction;
 use crate::storage::read_disk::read_nba_season;
 
 use crate::types::PlayerId;
 
-use once_cell::sync::Lazy;
-
 use std::collections::HashMap;
 use std::fs;
-use std::path::PathBuf;
 
 pub struct EloTracker {
     historical_ratings: Vec<Elo>,
@@ -45,8 +46,18 @@ impl EloTracker {
                 games.sort_by_key(|game| game.game_date.0);
             }
 
+            let mut predictions = Vec::new();
+
             for game in games {
                 self.update_ratings(&game);
+
+                let prediction = self.predict(&game);
+
+                predictions.push(Prediction::from(game.card(), prediction));
+            }
+
+            if let Err(e) = write_predictions(self, predictions) {
+                println!("❗ error writing predictions for {}: {}", period, e);
             }
         }
 
@@ -129,9 +140,7 @@ impl EloTracker {
     // SERIALIZATION
 
     pub fn save(&self) -> Result<(), String> {
-        let model_name = self.get_model_name();
-
-        let records_filename = Self::records_path(&format!("{model_name}.csv"));
+        let records_filename = records_path(self);
 
         let mut writer = EloWriter::new(records_filename).expect("💀 failed to create EloWriter");
 
@@ -139,28 +148,28 @@ impl EloTracker {
             let _ = writer.serialize_elo(&record);
         }
 
-        let results_filename = Self::results_path(&format!("{model_name}_results"));
+        let results_filename = results_path(self);
 
         let _ = fs::write(results_filename, format!("{}", self.log_loss));
 
         Ok(())
     }
+}
 
-    fn records_path(filename: &str) -> PathBuf {
-        static DATA: Lazy<String> = Lazy::new(data);
+impl Model for EloTracker {
+    fn predict(&mut self, obj: &GameObject) -> f64 {
+        let home = obj.home();
+        let away = obj.away();
 
-        PathBuf::from(format!("{}/nba/elo/records/{}", *DATA, filename))
+        let home_rating = home.get_normalized_team_rating(&mut self.current_ratings);
+        let away_rating = away.get_normalized_team_rating(&mut self.current_ratings);
+
+        let diff = home_rating - away_rating;
+
+        prob(diff)
     }
 
-    /// results_path generates the path to where the model accuracy is stored.
-    fn results_path(filename: &str) -> PathBuf {
-        static DATA: Lazy<String> = Lazy::new(data);
-
-        PathBuf::from(format!("{}/nba/elo/results/{}", *DATA, filename))
-    }
-
-    //todo: implement get_model_name for custom models
-    fn get_model_name(&self) -> String {
+    fn model_name(&self) -> String {
         "elo".to_string()
     }
 }

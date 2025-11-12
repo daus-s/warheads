@@ -4,7 +4,7 @@ use crate::checksum::sign::sign_nba;
 use crate::dapi::currency::source_data_current;
 use crate::dapi::season_manager::{nba_lifespan, nba_lifespan_period};
 
-use crate::format::path_manager::nba_checksum_path;
+use crate::format::path_manager::nba_checksum_file;
 
 use crate::ml::elo_tracker::EloTracker;
 
@@ -12,6 +12,7 @@ use crate::proc::gather::fetch_and_save_nba_stats;
 use crate::proc::hunting::compare_and_fetch;
 use crate::proc::store::store_nba_season;
 
+use crate::dapi::timeline::nba_timeline;
 use crate::stats::nba_kind::NBAStatKind;
 
 pub async fn observe_nba() {
@@ -21,8 +22,6 @@ pub async fn observe_nba() {
 
     let eras = nba_lifespan_period();
 
-    println!("Eras: {:?}", eras);
-
     for era in &eras[0..eras.len() - 1] {
         errors += compare_and_fetch(*era, NBAStatKind::Player, &checksums).await;
         errors += compare_and_fetch(*era, NBAStatKind::Team, &checksums).await;
@@ -30,7 +29,7 @@ pub async fn observe_nba() {
 
     let current_era = eras[eras.len() - 1];
 
-    if !source_data_current() {
+    if !source_data_current().await {
         let _ = fetch_and_save_nba_stats(current_era, NBAStatKind::Player).await;
         let _ = fetch_and_save_nba_stats(current_era, NBAStatKind::Team).await;
 
@@ -42,11 +41,11 @@ pub async fn observe_nba() {
         match sign_nba() {
             Ok(_) => println!(
                 "✅ successfully signed nba data with checksums in {}",
-                nba_checksum_path().display()
+                nba_checksum_file().display()
             ),
             Err(_) => eprintln!(
                 "❌ failed to sign nba data with checksums in {}",
-                nba_checksum_path().display()
+                nba_checksum_file().display()
             ),
         };
     }
@@ -57,6 +56,7 @@ pub async fn observe_nba() {
 pub fn chronicle_nba() {
     for szn in nba_lifespan() {
         store_nba_season(szn);
+        // todo: add checksums for each era.
     }
 }
 

@@ -1,8 +1,11 @@
 pub mod error;
+pub mod forecast;
 pub mod gather;
 pub mod historian;
 pub mod hunting;
+pub mod prophet;
 pub mod query;
+pub mod refresher;
 mod revise;
 pub mod rip;
 mod store;

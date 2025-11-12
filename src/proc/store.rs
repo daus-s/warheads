@@ -1,4 +1,4 @@
-use crate::corrections::correction_builder::{self, CorrectionBuilder};
+use crate::corrections::correction_builder::CorrectionBuilder;
 
 use crate::dapi::team_box_score::TeamBoxScore;
 
@@ -53,7 +53,7 @@ pub fn store_nba_season(year: i32) {
     } else if let Ok(games) = pairs {
         sub_save(games);
     } else {
-        unreachable!("💀 ")
+        unreachable!("💀 result variant is neither Err nor Ok. ")
     }
 }
 
@@ -136,7 +136,7 @@ pub(crate) fn pair_off(games: Vec<TeamGame>) -> Result<Vec<GameObject>, Vec<Corr
                     game_date,
                 } = game.0.clone();
 
-                let mut correction_builder = correction_builder::CorrectionBuilder::new(
+                let mut correction_builder = CorrectionBuilder::new(
                     game_id,
                     season_id,
                     player_id,

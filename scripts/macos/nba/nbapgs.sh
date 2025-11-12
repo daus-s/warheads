@@ -6,7 +6,7 @@ for PARAM in {1946..2024}; do
     GEN_PARAM="${PARAM}-${FORMATTED}"
 
     URL="https://stats.nba.com/stats/leaguegamelog?Counter=1000&DateFrom=&DateTo=&Direction=DESC&ISTRound=&LeagueID=00&PlayerOrTeam=P&Season=${GEN_PARAM}&SeasonType=Regular%20Season&Sorter=DATE"
-    OUTPUT_FILE="../../../data/nba/playergames/${PARAM}_${FORMATTED}_pg.json"
+    OUTPUT_FILE="../../../source/nba/playergames/${PARAM}_${FORMATTED}_pg.json"
 
     echo "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
     echo "$URL"
