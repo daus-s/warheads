@@ -3,7 +3,7 @@ pub mod forecast;
 pub mod gather;
 pub mod historian;
 pub mod hunting;
-pub mod predict;
+pub mod prophet;
 pub mod query;
 pub mod refresher;
 mod revise;

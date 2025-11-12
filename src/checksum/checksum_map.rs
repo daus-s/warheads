@@ -1,4 +1,4 @@
-use crate::format::path_manager::nba_checksum_path;
+use crate::format::path_manager::nba_checksum_file;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::File;
@@ -11,7 +11,7 @@ pub struct ChecksumMap {
 
 impl ChecksumMap {
     pub fn load() -> Result<Self, String> {
-        let path = nba_checksum_path();
+        let path = nba_checksum_file();
 
         let file = File::open(&path).map_err(|e| format!("❌ failed to open file: {}", e))?;
 
@@ -63,7 +63,7 @@ impl ChecksumMap {
     }
 
     pub fn save(&self) -> Result<(), String> {
-        let path = nba_checksum_path();
+        let path = nba_checksum_file();
 
         let file = File::create(&path).map_err(|e| format!("❌ failed to create file: {}", e))?;
 

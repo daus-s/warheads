@@ -3,8 +3,8 @@ use std::{fs, io};
 
 use serde::Serialize;
 
-pub fn write_serializable_with_directory<S: Serialize, T: AsRef<Path>>(
-    file_path: T,
+pub fn write_serializable_with_directory<P: AsRef<Path>, S: Serialize>(
+    file_path: P,
     content: &S,
 ) -> io::Result<()> {
     if let Some(parent) = file_path.as_ref().parent() {

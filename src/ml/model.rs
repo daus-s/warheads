@@ -1,6 +1,6 @@
-use crate::stats::gamecard::GameCard;
+use crate::stats::game_obj::GameObject;
 
 pub trait Model {
     fn get_model_name(&self) -> String;
-    fn predict(&self, card: &GameCard) -> f64;
+    fn predict(&mut self, obj: &GameObject) -> f64;
 }

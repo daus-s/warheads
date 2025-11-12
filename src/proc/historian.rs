@@ -4,7 +4,7 @@ use crate::checksum::sign::sign_nba;
 use crate::dapi::currency::source_data_current;
 use crate::dapi::season_manager::{nba_lifespan, nba_lifespan_period};
 
-use crate::format::path_manager::nba_checksum_path;
+use crate::format::path_manager::nba_checksum_file;
 
 use crate::ml::elo_tracker::EloTracker;
 
@@ -41,11 +41,11 @@ pub async fn observe_nba() {
         match sign_nba() {
             Ok(_) => println!(
                 "✅ successfully signed nba data with checksums in {}",
-                nba_checksum_path().display()
+                nba_checksum_file().display()
             ),
             Err(_) => eprintln!(
                 "❌ failed to sign nba data with checksums in {}",
-                nba_checksum_path().display()
+                nba_checksum_file().display()
             ),
         };
     }
@@ -58,11 +58,6 @@ pub fn chronicle_nba() {
         store_nba_season(szn);
         // todo: add checksums for each era.
     }
-
-    match nba_timeline() {
-        Ok(_) => println!("✅ successfully saved historical NBA schedule. "),
-        Err(_) => eprintln!("❌ failed to create a chronological timeline for NBA Chronology"),
-    };
 }
 
 pub fn rate_nba() {

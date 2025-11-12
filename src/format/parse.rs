@@ -119,9 +119,7 @@ fn parse_card(value: &Value) -> Option<GameCard> {
     let season_type = card.get("seasonType")?.as_str()?;
 
     let year = season_year.split('-').next()?.parse::<i32>().ok()?;
-    println!("{}", year);
     let season_period = season_type.parse::<SeasonPeriod>().ok()?;
-    println!("{}", season_period);
 
     let season_id = SeasonId::from((year, season_period));
 

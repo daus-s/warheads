@@ -14,7 +14,7 @@ mod test_extract {
 mod test_path_manager {
     use crate::constants::paths::data;
     use crate::format::path_manager::{
-        nba_storage_file, nba_storage_path, nba_team_correction_file, nba_timeline_file,
+        nba_storage_file, nba_storage_path, nba_team_correction_file,
     };
     use crate::types::{GameDate, GameId, SeasonId, TeamId};
     use once_cell::sync::Lazy;
@@ -57,42 +57,6 @@ mod test_path_manager {
         let team_id = TeamId::from(1610612743);
 
         let actual_file = nba_team_correction_file(szn, game_id, team_id);
-
-        assert_eq!(expected_file, actual_file);
-    }
-
-    #[test]
-    fn test_nba_timeline_file() {
-        static DATA: Lazy<String> = Lazy::new(data);
-
-        let expected_file = PathBuf::from(format!(
-            "{}/nba/timeline/2025_26/RegularSeason/2025_10_28.game",
-            *DATA
-        ));
-
-        let szn = SeasonId::from(22025);
-
-        let game_id = GameDate::from("2025-10-28");
-
-        let actual_file = nba_timeline_file(szn, game_id);
-
-        assert_eq!(expected_file, actual_file);
-    }
-
-    #[test]
-    fn test_nba_timeline_file_1() {
-        static DATA: Lazy<String> = Lazy::new(data);
-
-        let expected_file = PathBuf::from(format!(
-            "{}/nba/timeline/2025_26/RegularSeason/2025_09_09.game",
-            *DATA
-        ));
-
-        let szn = SeasonId::from(22025);
-
-        let game_id = GameDate::from("2025-9-9");
-
-        let actual_file = nba_timeline_file(szn, game_id);
 
         assert_eq!(expected_file, actual_file);
     }

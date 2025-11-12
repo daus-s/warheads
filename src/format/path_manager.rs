@@ -106,31 +106,14 @@ pub fn nba_storage_file(season_id: SeasonId, game_id: GameId) -> PathBuf {
     path
 }
 
-pub fn nba_checksum_path() -> PathBuf {
+pub fn nba_checksum_file() -> PathBuf {
     PathBuf::from(format!("{}/nba/checksum/checksums.json", *DATA))
 }
 
-pub fn nba_timeline_path(season_id: SeasonId) -> PathBuf {
-    let (_year, period) = season_id.destructure();
+pub fn nba_prediction_file(date: GameDate) -> PathBuf {
+    let d = format!("{:?}", date); // Dec 20, 2022 -> 2022_12_20
 
-    let s = format!(
-        "{}/nba/timeline/{}/{}/",
-        *DATA,
-        season_path(season_id),
-        period
-    );
-
-    PathBuf::from(s)
-}
-
-pub fn nba_timeline_file(season_id: SeasonId, game_date: GameDate) -> PathBuf {
-    let mut path = nba_timeline_path(season_id);
-
-    let (y, m, d) = game_date.destructure();
-
-    let file = format!("{y}_{m:02}_{d:02}.game",); // 2025_10_28.game
-
-    path.push(file);
+    let path = PathBuf::from(format!("{}/nba/predictions/{d}", *DATA));
 
     path
 }

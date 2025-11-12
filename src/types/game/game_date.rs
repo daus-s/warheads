@@ -32,7 +32,6 @@ impl GameDate {
         (year, month, day)
     }
 
-
     pub fn next(&self) -> Self {
         let naive_date = self.0.succ_opt().unwrap();
 
@@ -110,7 +109,7 @@ impl From<&str> for GameDate {
 ////////////////////////////////////////////////////////////////////////////////////////
 impl Debug for GameDate {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let formatted_date = self.0.format("%Y-%m-%d").to_string();
+        let formatted_date = self.0.format("%Y_%m_%d").to_string();
 
         write!(f, "{}", formatted_date)
     }
