@@ -4,7 +4,7 @@ use crate::stats::gamecard::{GameCard, GameCardBuilder};
 use crate::stats::record::Record;
 use crate::stats::season_period::SeasonPeriod;
 use crate::stats::teamcard::TeamCard;
-use crate::types::{GameDate, SeasonId};
+use crate::types::SeasonId;
 
 use chrono::{DateTime, Datelike, Local, NaiveDate};
 

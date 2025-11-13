@@ -104,7 +104,7 @@ pub fn nba_lifespan_period() -> Vec<SeasonId> {
             seasons.push(SeasonId::from((prev_year, PlayIn)));
             seasons.push(SeasonId::from((prev_year, PostSeason)));
             seasons.push(SeasonId::from((curr_year, PreSeason)));
-            seasons.push(SeasonId::from((curr_year, PreSeason)));
+            seasons.push(SeasonId::from((curr_year, RegularSeason)));
         }
         _ => unreachable!(""),
     };
@@ -141,5 +141,17 @@ pub fn get_era_by_date(date: GameDate) -> SeasonId {
         },
         11..=12 => SeasonId::from((year, RegularSeason)),
         _ => unreachable!("💀 12 months in a year."),
+    }
+}
+
+#[cfg(test)]
+mod test_season_manager {
+    use super::*;
+
+    #[test]
+    fn test_last_era_in_lifespan_is_current_eta() {
+        let current_era = get_current_era();
+        let last_era_in_lifespan = nba_lifespan_period()[nba_lifespan_period().len() - 1];
+        assert_eq!(last_era_in_lifespan, current_era);
     }
 }

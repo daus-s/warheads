@@ -2,6 +2,7 @@ use crate::format::path_manager::nba_storage_path;
 
 use crate::stats::game_obj::GameObject;
 
+use crate::stats::season_period::minimum_spanning_era;
 use crate::types::SeasonId;
 
 use NBAReadError::*;
@@ -11,6 +12,20 @@ use std::fs;
 use std::path::PathBuf;
 
 use thiserror::Error;
+
+pub fn read_entire_nba_season(year: i32) -> Result<Vec<GameObject>, NBAReadError> {
+    let mut gamelog = Vec::new();
+
+    for era in minimum_spanning_era(year) {
+        let dir = nba_storage_path(era);
+
+        let games = read_directory(&dir)?;
+
+        gamelog.extend(games);
+    }
+
+    Ok(gamelog)
+}
 
 // todo: if data is loaded in the file system load from the json files rather than the source data (ugly).
 pub fn read_nba_season(season_id: SeasonId) -> Result<Vec<GameObject>, NBAReadError> {
