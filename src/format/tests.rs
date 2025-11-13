@@ -107,7 +107,7 @@ mod test_path_manager {
             "test_model".to_owned()
         }
 
-        fn predict(&mut self, obj: &crate::stats::game_obj::GameObject) -> f64 {
+        fn predict(&mut self, _obj: &crate::stats::game_obj::GameObject) -> f64 {
             todo!()
         }
     }

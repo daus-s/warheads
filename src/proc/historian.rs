@@ -57,7 +57,7 @@ pub async fn observe_nba() {
 /// you can build around this function but not from it... this is the one function to start the nba into memory then iterate over elo.
 pub fn chronicle_nba() {
     for szn in nba_lifespan() {
-        if let Err(e) = read_entire_nba_season(szn) {
+        if let Err(_) = read_entire_nba_season(szn) {
             store_nba_season(szn);
         }
     }
