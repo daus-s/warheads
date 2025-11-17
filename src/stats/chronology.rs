@@ -20,20 +20,37 @@ impl Chronology {
         }
     }
 
+    pub fn with_era(&self, era: SeasonId) -> Self {
+        let mut timeline = Chronology::new();
+
+        if let Err(_) = timeline.load_year(era) {
+            Chronology::new()
+        } else {
+            timeline
+        }
+    }
+
     pub fn load_year(&mut self, era: SeasonId) -> Result<(), Box<dyn Error>> {
-        self.era = Some(era);
-
-        let season = read_nba_season(self.era.unwrap())?;
-
-        self.games = Some(season);
-
+        if let Err(e) = read_nba_season(era) {
+            return Err(Box::new(e));
+        } else if let Ok(season) = read_nba_season(era) {
+            self.era = Some(era);
+            self.games = Some(season);
+        }
         Ok(())
     }
 
-    pub fn next_era(&mut self) -> Result<(), Box<dyn Error>> {
+    pub fn next(&mut self) -> Result<(), Box<dyn Error>> {
         let current_era = self.era.unwrap();
         let next_era = current_era.next();
 
         self.load_year(next_era)
+    }
+
+    pub fn prev(&mut self) -> Result<(), Box<dyn Error>> {
+        let current_era = self.era.unwrap();
+        let previous_era = current_era.prev();
+
+        self.load_year(previous_era)
     }
 }
