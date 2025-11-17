@@ -79,7 +79,7 @@ fn build_nba_history_url(
     )
 }
 
-pub async fn daily_gamecard_json(date: GameDate) -> Result<Value, NBAQueryError> {
+pub async fn get_gamecard_json(date: GameDate) -> Result<Value, NBAQueryError> {
     let response = make_nba_gamecard_request(date).await?;
 
     let json = response

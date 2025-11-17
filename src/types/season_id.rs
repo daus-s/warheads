@@ -3,6 +3,7 @@ use crate::stats::season_period::SeasonPeriod;
 use crate::stats::season_period::SeasonPeriod::{
     AllStarGame, NBACup, PlayIn, PostSeason, PreSeason, RegularSeason,
 };
+use chrono::Datelike;
 use serde::de;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
@@ -50,6 +51,60 @@ impl SeasonId {
 
     pub fn year(&self) -> i32 {
         self.year
+    }
+
+    pub fn next(&self) -> SeasonId {
+        let next_period = match self.period {
+            PreSeason => RegularSeason,
+            RegularSeason => {
+                if self.year >= 2019 {
+                    PlayIn
+                } else {
+                    PostSeason
+                }
+            }
+            PlayIn => PostSeason,
+            PostSeason => PreSeason,
+            AllStarGame | NBACup => unimplemented!(),
+        };
+
+        let next_year = match self.period {
+            PreSeason | RegularSeason | PlayIn => self.year,
+            PostSeason => self.year + 1,
+            AllStarGame | NBACup => unimplemented!(),
+        };
+
+        SeasonId {
+            year: next_year,
+            period: next_period,
+        }
+    }
+
+    pub fn prev(&self) -> SeasonId {
+        let prev_period = match self.period {
+            PreSeason => PostSeason,
+            RegularSeason => PreSeason,
+            PlayIn => RegularSeason,
+            PostSeason => {
+                if self.year >= 2019 {
+                    PlayIn
+                } else {
+                    RegularSeason
+                }
+            }
+            AllStarGame | NBACup => unimplemented!(),
+        };
+
+        let prev_year = match self.period {
+            PreSeason => self.year - 1,
+            PostSeason | RegularSeason | PlayIn => self.year,
+            AllStarGame | NBACup => unimplemented!(),
+        };
+
+        SeasonId {
+            year: prev_year,
+            period: prev_period,
+        }
     }
 }
 
@@ -162,5 +217,44 @@ impl<'de> Deserialize<'de> for SeasonId {
         let i = s.parse::<i32>().map_err(de::Error::custom)?;
 
         Ok(SeasonId::from(i))
+    }
+}
+
+#[cfg(test)]
+mod test_prev_next {
+    use super::*;
+
+    #[test]
+    fn test_prev_next() {
+        let season = SeasonId::from((2007, RegularSeason));
+
+        assert_eq!(season.prev(), SeasonId::from((2007, PreSeason)));
+        assert_eq!(season.next(), SeasonId::from((2007, PostSeason)));
+    }
+
+    #[test]
+    fn test_play_in() {
+        let regular = SeasonId::from((2020, RegularSeason));
+
+        assert_eq!(regular.next(), SeasonId::from((2020, PlayIn)));
+
+        let playin = SeasonId::from((2020, PlayIn));
+
+        assert_eq!(playin.next(), SeasonId::from((2020, PostSeason)));
+    }
+
+    #[test]
+    fn test_no_play_in() {
+        let regular = SeasonId::from((2018, RegularSeason));
+
+        assert_eq!(regular.next(), SeasonId::from((2018, PostSeason)));
+    }
+
+    #[test]
+    fn test_inverses() {
+        let season = SeasonId::from((2022, RegularSeason));
+
+        assert_eq!(season.prev().next(), season);
+        assert_eq!(season.next().prev(), season);
     }
 }

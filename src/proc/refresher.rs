@@ -6,7 +6,7 @@ use crate::dapi::season_manager::get_current_era;
 use crate::format::parse::parse_gamecards;
 
 use crate::proc::gather::fetch_and_save_nba_stats;
-use crate::proc::query::{daily_gamecard_json, NBAQueryError};
+use crate::proc::query::{get_gamecard_json, NBAQueryError};
 
 use crate::stats::gamecard::GameCard;
 use crate::stats::nba_kind::NBAStatKind;
@@ -50,7 +50,7 @@ pub async fn update_source_data() -> bool {
 
 // game schedule tracker
 pub async fn get_daily_gamecard() -> Result<Vec<GameCard>, NBAQueryError> {
-    let response = daily_gamecard_json(GameDate::today()).await?;
+    let response = get_gamecard_json(GameDate::today()).await?;
 
     let gamecards =
         parse_gamecards(response).map_err(|e| NBAQueryError::ObjectStructureError(e))?;
@@ -80,7 +80,7 @@ mod test_get_daily_gamecard {
     async fn test_setdate_gamecards() {
         let setdate = NaiveDate::from_ymd_opt(2025, 10, 21).unwrap();
 
-        let json_response = daily_gamecard_json(GameDate::from(setdate))
+        let json_response = get_gamecard_json(GameDate::from(setdate))
             .await
             .unwrap_or_else(|err| panic!("💀 failed to get daily gamecard: {}", err));
 

@@ -10,6 +10,7 @@ use crate::format::path_manager::nba_checksum_file;
 
 use crate::ml::elo_tracker::EloTracker;
 
+use crate::proc::forecast::forecast_nba;
 use crate::proc::gather::fetch_and_save_nba_stats;
 use crate::proc::hunting::compare_and_fetch;
 
@@ -67,7 +68,7 @@ pub fn chronicle_nba() {
     store_nba_season(current_year); //always update the current year's season
 }
 
-pub fn rate_nba() {
+pub async fn rate_nba() {
     let mut tracker = EloTracker::new();
 
     match tracker.process_elo() {
@@ -79,4 +80,6 @@ pub fn rate_nba() {
         Ok(_) => println!("✅  Elo data saved successfully"),
         Err(e) => println!("❌  Error saving elo data: {}", e),
     };
+
+    forecast_nba(&tracker).await;
 }

@@ -1,4 +1,5 @@
 pub mod box_score;
+pub mod chronology;
 pub mod domain;
 pub mod field_status;
 mod game_data;
