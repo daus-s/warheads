@@ -73,7 +73,7 @@ impl GameObject {
         }
 
         //draconian yes, but if there isn't a roster for the team we're not gonna study it.
-        if game1.roster().len() == 0 || game2.roster().len() == 0 {
+        if game1.roster_box_scores().len() == 0 || game2.roster_box_scores().len() == 0 {
             println!("No roster data available for one or both teams. {id1:?}, {id2:?}");
             correction1.set_delete(true);
             correction2.set_delete(true);
@@ -219,11 +219,11 @@ impl GameObject {
     }
 
     pub fn home_roster(&self) -> &Vec<PlayerBoxScore> {
-        self.home.roster()
+        self.home.roster_box_scores()
     }
 
     pub fn away_roster(&self) -> &Vec<PlayerBoxScore> {
-        self.away.roster()
+        self.away.roster_box_scores()
     }
 
     pub fn game_identity(&self) -> GameIdentity {

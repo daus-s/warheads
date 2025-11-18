@@ -8,5 +8,5 @@ async fn main() {
 
     chronicle_nba();
 
-    rate_nba();
+    rate_nba().await;
 }

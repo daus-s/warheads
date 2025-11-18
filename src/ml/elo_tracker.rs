@@ -66,12 +66,8 @@ impl EloTracker {
 
     //todo: implement a rating share function as a parameter
     fn update_ratings(&mut self, game: &GameObject) {
-        let home_rating = game
-            .home()
-            .get_normalized_team_rating(&mut self.current_ratings);
-        let away_rating = game
-            .away()
-            .get_normalized_team_rating(&mut self.current_ratings);
+        let home_rating = self.normalized_ratings_from_iter(game.home().roster().into_iter());
+        let away_rating = self.normalized_ratings_from_iter(game.away().roster().into_iter());
 
         let delta = home_rating - away_rating;
 
@@ -154,6 +150,21 @@ impl EloTracker {
 
         Ok(())
     }
+
+    pub fn normalized_ratings_from_iter(&mut self, iter: impl Iterator<Item = PlayerId>) -> f64 {
+        let (count, sum) = iter.fold((0usize, 0i64), |acc, id| {
+            (
+                acc.0 + 1,
+                acc.1
+                    + *self
+                        .current_ratings
+                        .entry(id)
+                        .or_insert(elo::INITIAL_RATING),
+            )
+        });
+
+        sum as f64 / count as f64
+    }
 }
 
 impl Model for EloTracker {
@@ -161,8 +172,8 @@ impl Model for EloTracker {
         let home = obj.home();
         let away = obj.away();
 
-        let home_rating = home.get_normalized_team_rating(&mut self.current_ratings);
-        let away_rating = away.get_normalized_team_rating(&mut self.current_ratings);
+        let home_rating = self.normalized_ratings_from_iter(home.roster().into_iter());
+        let away_rating = self.normalized_ratings_from_iter(away.roster().into_iter());
 
         let diff = home_rating - away_rating;
 

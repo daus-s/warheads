@@ -86,8 +86,18 @@ impl TeamBoxScore {
         &self.box_score
     }
 
-    pub fn roster(&self) -> &Vec<PlayerBoxScore> {
+    pub fn roster_box_scores(&self) -> &Vec<PlayerBoxScore> {
         &self.roster
+    }
+
+    pub fn roster(&self) -> Vec<PlayerId> {
+        let mut player_ids = Vec::new();
+
+        for player in &self.roster {
+            player_ids.push(player.player_id());
+        }
+
+        player_ids
     }
 
     pub fn correct_box_score(&mut self, correction: &mut Correction) {
@@ -144,24 +154,6 @@ impl TeamBoxScore {
             }
             _ => true,
         });
-    }
-
-    pub fn get_team_rating(&self, ratings: &mut HashMap<PlayerId, i64>) -> i64 {
-        let mut rating = 0;
-        for player in self.roster() {
-            if let Some(i) = ratings.get(&player.player_id()) {
-                rating += *i;
-            } else {
-                ratings.insert(player.player_id(), elo::INITIAL_RATING);
-                rating += elo::INITIAL_RATING;
-            }
-        }
-        rating
-    }
-
-    pub fn get_normalized_team_rating(&self, ratings: &mut HashMap<PlayerId, i64>) -> f64 {
-        let rating = self.get_team_rating(ratings);
-        rating as f64 / self.roster().len() as f64
     }
 }
 

@@ -97,6 +97,10 @@ impl GameCard {
     pub fn date(&self) -> GameDate {
         self.date
     }
+
+    pub fn season(&self) -> SeasonId {
+        self.season_id
+    }
 }
 
 //todo: get this all squared as in shaped like even rows even columns for tui display
