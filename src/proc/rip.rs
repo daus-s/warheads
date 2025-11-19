@@ -13,7 +13,7 @@ use crate::proc::error::ReadProcessError;
 
 use crate::stats::box_score::BoxScoreBuilder;
 use crate::stats::game_display::GameDisplay;
-use crate::stats::id::Identity;
+use crate::stats::identity::Identity;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::nba_kind::NBAStatKind::{LineUp, Player, Team};
 use crate::stats::nba_stat::NBABoxScore;

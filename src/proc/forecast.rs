@@ -8,7 +8,7 @@ use crate::stats::chronology::Chronology;
 use crate::stats::gamecard::GameCard;
 use crate::types::GameDate;
 
-pub async fn forecast_nba(elo: &EloTracker) {
+pub async fn forecast_nba(elo: &mut EloTracker) {
     let mut chronology = Chronology::new();
 
     let upcoming_games = get_upcoming_games()
@@ -22,16 +22,12 @@ pub async fn forecast_nba(elo: &EloTracker) {
 
         let (home, away) = (game.home(), game.away());
 
-        let home_roster = chronology
-            .get_expected_roster(home.team_id(), game.game_id())
-            .expect("Failed to get home roster");
+        let home_roster = chronology.get_expected_roster(home.team_id(), game.game_id());
 
-        let away_roster = chronology
-            .get_expected_roster(away.team_id(), game.game_id())
-            .expect("Failed to get away roster");
+        let away_roster = chronology.get_expected_roster(away.team_id(), game.game_id());
 
-        todo!();
-        let home_rating = 1;
+        let home_rating = elo.normalized_ratings_from_iter(home_roster.into_iter());
+        let away_rating = elo.normalized_ratings_from_iter(away_roster.into_iter());
     }
 }
 

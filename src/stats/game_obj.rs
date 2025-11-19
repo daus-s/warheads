@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use crate::corrections::correction_builder::CorrectionBuilder;
 
 use crate::dapi::player_box_score::PlayerBoxScore;
@@ -6,7 +8,7 @@ use crate::dapi::team_box_score::TeamBoxScore;
 use crate::format::game_object_formatter::GameIdentity;
 use crate::stats::game_display::GameDisplay;
 use crate::stats::gamecard::GameCard;
-use crate::stats::id::Identity;
+use crate::stats::identity::Identity;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::stat_column::StatColumn::{GAME_DATE, MATCHUP, WL};
 use crate::stats::visiting::Visiting;
@@ -258,5 +260,30 @@ impl GameObject {
             self.home().card(),
             self.away().card(),
         )
+    }
+
+    pub(crate) fn team(&self, team_id: TeamId) -> &TeamBoxScore {
+        if self.home_team_id() == team_id {
+            &self.home
+        } else if self.away_team_id() == team_id {
+            &self.away
+        } else {
+            panic!("💀 team provided is neither of the two teams in the gameobject. check carefully before passing team_id.")
+        }
+    }
+}
+
+impl Ord for GameObject {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.game_date
+            .timestamp()
+            .cmp(&other.game_date.timestamp())
+            .then_with(|| self.game_id.cmp(&other.game_id))
+    }
+}
+
+impl PartialOrd for GameObject {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }

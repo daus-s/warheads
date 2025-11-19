@@ -3,7 +3,7 @@ use thiserror::Error;
 use crate::corrections::correction::Correction;
 use crate::format::path_manager::{correction_path_from_identity, nba_correction_dir};
 use crate::format::season::season_fmt;
-use crate::stats::id::{Identifiable, Identity};
+use crate::stats::identity::{Identifiable, Identity};
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::season_period::minimum_spanning_era;
 use crate::types::SeasonId;

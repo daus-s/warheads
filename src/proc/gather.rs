@@ -8,7 +8,7 @@ use crate::proc::error::ReadProcessError;
 use crate::proc::query;
 use crate::proc::rip::read_and_process_nba_games;
 
-use crate::stats::id::Identity;
+use crate::stats::identity::Identity;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::nba_stat::NBABoxScore::{Player, Team};
 

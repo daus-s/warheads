@@ -1,10 +1,12 @@
+use thiserror::Error;
+
 use crate::dapi::season_manager::nba_lifespan_period;
 
 use crate::format::path_manager::{records_path, results_path};
 
 use crate::ml::cdf::prob;
 use crate::ml::elo::{self, Elo};
-use crate::ml::elo_writer::EloWriter;
+use crate::ml::elo_writer::{EloWriter, EloWriterError};
 use crate::ml::log_loss::LogLossTracker;
 use crate::ml::measurement::Measurement;
 use crate::ml::model::Model;
@@ -14,12 +16,12 @@ use crate::proc::prophet::write_predictions;
 use crate::stats::game_obj::GameObject;
 
 use crate::stats::prediction::Prediction;
-use crate::storage::read_disk::read_nba_season;
+use crate::storage::read_disk::{read_nba_season, NBAReadError};
 
 use crate::types::PlayerId;
 
 use std::collections::HashMap;
-use std::fs;
+use std::{fs, io};
 
 pub struct EloTracker {
     historical_ratings: Vec<Elo>,
@@ -28,19 +30,33 @@ pub struct EloTracker {
 }
 
 impl EloTracker {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             historical_ratings: Vec::new(),
             current_ratings: HashMap::new(),
-            log_loss: LogLossTracker::new(),
+            log_loss: LogLossTracker::model("elo v1".to_owned()),
         }
     }
 
-    pub fn process_elo(&mut self) -> Result<(), ()> {
+    pub fn train() -> Result<Self, EloTrackerError> {
+        let mut tracker = EloTracker::new();
+
+        if let Err(e) = tracker.process_elo() {
+            return Err(e);
+        } else {
+            match tracker.save() {
+                Ok(_) => println!("✅  loaded elo model"),
+                Err(e) => return Err(e),
+            }
+        }
+
+        Ok(tracker)
+    }
+
+    fn process_elo(&mut self) -> Result<(), EloTrackerError> {
         // todo: assign elo values to players on a game by game basis
         for period in nba_lifespan_period() {
-            let mut games =
-                read_nba_season(period).map_err(|e| println!("❗ NBAReadError:\n{}", e))?;
+            let mut games = read_nba_season(period).map_err(|e| EloTrackerError::ReaderError(e))?;
 
             if !games.is_sorted_by_key(|game| game.game_date.0) {
                 games.sort_by_key(|game| game.game_date.0);
@@ -56,9 +72,8 @@ impl EloTracker {
                 predictions.push(Prediction::from(game.card(), prediction));
             }
 
-            if let Err(e) = write_predictions(self, predictions) {
-                println!("❗ error writing predictions for {}: {}", period, e);
-            }
+            write_predictions(self, predictions)
+                .map_err(|e| EloTrackerError::WritePredictionError(e))?;
         }
 
         Ok(())
@@ -135,13 +150,16 @@ impl EloTracker {
 
     // SERIALIZATION
 
-    pub fn save(&self) -> Result<(), String> {
+    pub fn save(&self) -> Result<(), EloTrackerError> {
         let records_filename = records_path(self);
 
-        let mut writer = EloWriter::new(records_filename).expect("💀 failed to create EloWriter");
+        let mut writer = EloWriter::new(records_filename)
+            .map_err(|e| EloTrackerError::WriterCreationError(e))?;
 
         for record in &self.historical_ratings {
-            let _ = writer.serialize_elo(&record);
+            writer
+                .serialize_elo(&record)
+                .map_err(|e| EloTrackerError::EloWriteError(e))?;
         }
 
         let results_filename = results_path(self);
@@ -165,6 +183,18 @@ impl EloTracker {
 
         sum as f64 / count as f64
     }
+}
+
+#[derive(Debug, Error)]
+pub enum EloTrackerError {
+    #[error("❌ {0}\n❌ failed to load an elo writer from file.")]
+    WriterCreationError(EloWriterError),
+    #[error("❌ {0}\n❌ failed to load an nba games from file.")]
+    ReaderError(NBAReadError),
+    #[error("❌ {0}\n❌ error writing predictions to file. ")]
+    WritePredictionError(io::Error),
+    #[error("❌ {0}\n❌ error writing elo records to file. ")]
+    EloWriteError(EloWriterError),
 }
 
 impl Model for EloTracker {

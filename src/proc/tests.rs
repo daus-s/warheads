@@ -11,7 +11,7 @@ use crate::proc::rip::season;
 use crate::proc::store::{pair_off, TeamGame};
 
 use crate::stats::game_obj::GameObject;
-use crate::stats::id::Identity;
+use crate::stats::identity::Identity;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::nba_stat::NBABoxScore;
 use crate::stats::season_period::SeasonPeriod;

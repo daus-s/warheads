@@ -69,17 +69,5 @@ pub fn chronicle_nba() {
 }
 
 pub async fn rate_nba() {
-    let mut tracker = EloTracker::new();
-
-    match tracker.process_elo() {
-        Ok(_) => println!("✅  Elo data processed successfully"),
-        Err(_) => println!("❌  Error processing elo data"),
-    }
-
-    match tracker.save() {
-        Ok(_) => println!("✅  Elo data saved successfully"),
-        Err(e) => println!("❌  Error saving elo data: {}", e),
-    };
-
-    forecast_nba(&tracker).await;
+    let _ = EloTracker::train();
 }

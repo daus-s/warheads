@@ -58,7 +58,7 @@ pub fn format_player_box_score(
         f,
         "{}{}{} (fpts: {}) ",
         box_score.player_name(),
-        whitespace_n(COL_NAME - box_score.player_name().0.len()),
+        whitespace_n(COL_NAME - box_score.player_name().0.chars().count()),
         box_score.box_score(),
         box_score.box_score().calculate_fantasy()
     )
