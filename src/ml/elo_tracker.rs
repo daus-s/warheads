@@ -4,7 +4,7 @@ use crate::dapi::season_manager::nba_lifespan_period;
 
 use crate::format::path_manager::{records_path, results_path};
 
-use crate::ml::cdf::prob;
+use crate::ml::cdf;
 use crate::ml::elo::{self, Elo};
 use crate::ml::elo_writer::{EloWriter, EloWriterError};
 use crate::ml::log_loss::LogLossTracker;
@@ -88,8 +88,8 @@ impl EloTracker {
 
         //R'=R+K∙(S-E) where s is the score and e is the expected (1 for win, 0 for loss - win probability)
 
-        let mut home_step = (elo::K as f64 * (1.0 - prob(delta))) as i64;
-        let mut away_step = (elo::K as f64 * (1.0 - prob(-1f64 * delta))) as i64;
+        let mut home_step = (elo::K as f64 * (1.0 - cdf::prob(delta))) as i64;
+        let mut away_step = (elo::K as f64 * (1.0 - cdf::prob(-1f64 * delta))) as i64;
 
         //this is the winners step, the losers step is -step
         if game.winner() == game.home_team_id() {
@@ -133,7 +133,7 @@ impl EloTracker {
     }
 
     fn track_log_loss(&mut self, game: &GameObject, delta: f64) {
-        let p = prob(delta);
+        let p = cdf::prob(delta);
 
         let a = if game.winner() == game.home_team_id() {
             1
@@ -207,7 +207,7 @@ impl Model for EloTracker {
 
         let diff = home_rating - away_rating;
 
-        prob(diff)
+        cdf::prob(diff)
     }
 
     fn model_name(&self) -> String {
