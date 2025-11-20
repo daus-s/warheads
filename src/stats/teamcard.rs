@@ -43,6 +43,10 @@ impl TeamCard {
     pub fn add_loss(&mut self) {
         self.record.losses += 1;
     }
+
+    pub fn add_record(&mut self, record: Record) {
+        self.record = record
+    }
 }
 
 impl Display for TeamCard {

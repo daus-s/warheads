@@ -13,15 +13,20 @@ use crate::ml::model::Model;
 
 use crate::proc::prophet::write_predictions;
 
+use crate::stats::chronology::Chronology;
 use crate::stats::game_obj::GameObject;
 
+use crate::stats::gamecard::GameCard;
 use crate::stats::prediction::Prediction;
+use crate::stats::visiting::Visiting;
 use crate::storage::read_disk::{read_nba_season, NBAReadError};
 
 use crate::types::PlayerId;
 
 use std::collections::HashMap;
 use std::{fs, io};
+
+const ELO_VERSION: &str = "elo v1";
 
 pub struct EloTracker {
     historical_ratings: Vec<Elo>,
@@ -34,21 +39,16 @@ impl EloTracker {
         Self {
             historical_ratings: Vec::new(),
             current_ratings: HashMap::new(),
-            log_loss: LogLossTracker::model("elo v1".to_owned()),
+            log_loss: LogLossTracker::model(ELO_VERSION.to_owned()),
         }
     }
 
     pub fn train() -> Result<Self, EloTrackerError> {
         let mut tracker = EloTracker::new();
 
-        if let Err(e) = tracker.process_elo() {
-            return Err(e);
-        } else {
-            match tracker.save() {
-                Ok(_) => println!("✅  loaded elo model"),
-                Err(e) => return Err(e),
-            }
-        }
+        tracker.process_elo()?;
+
+        tracker.save()?;
 
         Ok(tracker)
     }
@@ -169,6 +169,10 @@ impl EloTracker {
         Ok(())
     }
 
+    //todo: implement a less safe version of this function that accepts a immutable reference to the tracker
+    //      panic the program if called incorrectly.
+    //
+    // mayeb dont add this and suffer a teensy performance hit
     pub fn normalized_ratings_from_iter(&mut self, iter: impl Iterator<Item = PlayerId>) -> f64 {
         let (count, sum) = iter.fold((0usize, 0i64), |acc, id| {
             (
@@ -182,6 +186,41 @@ impl EloTracker {
         });
 
         sum as f64 / count as f64
+    }
+
+    pub fn predict_cards(&mut self, gamecards: Vec<GameCard>) -> Vec<Prediction> {
+        let mut chronology = Chronology::new();
+        let mut predictions = Vec::new();
+
+        for mut game in gamecards.into_iter() {
+            chronology
+                .load_year(game.season())
+                .expect("Failed to load year from storage");
+
+            game.add_record(
+                Visiting::Home,
+                chronology.calculate_record(game.home().team_id()),
+            );
+            game.add_record(
+                Visiting::Away,
+                chronology.calculate_record(game.away().team_id()),
+            );
+
+            let home_roster = chronology.get_expected_roster(game.home().team_id(), game.game_id());
+            let away_roster = chronology.get_expected_roster(game.away().team_id(), game.game_id());
+
+            let home_rating = self.normalized_ratings_from_iter(home_roster.into_iter());
+            let away_rating = self.normalized_ratings_from_iter(away_roster.into_iter());
+
+            //that home wins
+            let prob = cdf::prob(home_rating - away_rating);
+
+            let prediction = Prediction::from(game, prob);
+
+            predictions.push(prediction);
+        }
+
+        predictions
     }
 }
 
@@ -211,6 +250,6 @@ impl Model for EloTracker {
     }
 
     fn model_name(&self) -> String {
-        "elo".to_string()
+        ELO_VERSION.to_string()
     }
 }

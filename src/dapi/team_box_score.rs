@@ -1,22 +1,19 @@
-use crate::stats::record::Record;
-use crate::{corrections::correction::Correction, stats::teamcard::TeamCard};
+use crate::corrections::correction::Correction;
 
 use crate::dapi::from_value::FromValue;
 use crate::dapi::player_box_score::PlayerBoxScore;
 
 use crate::format::box_score_formatter::format_team_box_score;
 
-use crate::ml::elo;
-
 use crate::stats::box_score::BoxScore;
+use crate::stats::record::Record;
 use crate::stats::stat_column::StatColumn::*;
+use crate::stats::teamcard::TeamCard;
 use crate::stats::visiting::Visiting;
 
 use crate::types::*;
 
 use serde::{Deserialize, Serialize};
-
-use std::collections::HashMap;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct TeamBoxScore {

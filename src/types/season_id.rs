@@ -3,7 +3,6 @@ use crate::stats::season_period::SeasonPeriod;
 use crate::stats::season_period::SeasonPeriod::{
     AllStarGame, NBACup, PlayIn, PostSeason, PreSeason, RegularSeason,
 };
-use chrono::Datelike;
 use serde::de;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;

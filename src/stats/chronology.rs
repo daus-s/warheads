@@ -1,6 +1,7 @@
 // an efficient way to query through historical games
 use crate::stats::game_obj::GameObject;
 
+use crate::stats::record::Record;
 use crate::storage::read_disk::read_nba_season;
 
 use crate::types::{GameId, PlayerId, SeasonId, TeamId};
@@ -91,9 +92,6 @@ impl Chronology {
             last_n_games.push(games_for_team[i].clone());
         }
 
-        //debug
-        games_for_team.iter().for_each(|g| println!("{g}"));
-
         last_n_games
     }
 
@@ -133,6 +131,30 @@ impl Chronology {
 
     fn is_initialized(&self) -> bool {
         self.games.is_some() && self.era.is_some()
+    }
+
+    pub fn calculate_record(&self, team_id: TeamId) -> Record {
+        if !self.is_initialized() {
+            return Record { wins: 0, losses: 0 };
+        }
+
+        let mut wins = 0;
+        let mut losses = 0;
+
+        self.games
+            .as_ref()
+            .unwrap()
+            .iter()
+            .filter(|game| game.had_participant(team_id))
+            .for_each(|game| {
+                if game.winner() == team_id {
+                    wins += 1
+                } else {
+                    losses += 1
+                }
+            });
+
+        Record { wins, losses }
     }
 }
 
@@ -239,8 +261,6 @@ mod test_chronology {
             })
             .collect::<Vec<GameId>>();
 
-        println!("let expected: Vec<GameId> = vec![");
-
         assert_eq!(actual, expected);
         assert_eq!(actual.len(), 81);
     }
@@ -250,13 +270,6 @@ mod test_chronology {
         let chronology = Chronology::from_era(SeasonId::from((2024, RegularSeason)));
 
         let actual = chronology.get_expected_roster(TeamId(1610612747), GameId::from(0022401199));
-
-        println!("let expected: Vec<PlayerId> = vec![");
-
-        for player in actual.iter() {
-            println!("\tPlayerId({player}),")
-        }
-        println!("];");
 
         let expected: Vec<PlayerId> = vec![
             PlayerId(2544),

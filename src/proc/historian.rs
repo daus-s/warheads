@@ -8,9 +8,8 @@ use crate::dapi::season_manager::{get_current_era, nba_lifespan, nba_lifespan_pe
 
 use crate::format::path_manager::nba_checksum_file;
 
-use crate::ml::elo_tracker::EloTracker;
+use crate::ml::elo_tracker::{EloTracker, EloTrackerError};
 
-use crate::proc::forecast::forecast_nba;
 use crate::proc::gather::fetch_and_save_nba_stats;
 use crate::proc::hunting::compare_and_fetch;
 
@@ -68,6 +67,6 @@ pub fn chronicle_nba() {
     store_nba_season(current_year); //always update the current year's season
 }
 
-pub async fn rate_nba() {
-    let _ = EloTracker::train();
+pub async fn rate_nba() -> Result<EloTracker, EloTrackerError> {
+    EloTracker::train()
 }
