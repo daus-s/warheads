@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Record {
-    pub wins: u8,
-    pub losses: u8,
+    pub wins: u32,
+    pub losses: u32,
 }
 
 impl Record {
@@ -15,8 +15,8 @@ impl Record {
 
     pub fn wl(wins: u64, losses: u64) -> Self {
         Record {
-            wins: wins as u8,
-            losses: losses as u8,
+            wins: wins as u32,
+            losses: losses as u32,
         }
     }
 }

@@ -35,10 +35,10 @@ pub fn format_team_box_score(
             }
         },
     )?;
-    for pbs in box_score.roster() {
+    for pbs in box_score.roster_box_scores() {
         writeln!(f, "{}", pbs)?;
     }
-    if box_score.roster().len() == 0 {
+    if box_score.roster_box_scores().len() == 0 {
         writeln!(f, "\n{}no player records\n", whitespace_n((WIDTH - 17) / 2))?;
     }
     writeln!(f, "{}", "=".repeat(WIDTH))?;
@@ -58,7 +58,7 @@ pub fn format_player_box_score(
         f,
         "{}{}{} (fpts: {}) ",
         box_score.player_name(),
-        whitespace_n(COL_NAME - box_score.player_name().0.len()),
+        whitespace_n(COL_NAME - box_score.player_name().0.chars().count()),
         box_score.box_score(),
         box_score.box_score().calculate_fantasy()
     )

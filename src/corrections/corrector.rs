@@ -6,7 +6,7 @@ use crate::dapi::archive::Archive;
 use crate::format::extract::json_to_hashmap;
 
 use crate::stats::domain::Domain;
-use crate::stats::id::{Identifiable, Identity};
+use crate::stats::identity::{Identifiable, Identity};
 
 use std::collections::HashMap;
 

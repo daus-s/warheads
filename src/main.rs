@@ -9,7 +9,13 @@ async fn main() {
 
     chronicle_nba();
 
-    forecast_nba().await;
+    let mut elo = match rate_nba().await {
+        Ok(tracker) => {
+            println!("✅  loaded elo model");
+            tracker
+        }
+        Err(e) => panic!("{e}\n💀 failed to elo model"),
+    };
 
-    rate_nba();
+    forecast_nba(&mut elo).await;
 }

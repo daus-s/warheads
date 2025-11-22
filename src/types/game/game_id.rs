@@ -26,6 +26,14 @@ impl Display for GameId {
     }
 }
 
+impl From<u64> for GameId {
+    fn from(value: u64) -> Self {
+        assert!(value < 9999999999, "GameId format is 10 characters");
+
+        GameId(value)
+    }
+}
+
 impl From<String> for GameId {
     fn from(value: String) -> Self {
         GameId(value.parse().expect("💀 couldn't parse game id"))

@@ -24,6 +24,8 @@ pub fn read_entire_nba_season(year: i32) -> Result<Vec<GameObject>, NBAReadError
         gamelog.extend(games);
     }
 
+    gamelog.sort();
+
     Ok(gamelog)
 }
 
@@ -56,6 +58,8 @@ fn read_directory(path: &PathBuf) -> Result<Vec<GameObject>, NBAReadError> {
         }
     }
 
+    games.sort();
+
     Ok(games)
 }
 
@@ -86,6 +90,26 @@ impl Display for NBAReadError {
             NBAReadError::FileEntryError(e, path) => {
                 write!(f, "❗  {e}:\n{}\n❗  failed to get entry", path.display())
             }
+        }
+    }
+}
+
+#[cfg(test)]
+mod test_read_data {
+    use crate::storage::read_disk::read_entire_nba_season;
+
+    #[test]
+    fn assert_well_ordered() {
+        let games = read_entire_nba_season(2024).expect("failed to read 2024 nba season in test.");
+
+        for idx in 1..games.len() {
+            let sort_statement = if games[idx].game_date == games[idx - 1].game_date {
+                games[idx].game_id.0 > games[idx - 1].game_id.0
+            } else {
+                games[idx].game_date.0 > games[idx - 1].game_date.0
+            };
+
+            assert!(sort_statement)
         }
     }
 }

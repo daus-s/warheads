@@ -54,6 +54,10 @@ impl GameDate {
 
         PathBuf::from(s)
     }
+
+    pub fn timestamp(&self) -> i32 {
+        self.0.to_epoch_days()
+    }
 }
 
 impl From<NaiveDate> for GameDate {

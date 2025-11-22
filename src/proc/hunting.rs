@@ -8,7 +8,7 @@ use crate::format::path_manager::{nba_source_path, universal_nba_source_path};
 use crate::proc::gather;
 use crate::proc::gather::{player_games, team_games};
 
-use crate::stats::id::Identity;
+use crate::stats::identity::Identity;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::season_period::minimum_spanning_era;
 

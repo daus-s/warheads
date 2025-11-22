@@ -1,7 +1,7 @@
 use crate::corrections::correction::Correction;
 use crate::corrections::correction_loader::load_single_correction;
 use crate::stats::game_display::GameDisplay;
-use crate::stats::id::Identifiable;
+use crate::stats::identity::Identifiable;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::percent::PercentGeneric;
 use crate::stats::stat_column::StatColumn;

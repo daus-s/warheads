@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use crate::corrections::correction_builder::CorrectionBuilder;
 
 use crate::dapi::player_box_score::PlayerBoxScore;
@@ -6,7 +8,7 @@ use crate::dapi::team_box_score::TeamBoxScore;
 use crate::format::game_object_formatter::GameIdentity;
 use crate::stats::game_display::GameDisplay;
 use crate::stats::gamecard::GameCard;
-use crate::stats::id::Identity;
+use crate::stats::identity::Identity;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::stat_column::StatColumn::{GAME_DATE, MATCHUP, WL};
 use crate::stats::visiting::Visiting;
@@ -73,7 +75,7 @@ impl GameObject {
         }
 
         //draconian yes, but if there isn't a roster for the team we're not gonna study it.
-        if game1.roster().len() == 0 || game2.roster().len() == 0 {
+        if game1.roster_box_scores().len() == 0 || game2.roster_box_scores().len() == 0 {
             println!("No roster data available for one or both teams. {id1:?}, {id2:?}");
             correction1.set_delete(true);
             correction2.set_delete(true);
@@ -179,6 +181,10 @@ impl GameObject {
         (self.season_id, self.game_id)
     }
 
+    pub fn had_participant(&self, team_id: TeamId) -> bool {
+        self.home.team_id == team_id || self.home.team_id == team_id
+    }
+
     pub fn winning_side(&self) -> Visiting {
         match self.winner() {
             team_id if team_id == self.home.team_id => Visiting::Home,
@@ -219,11 +225,11 @@ impl GameObject {
     }
 
     pub fn home_roster(&self) -> &Vec<PlayerBoxScore> {
-        self.home.roster()
+        self.home.roster_box_scores()
     }
 
     pub fn away_roster(&self) -> &Vec<PlayerBoxScore> {
-        self.away.roster()
+        self.away.roster_box_scores()
     }
 
     pub fn game_identity(&self) -> GameIdentity {
@@ -258,5 +264,30 @@ impl GameObject {
             self.home().card(),
             self.away().card(),
         )
+    }
+
+    pub(crate) fn team(&self, team_id: TeamId) -> &TeamBoxScore {
+        if self.home_team_id() == team_id {
+            &self.home
+        } else if self.away_team_id() == team_id {
+            &self.away
+        } else {
+            panic!("💀 team provided is neither of the two teams in the gameobject. check carefully before passing team_id.")
+        }
+    }
+}
+
+impl Ord for GameObject {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.game_date
+            .timestamp()
+            .cmp(&other.game_date.timestamp())
+            .then_with(|| self.game_id.cmp(&other.game_id))
+    }
+}
+
+impl PartialOrd for GameObject {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }

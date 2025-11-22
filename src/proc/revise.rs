@@ -5,7 +5,7 @@ use crate::corrections::correction_loader::load_season_correction_maps;
 use crate::dapi::team_box_score::TeamBoxScore;
 
 use crate::format::path_manager::nba_storage_file;
-use crate::stats::id::{Identifiable, Identity};
+use crate::stats::identity::{Identifiable, Identity};
 
 pub fn revise_nba_season(year: i32, games: &mut Vec<(Identity, TeamBoxScore)>) -> Result<(), ()> {
     let (mut player_corrections, mut team_corrections) =

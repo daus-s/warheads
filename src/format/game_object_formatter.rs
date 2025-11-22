@@ -1,7 +1,7 @@
 use std::fmt::{Debug, Display};
 
 use crate::stats::game_obj::GameObject;
-use crate::stats::id::Identity;
+use crate::stats::identity::Identity;
 
 impl Display for GameObject {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

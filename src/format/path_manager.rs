@@ -2,7 +2,7 @@ use crate::constants::paths::data;
 use crate::format::season::season_path;
 use crate::format::stat_path_formatter::StatPathFormatter as SPF;
 use crate::ml::model::Model;
-use crate::stats::id::Identity;
+use crate::stats::identity::Identity;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::nba_kind::NBAStatKind::{Player, Team};
 use crate::types::{GameDate, GameId, PlayerId, SeasonId, TeamId};

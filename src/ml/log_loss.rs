@@ -3,6 +3,7 @@ use std::fmt::Display;
 use crate::ml::measurement::{Measureable, Measurement};
 
 pub struct LogLossTracker {
+    model_name: String,
     measurements: Vec<Measurement>,
 }
 
@@ -34,6 +35,14 @@ impl LogLossTracker {
 
     pub fn new() -> Self {
         LogLossTracker {
+            model_name: format!(""),
+            measurements: Vec::new(),
+        }
+    }
+
+    pub fn model(model_name: String) -> Self {
+        LogLossTracker {
+            model_name,
             measurements: Vec::new(),
         }
     }
@@ -51,7 +60,8 @@ impl Display for LogLossTracker {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "LogLossTracker {{ log_loss: {}, freq: {} }}",
+            "{} {{ log_loss: {}, freq: {} }}",
+            self.model_name,
             self.log_loss(),
             self.freq()
         )

@@ -3,6 +3,7 @@ use crate::dapi::season_manager::get_era_by_date;
 use crate::format::path_manager::{nba_source_path, nba_storage_file};
 
 use crate::stats::nba_kind::NBAStatKind;
+use crate::stats::record::Record;
 use crate::stats::teamcard::TeamCard;
 use crate::stats::visiting::Visiting;
 
@@ -96,6 +97,17 @@ impl GameCard {
 
     pub fn date(&self) -> GameDate {
         self.date
+    }
+
+    pub fn season(&self) -> SeasonId {
+        self.season_id
+    }
+
+    pub fn add_record(&mut self, visiting: Visiting, record: Record) {
+        match visiting {
+            Visiting::Home => self.home.add_record(record),
+            Visiting::Away => self.away.add_record(record),
+        }
     }
 }
 

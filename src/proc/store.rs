@@ -8,7 +8,7 @@ use crate::proc::hunting::load_nba_season_from_source;
 use crate::proc::revise::revise_nba_season;
 
 use crate::stats::game_obj::GameObject;
-use crate::stats::id::Identity;
+use crate::stats::identity::Identity;
 use crate::stats::nba_kind::NBAStatKind::{Player, Team};
 
 use crate::types::GameId;

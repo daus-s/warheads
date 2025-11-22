@@ -1,11 +1,12 @@
 pub mod box_score;
+pub mod chronology;
 pub mod domain;
 pub mod field_status;
 mod game_data;
 pub mod game_display;
 pub mod game_obj;
 pub mod gamecard;
-pub mod id;
+pub mod identity;
 pub mod itemize;
 pub mod nba_kind;
 pub mod nba_stat;
