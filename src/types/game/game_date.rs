@@ -1,4 +1,4 @@
-use chrono::{Datelike, NaiveDate};
+use chrono::{Datelike, Local, NaiveDate};
 
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 
@@ -57,6 +57,10 @@ impl GameDate {
 
     pub fn timestamp(&self) -> i32 {
         self.0.to_epoch_days()
+    }
+
+    pub fn is_today(&self) -> bool {
+        self.0 == Local::now().date_naive()
     }
 }
 

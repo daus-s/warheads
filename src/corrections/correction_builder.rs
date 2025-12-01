@@ -225,6 +225,10 @@ impl CorrectionBuilder {
     pub fn set_delete(&mut self, delete: bool) {
         self.correction.delete = delete;
     }
+
+    pub fn correction(&self) -> &Correction {
+        &self.correction
+    }
 }
 
 fn save_correction(correction: &Correction) {
