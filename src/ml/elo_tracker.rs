@@ -21,6 +21,8 @@ use crate::stats::prediction::Prediction;
 use crate::stats::visiting::Visiting;
 use crate::storage::read_disk::{read_nba_season, NBAReadError};
 
+use crate::tui::game_ratings::GameRatings;
+use crate::tui::tui_display::TuiDisplay;
 use crate::types::PlayerId;
 
 use std::collections::HashMap;
@@ -193,6 +195,14 @@ impl EloTracker {
         let mut predictions = Vec::new();
 
         for mut game in gamecards.into_iter() {
+            chronology
+                .load_year(game.season())
+                .expect(&format!("💀 failed to load season_era: {}", game.season()));
+
+            let game_ratings = GameRatings::new(&game, &mut chronology, &mut self.current_ratings);
+
+            println!("{}", game_ratings.display());
+
             chronology
                 .load_year(game.season())
                 .expect("Failed to load year from storage");

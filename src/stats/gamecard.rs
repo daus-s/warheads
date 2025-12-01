@@ -7,6 +7,7 @@ use crate::stats::record::Record;
 use crate::stats::teamcard::TeamCard;
 use crate::stats::visiting::Visiting;
 
+use crate::tui::tui_display::TuiDisplay;
 use crate::types::{GameDate, GameId, SeasonId};
 
 use std::fmt::Display;
@@ -111,7 +112,15 @@ impl GameCard {
     }
 }
 
-//todo: get this all squared as in shaped like even rows even columns for tui display
+impl TuiDisplay for GameCard {
+    fn display(&self) -> String {
+        format!(
+            "Game ID: {}, Date: {}\nhome: {}\naway: {}",
+            self.game_id, self.date, self.home, self.away
+        )
+    }
+}
+
 impl Display for GameCard {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(

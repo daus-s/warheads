@@ -1,5 +1,3 @@
-use std::error::Error;
-
 pub trait TuiDisplay {
-    fn display(&self) -> Result<String, Box<dyn Error>>;
-}
+    fn display(&self) -> String;
+} //can add special formatting rules later as an options object type shi

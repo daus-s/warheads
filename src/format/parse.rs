@@ -66,6 +66,11 @@ pub fn parse_gamecards(value: Value) -> Result<Vec<GameCard>, ParseError> {
 
     let modules_array = modules.as_array().ok_or(ParseError::ModuleListError)?;
 
+    if modules_array.is_empty() {
+        //sometimes no games happen (e.g. thxgiving)
+        return Ok(vec![]);
+    }
+
     let head = modules_array[0]
         .as_object()
         .ok_or(ParseError::ModuleListError)?;
