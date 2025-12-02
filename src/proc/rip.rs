@@ -111,7 +111,12 @@ pub(crate) fn season(
                     }
                     Ok(None) => {} //dont create a box score if it needs to be deleted
                     Err(correction) => {
-                        corrections.push(correction);
+                        //any exceptions
+                        if correction.correction().game_date.is_today() {
+                            //omit games that are wrong if they are potentially still being recorded
+                        } else {
+                            corrections.push(correction);
+                        }
                     }
                 },
                 Team => match fields_to_team_box_score(&fields) {
@@ -120,7 +125,11 @@ pub(crate) fn season(
                     }
                     Ok(None) => {} //dont create a box score if it needs to be deleted
                     Err(correction) => {
-                        corrections.push(correction);
+                        if correction.correction().game_date.is_today() {
+                            //omit games that are wrong if they are potentially still being recorded
+                        } else {
+                            corrections.push(correction);
+                        }
                     }
                 },
                 LineUp => unimplemented!("lineup stats are not yet supported."),
