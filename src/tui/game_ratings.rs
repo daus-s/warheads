@@ -55,27 +55,31 @@ impl TuiDisplay for GameRatings {
         let mut home_ratings_vec = self.home_ratings.iter().collect::<Vec<_>>();
         let mut away_ratings_vec = self.away_ratings.iter().collect::<Vec<_>>();
 
-        home_ratings_vec.sort_by_cached_key(|(_, r)| *r);
-        away_ratings_vec.sort_by_cached_key(|(_, r)| *r);
+        home_ratings_vec.sort_by_cached_key(|(_, r)| -1 * *r);
+        away_ratings_vec.sort_by_cached_key(|(_, r)| -1 * *r);
+
+        s.push_str(&format!("Home{}Away", format::space(44)));
+        s.push('\n');
+        s.push_str(&format::underline(52));
+        s.push('\n');
 
         for i in 0..num_rating_rows {
             let home_row = match 2 * home_ratings_vec.len() - num_rating_rows {
                 x if i < x => {
-                    let home_rating = home_ratings_vec[num_rating_rows - i - 1];
+                    let home_rating = home_ratings_vec[i];
 
                     Some(home_rating)
                 }
                 _ => None,
             };
-            let away_row = if i < 2 * away_ratings_vec.len() - num_rating_rows {
-                let away_rating = away_ratings_vec[num_rating_rows - i - 1];
+            let away_row = match 2 * away_ratings_vec.len() - num_rating_rows {
+                x if i < x => {
+                    let away_rating = away_ratings_vec[i];
 
-                Some(away_rating)
-            } else {
-                None
+                    Some(away_rating)
+                }
+                _ => None,
             };
-
-            dbg!(home_row, away_row);
 
             let home_rating_str = format!(
                 "{}",
@@ -87,9 +91,9 @@ impl TuiDisplay for GameRatings {
                         let u0_buffer = format::space(10 - id.len());
                         let u1_buffer = format::space(6 - rating.len());
 
-                        format!("{}{}|{}{}", u0_buffer, u.0, u1_buffer, rating)
+                        format!("|{}{}|{}{}", u.0, u0_buffer, u1_buffer, rating)
                     })
-                    .unwrap_or(format::space(17)),
+                    .unwrap_or(format!("|{}|{}", format::space(10), format::space(6))),
             );
             let away_rating_str = format!(
                 "{}",
@@ -101,9 +105,9 @@ impl TuiDisplay for GameRatings {
                         let u0_buffer = format::space(10 - id.len());
                         let u1_buffer = format::space(6 - rating.len());
 
-                        format!("{}{}|{}{}", rating, u1_buffer, u0_buffer, id)
+                        format!("{}{}|{}{}|", rating, u1_buffer, u0_buffer, id)
                     })
-                    .unwrap_or(format::space(17)),
+                    .unwrap_or(format!("{}|{}|", format::space(6), format::space(17))),
             );
 
             s.push_str(&format!(
@@ -114,7 +118,7 @@ impl TuiDisplay for GameRatings {
             ));
         }
 
-        s.push_str(&format::underline(50));
+        s.push_str(&format::underline(52));
         s.push('\n');
 
         s.push_str(&format::space(11));
