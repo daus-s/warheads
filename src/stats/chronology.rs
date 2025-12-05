@@ -96,7 +96,12 @@ impl Chronology {
     }
 
     //todo: improve this with win sharing function as elo parameter
-    pub fn get_expected_roster(&self, team_id: TeamId, game: GameId) -> Vec<PlayerId> {
+    /// calculates the expected roster for a given team and game based on previous N games
+    ///
+    /// # function
+    ///
+    /// N = 5
+    pub fn get_expected_roster(&self, team_id: TeamId, game_id: GameId) -> Vec<PlayerId> {
         if !self.is_initialized() {
             panic!("💀 tried to run get_expected_roster on an uninitialized Chronology object.")
         }
@@ -104,7 +109,7 @@ impl Chronology {
         //map players and appearances
         let mut players: HashMap<PlayerId, u8> = HashMap::new();
 
-        let recent_games = self.n_most_recent_games(5, team_id, game);
+        let recent_games = self.n_most_recent_games(5, team_id, game_id);
 
         let mut max_roster_size = 0;
 
