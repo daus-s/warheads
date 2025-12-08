@@ -61,8 +61,6 @@ pub fn parse_season(value: Value) -> Result<(Vec<Value>, Vec<String>), ParseErro
 }
 
 pub fn parse_gamecards(value: Value) -> Result<Vec<GameCard>, ParseError> {
-    dbg!(&value);
-
     let modules = value.get("modules").ok_or(ParseError::ModulesError)?;
 
     let modules_array = modules.as_array().ok_or(ParseError::ModuleListError)?;
