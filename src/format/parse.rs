@@ -11,7 +11,6 @@ use chrono::{DateTime, Datelike, Local, NaiveDate};
 use serde_json::Value;
 
 use std::fmt::Debug;
-use std::fmt::{self, Display};
 
 use thiserror::Error;
 
@@ -93,6 +92,8 @@ pub fn parse_gamecards(value: Value) -> Result<Vec<GameCard>, ParseError> {
 fn parse_card(value: &Value) -> Option<GameCard> {
     let card = value.as_object()?.get("cardData")?;
 
+    // dbg!(&value);
+
     // println!("{}", serde_json::to_string_pretty(&card).unwrap());
 
     let game_id = card.get("gameId")?.game_id().ok()?;
@@ -152,51 +153,22 @@ fn parse_team(team: &serde_json::Map<String, Value>) -> Option<TeamCard> {
     Some(TeamCard::new(team_id, team_name, team_abbr, record))
 }
 
-#[derive(Error)]
+#[derive(Error, Debug)]
 pub enum ParseError {
+    #[error("❌  missing result set from GameLog request. ")]
     ResultSetError,
+    #[error("❌  missing headers from GameLog request. ")]
     HeaderRowError,
+    #[error("❌  missing box scores from GameLog request. ")]
     BoxScoreRowsError,
+    #[error("❌  missing modules field on GameCard request.")]
     ModulesError,
+    #[error("❌  module field is not an array.")]
     ModuleListError,
+    #[error("❌  missing cards field in module list.")]
     CardError,
+    #[error("❌  card field is not an array.")]
     CardListError,
+    #[error("❌  failed to parse game card.")]
     CardParseError,
-}
-
-impl Debug for ParseError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            ParseError::ResultSetError => {
-                write!(f, "❌  missing result set from GameLog request. ")
-            }
-            ParseError::HeaderRowError => {
-                write!(f, "❌  missing headers from GameLog request. ")
-            }
-            ParseError::BoxScoreRowsError => {
-                write!(f, "❌  missing box scores from GameLog request. ")
-            }
-            ParseError::ModulesError => {
-                write!(f, "❌  missing modules field on GameCard request.")
-            }
-            ParseError::ModuleListError => {
-                write!(f, "❌  module field is not an array.")
-            }
-            ParseError::CardError => {
-                write!(f, "❌  missing cards field in module list.")
-            }
-            ParseError::CardListError => {
-                write!(f, "❌  card field is not an array.")
-            }
-            ParseError::CardParseError => {
-                write!(f, "❌  failed to parse game card.")
-            }
-        }
-    }
-}
-
-impl Display for ParseError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self)
-    }
 }
