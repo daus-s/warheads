@@ -84,9 +84,7 @@ pub fn parse_gamecards(value: Value) -> Result<Vec<GameCard>, ParseError> {
     for card_json in cards_array {
         if let Some(card) = parse_card(card_json) {
             gamecards.push(card);
-        } else {
-            return Err(ParseError::CardParseError);
-        }
+        } //ignore silently unparsable cards
     }
 
     Ok(gamecards)
@@ -113,6 +111,10 @@ fn parse_card(value: &Value) -> Option<GameCard> {
 
     let home_team = card.get("homeTeam")?;
     let away_team = card.get("awayTeam")?;
+
+    if home_team.is_null() || away_team.is_null() {
+        return None;
+    }
 
     let home = parse_team(home_team.as_object()?)?;
     let away = parse_team(away_team.as_object()?)?;
