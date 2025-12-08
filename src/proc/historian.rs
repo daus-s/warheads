@@ -1,5 +1,3 @@
-use std::time::Instant;
-
 use crate::checksum::checksum_map::ChecksumMap;
 use crate::checksum::sign::sign_nba;
 
@@ -84,19 +82,7 @@ pub fn rate_nba(elo_tracker: &mut EloTracker) {
     let mut chronology = Chronology::new();
 
     for era in nba_lifespan_period() {
-        let era_start = Instant::now();
-
-        println!("rating games for {}", era);
-
-        let read_start = Instant::now();
-
-        println!("loading chrono took {}ms", read_start.elapsed().as_millis());
-        //waht is happening on this line and why so slow
-
         if let Ok(_) = chronology.load_year(era) {
-            let rate_start = Instant::now();
-
-            //
             let games = chronology
                 .games()
                 .as_ref()
@@ -114,17 +100,14 @@ pub fn rate_nba(elo_tracker: &mut EloTracker) {
                     );
 
                     (card, game.clone())
-                }) //fuck it
+                })
                 .collect::<Vec<_>>();
 
             elo_tracker.train(&games);
-
-            println!(
-                "calculating ratings took {}ms",
-                rate_start.elapsed().as_millis()
-            );
         }
-
-        println!("total time for {era}={}ms", era_start.elapsed().as_millis());
     }
+
+    if let Err(e) = elo_tracker.save() {
+        println!("{}\n❌ failed to serialize elo tracker.", e);
+    };
 }
