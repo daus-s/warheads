@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use chrono::Datelike;
 
 use crate::checksum::checksum_map::ChecksumMap;
@@ -8,12 +10,14 @@ use crate::dapi::season_manager::{get_current_era, nba_lifespan, nba_lifespan_pe
 
 use crate::format::path_manager::nba_checksum_file;
 
-use crate::ml::elo_tracker::{EloTracker, EloTrackerError};
+use crate::ml::elo_tracker::EloTracker;
 
+use crate::ml::model::Model;
 use crate::proc::gather::fetch_and_save_nba_stats;
 use crate::proc::hunting::compare_and_fetch;
 
 use crate::proc::store::store_nba_season;
+use crate::stats::chronology::Chronology;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::storage::read_disk::read_entire_nba_season;
 
@@ -67,6 +71,51 @@ pub fn chronicle_nba() {
     store_nba_season(current_year); //always update the current year's season
 }
 
-pub async fn rate_nba() -> Result<EloTracker, EloTrackerError> {
-    EloTracker::train()
+pub fn rate_nba(elo_tracker: &mut EloTracker) {
+    let mut chronology = Chronology::new();
+
+    for era in nba_lifespan_period() {
+        let era_start = Instant::now();
+
+        println!("rating games for {}", era);
+
+        let read_start = Instant::now();
+
+        println!("loading chrono took {}ms", read_start.elapsed().as_millis());
+        //waht is happening on this line and why so slow
+
+        if let Ok(_) = chronology.load_year(era) {
+            let rate_start = Instant::now();
+
+            //
+            let games = chronology
+                .games()
+                .as_ref()
+                .expect("💀 load chronology but failed to access games. ")
+                .iter()
+                .map(|game| {
+                    let mut card = game.card();
+
+                    card.add_home_ratings(
+                        chronology.get_expected_roster(card.home().team_id(), card.game_id()),
+                    );
+
+                    card.add_away_ratings(
+                        chronology.get_expected_roster(card.away().team_id(), card.game_id()),
+                    );
+
+                    (card, game.clone())
+                }) //fuck it
+                .collect::<Vec<_>>();
+
+            elo_tracker.train(&games);
+
+            println!(
+                "calculating ratings took {}ms",
+                rate_start.elapsed().as_millis()
+            );
+        }
+
+        println!("total time for {era}={}ms", era_start.elapsed().as_millis());
+    }
 }

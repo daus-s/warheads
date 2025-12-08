@@ -176,9 +176,7 @@ impl Display for SeasonId {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let year_str = season_fmt(self.year());
 
-        let period_str = serde_json::to_string(&self.period()).unwrap();
-
-        write!(f, "{} {}", year_str, period_str)
+        write!(f, "{} {}", year_str, self.period)
     }
 }
 

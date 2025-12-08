@@ -18,7 +18,7 @@ pub struct Elo {
 }
 
 pub const INITIAL_RATING: i64 = 3000;
-
+pub const SCALE_FACTOR: f64 = 400.0;
 pub const K: i64 = 32;
 
 impl Elo {

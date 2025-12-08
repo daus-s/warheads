@@ -19,3 +19,5 @@ pub mod ml;
 pub mod checksum;
 
 pub mod proc;
+
+pub mod models;
