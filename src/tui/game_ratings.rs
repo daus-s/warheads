@@ -10,11 +10,10 @@ use crate::stats::gamecard::GameCard;
 
 use crate::tui::tui_display::TuiDisplay;
 
-use crate::types::{GameId, PlayerId};
+use crate::types::PlayerId;
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct GameRatings {
-    #[allow(dead_code)]
-    game_id: GameId,
     home_ratings: HashMap<PlayerId, i64>,
     away_ratings: HashMap<PlayerId, i64>,
 }
@@ -31,7 +30,6 @@ impl GameRatings {
             chronology.get_expected_roster(gamecard.away().team_id(), gamecard.game_id());
 
         GameRatings {
-            game_id: gamecard.game_id(),
             home_ratings: home_expected_roster
                 .iter()
                 .map(|id| (*id, *ratings.get(id).unwrap_or(&elo::INITIAL_RATING)))
@@ -42,6 +40,14 @@ impl GameRatings {
                 .collect(),
         }
     }
+
+    pub fn home_roster(&self) -> Option<Vec<PlayerId>> {
+        Some(self.home_ratings.keys().cloned().collect())
+    }
+
+    pub fn away_roster(&self) -> Option<Vec<PlayerId>> {
+        Some(self.away_ratings.keys().cloned().collect())
+    }
 }
 
 impl TuiDisplay for GameRatings {
@@ -51,15 +57,13 @@ impl TuiDisplay for GameRatings {
 
         let num_rating_rows = max(self.home_ratings.len(), self.away_ratings.len());
 
-        // let rating_width = 50;
-
         let mut home_ratings_vec = self.home_ratings.iter().collect::<Vec<_>>();
         let mut away_ratings_vec = self.away_ratings.iter().collect::<Vec<_>>();
 
         home_ratings_vec.sort_by_cached_key(|(_, r)| -1 * *r);
         away_ratings_vec.sort_by_cached_key(|(_, r)| -1 * *r);
 
-        s.push_str(&format!("Home{}Away", format::space(44)));
+        s.push_str(&format!("  Home{}Away  ", format::space(40)));
         s.push('\n');
         s.push_str(&format::underline(52));
         s.push('\n');
@@ -108,7 +112,7 @@ impl TuiDisplay for GameRatings {
 
                         format!("{}{}|{}{}|", rating, u1_buffer, u0_buffer, id)
                     })
-                    .unwrap_or(format!("{}|{}|", format::space(6), format::space(17))),
+                    .unwrap_or(format!("{}|{}|", format::space(6), format::space(10))),
             );
 
             s.push_str(&format!(

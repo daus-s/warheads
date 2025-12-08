@@ -27,8 +27,6 @@ impl EloWriter {
     }
 
     pub fn serialize_elo(&mut self, elo: &Elo) -> Result<(), EloWriterError> {
-        //todo: implement this to have each row have a same
-
         self.file.serialize(elo).map_err(|e| SerializerError(e))?;
         Ok(())
     }

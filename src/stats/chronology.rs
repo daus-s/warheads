@@ -39,12 +39,11 @@ impl Chronology {
             return Ok(());
         }
 
-        if let Err(e) = read_nba_season(era) {
-            return Err(Box::new(e));
-        } else if let Ok(season) = read_nba_season(era) {
-            self.era = Some(era);
-            self.games = Some(season);
-        }
+        let season = read_nba_season(era).map_err(|e| Box::new(e))?;
+
+        self.era = Some(era);
+        self.games = Some(season);
+
         Ok(())
     }
 
@@ -160,6 +159,10 @@ impl Chronology {
             });
 
         Record { wins, losses }
+    }
+
+    pub fn games(&self) -> &Option<Vec<GameObject>> {
+        &self.games
     }
 }
 

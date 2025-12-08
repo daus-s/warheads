@@ -1,7 +1,9 @@
 use num::pow::Pow;
 
+use crate::ml::elo;
+
 pub(crate) fn prob(diff: f64) -> f64 {
-    let exponent = -1. * diff / 400.0;
+    let exponent = -1. * diff / elo::SCALE_FACTOR;
     /* FIDE uses 400 for the scale factor and chess players have a similar number of games to nba players
      * each year, so this factor seems appropriate
      *

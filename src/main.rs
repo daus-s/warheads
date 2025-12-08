@@ -1,3 +1,4 @@
+use warheads::ml::elo_tracker::EloTracker;
 use warheads::proc::forecast::forecast_nba;
 use warheads::proc::historian::{chronicle_nba, observe_nba, rate_nba};
 
@@ -5,17 +6,17 @@ use warheads::proc::historian::{chronicle_nba, observe_nba, rate_nba};
 async fn main() {
     println!("hello, {}!", "lisan al-gaib"); //TODO: make this say hi to the user with auth/name
 
+    //initialize the data
     observe_nba().await;
 
     chronicle_nba();
 
-    let mut elo = match rate_nba().await {
-        Ok(tracker) => {
-            println!("✅  loaded elo model");
-            tracker
-        }
-        Err(e) => panic!("{e}\n💀 failed to elo model"),
-    };
+    //load history into memory?
+
+    //generate ratings and predictions for model
+    let mut elo = EloTracker::new();
+
+    rate_nba(&mut elo);
 
     forecast_nba(&mut elo).await;
 }

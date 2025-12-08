@@ -15,7 +15,7 @@ pub async fn forecast_nba(elo: &mut EloTracker) {
 
     let predictions = elo.predict_cards(upcoming_games);
 
-    if let Err(e) = write_predictions(elo, predictions) {
+    if let Err(e) = write_predictions(elo, &predictions) {
         println!("{e}\n⚠️ generated but failed to write predictions to file. ")
     };
 }
