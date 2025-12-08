@@ -19,6 +19,7 @@ use crate::stats::visiting::Visiting;
 
 use crate::storage::read_disk::NBAReadError;
 
+use crate::storage::write::write_serializable_with_directory;
 use crate::tui::game_ratings::GameRatings;
 use crate::tui::tui_display::TuiDisplay;
 
@@ -157,7 +158,7 @@ impl EloTracker {
         for record in &self.historical_ratings {
             writer
                 .serialize_elo(&record)
-                .map_err(|e| EloTrackerError::EloWriteError(e))?;
+                .map_err(|e| EloTrackerError::WriteEloError(e))?;
         }
 
         Ok(())
@@ -166,9 +167,8 @@ impl EloTracker {
     fn save_results(&self) -> Result<(), EloTrackerError> {
         let results_filename = results_path(self);
 
-        let _ = fs::write(results_filename, format!("{}", self.log_loss));
-
-        Ok(())
+        write_serializable_with_directory(results_filename, &self.log_loss)
+            .map_err(|e| EloTrackerError::WriteResultsError(e))
     }
 
     fn save_predictions(&self) -> Result<(), EloTrackerError> {
@@ -252,8 +252,10 @@ pub enum EloTrackerError {
     ReaderError(NBAReadError),
     #[error("❌ {0}\n❌ error writing predictions to file. ")]
     WritePredictionError(io::Error),
+    #[error("❌ {0}\n❌ error writing results to file. ")]
+    WriteResultsError(io::Error),
     #[error("❌ {0}\n❌ error writing elo records to file. ")]
-    EloWriteError(EloWriterError),
+    WriteEloError(EloWriterError),
 }
 
 impl Model for EloTracker {

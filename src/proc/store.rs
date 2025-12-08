@@ -17,7 +17,7 @@ use indicatif::{ProgressBar, ProgressStyle};
 
 use std::collections::HashMap;
 
-pub fn store_nba_season(year: i32) {
+pub fn store_nba_year(year: i32) {
     let mut team_games = load_nba_season_from_source(year);
 
     match revise_nba_season(year, &mut team_games) {
@@ -49,7 +49,7 @@ pub fn store_nba_season(year: i32) {
             correction.create_and_save();
         }
 
-        store_nba_season(year);
+        store_nba_year(year);
     } else if let Ok(games) = pairs {
         sub_save(games);
     } else {

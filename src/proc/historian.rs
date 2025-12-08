@@ -16,10 +16,10 @@ use crate::ml::model::Model;
 use crate::proc::gather::fetch_and_save_nba_stats;
 use crate::proc::hunting::compare_and_fetch;
 
-use crate::proc::store::store_nba_season;
+use crate::proc::store::store_nba_year;
 use crate::stats::chronology::Chronology;
 use crate::stats::nba_kind::NBAStatKind;
-use crate::storage::read_disk::read_entire_nba_season;
+use crate::storage::read_disk::read_nba_year;
 
 pub async fn observe_nba() {
     let checksums = ChecksumMap::load().expect("💀 failed to load checksums");
@@ -61,33 +61,21 @@ pub async fn observe_nba() {
 /// you can build around this function but not from it... this is the one function to start the nba into memory then iterate over elo.
 pub fn chronicle_nba() {
     for szn in nba_lifespan() {
-        if let Err(_) = read_entire_nba_season(szn) {
-            store_nba_season(szn);
+        if let Err(_) = read_nba_year(szn) {
+            store_nba_year(szn);
         }
     }
 
     let current_year = chrono::Utc::now().year();
 
-    store_nba_season(current_year); //always update the current year's season
+    store_nba_year(current_year); //always update the current year's season
 }
 
 pub fn rate_nba(elo_tracker: &mut EloTracker) {
     let mut chronology = Chronology::new();
 
     for era in nba_lifespan_period() {
-        let era_start = Instant::now();
-
-        println!("rating games for {}", era);
-
-        let read_start = Instant::now();
-
-        println!("loading chrono took {}ms", read_start.elapsed().as_millis());
-        //waht is happening on this line and why so slow
-
         if let Ok(_) = chronology.load_year(era) {
-            let rate_start = Instant::now();
-
-            //
             let games = chronology
                 .games()
                 .as_ref()
@@ -105,17 +93,14 @@ pub fn rate_nba(elo_tracker: &mut EloTracker) {
                     );
 
                     (card, game.clone())
-                }) //fuck it
+                })
                 .collect::<Vec<_>>();
 
             elo_tracker.train(&games);
-
-            println!(
-                "calculating ratings took {}ms",
-                rate_start.elapsed().as_millis()
-            );
         }
-
-        println!("total time for {era}={}ms", era_start.elapsed().as_millis());
     }
+
+    if let Err(e) = elo_tracker.save() {
+        println!("{}\n❌ failed to serialize elo tracker.", e);
+    };
 }

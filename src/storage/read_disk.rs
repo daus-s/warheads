@@ -13,7 +13,7 @@ use std::path::PathBuf;
 
 use thiserror::Error;
 
-pub fn read_entire_nba_season(year: i32) -> Result<Vec<GameObject>, NBAReadError> {
+pub fn read_nba_year(year: i32) -> Result<Vec<GameObject>, NBAReadError> {
     let mut gamelog = Vec::new();
 
     for era in minimum_spanning_era(year) {
@@ -96,11 +96,11 @@ impl Display for NBAReadError {
 
 #[cfg(test)]
 mod test_read_data {
-    use crate::storage::read_disk::read_entire_nba_season;
+    use crate::storage::read_disk::read_nba_year;
 
     #[test]
     fn assert_well_ordered() {
-        let games = read_entire_nba_season(2024).expect("failed to read 2024 nba season in test.");
+        let games = read_nba_year(2024).expect("failed to read 2024 nba season in test.");
 
         for idx in 1..games.len() {
             let sort_statement = if games[idx].game_date == games[idx - 1].game_date {
