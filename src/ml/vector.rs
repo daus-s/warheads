@@ -3,24 +3,33 @@ use std::sync::{Arc, Mutex};
 
 // ok im gonna have to COOOOK
 #[derive(Debug, Clone)]
-pub struct Vector(Arc<Mutex<Vec<f64>>>);
+pub struct Vector {
+    vec: Arc<Mutex<Vec<f64>>>,
+    dim: usize,
+}
 
 impl Vector {
     pub fn origin(dim: usize) -> Self {
-        Self(Arc::new(Mutex::new(vec![0.0f64; dim])))
+        Self {
+            vec: Arc::new(Mutex::new(vec![0.0f64; dim])),
+            dim,
+        }
     }
 }
 
 impl From<Vec<f64>> for Vector {
     fn from(vec: Vec<f64>) -> Self {
-        Vector(Arc::new(Mutex::new(vec)))
+        Self {
+            dim: vec.len(),
+            vec: Arc::new(Mutex::new(vec)),
+        }
     }
 }
 
 impl From<Vector> for Arc<Mutex<Vec<f64>>> {
     /// Clones a Vector to a Vec<f64>
     fn from(vector: Vector) -> Self {
-        vector.0
+        vector.vec
     }
 }
 
@@ -28,8 +37,8 @@ impl From<Vector> for Arc<Mutex<Vec<f64>>> {
 
 impl PartialEq for Vector {
     fn eq(&self, other: &Self) -> bool {
-        let self_lock = self.0.lock().unwrap();
-        let other_lock = other.0.lock().unwrap();
+        let self_lock = self.vec.lock().unwrap();
+        let other_lock = other.vec.lock().unwrap();
 
         *self_lock == *other_lock
     }
@@ -48,22 +57,37 @@ impl Add for &Vector {
     type Output = Vector;
 
     fn add(self, rhs: Self) -> Self::Output {
-        let self_lock = self.0.lock().unwrap();
-        let rhs_lock = rhs.0.lock().unwrap();
+        assert_eq!(
+            self.dim, rhs.dim,
+            "Vectors must have the same dimension. Cannot add a {}-d vector and a {}-d vector",
+            rhs.dim, self.dim
+        );
+
+        let self_lock = self.vec.lock().unwrap();
+        let rhs_lock = rhs.vec.lock().unwrap();
 
         let mut result = self_lock.clone();
         for (i, &val) in rhs_lock.iter().enumerate() {
             result[i] += val;
         }
 
-        Vector(Arc::new(Mutex::new(result)))
+        Vector {
+            vec: Arc::new(Mutex::new(result)),
+            dim: self.dim,
+        }
     }
 }
 
 impl AddAssign<&Vector> for Vector {
     fn add_assign(&mut self, rhs: &Self) {
-        let mut self_lock = self.0.lock().unwrap();
-        let rhs_lock = rhs.0.lock().unwrap();
+        assert_eq!(
+            self.dim, rhs.dim,
+            "Vectors must have the same dimension. Cannot add {}-d vector to a {}-d vector",
+            rhs.dim, self.dim
+        );
+
+        let mut self_lock = self.vec.lock().unwrap();
+        let rhs_lock = rhs.vec.lock().unwrap();
 
         for (i, &val) in rhs_lock.iter().enumerate() {
             self_lock[i] += val;
@@ -75,22 +99,35 @@ impl Sub for &Vector {
     type Output = Vector;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        let self_lock = self.0.lock().unwrap();
-        let rhs_lock = rhs.0.lock().unwrap();
+        assert_eq!(
+            self.dim, rhs.dim,
+            "Vectors must have the same dimension. Cannot subtract a {}-d vector and a {}-d vector",
+            rhs.dim, self.dim
+        );
+        let self_lock = self.vec.lock().unwrap();
+        let rhs_lock = rhs.vec.lock().unwrap();
 
         let mut result = self_lock.clone();
         for (i, &val) in rhs_lock.iter().enumerate() {
             result[i] -= val;
         }
 
-        Vector(Arc::new(Mutex::new(result)))
+        Vector {
+            vec: Arc::new(Mutex::new(result)),
+            dim: self.dim,
+        }
     }
 }
 
 impl SubAssign<&Vector> for Vector {
     fn sub_assign(&mut self, rhs: &Self) {
-        let mut self_lock = self.0.lock().unwrap();
-        let rhs_lock = rhs.0.lock().unwrap();
+        assert_eq!(
+            self.dim, rhs.dim,
+            "Vectors must have the same dimension. Cannot subtract a {}-d vector from a {}-d vector",
+            rhs.dim, self.dim
+        );
+        let mut self_lock = self.vec.lock().unwrap();
+        let rhs_lock = rhs.vec.lock().unwrap();
 
         for (i, &val) in rhs_lock.iter().enumerate() {
             self_lock[i] -= val;
@@ -101,15 +138,28 @@ impl SubAssign<&Vector> for Vector {
 impl Div<f64> for &Vector {
     type Output = Vector;
 
-    fn div(self, rhs: f64) -> Self::Output {
-        let self_lock = self.0.lock().unwrap();
+    fn div(self, scalar: f64) -> Self::Output {
+        let self_lock = self.vec.lock().unwrap();
 
         let mut result = self_lock.clone();
         for val in result.iter_mut() {
-            *val /= rhs;
+            *val /= scalar;
         }
 
-        Vector(Arc::new(Mutex::new(result)))
+        Vector {
+            vec: Arc::new(Mutex::new(result)),
+            dim: self.dim,
+        }
+    }
+}
+
+impl DivAssign<f64> for Vector {
+    fn div_assign(&mut self, scalar: f64) {
+        let mut self_lock = self.vec.lock().unwrap();
+
+        for val in self_lock.iter_mut() {
+            *val /= scalar;
+        }
     }
 }
 
