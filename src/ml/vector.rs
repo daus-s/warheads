@@ -1,4 +1,4 @@
-use std::ops::{Add, AddAssign, Div, DivAssign, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 use std::sync::{Arc, Mutex};
 
 // ok im gonna have to COOOOK
@@ -163,6 +163,34 @@ impl DivAssign<f64> for Vector {
     }
 }
 
+impl Mul<f64> for &Vector {
+    type Output = Vector;
+
+    fn mul(self, scalar: f64) -> Self::Output {
+        let self_lock = self.vec.lock().unwrap();
+
+        let mut result = self_lock.clone();
+        for val in result.iter_mut() {
+            *val *= scalar;
+        }
+
+        Vector {
+            vec: Arc::new(Mutex::new(result)),
+            dim: self.dim,
+        }
+    }
+}
+
+impl MulAssign<f64> for Vector {
+    fn mul_assign(&mut self, scalar: f64) {
+        let mut self_lock = self.vec.lock().unwrap();
+
+        for val in self_lock.iter_mut() {
+            *val *= scalar;
+        }
+    }
+}
+
 //todo: implement vector multiplication: inner and outer product
 
 #[cfg(test)]
@@ -213,5 +241,21 @@ mod test_vector {
         let v2 = &v1 / 2.0;
 
         assert_eq!(v2, Vector::from(vec![0.5, 1.0, 1.5]));
+    }
+
+    #[test]
+    fn test_scalar_mul() {
+        let v1 = Vector::from(vec![1.0, 2.0, 3.0]);
+        let v2 = &v1 * 2.0;
+
+        assert_eq!(v2, Vector::from(vec![2.0, 4.0, 6.0]));
+    }
+
+    #[test]
+    fn test_scalar_mul_assign() {
+        let mut v1 = Vector::from(vec![1.0, 2.0, 3.0]);
+        v1 *= 2.0;
+
+        assert_eq!(v1, Vector::from(vec![2.0, 4.0, 6.0]));
     }
 }
