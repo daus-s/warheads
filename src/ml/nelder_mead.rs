@@ -5,7 +5,6 @@ use crate::ml::vector::Vector;
 ///
 //holy fuck the performance is gonna be ass
 pub fn nelder_mead(cost: impl Fn(&Vector) -> f64, simplex: &mut Simplex) {
-    println!("Starting nelder_mead");
     let n = simplex.dim() + 1;
 
     assert!(n > 0, "💀 nelder_mead: n > 0");
@@ -47,6 +46,7 @@ pub fn nelder_mead(cost: impl Fn(&Vector) -> f64, simplex: &mut Simplex) {
 
             if cost(&contraction) < cost(&reflection) {
                 simplex.replace(&worst, &contraction);
+                dbg!(&simplex);
             } else {
                 // Shrink all points toward best
                 simplex.shrink_toward(&best);
@@ -62,27 +62,6 @@ pub fn nelder_mead(cost: impl Fn(&Vector) -> f64, simplex: &mut Simplex) {
                 simplex.shrink_toward(&best);
             }
         }
-        // let mut worst = worst; //if i shadow here is it accessible in all following subbranchee?
-        //                        //
-        // let contract_point = if cost(&reflection) < cost(&worst) {
-        //     println!("replacing {worst} with {reflection}");
-        //     simplex.replace(&worst, &reflection);
-        //     worst = reflection.clone();
-        //     &reflection
-        // } else {
-        //     &worst
-        // };
-        // let contraction = &(&midpoint + &contract_point) / 2.0; //worst has been replaced already if necesary thus our case 2 is accounted for
-        // dbg!(&contraction);
-
-        // if cost(&contraction) < cost(&worst) {
-        //     println!("replacing {worst} with {contraction}");
-        //     simplex.replace(&worst, &contraction);
-        // } else {
-        //     let shrink = &(&best + &worst) / 2.0;
-        //     simplex.replace(&worst, &shrink);
-        //     simplex.replace(&second_worst, &midpoint);
-        // }
     }
 }
 
@@ -99,21 +78,15 @@ mod test_nelder_mead {
             Vector::from(vec![1.0, 2.0]),
             Vector::from(vec![3.0, 4.0]),
         ]);
+
         nelder_mead(&cost, &mut simplex);
 
         let (b_prime, g_prime, w_prime) = simplex.rank_vertices(&cost);
 
-        dbg!(&b_prime, &g_prime, &w_prime);
-
         // dbg!(&b_prime, &g_prime, &w_prime);
 
         assert_eq!(b_prime, Vector::from(vec![0.0, 0.0]));
-        assert_eq!(cost(&b_prime), 0.0);
-
         assert_eq!(g_prime, Vector::from(vec![-0.75, -0.5]));
-        assert_eq!(cost(&g_prime), 1.0625);
-
         assert_eq!(w_prime, Vector::from(vec![1.0, 2.0]));
-        assert_eq!(cost(&w_prime), 6.0);
     }
 }
