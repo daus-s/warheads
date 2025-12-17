@@ -1,19 +1,42 @@
+use std::fmt::Display;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 use std::sync::{Arc, Mutex};
 
 // ok im gonna have to COOOOK
 #[derive(Debug, Clone)]
 pub struct Vector {
-    vec: Arc<Mutex<Vec<f64>>>,
+    vec: Vec<f64>,
     dim: usize,
 }
 
 impl Vector {
     pub fn origin(dim: usize) -> Self {
         Self {
-            vec: Arc::new(Mutex::new(vec![0.0f64; dim])),
+            vec: vec![0.0f64; dim],
             dim,
         }
+    }
+
+    pub fn dim(&self) -> usize {
+        self.dim
+    }
+
+    pub fn x(&self) -> f64 {
+        assert!(
+            self.dim >= 1,
+            "💀 vector is {}-dimensional and tried to access 1st dimension.",
+            self.dim
+        );
+        self.vec[0]
+    }
+
+    pub fn y(&self) -> f64 {
+        assert!(
+            self.dim >= 2,
+            "💀 vector is {}-dimensional and tried to access 2nd dimension.",
+            self.dim
+        );
+        self.vec[1]
     }
 }
 
@@ -21,15 +44,17 @@ impl From<Vec<f64>> for Vector {
     fn from(vec: Vec<f64>) -> Self {
         Self {
             dim: vec.len(),
-            vec: Arc::new(Mutex::new(vec)),
+            vec,
         }
     }
 }
 
-impl From<Vector> for Arc<Mutex<Vec<f64>>> {
-    /// Clones a Vector to a Vec<f64>
-    fn from(vector: Vector) -> Self {
-        vector.vec
+impl From<&Vector> for Vector {
+    fn from(vector: &Vector) -> Self {
+        Self {
+            vec: vector.vec.clone(),
+            dim: vector.dim,
+        }
     }
 }
 
@@ -37,13 +62,24 @@ impl From<Vector> for Arc<Mutex<Vec<f64>>> {
 
 impl PartialEq for Vector {
     fn eq(&self, other: &Self) -> bool {
-        let self_lock = self.vec.lock().unwrap();
-        let other_lock = other.vec.lock().unwrap();
-
-        *self_lock == *other_lock
+        self.vec == other.vec
     }
 }
 
+impl Eq for Vector {}
+
+impl Display for Vector {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "(")?;
+        for (i, &val) in self.vec.iter().enumerate() {
+            if i > 0 {
+                write!(f, ", ")?;
+            }
+            write!(f, "{}", val)?;
+        }
+        write!(f, ")")
+    }
+}
 // ADD + +=
 // behaves like linear combination of vectors:
 //                                              ax+by+cz = d
@@ -63,16 +99,13 @@ impl Add for &Vector {
             rhs.dim, self.dim
         );
 
-        let self_lock = self.vec.lock().unwrap();
-        let rhs_lock = rhs.vec.lock().unwrap();
-
-        let mut result = self_lock.clone();
-        for (i, &val) in rhs_lock.iter().enumerate() {
+        let mut result = self.vec.clone();
+        for (i, &val) in rhs.vec.iter().enumerate() {
             result[i] += val;
         }
 
         Vector {
-            vec: Arc::new(Mutex::new(result)),
+            vec: result,
             dim: self.dim,
         }
     }
@@ -86,11 +119,8 @@ impl AddAssign<&Vector> for Vector {
             rhs.dim, self.dim
         );
 
-        let mut self_lock = self.vec.lock().unwrap();
-        let rhs_lock = rhs.vec.lock().unwrap();
-
-        for (i, &val) in rhs_lock.iter().enumerate() {
-            self_lock[i] += val;
+        for (i, &val) in rhs.vec.iter().enumerate() {
+            self.vec[i] += val;
         }
     }
 }
@@ -104,16 +134,14 @@ impl Sub for &Vector {
             "Vectors must have the same dimension. Cannot subtract a {}-d vector and a {}-d vector",
             rhs.dim, self.dim
         );
-        let self_lock = self.vec.lock().unwrap();
-        let rhs_lock = rhs.vec.lock().unwrap();
 
-        let mut result = self_lock.clone();
-        for (i, &val) in rhs_lock.iter().enumerate() {
+        let mut result = self.vec.clone();
+        for (i, &val) in rhs.vec.iter().enumerate() {
             result[i] -= val;
         }
 
         Vector {
-            vec: Arc::new(Mutex::new(result)),
+            vec: result,
             dim: self.dim,
         }
     }
@@ -126,28 +154,26 @@ impl SubAssign<&Vector> for Vector {
             "Vectors must have the same dimension. Cannot subtract a {}-d vector from a {}-d vector",
             rhs.dim, self.dim
         );
-        let mut self_lock = self.vec.lock().unwrap();
-        let rhs_lock = rhs.vec.lock().unwrap();
 
-        for (i, &val) in rhs_lock.iter().enumerate() {
-            self_lock[i] -= val;
+        for (i, &val) in rhs.vec.iter().enumerate() {
+            self.vec[i] -= val;
         }
     }
 }
+
+// Scalar Multiplication and Division
 
 impl Div<f64> for &Vector {
     type Output = Vector;
 
     fn div(self, scalar: f64) -> Self::Output {
-        let self_lock = self.vec.lock().unwrap();
-
-        let mut result = self_lock.clone();
+        let mut result = self.vec.clone();
         for val in result.iter_mut() {
             *val /= scalar;
         }
 
         Vector {
-            vec: Arc::new(Mutex::new(result)),
+            vec: result,
             dim: self.dim,
         }
     }
@@ -155,9 +181,7 @@ impl Div<f64> for &Vector {
 
 impl DivAssign<f64> for Vector {
     fn div_assign(&mut self, scalar: f64) {
-        let mut self_lock = self.vec.lock().unwrap();
-
-        for val in self_lock.iter_mut() {
+        for val in self.vec.iter_mut() {
             *val /= scalar;
         }
     }
@@ -167,15 +191,14 @@ impl Mul<f64> for &Vector {
     type Output = Vector;
 
     fn mul(self, scalar: f64) -> Self::Output {
-        let self_lock = self.vec.lock().unwrap();
+        let mut result = self.vec.clone();
 
-        let mut result = self_lock.clone();
         for val in result.iter_mut() {
             *val *= scalar;
         }
 
         Vector {
-            vec: Arc::new(Mutex::new(result)),
+            vec: result,
             dim: self.dim,
         }
     }
@@ -183,9 +206,7 @@ impl Mul<f64> for &Vector {
 
 impl MulAssign<f64> for Vector {
     fn mul_assign(&mut self, scalar: f64) {
-        let mut self_lock = self.vec.lock().unwrap();
-
-        for val in self_lock.iter_mut() {
+        for val in self.vec.iter_mut() {
             *val *= scalar;
         }
     }
