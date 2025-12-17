@@ -1,6 +1,5 @@
 use std::fmt::Display;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
-use std::sync::{Arc, Mutex};
 
 // ok im gonna have to COOOOK
 #[derive(Debug, Clone)]
@@ -38,6 +37,15 @@ impl Vector {
         );
         self.vec[1]
     }
+}
+
+pub fn midpoint(v1: &Vector, v2: &Vector) -> Vector {
+    assert_eq!(v1.dim(), v2.dim(), "💀 vectors have different dimensions.");
+    let mut mid = Vec::with_capacity(v1.dim());
+    for (x, y) in v1.vec.iter().zip(v2.vec.iter()) {
+        mid.push((x + y) / 2.0);
+    }
+    Vector::from(mid)
 }
 
 impl From<Vec<f64>> for Vector {
