@@ -7,6 +7,7 @@ pub mod log_loss;
 pub mod measurement;
 pub mod model;
 pub mod nelder_mead;
+mod simplex;
 mod tests;
 mod training_set;
 mod vector;
