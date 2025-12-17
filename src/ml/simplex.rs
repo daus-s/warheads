@@ -80,6 +80,8 @@ impl Simplex {
                 second_worst = worst;
 
                 worst = (x.clone(), cost_x);
+            } else if cost_x > second_worst.1 {
+                second_worst = (x.clone(), cost_x);
             }
         }
 
@@ -104,12 +106,15 @@ impl Simplex {
     }
 
     pub fn replace(&mut self, old: &Vector, new: &Vector) {
+        println!("Replacing {} with {}", old, new);
         for vertex in self.vertices.iter_mut() {
             if vertex == old {
                 *vertex = Vector::from(new);
                 println!("replaced {} with {}", old, new);
             }
         }
+
+        dbg!(&self);
     }
 
     pub fn shrink_toward(&mut self, target: &Vector) {
