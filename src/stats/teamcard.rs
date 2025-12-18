@@ -11,6 +11,7 @@ pub struct TeamCard {
     team_name: TeamName,
     team_abbr: TeamAbbreviation,
     record: Record,
+    #[serde(skip_serializing)]
     roster: Vec<PlayerId>,
 }
 
