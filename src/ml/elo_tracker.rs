@@ -26,7 +26,7 @@ use crate::tui::tui_display::TuiDisplay;
 use crate::types::PlayerId;
 
 use std::collections::HashMap;
-use std::{fs, io};
+use std::io;
 
 const ELO_VERSION: &str = "elo v1";
 
