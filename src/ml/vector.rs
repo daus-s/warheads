@@ -37,6 +37,10 @@ impl Vector {
         );
         self.vec[1]
     }
+
+    pub fn norm(&self) -> f64 {
+        self.vec.iter().map(|x| x.powi(2)).sum::<f64>().sqrt()
+    }
 }
 
 pub fn midpoint(v1: &Vector, v2: &Vector) -> Vector {

@@ -1,3 +1,5 @@
+use std::ops::Index;
+
 use crate::ml::vector::{self, Vector};
 
 #[derive(Debug)]
@@ -60,28 +62,33 @@ impl Simplex {
         self.vertices.iter()
     }
 
-    pub fn rank_vertices(&self, cost: &impl Fn(&Vector) -> f64) -> (Vector, Vector, Vector) {
-        let mut best = (self.n(0).clone(), cost(self.n(0)));
+    fn vertices(&self) -> usize {
+        self.vertices.len()
+    }
+
+    pub fn rank_vertices(&self, cost: &impl Fn(&Vector) -> f64) -> (usize, usize, usize) {
+        let mut best = (0, cost(self.n(0)));
         //this is so much better than reevaulating cost 😭
         let mut second_worst = best.clone();
         let mut worst = best.clone();
 
-        for x in self.iter() {
+        for i in 1..self.vertices() {
+            let x = self.n(i);
             let cost_x = cost(x);
 
             //update best
             if cost_x < best.1 {
                 //minimize
-                best = (x.clone(), cost_x);
+                best = (i, cost_x);
             }
 
             //update worst (and shift previous worst to second worst
             if cost_x > worst.1 {
                 second_worst = worst;
 
-                worst = (x.clone(), cost_x);
+                worst = (i, cost_x);
             } else if cost_x > second_worst.1 {
-                second_worst = (x.clone(), cost_x);
+                second_worst = (i, cost_x);
             }
         }
 
@@ -105,22 +112,24 @@ impl Simplex {
         self.vertices[0].dim()
     }
 
-    pub fn replace(&mut self, old: &Vector, new: &Vector) {
-        println!("Replacing {} with {}", old, new);
-        for vertex in self.vertices.iter_mut() {
-            if vertex == old {
-                *vertex = Vector::from(new);
-                println!("replaced {} with {}", old, new);
-            }
-        }
-
-        dbg!(&self);
+    pub fn replace(&mut self, index: usize, new: &Vector) {
+        self.vertices[index] = Vector::from(new);
     }
 
-    pub fn shrink_toward(&mut self, target: &Vector) {
+    pub fn shrink_toward(&mut self, target: usize) {
+        let target = self.vertices[target].clone();
+
         for vertex in self.vertices.iter_mut() {
-            *vertex = vector::midpoint(vertex, target);
+            *vertex = vector::midpoint(vertex, &target);
         }
+    }
+}
+
+impl Index<usize> for Simplex {
+    type Output = Vector;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.vertices[index]
     }
 }
 
@@ -163,5 +172,19 @@ mod test_simplex {
             simplex.centroid(),
             Vector::from(vec![1f64 / 3f64, 1f64 / 3f64])
         );
+    }
+
+    #[test]
+    fn test_rank_vertices() {
+        let points = vec![
+            Vector::from(vec![0.0, 0.0]),
+            Vector::from(vec![1.0, 0.0]),
+            Vector::from(vec![1.0, 1.0]),
+        ];
+        let simplex = Simplex::from(&points);
+        let (best, second_worst, worst) = simplex.rank_vertices(&|v: &Vector| v.norm());
+        assert_eq!(best, 0);
+        assert_eq!(second_worst, 1);
+        assert_eq!(worst, 2);
     }
 }

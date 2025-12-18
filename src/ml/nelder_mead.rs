@@ -18,48 +18,51 @@ pub fn nelder_mead(cost: impl Fn(&Vector) -> f64, simplex: &mut Simplex) {
 
     let centroid = simplex.centroid();
 
-    let midpoint = &(&centroid * (n as f64 / (n - 1) as f64)) - &(&worst / (n - 1) as f64);
+    let midpoint = &(&centroid * (n as f64 / (n - 1) as f64)) - &(&simplex[worst] / (n - 1) as f64);
 
-    let reflection = &(&midpoint * 2.0) - &worst;
+    let reflection = &(&midpoint * 2.0) - &simplex[worst];
 
+    let best_cost = cost(&simplex[best]);
+    let second_worst_cost = cost(&simplex[second_worst]);
+    let worst_cost = cost(&simplex[worst]);
+    let reflection_cost = cost(&reflection);
     //algorithm
     //remove these cost evaluations or memoize?
-    if cost(&reflection) < cost(&second_worst) {
+    if reflection_cost < second_worst_cost {
         //reflection is pretty good, how good?
-        if cost(&best) < cost(&reflection) {
+        if best_cost < reflection_cost {
             //replace w with r
-            simplex.replace(&worst, &reflection);
+            simplex.replace(worst, &reflection);
         } else {
             let expansion = &(&reflection * 2.0) - &midpoint;
 
-            if cost(&expansion) < cost(&best) {
-                simplex.replace(&worst, &expansion);
+            if cost(&expansion) < best_cost {
+                simplex.replace(worst, &expansion);
             } else {
-                simplex.replace(&worst, &reflection);
+                simplex.replace(worst, &reflection);
             }
         }
     } else {
         //cost(reflection) >= cost(second_worst) SHRINK
         //
-        if cost(&reflection) < cost(&worst) {
+        if cost(&reflection) < worst_cost {
             let contraction = &(&midpoint + &reflection) / 2.0;
 
             if cost(&contraction) < cost(&reflection) {
-                simplex.replace(&worst, &contraction);
-                dbg!(&simplex);
+                simplex.replace(worst, &contraction);
             } else {
                 // Shrink all points toward best
-                simplex.shrink_toward(&best);
+                simplex.shrink_toward(best);
             }
         } else {
             // Inside contraction: reflect was worse than worst
-            let contraction = &(&midpoint + &worst) / 2.0;
+            let contraction = &(&midpoint + &simplex[worst]) / 2.0;
 
-            if cost(&contraction) < cost(&worst) {
-                simplex.replace(&worst, &contraction);
+            if cost(&contraction) < worst_cost {
+                simplex.replace(worst, &contraction);
             } else {
                 // Shrink all points toward best
-                simplex.shrink_toward(&best);
+                simplex.shrink_toward(best);
             }
         }
     }
@@ -85,8 +88,8 @@ mod test_nelder_mead {
 
         // dbg!(&b_prime, &g_prime, &w_prime);
 
-        assert_eq!(b_prime, Vector::from(vec![0.0, 0.0]));
-        assert_eq!(g_prime, Vector::from(vec![-0.75, -0.5]));
-        assert_eq!(w_prime, Vector::from(vec![1.0, 2.0]));
+        assert_eq!(simplex[b_prime], Vector::from(vec![0.0, 0.0]));
+        assert_eq!(simplex[g_prime], Vector::from(vec![-0.75, -0.5]));
+        assert_eq!(simplex[w_prime], Vector::from(vec![1.0, 2.0]));
     }
 }
