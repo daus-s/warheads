@@ -1,9 +1,9 @@
 use num::pow::Pow;
 
-use crate::ml::elo;
+use crate::ml::elo_params;
 
-pub(crate) fn prob(diff: f64) -> f64 {
-    let exponent = -1. * diff / elo::SCALE_FACTOR;
+pub(crate) fn prob(diff: f64, scale_factor: f64) -> f64 {
+    let exponent = -1. * diff / elo_params::SCALE_FACTOR;
     /* FIDE uses 400 for the scale factor and chess players have a similar number of games to nba players
      * each year, so this factor seems appropriate
      *
@@ -17,7 +17,7 @@ pub(crate) fn prob(diff: f64) -> f64 {
 fn test_diff_0() {
     let diff = 0f64; //0 std devs
 
-    let expected = prob(diff);
+    let expected = prob(diff, elo_params::SCALE_FACTOR);
 
     assert_eq!(expected, 0.5) //expect 50-50
 }
@@ -26,7 +26,7 @@ fn test_diff_0() {
 fn test_diff_1() {
     let diff = 400f64; //1 std devs
 
-    let expected = prob(diff);
+    let expected = prob(diff, elo_params::SCALE_FACTOR);
 
     assert_eq!(expected, 0.9090909090909091)
 }
@@ -35,7 +35,7 @@ fn test_diff_1() {
 fn test_specific_diff() {
     let diff = 200f64; // https://en.wikipedia.org/wiki/Elo_rating_system#Mathematical_details::text=Performance%20is%20not,of%20approximately%200.75.
 
-    let expected = prob(diff);
+    let expected = prob(diff, elo_params::SCALE_FACTOR);
 
     assert_eq!(expected, 0.7597469266479578)
 }
@@ -43,9 +43,9 @@ fn test_specific_diff() {
 #[test]
 fn test_symmetry() {
     for diff in 0..200 {
-        let win = prob(diff as f64);
+        let win = prob(diff as f64, elo_params::SCALE_FACTOR);
 
-        let loss = prob(-1f64 * diff as f64);
+        let loss = prob(-1f64 * diff as f64, elo_params::SCALE_FACTOR);
 
         let tol = 1. - (win + loss) <= 0.00000000000005;
 

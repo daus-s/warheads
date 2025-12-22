@@ -9,12 +9,21 @@ pub struct Measurement {
 
 impl Measurement {
     pub fn new(actual: u8, prob: f64) -> Self {
-        assert!(actual == 0 || actual == 1);
-        assert!(prob > 0.0 && prob < 1.0);
+        assert!(
+            actual == 0 || actual == 1,
+            "💀 outcome must be either 0 or 1. {}",
+            actual
+        );
+        assert!(
+            prob > 0.0 && prob < 1.0,
+            "💀 probability must be between 0 and 1: {}",
+            prob
+        );
 
         Measurement { actual, prob }
     }
 
+    // L = = -(y⋅ln*(p))+(1-y⋅ln*(1-p))
     pub fn log_loss(&self) -> f64 {
         -1f64
             * (self.actual as f64 * self.prob.ln()

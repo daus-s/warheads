@@ -3,8 +3,6 @@ use std::collections::HashMap;
 
 use crate::format;
 
-use crate::ml::elo;
-
 use crate::stats::chronology::Chronology;
 use crate::stats::gamecard::GameCard;
 
@@ -32,11 +30,11 @@ impl GameRatings {
         GameRatings {
             home_ratings: home_expected_roster
                 .iter()
-                .map(|id| (*id, *ratings.get(id).unwrap_or(&elo::INITIAL_RATING)))
+                .map(|id| (*id, *ratings.get(id).unwrap())) //maybe panic on this?
                 .collect(),
             away_ratings: away_expected_roster
                 .iter()
-                .map(|id| (*id, *ratings.get(id).unwrap_or(&elo::INITIAL_RATING)))
+                .map(|id| (*id, *ratings.get(id).unwrap()))
                 .collect(),
         }
     }

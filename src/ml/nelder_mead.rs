@@ -86,8 +86,6 @@ mod test_nelder_mead {
 
         let (b_prime, g_prime, w_prime) = simplex.rank_vertices(&cost);
 
-        // dbg!(&b_prime, &g_prime, &w_prime);
-
         assert_eq!(simplex[b_prime], Vector::from(vec![0.0, 0.0]));
         assert_eq!(simplex[g_prime], Vector::from(vec![-0.75, -0.5]));
         assert_eq!(simplex[w_prime], Vector::from(vec![1.0, 2.0]));

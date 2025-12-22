@@ -1,1 +1,1 @@
-pub mod optimized_elo;
+pub mod elo_models;
