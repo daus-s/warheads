@@ -56,6 +56,10 @@ impl LogLossTracker {
     pub fn add_measurable(&mut self, event: &Box<dyn Measureable>) {
         self.add_measurement(event.into_measurement());
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.measurements.is_empty()
+    }
 }
 
 impl Display for LogLossTracker {

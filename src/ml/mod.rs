@@ -1,6 +1,7 @@
 pub mod cdf;
 pub mod cost;
 pub mod elo;
+mod elo_params;
 pub mod elo_tracker;
 mod elo_writer;
 pub mod log_loss;

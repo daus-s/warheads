@@ -82,7 +82,7 @@ pub fn rate_nba(elo_tracker: &mut EloTracker) {
     let mut chronology = Chronology::new();
 
     for era in nba_lifespan_period() {
-        if let Ok(_) = chronology.load_year(era) {
+        if let Ok(_) = chronology.load_era(era) {
             let games = chronology
                 .games()
                 .as_ref()

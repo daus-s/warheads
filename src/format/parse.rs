@@ -92,8 +92,6 @@ pub fn parse_gamecards(value: Value) -> Result<Vec<GameCard>, ParseError> {
 fn parse_card(value: &Value) -> Option<GameCard> {
     let card = value.as_object()?.get("cardData")?;
 
-    // dbg!(&value);
-
     // println!("{}", serde_json::to_string_pretty(&card).unwrap());
 
     let game_id = card.get("gameId")?.game_id().ok()?;

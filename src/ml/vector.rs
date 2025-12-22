@@ -38,6 +38,15 @@ impl Vector {
         self.vec[1]
     }
 
+    pub fn z(&self) -> f64 {
+        assert!(
+            self.dim >= 3,
+            "💀 vector is {}-dimensional and tried to access 2nd dimension.",
+            self.dim
+        );
+        self.vec[3]
+    }
+
     pub fn norm(&self) -> f64 {
         self.vec.iter().map(|x| x.powi(2)).sum::<f64>().sqrt()
     }

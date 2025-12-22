@@ -17,10 +17,6 @@ pub struct Elo {
     pub rating: i64,
 }
 
-pub const INITIAL_RATING: i64 = 3000;
-pub const SCALE_FACTOR: f64 = 400.0;
-pub const K: i64 = 32;
-
 impl Elo {
     pub fn new(player_id: PlayerId, game_id: GameId, rating: i64) -> Self {
         Elo {

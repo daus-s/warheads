@@ -2,7 +2,7 @@ use std::ops::Index;
 
 use crate::ml::vector::{self, Vector};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Simplex {
     vertices: Vec<Vector>, /* (x,y,z) -> ah fuck its a matrix
                             * (1,0,0)
