@@ -65,24 +65,21 @@ impl StatPathFormatter for SeasonPeriod {
 }
 
 pub fn minimum_spanning_era(year: i32) -> Vec<SeasonId> {
-    let mut minimum_spanning_era = if year >= 2003 {
-        vec![
-            SeasonId::from((year, SeasonPeriod::PreSeason)),
-            SeasonId::from((year, SeasonPeriod::RegularSeason)),
-            SeasonId::from((year, SeasonPeriod::PostSeason)),
-        ]
-    } else {
-        vec![
-            SeasonId::from((year, SeasonPeriod::RegularSeason)),
-            SeasonId::from((year, SeasonPeriod::PostSeason)),
-        ]
-    };
+    let mut season = vec![];
 
-    if year >= 2020 {
-        minimum_spanning_era.push(SeasonId::from((year, SeasonPeriod::PlayIn)));
+    if year >= 2003 {
+        season.push(SeasonId::from((year, SeasonPeriod::PreSeason)));
     }
 
-    minimum_spanning_era
+    season.push(SeasonId::from((year, SeasonPeriod::RegularSeason)));
+
+    if year >= 2020 {
+        season.push(SeasonId::from((year, SeasonPeriod::PlayIn)));
+    }
+
+    season.push(SeasonId::from((year, SeasonPeriod::PostSeason)));
+
+    season
 }
 
 impl UrlFormatter for SeasonPeriod {

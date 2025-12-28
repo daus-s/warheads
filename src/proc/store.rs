@@ -11,26 +11,26 @@ use crate::stats::game_obj::GameObject;
 use crate::stats::identity::Identity;
 use crate::stats::nba_kind::NBAStatKind::{Player, Team};
 
-use crate::types::GameId;
+use crate::types::{GameId, SeasonId};
 
 use indicatif::{ProgressBar, ProgressStyle};
 
 use std::collections::HashMap;
 
-pub fn store_nba_season(year: i32) {
-    let mut team_games = load_nba_season_from_source(year);
+pub fn store_nba_season(era: SeasonId) {
+    let mut team_games = load_nba_season_from_source(era);
 
-    match revise_nba_season(year, &mut team_games) {
+    match revise_nba_season(era, &mut team_games) {
         Ok(_) => {
             println!(
                 "✅ corrections for the {} NBA season have been written successfully.",
-                season_fmt(year)
+                era
             );
         }
         Err(_) => {
             eprintln!(
                 "❌ corrections for the {} NBA season have failed to save.",
-                season_fmt(year)
+                era
             );
         }
     };
@@ -42,14 +42,14 @@ pub fn store_nba_season(year: i32) {
             "ℹ️  there are {} {} corrections to make for the {} season.",
             correction_builders.len(),
             Team,
-            season_fmt(year)
+            era
         );
 
         for correction in correction_builders.iter_mut() {
             correction.create_and_save();
         }
 
-        store_nba_season(year);
+        store_nba_season(era);
     } else if let Ok(games) = pairs {
         sub_save(games);
     } else {

@@ -5,11 +5,17 @@ use crate::corrections::correction_loader::load_season_correction_maps;
 use crate::dapi::team_box_score::TeamBoxScore;
 
 use crate::format::path_manager::nba_storage_file;
+
 use crate::stats::identity::{Identifiable, Identity};
 
-pub fn revise_nba_season(year: i32, games: &mut Vec<(Identity, TeamBoxScore)>) -> Result<(), ()> {
+use crate::types::SeasonId;
+
+pub fn revise_nba_season(
+    era: SeasonId,
+    games: &mut Vec<(Identity, TeamBoxScore)>,
+) -> Result<(), ()> {
     let (mut player_corrections, mut team_corrections) =
-        load_season_correction_maps(year).map_err(|_e| ())?;
+        load_season_correction_maps(era.year()).map_err(|_e| ())?;
 
     //only delete if the team correction says the game shouldnt be recorded
     for correction in team_corrections.values() {

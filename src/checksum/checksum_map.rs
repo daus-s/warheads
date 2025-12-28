@@ -1,8 +1,13 @@
 use crate::format::path_manager::nba_checksum_file;
+
 use serde::{Deserialize, Serialize};
+
 use std::collections::HashMap;
-use std::fs::File;
+use std::fs::{self, File};
+use std::io;
 use std::path::PathBuf;
+
+use thiserror::Error;
 
 #[derive(Deserialize, Serialize, PartialEq, Eq, Debug, Clone)]
 pub struct ChecksumMap {
@@ -10,13 +15,13 @@ pub struct ChecksumMap {
 }
 
 impl ChecksumMap {
-    pub fn load() -> Result<Self, String> {
+    pub fn load() -> Result<Self, ChecksumMapError> {
         let path = nba_checksum_file();
 
-        let file = File::open(&path).map_err(|e| format!("❌ failed to open file: {}", e))?;
+        let file = File::open(&path).map_err(|e| ChecksumMapError::ChecksumFileError(e))?;
 
         let map = serde_json::from_reader(file)
-            .map_err(|e| format!("❌ failed to parse JSON into a HashMap: {}", e))?;
+            .map_err(|e| ChecksumMapError::ChecksumSerializerError(e))?;
 
         Ok(ChecksumMap { map })
     }
@@ -62,10 +67,17 @@ impl ChecksumMap {
         errors
     }
 
-    pub fn save(&self) -> Result<(), String> {
+    pub fn save(&self) -> Result<(), ChecksumMapError> {
         let path = nba_checksum_file();
 
-        let file = File::create(&path).map_err(|e| format!("❌ failed to create file: {}", e))?;
+        let _ = fs::create_dir_all(
+            &path
+                .parent()
+                .expect("💀 static checksum path does not have a parent directory."),
+        )
+        .map_err(|e| ChecksumMapError::ChecksumFileError(e));
+
+        let file = File::create(&path).map_err(|e| ChecksumMapError::ChecksumFileError(e))?;
 
         let serializable_map = self
             .map
@@ -74,8 +86,16 @@ impl ChecksumMap {
             .collect::<HashMap<String, u32>>();
 
         serde_json::to_writer_pretty(file, &serializable_map)
-            .map_err(|e| format!("❌ failed to serialize ChecksumMap into JSON: {}", e))?;
+            .map_err(|e| ChecksumMapError::ChecksumSerializerError(e))?;
 
         Ok(())
     }
+}
+
+#[derive(Error, Debug)]
+pub enum ChecksumMapError {
+    #[error("❌ failed to create or read checksum file. ")]
+    ChecksumFileError(io::Error),
+    #[error("❌ failed to serialize checksums with serde_json formatter. ")]
+    ChecksumSerializerError(serde_json::Error),
 }

@@ -13,6 +13,7 @@ use crate::tui::tui_display::TuiDisplay;
 use crate::types::{GameId, PlayerId};
 
 pub struct GameRatings {
+    #[allow(dead_code)]
     game_id: GameId,
     home_ratings: HashMap<PlayerId, i64>,
     away_ratings: HashMap<PlayerId, i64>,
