@@ -275,6 +275,13 @@ impl GameObject {
             panic!("💀 team provided is neither of the two teams in the gameobject. check carefully before passing team_id.")
         }
     }
+
+    pub fn game_score(&self) -> (u8, u8) {
+        match self.winning_side() {
+            Visiting::Home => (1, 0),
+            Visiting::Away => (0, 1),
+        }
+    }
 }
 
 impl Ord for GameObject {

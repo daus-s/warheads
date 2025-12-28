@@ -88,19 +88,13 @@ impl EloTracker {
 
         let delta = home_rating - away_rating;
         //R'=R+K∙(S-E) where s is the score and e is the expected (1 for win, 0 for loss - win probability)
-        let mut home_step =
-            (self.step() as f64 * (cdf::prob(delta, self.scale_factor()))).round() as i64;
-        let mut away_step =
-            (self.step() as f64 * (1f64 - cdf::prob(delta, self.scale_factor()))).round() as i64;
+        let home_expected = cdf::prob(delta, self.scale_factor());
+        let away_expected = 1f64 - home_expected;
 
-        //this is the winners step, the losers step is -step
-        if box_score.winner() == slip.home().team_id() {
-            away_step = -1 * (away_step as i64);
-        } else if box_score.winner() == slip.away().team_id() {
-            home_step = -1 * (home_step as i64);
-        } else {
-            panic!("💀 Game must have a winner that was a participant. Somehow passed the win/loss check in GameObject::try_create");
-        }
+        let (home_score, away_score) = box_score.game_score();
+
+        let home_step = (self.step() as f64 * (home_score as f64 - home_expected)).round() as i64;
+        let away_step = (self.step() as f64 * (away_score as f64 - away_expected)).round() as i64;
 
         let init = self.initial_rating();
 
