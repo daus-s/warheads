@@ -6,25 +6,22 @@ mod test_save_load_verify {
     fn test_generate_save_load_verify() {
         let map = generate_checksums();
         let result = map.save();
-        match result.clone() {
+        match result {
             Ok(_) => println!("ChecksumMap saved successfully"),
-            Err(e) => println!("Failed to save ChecksumMap: {}", e),
+            Err(e) => panic!("💀 failed to save ChecksumMap: {}", e),
         }
-        assert!(result.is_ok());
 
         let loaded_map = ChecksumMap::load();
         match &loaded_map {
             Ok(_) => println!("ChecksumMap loaded successfully"),
-            Err(e) => println!("Failed to load ChecksumMap: {}", e),
+            Err(e) => panic!("💀 failed to load ChecksumMap: {}", e),
         }
-        assert!(loaded_map.is_ok());
 
         let verify_result = map.verify_checksums(&loaded_map.unwrap());
         match verify_result.len() == 0 {
             true => println!("no checksum errors."),
-            false => println!("checksum errors detected."),
+            false => panic!("💀 checksum errors detected."),
         }
-        assert_eq!(verify_result.len(), 0);
     }
 }
 

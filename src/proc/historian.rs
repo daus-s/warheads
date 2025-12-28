@@ -15,7 +15,7 @@ use crate::proc::hunting::compare_and_fetch;
 
 use crate::proc::store::store_nba_season;
 use crate::stats::nba_kind::NBAStatKind;
-use crate::storage::read_disk::read_entire_nba_season;
+use crate::storage::read_disk::{read_entire_nba_season, read_nba_season};
 
 pub async fn observe_nba() {
     match ChecksumMap::load() {
@@ -45,7 +45,7 @@ pub async fn observe_nba() {
                         "✅ successfully signed nba data with checksums in {}",
                         nba_checksum_file().display()
                     ),
-                    Err(_) => eprintln!(
+                    Err(_) => println!(
                         "❌ failed to sign nba data with checksums in {}",
                         nba_checksum_file().display()
                     ),
@@ -58,7 +58,7 @@ pub async fn observe_nba() {
                 let _ = fetch_and_save_nba_stats(era, NBAStatKind::Team).await;
             }
 
-            let _ = sign_nba();
+            sign_nba().expect("💀 should be able to write checksums. ");
         }
     }
 }
@@ -66,13 +66,13 @@ pub async fn observe_nba() {
 /// this module contains functions for writing the history of the nba stats
 /// you can build around this function but not from it... this is the one function to start the nba into memory then iterate over elo.
 pub fn chronicle_nba() {
-    for szn in nba_lifespan() {
-        if let Err(_) = read_entire_nba_season(szn) {
-            store_nba_season(szn);
+    for era in nba_lifespan_period() {
+        if let Err(_) = read_nba_season(era) {
+            store_nba_season(era);
         }
     }
 
-    let current_year = chrono::Utc::now().year();
+    let current_year = get_current_era();
 
     store_nba_season(current_year); //always update the current year's season
 }

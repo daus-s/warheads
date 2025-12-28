@@ -21,28 +21,26 @@ use crate::types::SeasonId;
     GOOD WILL HUNTING
 */
 
-pub fn load_nba_season_from_source(year: i32) -> Vec<(Identity, TeamBoxScore)> {
+pub fn load_nba_season_from_source(era: SeasonId) -> Vec<(Identity, TeamBoxScore)> {
     let mut team_games_vec = Vec::new();
 
-    for period in minimum_spanning_era(year) {
-        let player_games_of_period = player_games(period).unwrap_or_else(|e| {
-            panic!(
-                "{e}\n\
-                💀 failed to load and parse player games as JSON.\n\
+    let player_games_of_period = player_games(era).unwrap_or_else(|e| {
+        panic!(
+            "{e}\n\
+                💀 failed to load and parse {era} player games as JSON.\n\
                 run `cargo test checksum::assert_checksums`"
-            );
-        });
+        );
+    });
 
-        let team_games_of_period = team_games(period, player_games_of_period).unwrap_or_else(|e| {
-            panic!(
-                "{e}\n\
+    let team_games_of_period = team_games(era, player_games_of_period).unwrap_or_else(|e| {
+        panic!(
+            "{e}\n\
                     💀 failed to load and parse team games as JSON.\n\
                     run `cargo test checksum::assert_checksums`"
-            );
-        });
+        );
+    });
 
-        team_games_vec.extend(team_games_of_period);
-    }
+    team_games_vec.extend(team_games_of_period);
 
     team_games_vec
 }
