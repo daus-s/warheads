@@ -10,7 +10,6 @@ use crate::proc::gather::{player_games, team_games};
 
 use crate::stats::identity::Identity;
 use crate::stats::nba_kind::NBAStatKind;
-use crate::stats::season_period::minimum_spanning_era;
 
 use crate::types::SeasonId;
 

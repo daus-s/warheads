@@ -2,7 +2,6 @@ use crate::dapi::player_box_score::PlayerBoxScore;
 use crate::dapi::team_box_score::TeamBoxScore;
 
 use crate::format::path_manager::nba_source_path;
-use crate::format::season::season_fmt;
 
 use crate::proc::error::ReadProcessError;
 use crate::proc::query;
@@ -61,16 +60,13 @@ pub async fn fetch_and_save_nba_stats(season: SeasonId, stat: NBAStatKind) -> Re
             Ok(_) => {
                 println!(
                     "✅ successfully saved nba stats for {} season at file: {:?}",
-                    season_fmt(season.year()),
-                    &file_path
+                    season, &file_path
                 );
                 Ok(())
             }
             Err(e) => Err(format!(
                 "❌ error saving nba stats for {} season at file {:?}: {}",
-                season_fmt(season.year()),
-                &file_path,
-                e
+                season, &file_path, e
             )),
         },
         Err(e) => Err(format!(

@@ -119,7 +119,7 @@ mod test_header_manager {
 
     #[test]
     fn are_headers_present() {
-        let manager = HeaderManager::load();
+        let _manager = HeaderManager::load();
 
         assert!(true);
     }

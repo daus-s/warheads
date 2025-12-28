@@ -1,10 +1,8 @@
-use chrono::Datelike;
-
 use crate::checksum::checksum_map::ChecksumMap;
 use crate::checksum::sign::sign_nba;
 
 use crate::dapi::currency::source_data_current;
-use crate::dapi::season_manager::{get_current_era, nba_lifespan, nba_lifespan_period};
+use crate::dapi::season_manager::{get_current_era, nba_lifespan_period};
 
 use crate::format::path_manager::nba_checksum_file;
 
@@ -12,10 +10,11 @@ use crate::ml::elo_tracker::{EloTracker, EloTrackerError};
 
 use crate::proc::gather::fetch_and_save_nba_stats;
 use crate::proc::hunting::compare_and_fetch;
-
 use crate::proc::store::store_nba_season;
+
 use crate::stats::nba_kind::NBAStatKind;
-use crate::storage::read_disk::{read_entire_nba_season, read_nba_season};
+
+use crate::storage::read_disk::read_nba_season;
 
 pub async fn observe_nba() {
     match ChecksumMap::load() {
