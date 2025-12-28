@@ -18,38 +18,48 @@ use crate::stats::nba_kind::NBAStatKind;
 use crate::storage::read_disk::read_entire_nba_season;
 
 pub async fn observe_nba() {
-    let checksums = ChecksumMap::load().expect("💀 failed to load checksums");
+    match ChecksumMap::load() {
+        Ok(checksums) => {
+            let mut errors = 0;
 
-    let mut errors = 0;
+            let eras = nba_lifespan_period();
 
-    let eras = nba_lifespan_period();
+            for era in &eras[0..eras.len() - 1] {
+                errors += compare_and_fetch(*era, NBAStatKind::Player, &checksums).await;
+                errors += compare_and_fetch(*era, NBAStatKind::Team, &checksums).await;
+            }
 
-    for era in &eras[0..eras.len() - 1] {
-        errors += compare_and_fetch(*era, NBAStatKind::Player, &checksums).await;
-        errors += compare_and_fetch(*era, NBAStatKind::Team, &checksums).await;
-    }
+            let current_era = get_current_era();
 
-    let current_era = get_current_era();
+            if !source_data_current().await {
+                let _ = fetch_and_save_nba_stats(current_era, NBAStatKind::Player).await;
+                let _ = fetch_and_save_nba_stats(current_era, NBAStatKind::Team).await;
 
-    if !source_data_current().await {
-        let _ = fetch_and_save_nba_stats(current_era, NBAStatKind::Player).await;
-        let _ = fetch_and_save_nba_stats(current_era, NBAStatKind::Team).await;
+                errors += 1;
+                errors += 1;
+            }
 
-        errors += 1;
-        errors += 1;
-    }
+            if errors > 0 {
+                match sign_nba() {
+                    Ok(_) => println!(
+                        "✅ successfully signed nba data with checksums in {}",
+                        nba_checksum_file().display()
+                    ),
+                    Err(_) => eprintln!(
+                        "❌ failed to sign nba data with checksums in {}",
+                        nba_checksum_file().display()
+                    ),
+                };
+            }
+        }
+        Err(_) => {
+            for era in nba_lifespan_period() {
+                let _ = fetch_and_save_nba_stats(era, NBAStatKind::Player).await;
+                let _ = fetch_and_save_nba_stats(era, NBAStatKind::Team).await;
+            }
 
-    if errors > 0 {
-        match sign_nba() {
-            Ok(_) => println!(
-                "✅ successfully signed nba data with checksums in {}",
-                nba_checksum_file().display()
-            ),
-            Err(_) => eprintln!(
-                "❌ failed to sign nba data with checksums in {}",
-                nba_checksum_file().display()
-            ),
-        };
+            let _ = sign_nba();
+        }
     }
 }
 

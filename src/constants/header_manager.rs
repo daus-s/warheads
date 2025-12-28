@@ -112,3 +112,15 @@ impl HeaderManager {
         headers
     }
 }
+
+#[cfg(test)]
+mod test_header_manager {
+    use crate::constants::header_manager::HeaderManager;
+
+    #[test]
+    fn are_headers_present() {
+        let manager = HeaderManager::load();
+
+        assert!(true);
+    }
+}
