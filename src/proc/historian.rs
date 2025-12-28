@@ -73,9 +73,9 @@ pub fn chronicle_nba() {
         }
     }
 
-    let current_year = get_current_era();
+    let current_era = get_current_era();
 
-    store_nba_season(current_year); //always update the current year's season
+    store_nba_season(current_era); //always update the current year's season
 }
 
 pub fn rate_nba(elo_tracker: &mut EloTracker) {
