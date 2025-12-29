@@ -6,12 +6,14 @@ use crate::dapi::season_manager::{get_current_era, nba_lifespan_period};
 
 use crate::format::path_manager::nba_checksum_file;
 
-use crate::ml::elo_tracker::{EloTracker, EloTrackerError};
+use crate::ml::elo_tracker::EloTracker;
+use crate::ml::model::Model;
 
 use crate::proc::gather::fetch_and_save_nba_stats;
 use crate::proc::hunting::compare_and_fetch;
 use crate::proc::store::store_nba_season;
 
+use crate::stats::chronology::Chronology;
 use crate::stats::nba_kind::NBAStatKind;
 
 use crate::storage::read_disk::read_nba_season;
@@ -71,11 +73,41 @@ pub fn chronicle_nba() {
         }
     }
 
-    let current_year = get_current_era();
+    let current_era = get_current_era();
 
-    store_nba_season(current_year); //always update the current year's season
+    store_nba_season(current_era); //always update the current year's season
 }
 
-pub async fn rate_nba() -> Result<EloTracker, EloTrackerError> {
-    EloTracker::train()
+pub fn rate_nba(elo_tracker: &mut EloTracker) {
+    let mut chronology = Chronology::new();
+
+    for era in nba_lifespan_period() {
+        if let Ok(_) = chronology.load_era(era) {
+            let games = chronology
+                .games()
+                .as_ref()
+                .expect("💀 load chronology but failed to access games. ")
+                .iter()
+                .map(|game| {
+                    let mut card = game.card();
+
+                    card.add_home_ratings(
+                        chronology.get_expected_roster(card.home().team_id(), card.game_id()),
+                    );
+
+                    card.add_away_ratings(
+                        chronology.get_expected_roster(card.away().team_id(), card.game_id()),
+                    );
+
+                    (card, game.clone())
+                })
+                .collect::<Vec<_>>();
+
+            elo_tracker.train(&games);
+        }
+    }
+
+    if let Err(e) = elo_tracker.save() {
+        println!("{}\n❌ failed to serialize elo tracker.", e);
+    };
 }

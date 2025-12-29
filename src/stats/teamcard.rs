@@ -3,7 +3,7 @@ use std::fmt::Display;
 use serde::{Deserialize, Serialize};
 
 use crate::stats::record::Record;
-use crate::types::{TeamAbbreviation, TeamId, TeamName};
+use crate::types::{PlayerId, TeamAbbreviation, TeamId, TeamName};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TeamCard {
@@ -11,6 +11,8 @@ pub struct TeamCard {
     team_name: TeamName,
     team_abbr: TeamAbbreviation,
     record: Record,
+    #[serde(skip_serializing)]
+    roster: Vec<PlayerId>,
 }
 
 impl TeamCard {
@@ -25,6 +27,7 @@ impl TeamCard {
             team_name,
             team_abbr,
             record,
+            roster: vec![],
         }
     }
 
@@ -46,6 +49,14 @@ impl TeamCard {
 
     pub fn add_record(&mut self, record: Record) {
         self.record = record
+    }
+
+    pub fn add_roster(&mut self, roster: Vec<PlayerId>) {
+        self.roster = roster;
+    }
+
+    pub fn roster(&self) -> &Vec<PlayerId> {
+        &self.roster
     }
 }
 

@@ -1,15 +1,17 @@
+use thiserror::Error;
+
+use crate::dapi::season_manager::nba_lifespan_period;
 // an efficient way to query through historical games
 use crate::stats::game_obj::GameObject;
 
+use crate::stats::gamecard::GameCard;
 use crate::stats::record::Record;
-use crate::storage::read_disk::read_nba_season;
+use crate::storage::read_disk::{read_nba_season, NBAReadError};
 
 use crate::types::{GameId, PlayerId, SeasonId, TeamId};
 
 use std::cmp::max;
 use std::collections::HashMap;
-
-use std::error::Error;
 
 pub struct Chronology {
     games: Option<Vec<GameObject>>,
@@ -27,39 +29,64 @@ impl Chronology {
     pub fn from_era(era: SeasonId) -> Self {
         let mut timeline = Chronology::new();
 
-        if let Err(_) = timeline.load_year(era) {
+        if let Err(_) = timeline.load_era(era) {
             Chronology::new()
         } else {
             timeline
         }
     }
 
-    pub fn load_year(&mut self, era: SeasonId) -> Result<(), Box<dyn Error>> {
+    pub fn load_era(&mut self, era: SeasonId) -> Result<(), ChronologyError> {
         if self.era.is_some() && era == self.era.unwrap() {
             return Ok(());
         }
 
-        if let Err(e) = read_nba_season(era) {
-            return Err(Box::new(e));
-        } else if let Ok(season) = read_nba_season(era) {
-            self.era = Some(era);
-            self.games = Some(season);
-        }
+        let season = read_nba_season(era).map_err(|e| ChronologyError::ReadSeasonError(e))?;
+
+        self.era = Some(era);
+        self.games = Some(season);
+
         Ok(())
     }
 
-    pub fn next(&mut self) -> Result<(), Box<dyn Error>> {
+    pub fn next(&mut self) -> Result<(), ChronologyError> {
         let current_era = self.era.unwrap();
         let next_era = current_era.next();
 
-        self.load_year(next_era)
+        self.load_era(next_era)
     }
 
-    pub fn prev(&mut self) -> Result<(), Box<dyn Error>> {
+    pub fn prev(&mut self) -> Result<(), ChronologyError> {
         let current_era = self.era.unwrap();
         let previous_era = current_era.prev();
 
-        self.load_year(previous_era)
+        self.load_era(previous_era)
+    }
+
+    pub fn as_training_data(mut self) -> Result<Vec<(GameCard, GameObject)>, ChronologyError> {
+        let mut games = Vec::new();
+
+        for era in nba_lifespan_period() {
+            if let Err(e) = self.load_era(era) {
+                return Err(e);
+            }
+
+            games.extend(
+                self.games
+                    .clone()
+                    .ok_or(ChronologyError::ChronologyMemoryError)?,
+            )
+        }
+
+        let mut pairs: Vec<(GameCard, GameObject)> =
+            games.into_iter().map(|game| (game.card(), game)).collect();
+
+        for (card, game) in &mut pairs {
+            card.add_away_ratings(self.get_expected_roster(game.away_team_id(), game.game_id()));
+            card.add_home_ratings(self.get_expected_roster(game.home_team_id(), game.game_id()));
+        }
+
+        Ok(pairs)
     }
 
     fn n_most_recent_games(&self, n: usize, team_id: TeamId, game_id: GameId) -> Vec<GameObject> {
@@ -117,7 +144,10 @@ impl Chronology {
             let team = game.team(team_id);
 
             for player in team.roster() {
-                players.entry(player).and_modify(|x| *x += 1).or_insert(1);
+                players
+                    .entry(player)
+                    .and_modify(|games_played| *games_played += 1)
+                    .or_insert(1);
             }
 
             max_roster_size = max(max_roster_size, team.roster().len())
@@ -161,6 +191,20 @@ impl Chronology {
 
         Record { wins, losses }
     }
+
+    pub fn games(&self) -> &Option<Vec<GameObject>> {
+        &self.games
+    }
+}
+
+#[derive(Debug, Error)]
+pub enum ChronologyError {
+    #[error("❌ failed to read season data from storage")]
+    ReadSeasonError(NBAReadError),
+    #[error(
+        "❌ chronology implementation error \n❌ couldn't access games after a successful load"
+    )]
+    ChronologyMemoryError,
 }
 
 #[cfg(test)]
@@ -168,6 +212,25 @@ mod test_chronology {
     use super::*;
 
     use crate::stats::season_period::SeasonPeriod::*;
+
+    #[test]
+    fn test_last_n_games_early_season() {
+        let chronology = Chronology::from_era(SeasonId::from((2024, RegularSeason)));
+        let expected: Vec<GameId> =
+            vec![GameId(0022400062), GameId(0022400085), GameId(0022400096)];
+
+        let game = GameId(0022400111);
+
+        let team = TeamId(1610612747);
+
+        let actual = chronology
+            .n_most_recent_games(5, team, game)
+            .iter()
+            .map(|x| x.game_id())
+            .collect::<Vec<_>>();
+
+        assert_eq!(actual, expected);
+    }
 
     #[test]
     fn test_last_n_games() {

@@ -8,7 +8,8 @@ use crate::stats::teamcard::TeamCard;
 use crate::stats::visiting::Visiting;
 
 use crate::tui::tui_display::TuiDisplay;
-use crate::types::{GameDate, GameId, SeasonId};
+
+use crate::types::{GameDate, GameId, PlayerId, SeasonId};
 
 use std::fmt::Display;
 use std::fs;
@@ -109,6 +110,22 @@ impl GameCard {
             Visiting::Home => self.home.add_record(record),
             Visiting::Away => self.away.add_record(record),
         }
+    }
+
+    pub fn add_home_ratings(&mut self, roster: Vec<PlayerId>) {
+        self.home.add_roster(roster);
+    }
+
+    pub fn add_away_ratings(&mut self, roster: Vec<PlayerId>) {
+        self.away.add_roster(roster);
+    }
+
+    pub(crate) fn home_roster(&self) -> &Vec<PlayerId> {
+        self.home.roster()
+    }
+
+    pub(crate) fn away_roster(&self) -> &Vec<PlayerId> {
+        self.away.roster()
     }
 }
 

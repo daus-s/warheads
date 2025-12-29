@@ -9,14 +9,20 @@ use crate::stats::gamecard::GameCard;
 use crate::types::GameDate;
 
 pub async fn forecast_nba(elo: &mut EloTracker) {
-    let upcoming_games = get_upcoming_games()
-        .await
-        .expect("Failed to fetch upcoming games");
+    let gamecard_response = get_upcoming_games().await;
+
+    let upcoming_games = if let Ok(games) = gamecard_response {
+        games
+    } else if let Err(e) = gamecard_response {
+        panic!("{e}\n💀 failed to fetch upcoming games")
+    } else {
+        unreachable!()
+    };
 
     let predictions = elo.predict_cards(upcoming_games);
 
-    if let Err(e) = write_predictions(elo, predictions) {
-        println!("{e}\n⚠️ generated but failed to write predictions to file. ")
+    if let Err(e) = write_predictions(elo, &predictions) {
+        println!("{e}\n⚠️ predictions were generated but failed to write predictions to file. ")
     };
 }
 

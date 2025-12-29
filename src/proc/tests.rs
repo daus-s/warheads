@@ -84,7 +84,7 @@ mod test_injest {
         pretty_assertions::assert_eq!(
             expected_team_file.trim_end(),
             actual_team_file.trim_end(),
-            "💀 team data download failed"
+            "💀 team data doesnt match expected"
         );
 
         // PLAYER //////////////////////////////////////////////////////////
@@ -123,7 +123,7 @@ mod test_injest {
         pretty_assertions::assert_eq!(
             expected_player_file.trim_end(),
             actual_player_file.trim_end(),
-            "💀 player data download failed"
+            "💀 player data doesnt match expected"
         );
     }
 

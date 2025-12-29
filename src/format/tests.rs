@@ -17,6 +17,8 @@ mod test_path_manager {
         nba_prediction_file, nba_storage_file, nba_storage_path, nba_team_correction_file,
     };
     use crate::ml::model::Model;
+    use crate::stats::game_obj::GameObject;
+    use crate::stats::gamecard::GameCard;
     use crate::types::{GameDate, GameId, SeasonId, TeamId};
     use once_cell::sync::Lazy;
     use std::path::PathBuf;
@@ -107,7 +109,15 @@ mod test_path_manager {
             "test_model".to_owned()
         }
 
-        fn predict(&mut self, _obj: &crate::stats::game_obj::GameObject) -> f64 {
+        fn predict(&mut self, _obj: &crate::stats::gamecard::GameCard) -> f64 {
+            todo!()
+        }
+
+        fn evaluate(&self) -> f64 {
+            todo!()
+        }
+
+        fn train(&mut self, _data: &[(GameCard, GameObject)]) {
             todo!()
         }
     }
