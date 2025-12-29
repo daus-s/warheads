@@ -10,7 +10,6 @@ pub mod identity;
 pub mod itemize;
 pub mod nba_kind;
 pub mod nba_stat;
-pub mod percent;
 pub mod prediction;
 pub mod record;
 pub mod schema;
