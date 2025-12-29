@@ -108,7 +108,7 @@ mod test_nelder_mead_elo {
 
     use super::*;
 
-    #[test]
+    #[allow(dead_code)]
     fn get_optimal_params() {
         let mut tracker = NelderMeadEloTracker::new();
 
