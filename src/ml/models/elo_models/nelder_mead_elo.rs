@@ -86,7 +86,7 @@ impl Model for NelderMeadEloTracker {
         "nelder-mead elo v1".to_string()
     }
 
-    fn predict(&mut self, obj: &crate::stats::gamecard::GameCard) -> f64 {
+    fn predict(&mut self, _obj: &crate::stats::gamecard::GameCard) -> f64 {
         if !self.is_trained {
             panic!("💀 model not trained");
         }
