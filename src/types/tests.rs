@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod test_serde_type_support {
-    use crate::stats::percent::PercentageFormatter;
+    use crate::format::percent::PercentageFormatter;
     use crate::types::fantasy_points::FantasyFormatter;
     use crate::types::{
         Assists, Blocks, DefensiveRebounds, FantasyPoints, FieldGoalAttempts, FieldGoalMakes,

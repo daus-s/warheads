@@ -1,17 +1,28 @@
 use crate::corrections::correction::Correction;
 use crate::corrections::correction_loader::load_single_correction;
+
+use crate::format::percent::PercentGeneric;
+
 use crate::stats::game_display::GameDisplay;
 use crate::stats::identity::Identifiable;
 use crate::stats::nba_kind::NBAStatKind;
-use crate::stats::percent::PercentGeneric;
 use crate::stats::stat_column::StatColumn;
 use crate::stats::types::BoolInt;
-use crate::tui::prompter::{
-    prompt_and_delete, prompt_and_select, prompt_and_validate, prompt_with_options,
-};
-use crate::types::{
-    GameDate, GameId, GameResult, Matchup, PlayerId, SeasonId, TeamAbbreviation, TeamId,
-};
+
+use crate::tui::prompter::prompt_and_delete;
+use crate::tui::prompter::prompt_and_select;
+use crate::tui::prompter::prompt_and_validate;
+use crate::tui::prompter::prompt_with_options;
+
+use crate::types::GameDate;
+use crate::types::GameId;
+use crate::types::GameResult;
+use crate::types::Matchup;
+use crate::types::PlayerId;
+use crate::types::SeasonId;
+use crate::types::TeamAbbreviation;
+use crate::types::TeamId;
+
 use chrono::NaiveDate;
 use serde_json::Value;
 use std::collections::HashMap;
