@@ -3,6 +3,7 @@ pub mod box_score_stat;
 pub mod currency;
 pub mod from_value;
 pub mod player_box_score;
+pub mod player_directory;
 pub mod season_manager;
 pub mod stat_builder;
 pub mod team_box_score;

@@ -1,3 +1,4 @@
+use crate::dapi::player_directory::PlayerDirectory;
 use crate::dapi::season_manager::nba_lifespan_period;
 
 use crate::stats::game_obj::GameObject;
@@ -17,6 +18,7 @@ use thiserror::Error;
 pub struct Chronology {
     games: Option<Vec<GameObject>>,
     era: Option<SeasonId>,
+    player_directory: PlayerDirectory,
 }
 
 impl Chronology {
@@ -24,6 +26,7 @@ impl Chronology {
         Self {
             games: None,
             era: None,
+            player_directory: Default::default(),
         }
     }
 
@@ -43,6 +46,13 @@ impl Chronology {
         }
 
         let season = read_nba_season(era).map_err(|e| ChronologyError::ReadSeasonError(e))?;
+
+        season.iter().for_each(|game| {
+            for p in game.away_roster().iter().chain(game.home_roster().iter()) {
+                self.player_directory
+                    .insert(p.player_id(), p.player_name().clone())
+            }
+        });
 
         self.era = Some(era);
         self.games = Some(season);
@@ -195,6 +205,10 @@ impl Chronology {
 
     pub fn games(&self) -> &Option<Vec<GameObject>> {
         &self.games
+    }
+
+    pub fn player_directory(&self) -> &PlayerDirectory {
+        &self.player_directory
     }
 }
 

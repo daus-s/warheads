@@ -3,17 +3,19 @@ use std::collections::HashMap;
 
 use crate::format;
 
+use crate::ml::cdf;
 use crate::stats::chronology::Chronology;
 use crate::stats::gamecard::GameCard;
 
 use crate::tui::tui_display::TuiDisplay;
 
-use crate::types::PlayerId;
+use crate::types::{PlayerId, PlayerName};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct GameRatings {
-    home_ratings: HashMap<PlayerId, i64>,
-    away_ratings: HashMap<PlayerId, i64>,
+    game_card: GameCard,
+    home_ratings: HashMap<PlayerId, (PlayerName, i64)>,
+    away_ratings: HashMap<PlayerId, (PlayerName, i64)>,
 }
 
 impl GameRatings {
@@ -27,14 +29,33 @@ impl GameRatings {
         let away_expected_roster =
             chronology.get_expected_roster(gamecard.away().team_id(), gamecard.game_id());
 
+        let player_directory = chronology.player_directory();
+
         GameRatings {
+            game_card: gamecard.clone(),
             home_ratings: home_expected_roster
                 .iter()
-                .map(|id| (*id, *ratings.get(id).unwrap())) //maybe panic on this?
+                .map(|id| {
+                    (
+                        *id,
+                        (
+                            player_directory.get(*id).unwrap().clone(),
+                            *ratings.get(id).unwrap(),
+                        ),
+                    )
+                }) //maybe panic on this?
                 .collect(),
             away_ratings: away_expected_roster
                 .iter()
-                .map(|id| (*id, *ratings.get(id).unwrap()))
+                .map(|id| {
+                    (
+                        *id,
+                        (
+                            player_directory.get(*id).unwrap().clone(),
+                            *ratings.get(id).unwrap(),
+                        ),
+                    )
+                })
                 .collect(),
         }
     }
@@ -58,12 +79,19 @@ impl TuiDisplay for GameRatings {
         let mut home_ratings_vec = self.home_ratings.iter().collect::<Vec<_>>();
         let mut away_ratings_vec = self.away_ratings.iter().collect::<Vec<_>>();
 
-        home_ratings_vec.sort_by_cached_key(|(_, r)| -1 * *r);
-        away_ratings_vec.sort_by_cached_key(|(_, r)| -1 * *r);
+        home_ratings_vec.sort_by_cached_key(|(_, (_, r))| -1 * *r);
+        away_ratings_vec.sort_by_cached_key(|(_, (_, r))| -1 * *r);
 
-        s.push_str(&format!("  Home{}Away  ", format::space(40)));
+        s.push_str(&format::underline(80));
+        s.push_str("\n| ");
+        s.push_str(&self.game_card.away().team_abbr().emphasize());
+        s.push_str(" @ ");
+        s.push_str(&self.game_card.home().team_abbr().emphasize());
+        s.push_str(&format!(" {:>10}", self.game_card.date()));
+        s.push_str(&format::space(56));
+        s.push_str(&format!(" |\n| Away{}Home |", format::space(68)));
         s.push('\n');
-        s.push_str(&format::underline(52));
+        s.push_str(&format::underline(80));
         s.push('\n');
 
         for i in 0..num_rating_rows {
@@ -88,75 +116,98 @@ impl TuiDisplay for GameRatings {
                 "{}",
                 home_row
                     .map(|u| {
-                        let id = format!("{}", u.0);
-                        let rating = format!("{}", u.1);
+                        let id = format!("{}", u.1 .0);
+                        let rating = format!("{}", u.1 .1);
 
-                        let u0_buffer = format::space(10 - id.len());
-                        let u1_buffer = format::space(6 - rating.len());
+                        let id_buffer = format::space(24 - id.chars().count());
+                        let rating_buffer = format::space(6 - rating.len());
 
-                        format!("|{}{}|{}{}", u.0, u0_buffer, u1_buffer, rating)
+                        format!("{}{}|{}{}|", rating, rating_buffer, id_buffer, id)
                     })
-                    .unwrap_or(format!("|{}|{}", format::space(10), format::space(6))),
+                    .unwrap_or(format!("{}|{}|", format::space(6), format::space(24))),
             );
             let away_rating_str = format!(
                 "{}",
                 away_row
                     .map(|u| {
-                        let id = format!("{}", u.0);
-                        let rating = format!("{}", u.1);
+                        let id = format!("{}", u.1 .0);
+                        let rating = format!("{}", u.1 .1);
 
-                        let u0_buffer = format::space(10 - id.len());
-                        let u1_buffer = format::space(6 - rating.len());
+                        let id_buffer = format::space(24 - id.chars().count());
+                        let rating_buffer = format::space(6 - rating.len());
 
-                        format!("{}{}|{}{}|", rating, u1_buffer, u0_buffer, id)
+                        format!("|{}{}|{}{}", id, id_buffer, rating_buffer, rating)
                     })
-                    .unwrap_or(format!("{}|{}|", format::space(6), format::space(10))),
+                    .unwrap_or(format!("|{}|{}", format::space(24), format::space(6))),
             );
 
             s.push_str(&format!(
                 "{}{}{}\n",
-                home_rating_str,
+                away_rating_str,
                 format::space(16),
-                away_rating_str
+                home_rating_str,
             ));
         }
 
-        s.push_str(&format::underline(52));
+        s.push_str(&format::underline(80));
         s.push('\n');
-
-        s.push_str(&format::space(11));
 
         let home_avg = self
             .home_ratings
             .iter()
-            .map(|(_, rating)| *rating)
+            .map(|(_, (_, rating))| *rating)
             .sum::<i64>() as f64
             / self.home_ratings.len() as f64;
-
-        let home_average_string = format!("{}", home_avg.round() as i64);
-
-        s.push_str(&format::space(6 - home_average_string.len()));
-
-        s.push_str(&home_average_string);
-
         let away_avg = self
             .away_ratings
             .iter()
-            .map(|(_, rating)| *rating)
+            .map(|(_, (_, rating))| *rating)
             .sum::<i64>() as f64
             / self.away_ratings.len() as f64;
 
+        let p_home = cdf::prob(home_avg - away_avg, 400.0);
+        let p_away = 1f64 - p_home;
+
+        let home_prob_string = format!("({:.1}%)", p_home * 100.0);
+
+        let home_rating_string = format!("{}", home_avg.round() as i64,);
+
+        let away_prob_string = format!("({:.1}%)", p_away * 100.0);
+
+        let away_rating_string = format!("{}", away_avg.round() as i64,);
+
+        s.push('|');
+        s.push_str(&format::space(25));
+
+        s.push_str(&away_rating_string);
+        s.push_str(&format::space(6 - away_rating_string.len()));
+
+        s.push_str(&format::space(16));
+
+        s.push_str(&format::space(6 - home_rating_string.len()));
+        s.push_str(&home_rating_string);
+
+        s.push_str(&format::space(25));
+        s.push('|');
+        s.push('\n');
+
+        s.push('|');
+        s.push_str(&format::space(25));
+
+        s.push_str(&away_prob_string);
+        s.push_str(&format::space(7 - away_prob_string.len()));
+
         s.push_str(&format::space(14));
 
-        let away_average_str = format!("{}", away_avg.round() as i64);
+        s.push_str(&format::space(7 - home_prob_string.len()));
+        s.push_str(&home_prob_string);
 
-        s.push_str(&format::space(6 - away_average_str.len()));
-
-        s.push_str(&away_average_str);
-
-        s.push_str(&format::space(11));
+        s.push_str(&format::space(25));
+        s.push('|');
 
         s.push('\n');
+
+        s.push_str(&format::underline(80));
 
         s
     }
