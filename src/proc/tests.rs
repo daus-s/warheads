@@ -1,48 +1,15 @@
-#![allow(dead_code)]
-#![allow(unused_imports)]
-
-use crate::constants::paths::test;
-
-use crate::format::parse::parse_season;
-
-use crate::proc::gather::{player_games, team_games};
-use crate::proc::query::make_nba_history_request;
-use crate::proc::rip::season;
-use crate::proc::store::{pair_off, TeamGame};
-
-use crate::stats::game_obj::GameObject;
-use crate::stats::identity::Identity;
-use crate::stats::nba_kind::NBAStatKind;
-use crate::stats::nba_stat::NBABoxScore;
-use crate::stats::season_period::SeasonPeriod;
-
-use crate::storage::write::write_serializable_with_directory;
-
-use crate::types::{GameId, SeasonId};
-
-use std::fs::{self, File};
-use std::io::Read;
-use std::path::PathBuf;
-use std::sync::Mutex;
-
-use once_cell::sync::Lazy;
-
-static TEST: Lazy<String> = Lazy::new(test);
-static TEST_MUTEX: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
-
 #[cfg(test)]
 mod test_injest {
-    use std::path::PathBuf;
 
-    use serde_json::Value;
+    use crate::proc::query::make_nba_history_request;
 
-    use crate::{dapi::team_box_score::TeamBoxScore, types::GameDate};
+    use crate::stats::nba_kind::NBAStatKind;
+    use crate::stats::season_period::SeasonPeriod;
 
-    use super::*;
+    use crate::types::{GameDate, SeasonId};
 
     #[tokio::test]
     async fn test_download() {
-        let _guard = TEST_MUTEX.lock().unwrap();
         let season = SeasonId::from((2024, SeasonPeriod::PostSeason));
         // test request info
         // url: https://www.nba.com/stats/teams/boxscores?Season=2024-25&SeasonType=Playoffs&DateFrom=04%2F26%2F2025&DateTo=04%2F30%2F2025
