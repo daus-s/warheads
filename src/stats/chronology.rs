@@ -1,11 +1,9 @@
-use thiserror::Error;
-
 use crate::dapi::season_manager::nba_lifespan_period;
-// an efficient way to query through historical games
-use crate::stats::game_obj::GameObject;
 
+use crate::stats::game_obj::GameObject;
 use crate::stats::gamecard::GameCard;
 use crate::stats::record::Record;
+
 use crate::storage::read_disk::{read_nba_season, NBAReadError};
 
 use crate::types::{GameId, PlayerId, SeasonId, TeamId};
@@ -13,6 +11,9 @@ use crate::types::{GameId, PlayerId, SeasonId, TeamId};
 use std::cmp::max;
 use std::collections::HashMap;
 
+use thiserror::Error;
+
+/// an efficient way to query through historical games
 pub struct Chronology {
     games: Option<Vec<GameObject>>,
     era: Option<SeasonId>,

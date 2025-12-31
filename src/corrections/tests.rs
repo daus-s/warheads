@@ -383,8 +383,6 @@ mod correct_columns {
 
 #[cfg(test)]
 mod serialize_corrections {
-    use crate::constants::paths::test;
-
     use crate::corrections::correction::Correction;
 
     use crate::stats::nba_kind::NBAStatKind;
@@ -396,12 +394,8 @@ mod serialize_corrections {
     use crate::types::{GameId, PlayerId, SeasonId, TeamId};
 
     use std::collections::HashMap;
-    use std::fs;
 
-    use once_cell::sync::Lazy;
     use serde_json::Value;
-
-    static TEST: Lazy<String> = Lazy::new(test);
 
     #[test]
     pub fn serialize_correction() {
@@ -424,10 +418,9 @@ mod serialize_corrections {
             period: SeasonPeriod::RegularSeason,
         };
 
-        let serialized = serde_json::to_string_pretty(&correction).unwrap();
+        let serialized = serde_json::to_string(&correction).unwrap();
 
-        let expected = fs::read_to_string(format!("{}/data/corrections/expected.json", *TEST))
-            .expect("💀 failed to read test file");
+        let expected = r#"{"game_id":"0025900253","game_date":"2000-02-05","season":"22000","player_id":69420,"team_id":1610612755,"team_abbr":"SEA","kind":"Player","period":"RegularSeason","delete":false,"corrections":{"WL":"L"}}"#;
 
         pretty_assertions::assert_eq!(serialized, expected.trim_end());
     }

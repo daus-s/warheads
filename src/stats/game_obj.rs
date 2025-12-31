@@ -182,7 +182,7 @@ impl GameObject {
     }
 
     pub fn had_participant(&self, team_id: TeamId) -> bool {
-        self.home.team_id == team_id || self.home.team_id == team_id
+        self.home.team_id == team_id || self.away.team_id == team_id
     }
 
     pub fn winning_side(&self) -> Visiting {
