@@ -1,6 +1,5 @@
-def main():
-    print("Hello from tui!")
-
+from components.tui import WARHeadsTUI
 
 if __name__ == "__main__":
-    main()
+    app = WARHeadsTUI()
+    app.run()
