@@ -7,10 +7,9 @@ Run: python app.py
 
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Container
-from textual.widgets import Footer, Header, Label, Static
+from textual.widgets import Footer, Header
 
-from components.title import Title
+from components.header import AppHeader
 
 
 class WARHeadsTUI(App):
@@ -32,12 +31,6 @@ class WARHeadsTUI(App):
 
     def compose(self) -> ComposeResult:
         """Create child widgets for the app."""
-        yield Header()
 
-        with Container(id="main_container"):
-            yield Title()
-            yield Static(
-                "hello, lisan al-gaib!", id="greeting"
-            )  # todo: implement user auth
-
+        yield AppHeader()
         yield Footer()
