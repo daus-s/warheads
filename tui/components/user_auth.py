@@ -8,8 +8,11 @@ class UserAuth(Container):
 
     DEFAULT_CSS = """
     UserAuth {
-        border: $border;
-        padding: 0 1 0 0;
+        margin: 0 1 0 0;
+        height: auto;
+        width: auto;
+    }
+    #greeting {
         height: auto;
         width: auto;
     }
@@ -19,6 +22,6 @@ class UserAuth(Container):
         super().__init__()
 
     def compose(self) -> ComposeResult:
-        user: str = "lisan al-gaib"
-        yield Static(f"hello, {user}!", id="greeting")
+        # user: str = "lisan al-gaib"
+        yield Static("hello, lisan al-gaib!", id="greeting")
         # yield Static("login", id="greeting", shrink=True)
