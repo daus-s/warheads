@@ -7,8 +7,9 @@ Run: python app.py
 
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.widgets import Footer, Header
+from textual.widgets import Footer
 
+from components.display import Display
 from components.header import AppHeader
 
 
@@ -33,4 +34,5 @@ class WARHeadsTUI(App):
         """Create child widgets for the app."""
 
         yield AppHeader()
+        yield Display()
         yield Footer()

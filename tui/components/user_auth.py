@@ -18,9 +18,6 @@ class UserAuth(Container):
     }
     """
 
-    def __init__(self):
-        super().__init__()
-
     def compose(self) -> ComposeResult:
         # user: str = "lisan al-gaib"
         yield Static("hello, lisan al-gaib!", id="greeting")

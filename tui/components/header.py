@@ -14,6 +14,21 @@ class AppHeader(Container):
         height: auto;
         width: 100%;
     }
+
+    .header-container {
+        height: auto;
+        width: 100%;
+        border: white;
+        align: left middle;
+    }
+
+    .app-title {
+        height: auto;
+    }
+
+    .user-auth {
+        height: auto;
+    }
     """
 
     def __init__(self):
@@ -23,4 +38,6 @@ class AppHeader(Container):
         """Create child widgets for the app."""
         yield Header()
 
-        yield Horizontal(Title(), UserAuth(), classes="header-container")
+        with Horizontal(classes="header-container"):
+            yield Title(classes="app-title")
+            yield UserAuth(classes="user-auth")

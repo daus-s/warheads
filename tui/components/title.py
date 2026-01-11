@@ -4,8 +4,11 @@ from textual.widgets import Static
 
 
 class Title(Container):
-    def __init__(self):
-        super().__init__()
+    DEFAULT_CSS = """
+    Title {
+        padding: 0 0 0 1;
+    }
+    """
 
     def compose(self) -> ComposeResult:
         """Title widget for the application."""
