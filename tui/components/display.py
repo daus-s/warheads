@@ -6,10 +6,10 @@ from textual.widgets import Static
 class Display(Container):
     DEFAULT_CSS = """
     Display {
-        color: $text;
         border: white;
-        width: 80;
-        height: 24;
+        width: 82;
+        height: 26;
+        padding: 0 1;
     }
     """
 

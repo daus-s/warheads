@@ -1,6 +1,5 @@
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal
-from textual.widgets import Header
 
 from components.title import Title
 from components.user_auth import UserAuth
@@ -18,8 +17,6 @@ class AppHeader(Container):
     .header-container {
         height: auto;
         width: 100%;
-        border: white;
-        align: left middle;
     }
 
     .app-title {
@@ -35,9 +32,6 @@ class AppHeader(Container):
         super().__init__()
 
     def compose(self) -> ComposeResult:
-        """Create child widgets for the app."""
-        yield Header()
-
         with Horizontal(classes="header-container"):
             yield Title(classes="app-title")
             yield UserAuth(classes="user-auth")

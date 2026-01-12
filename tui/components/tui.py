@@ -7,8 +7,10 @@ Run: python app.py
 
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.widgets import Footer
+from textual.containers import Vertical
+from textual.widgets import Footer, Header
 
+from components.controls import Controls
 from components.display import Display
 from components.header import AppHeader
 
@@ -16,10 +18,10 @@ from components.header import AppHeader
 class WARHeadsTUI(App):
     """WARHeads Text User Interface"""
 
-    CSS = """
-        Screen {
-            align: center middle;
-        }
+    DEFAULT_CSS = """
+    .app {
+        padding: 0 1;
+    }
     """
 
     BINDINGS = [
@@ -32,7 +34,10 @@ class WARHeadsTUI(App):
 
     def compose(self) -> ComposeResult:
         """Create child widgets for the app."""
+        yield Header()
 
-        yield AppHeader()
-        yield Display()
+        with Vertical(classes="app"):
+            yield AppHeader()
+            yield Display()
+            yield Controls()
         yield Footer()
