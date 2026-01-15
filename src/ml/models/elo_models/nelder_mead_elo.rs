@@ -38,9 +38,16 @@ impl Model for NelderMeadEloTracker {
             Vector::from(vec![32., 500.]),
         ]);
 
-        let cost = |v: &Vector| -> f64 {
-            let mut tracker = EloTracker::params(EloParams::new(v));
+        let mut cost = |v: &Vector| -> f64 {
+            let mut hash: u128 = 0;
+            hash |= v.x().to_bits() as u128;
+            hash |= (v.y().to_bits() as u128) << 64;
 
+            if let Some(&cached) = self.mapping.get(&hash) {
+                return cached;
+            }
+
+            let mut tracker = EloTracker::params(EloParams::new(v));
             tracker.train(games);
 
             println!(
@@ -50,22 +57,18 @@ impl Model for NelderMeadEloTracker {
                 tracker.evaluate()
             );
 
-            tracker.evaluate()
+            let result = tracker.evaluate();
+            self.mapping.insert(hash, result);
+            result
         };
 
         let baseline = 0.46304378813918995;
 
         while self.performance < baseline * 0.7 {
-            nelder_mead(cost, &mut simplex);
+            nelder_mead(&mut cost, &mut simplex);
 
             for v in simplex.iter() {
                 let new_performance = cost(v);
-                let mut hash: u128 = 0;
-
-                hash |= v.x().to_bits() as u128;
-                hash |= v.y().to_bits() as u128 >> 64;
-
-                self.mapping.insert(hash, new_performance);
 
                 if new_performance > self.performance {
                     self.performance = new_performance;

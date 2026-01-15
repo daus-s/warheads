@@ -4,7 +4,7 @@ use crate::ml::vector::Vector;
 /// # n-dimensional nelder mead
 ///
 //holy fuck the performance is gonna be ass
-pub fn nelder_mead(cost: impl Fn(&Vector) -> f64, simplex: &mut Simplex) {
+pub fn nelder_mead(mut cost: impl FnMut(&Vector) -> f64, simplex: &mut Simplex) {
     let n = simplex.dim() + 1;
 
     assert!(n > 0, "💀 nelder_mead: n > 0");
@@ -14,7 +14,7 @@ pub fn nelder_mead(cost: impl Fn(&Vector) -> f64, simplex: &mut Simplex) {
     );
 
     //declarations
-    let (best, second_worst, worst) = simplex.rank_vertices(&cost);
+    let (best, second_worst, worst) = simplex.rank_vertices(&mut cost);
 
     let centroid = simplex.centroid();
 
@@ -74,7 +74,7 @@ mod test_nelder_mead {
 
     #[test]
     fn test_nelder_mead() {
-        let cost = |v: &Vector| (v.x() - 1.) * v.x() + (v.y() + 1.) * v.y(); //analytically shown the minimum to be at (-.75, -.5)
+        let mut cost = |v: &Vector| (v.x() - 1.) * v.x() + (v.y() + 1.) * v.y(); //analytically shown the minimum to be at (-.75, -.5)
 
         let mut simplex = Simplex::from(&vec![
             Vector::from(vec![0.0, 0.0]),
@@ -84,7 +84,7 @@ mod test_nelder_mead {
 
         nelder_mead(&cost, &mut simplex);
 
-        let (b_prime, g_prime, w_prime) = simplex.rank_vertices(&cost);
+        let (b_prime, g_prime, w_prime) = simplex.rank_vertices(&mut cost);
 
         assert_eq!(simplex[b_prime], Vector::from(vec![0.0, 0.0]));
         assert_eq!(simplex[g_prime], Vector::from(vec![-0.75, -0.5]));

@@ -66,7 +66,7 @@ impl Simplex {
         self.vertices.len()
     }
 
-    pub fn rank_vertices(&self, cost: &impl Fn(&Vector) -> f64) -> (usize, usize, usize) {
+    pub fn rank_vertices(&self, cost: &mut impl FnMut(&Vector) -> f64) -> (usize, usize, usize) {
         let mut best = (0, cost(self.n(0)));
         //this is so much better than reevaulating cost 😭
         let mut second_worst = best.clone();
@@ -182,7 +182,7 @@ mod test_simplex {
             Vector::from(vec![1.0, 1.0]),
         ];
         let simplex = Simplex::from(&points);
-        let (best, second_worst, worst) = simplex.rank_vertices(&|v: &Vector| v.norm());
+        let (best, second_worst, worst) = simplex.rank_vertices(&mut |v: &Vector| v.norm());
         assert_eq!(best, 0);
         assert_eq!(second_worst, 1);
         assert_eq!(worst, 2);
