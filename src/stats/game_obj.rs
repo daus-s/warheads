@@ -276,7 +276,8 @@ impl GameObject {
         }
     }
 
-    pub fn game_score(&self) -> (u8, u8) {
+    /// returns the outcome of the game as a tuple `(home_score, away_score)` where the winner recieves a 1 and the loser recieves a 0.
+    pub fn outcome(&self) -> (u8, u8) {
         match self.winning_side() {
             Visiting::Home => (1, 0),
             Visiting::Away => (0, 1),

@@ -5,6 +5,7 @@ use crate::format;
 
 use crate::ml::cdf;
 use crate::stats::chronology::Chronology;
+use crate::stats::game_obj::GameObject;
 use crate::stats::gamecard::GameCard;
 
 use crate::tui::tui_display::TuiDisplay;
@@ -57,6 +58,44 @@ impl GameRatings {
                     )
                 })
                 .collect(),
+        }
+    }
+
+    pub fn from_games_ratings(game: &GameObject, ratings: &HashMap<PlayerId, i64>) -> Self {
+        let home_roster = game.home_roster();
+
+        let home_ratings = home_roster
+            .iter()
+            .map(|player| {
+                (
+                    player.player_id(),
+                    (
+                        player.player_name().clone(),
+                        *ratings.get(&player.player_id()).unwrap(),
+                    ),
+                )
+            })
+            .collect();
+
+        let away_roster = game.away_roster();
+
+        let away_ratings = away_roster
+            .iter()
+            .map(|player| {
+                (
+                    player.player_id(),
+                    (
+                        player.player_name().clone(),
+                        *ratings.get(&player.player_id()).unwrap(),
+                    ),
+                )
+            })
+            .collect();
+
+        Self {
+            home_ratings,
+            away_ratings,
+            game_card: game.card(),
         }
     }
 
@@ -192,17 +231,17 @@ impl TuiDisplay for GameRatings {
         s.push('\n');
 
         s.push('|');
-        s.push_str(&format::space(25));
+        s.push_str(&format::space(24));
 
         s.push_str(&away_prob_string);
-        s.push_str(&format::space(7 - away_prob_string.len()));
+        s.push_str(&format::space(8 - away_prob_string.len()));
 
         s.push_str(&format::space(14));
 
-        s.push_str(&format::space(7 - home_prob_string.len()));
+        s.push_str(&format::space(8 - home_prob_string.len()));
         s.push_str(&home_prob_string);
 
-        s.push_str(&format::space(25));
+        s.push_str(&format::space(24));
         s.push('|');
 
         s.push('\n');
@@ -210,5 +249,11 @@ impl TuiDisplay for GameRatings {
         s.push_str(&format::underline(80));
 
         s
+    }
+}
+
+impl std::fmt::Display for GameRatings {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "{}", self.display())
     }
 }

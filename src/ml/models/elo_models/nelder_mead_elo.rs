@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::io::{self, Write};
 
 use crate::ml::elo_params::EloParams;
 use crate::ml::elo_tracker::EloTracker;
@@ -17,6 +18,7 @@ pub struct NelderMeadEloTracker {
     is_trained: bool,
     params: Vector,
     performance: f64,
+    model: Option<EloTracker>,
 }
 
 impl NelderMeadEloTracker {
@@ -26,6 +28,7 @@ impl NelderMeadEloTracker {
             is_trained: false,
             params: Vector::from(vec![32., 400.]),
             performance: 0.0,
+            model: None,
         }
     }
 }
@@ -50,50 +53,46 @@ impl Model for NelderMeadEloTracker {
             let mut tracker = EloTracker::params(EloParams::new(v));
             tracker.train(games);
 
-            println!(
-                "{}/{}=>{}",
-                tracker.freq(),
-                tracker.log_loss(),
-                tracker.evaluate()
-            );
-
             let result = tracker.evaluate();
             self.mapping.insert(hash, result);
             result
         };
 
-        let baseline = 0.46304378813918995;
+        let baseline = cost(&Vector::from(vec![32., 400.]));
 
-        while self.performance < baseline * 0.7 {
+        while self.performance < baseline * 1.05 {
+            //minimum improvement of 5%
             nelder_mead(&mut cost, &mut simplex);
 
-            for v in simplex.iter() {
-                let new_performance = cost(v);
+            for params in simplex.iter() {
+                let new_performance = cost(params);
 
                 if new_performance > self.performance {
                     self.performance = new_performance;
+                    self.params = params.clone();
+                    self.model = Some(EloTracker::params(EloParams::new(params)));
                 }
             }
+            print!(
+                "\rScore: {:.4} | Baseline: {:.4} | step: {:.4} | scale: {:.4}",
+                self.performance,
+                baseline,
+                self.params.x(),
+                self.params.y()
+            );
+            io::stdout().flush().unwrap();
         }
-
-        println!(
-            "Score: {}\nBaseline: {}\nstep: {}\tscale factor: {}",
-            self.performance,
-            baseline,
-            self.params.x(),
-            self.params.y()
-        );
     }
 
     fn model_name(&self) -> String {
         "nelder-mead elo v1".to_string()
     }
 
-    fn predict(&mut self, _obj: &crate::stats::gamecard::GameCard) -> f64 {
+    fn predict(&mut self, card: &crate::stats::gamecard::GameCard) -> f64 {
         if !self.is_trained {
             panic!("💀 model not trained");
         }
-        todo!()
+        self.model.as_mut().unwrap().predict(card)
     }
 
     fn evaluate(&self) -> f64 {

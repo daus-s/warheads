@@ -1,6 +1,6 @@
 **/target/
 **/.env
-**/headers.json
+**/headers*.json
 **/Cargo.lock
 
 #s3 utils that are unneeded in the repo
@@ -27,3 +27,6 @@ store/
 .DS_Store
 
 .schema
+
+#temp
+tui/

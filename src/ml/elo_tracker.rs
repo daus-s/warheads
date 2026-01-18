@@ -87,14 +87,17 @@ impl EloTracker {
             self.normalized_ratings_from_iter(slip.away_roster().into_iter().map(|x| *x));
 
         let delta = home_rating - away_rating;
+        let k = self.step() as f64;
+        let f = self.scale_factor();
+
         //R'=R+K∙(S-E) where s is the score and e is the expected (1 for win, 0 for loss - win probability)
-        let home_expected = cdf::prob(delta, self.scale_factor());
+        let home_expected = cdf::prob(delta, f);
         let away_expected = 1f64 - home_expected;
 
-        let (home_score, away_score) = box_score.game_score();
+        let (home_score, away_score) = box_score.outcome();
 
-        let home_step = (self.step() as f64 * (home_score as f64 - home_expected)).round() as i64;
-        let away_step = (self.step() as f64 * (away_score as f64 - away_expected)).round() as i64;
+        let home_step = (k * (home_score as f64 - home_expected)).round() as i64;
+        let away_step = (k * (away_score as f64 - away_expected)).round() as i64;
 
         let init = self.initial_rating();
 
@@ -139,7 +142,12 @@ impl EloTracker {
 
     fn track_log_loss(&mut self, game: &GameObject, delta: f64) {
         let p = cdf::prob(delta, self.scale_factor());
-
+        if p == 1f64 {
+            println!(
+                "{}",
+                GameRatings::from_games_ratings(game, &self.current_ratings)
+            );
+        }
         let a = if game.winner() == game.home_team_id() {
             1
         } else if game.winner() == game.away_team_id() {
@@ -151,14 +159,6 @@ impl EloTracker {
         let m = Measurement::new(a, p);
 
         self.log_loss.add_measurement(m);
-    }
-
-    pub(crate) fn freq(&self) -> f64 {
-        self.log_loss.freq()
-    }
-
-    pub(crate) fn log_loss(&self) -> f64 {
-        self.log_loss.log_loss()
     }
 
     // SERIALIZATION
@@ -326,7 +326,9 @@ impl Model for EloTracker {
 
 #[cfg(test)]
 mod test_elo_tracker {
-    use crate::{ml::vector::Vector, types::SeasonId};
+    use std::time::Instant;
+
+    use crate::ml::vector::Vector;
 
     use super::*;
 
@@ -350,29 +352,30 @@ mod test_elo_tracker {
 
     #[test]
     fn test_process_elo() {
-        let mut tracker = EloTracker::params(EloParams::new(&Vector::from(vec![64.0, 400.0])));
-        let chronology = Chronology::from_era(SeasonId::from(42024));
+        let mut tracker = EloTracker::params(EloParams::new(&Vector::from(vec![32.0, 400.0])));
+        let chronology = Chronology::new();
 
-        let mut pairs = chronology
-            .games()
-            .as_ref()
-            .expect("chrono")
-            .iter()
-            .map(|game| (game.card(), game.clone()))
-            .collect::<Vec<_>>();
+        let start = Instant::now();
+        let training_data = chronology
+            .as_training_data()
+            .expect("failed to load nba history as training data.");
+        println!("loaded training data in {}ms", start.elapsed().as_millis());
 
-        for (slip, _box_score) in pairs.iter_mut() {
-            let away_expected =
-                chronology.get_expected_roster(slip.away().team_id(), slip.game_id());
-            let home_expected =
-                chronology.get_expected_roster(slip.home().team_id(), slip.game_id());
+        let start = Instant::now();
+        tracker.process_elo(&training_data);
+        println!("generated elo ratings in {}ms", start.elapsed().as_millis());
 
-            slip.add_away_ratings(away_expected);
-            slip.add_home_ratings(home_expected);
-        }
+        println!(
+            "freq: {}\tlog_loss: {}\tevaluate(): {}",
+            tracker.log_loss.freq(),
+            tracker.log_loss.log_loss(),
+            tracker.evaluate()
+        );
+        println!(
+            "freq/log_loss ratio: {}",
+            tracker.log_loss.freq() / tracker.log_loss.log_loss()
+        );
 
-        dbg!(&pairs);
-
-        tracker.process_elo(&pairs);
+        assert!(tracker.evaluate() > 0.9);
     }
 }

@@ -85,19 +85,28 @@ impl Chronology {
             games.extend(
                 self.games
                     .clone()
-                    .ok_or(ChronologyError::ChronologyMemoryError)?,
+                    .ok_or(ChronologyError::ChronologyMemoryError)?
+                    .iter()
+                    .map(|game| {
+                        let mut card = game.card();
+
+                        card.add_home_ratings(
+                            self.get_expected_roster(card.home().team_id(), card.game_id()),
+                        );
+
+                        card.add_away_ratings(
+                            self.get_expected_roster(card.away().team_id(), card.game_id()),
+                        );
+
+                        (game.card(), game.clone())
+                    })
+                    .collect::<Vec<(GameCard, GameObject)>>(),
             )
         }
 
-        let mut pairs: Vec<(GameCard, GameObject)> =
-            games.into_iter().map(|game| (game.card(), game)).collect();
+        println!("processing {} games", games.len());
 
-        for (card, game) in &mut pairs {
-            card.add_away_ratings(self.get_expected_roster(game.away_team_id(), game.game_id()));
-            card.add_home_ratings(self.get_expected_roster(game.home_team_id(), game.game_id()));
-        }
-
-        Ok(pairs)
+        Ok(games)
     }
 
     fn n_most_recent_games(&self, n: usize, team_id: TeamId, game_id: GameId) -> Vec<GameObject> {
