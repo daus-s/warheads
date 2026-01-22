@@ -1,7 +1,7 @@
 use crate::ml::vector::Vector;
 
 pub(crate) struct EloParams {
-    k: i64, //default step size
+    k: f64, //default step size
     f: f64,
     initial_rating: i64,
 }
@@ -14,7 +14,7 @@ impl EloParams {
         self.initial_rating
     }
 
-    pub(crate) fn step(&self) -> i64 {
+    pub(crate) fn step(&self) -> f64 {
         self.k
     }
 
@@ -22,13 +22,13 @@ impl EloParams {
         match v.dim() {
             2 => {
                 Self {
-                    k: v.x() as i64,
+                    k: v.x(),
                     f: v.y(),
                     initial_rating: 0, //assume 0 init for symmetry and some other lin alg properties
                 }
             }
             3 => Self {
-                k: v.x() as i64,
+                k: v.x(),
                 f: v.y(),
                 initial_rating: v.z() as i64,
             },
@@ -48,5 +48,5 @@ impl Default for EloParams {
 }
 
 pub const INITIAL_RATING: i64 = 3000;
-pub const SCALE_FACTOR: f64 = 400.0;
-pub const K: i64 = 32;
+pub const SCALE_FACTOR: f64 = 400.;
+pub const K: f64 = 32.;

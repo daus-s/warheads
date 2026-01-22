@@ -82,10 +82,11 @@ impl Model for NelderMeadEloTracker {
             );
             io::stdout().flush().unwrap();
         }
+        println!();
     }
 
     fn model_name(&self) -> String {
-        "nelder-mead elo v1".to_string()
+        "nelder-mead elo".to_string()
     }
 
     fn predict(&mut self, card: &crate::stats::gamecard::GameCard) -> f64 {
@@ -110,7 +111,7 @@ mod test_nelder_mead_elo {
 
     use super::*;
 
-    #[allow(dead_code)]
+    #[test]
     fn get_optimal_params() {
         let mut tracker = NelderMeadEloTracker::new();
 
@@ -120,6 +121,6 @@ mod test_nelder_mead_elo {
 
         tracker.train(&training_data);
 
-        assert!(tracker.performance > 0.46304378813918995 * 0.7);
+        assert!(tracker.performance > 0.9708); //baseline from 32, 400
     }
 }

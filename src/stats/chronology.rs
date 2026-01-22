@@ -98,14 +98,11 @@ impl Chronology {
                             self.get_expected_roster(card.away().team_id(), card.game_id()),
                         );
 
-                        (game.card(), game.clone())
+                        (card, game.clone())
                     })
                     .collect::<Vec<(GameCard, GameObject)>>(),
             )
         }
-
-        println!("processing {} games", games.len());
-
         Ok(games)
     }
 

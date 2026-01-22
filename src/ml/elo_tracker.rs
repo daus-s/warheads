@@ -71,6 +71,9 @@ impl EloTracker {
             // the first event other than fiftEE-fiftEE
             let prediction = self.predict(&slip);
 
+            // slip.add_away_ratings(box_score.home_roster_ids());
+            // slip.add_home_ratings(box_score.away_roster_ids());
+
             self.update_ratings(slip, box_score);
 
             predictions.push(Prediction::from(slip.clone(), prediction));
@@ -87,8 +90,9 @@ impl EloTracker {
             self.normalized_ratings_from_iter(slip.away_roster().into_iter().map(|x| *x));
 
         let delta = home_rating - away_rating;
-        let k = self.step() as f64;
+        let k = self.step();
         let f = self.scale_factor();
+        let init = self.initial_rating();
 
         //R'=R+K∙(S-E) where s is the score and e is the expected (1 for win, 0 for loss - win probability)
         let home_expected = cdf::prob(delta, f);
@@ -99,7 +103,7 @@ impl EloTracker {
         let home_step = (k * (home_score as f64 - home_expected)).round() as i64;
         let away_step = (k * (away_score as f64 - away_expected)).round() as i64;
 
-        let init = self.initial_rating();
+        assert!(home_step + away_step == 0);
 
         //no update based on what the scorecard reports (not initial gueses)
         for player in box_score.home_roster() {
@@ -132,12 +136,6 @@ impl EloTracker {
         }
 
         self.track_log_loss(box_score, delta);
-
-        // println!("======================================================================");
-        // self.current_ratings.iter().for_each(|(player, rating)| {
-        //     println!("{}: {}", player, rating);
-        // });
-        // println!("======================================================================");
     }
 
     fn track_log_loss(&mut self, game: &GameObject, delta: f64) {
@@ -273,7 +271,7 @@ impl EloTracker {
         self.params.initial_rating()
     }
 
-    fn step(&self) -> i64 {
+    fn step(&self) -> f64 {
         self.params.step()
     }
 }
@@ -341,7 +339,7 @@ mod test_elo_tracker {
     #[test]
     fn test_default_step() {
         let tracker = EloTracker::new();
-        assert_eq!(tracker.step(), 32);
+        assert_eq!(tracker.step(), 32f64);
     }
 
     #[test]
@@ -362,7 +360,7 @@ mod test_elo_tracker {
         println!("loaded training data in {}ms", start.elapsed().as_millis());
 
         let start = Instant::now();
-        tracker.process_elo(&training_data);
+        tracker.train(&training_data);
         println!("generated elo ratings in {}ms", start.elapsed().as_millis());
 
         println!(
@@ -377,5 +375,22 @@ mod test_elo_tracker {
         );
 
         assert!(tracker.evaluate() > 0.9);
+    }
+
+    #[test]
+    fn test_500_32() {
+        let mut tracker = EloTracker::params(EloParams::new(&Vector::from(vec![32.0, 500.0])));
+
+        let training_data = Chronology::new()
+            .as_training_data()
+            .expect("failed to load data when testing nelder-mead-elo algorithm");
+
+        tracker.train(&training_data);
+
+        println!("acc: {}", tracker.log_loss.freq());
+        println!("log_loss: {}", tracker.log_loss.log_loss());
+        println!("cost: {}", tracker.evaluate());
+
+        assert!(tracker.evaluate() > 0.9708); //baseline from 32, 400
     }
 }
