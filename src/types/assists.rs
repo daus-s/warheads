@@ -1,8 +1,9 @@
 use crate::stats::statify::SafetyValve;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
+use wincode::{SchemaRead, SchemaWrite};
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, SchemaWrite, SchemaRead)]
 pub struct Assists(pub Option<u8>);
 
 impl Display for Assists {

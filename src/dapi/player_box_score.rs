@@ -8,9 +8,11 @@ use crate::types::*;
 
 use serde::{Deserialize, Serialize};
 
+use wincode::{SchemaRead, SchemaWrite};
+
 use std::fmt::Formatter;
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, SchemaWrite, SchemaRead)]
 pub struct PlayerBoxScore {
     player_id: PlayerId,
     player_name: PlayerName,

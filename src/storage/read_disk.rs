@@ -46,11 +46,10 @@ fn read_directory(path: &PathBuf) -> Result<Vec<GameObject>, NBAReadError> {
     for file in files {
         match file {
             Ok(entry) => {
-                let s =
-                    fs::read_to_string(entry.path()).map_err(|e| FileReadError(e, path.clone()))?;
+                let s = fs::read(entry.path()).map_err(|e| FileReadError(e, path.clone()))?;
 
-                let game = serde_json::from_str::<GameObject>(&s)
-                    .map_err(|e| JSONParseError(e, path.clone()))?;
+                let game = wincode::deserialize::<GameObject>(&s)
+                    .map_err(|e| WincodeParseError(e, path.clone()))?;
 
                 games.push(game);
             }
@@ -67,7 +66,7 @@ fn read_directory(path: &PathBuf) -> Result<Vec<GameObject>, NBAReadError> {
 pub enum NBAReadError {
     DirectoryError(std::io::Error, PathBuf),
     FileReadError(std::io::Error, PathBuf),
-    JSONParseError(serde_json::Error, PathBuf),
+    WincodeParseError(wincode::ReadError, PathBuf),
     FileEntryError(std::io::Error, PathBuf),
 }
 
@@ -84,8 +83,12 @@ impl Display for NBAReadError {
             NBAReadError::FileReadError(e, path) => {
                 write!(f, "❗  {e}:\n{}\n❗  failed to read file", path.display())
             }
-            NBAReadError::JSONParseError(e, path) => {
-                write!(f, "❗  {e}:\n{}\n❗  failed to parse json", path.display())
+            NBAReadError::WincodeParseError(e, path) => {
+                write!(
+                    f,
+                    "❗  {e}:\n{}\n❗  failed to parse game file as wincode binary",
+                    path.display()
+                )
             }
             NBAReadError::FileEntryError(e, path) => {
                 write!(f, "❗  {e}:\n{}\n❗  failed to get entry", path.display())

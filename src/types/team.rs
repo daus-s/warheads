@@ -1,7 +1,10 @@
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
+use wincode::{SchemaRead, SchemaWrite};
+#[derive(
+    Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize, SchemaWrite, SchemaRead,
+)]
 pub struct TeamId(pub u64);
 
 #[derive(Debug, PartialEq, Eq)]
@@ -36,7 +39,9 @@ impl Display for TeamId {
 /// existence & correctness of the abbreviation.
 ///
 
-#[derive(Clone, Debug, Eq, Hash, PartialEq, Serialize, Deserialize, Default)]
+#[derive(
+    Clone, Debug, Eq, Hash, PartialEq, Serialize, Deserialize, Default, SchemaWrite, SchemaRead,
+)]
 pub struct TeamAbbreviation(pub String);
 
 #[derive(Debug, PartialEq, Eq)]
@@ -74,7 +79,7 @@ impl Display for TeamAbbreviation {
 /// `TeamName` is a validated (todo) String wrapper to represent Team Names and provide the same
 ///  existence checks as the other types in this module
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, SchemaWrite, SchemaRead)]
 pub struct TeamName(pub String);
 
 impl Display for TeamName {

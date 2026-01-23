@@ -1,4 +1,7 @@
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
+
+use wincode::{SchemaRead, SchemaWrite};
+
 use std::fmt::{Debug, Display, Formatter};
 
 /// ## GameId
@@ -17,7 +20,7 @@ use std::fmt::{Debug, Display, Formatter};
 /// ### Serialization & Deserialization
 /// `GameId` is a number represented in the NBA data by a JSON String, but we will use it as an int.
 ///
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Ord, PartialOrd, SchemaRead, SchemaWrite)]
 pub struct GameId(pub u64);
 
 impl Display for GameId {

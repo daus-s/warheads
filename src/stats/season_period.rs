@@ -5,10 +5,24 @@ use crate::types::SeasonId;
 
 use serde::{Deserialize, Serialize};
 
+use wincode::{SchemaRead, SchemaWrite};
+
 use std::fmt::{Debug, Display, Formatter};
 use std::str::FromStr;
 
-#[derive(Clone, Copy, PartialEq, PartialOrd, Serialize, Deserialize, Eq, Hash, Debug)]
+#[derive(
+    Clone,
+    Copy,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+    Deserialize,
+    Eq,
+    Hash,
+    Debug,
+    SchemaRead,
+    SchemaWrite,
+)]
 #[serde(rename_all = "PascalCase")]
 pub enum SeasonPeriod {
     PreSeason,

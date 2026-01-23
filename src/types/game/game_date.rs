@@ -1,6 +1,7 @@
 use chrono::{Datelike, Local, NaiveDate};
 
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
+use wincode::{SchemaRead, SchemaWrite};
 
 use std::fmt::{Debug, Display, Formatter};
 
@@ -109,6 +110,46 @@ impl<'de> Deserialize<'de> for GameDate {
         let date = NaiveDate::parse_from_str(&*s, "%Y-%m-%d").map_err(de::Error::custom)?;
 
         Ok(GameDate(date))
+    }
+}
+
+// Epoch: November 1, 1946
+const EPOCH: NaiveDate = NaiveDate::from_ymd_opt(1946, 11, 1).expect("valid epoch date");
+
+impl<'de> SchemaRead<'de> for GameDate {
+    type Dst = Self;
+
+    fn read(
+        reader: &mut impl wincode::io::Reader<'de>,
+        dst: &mut std::mem::MaybeUninit<Self::Dst>,
+    ) -> wincode::ReadResult<()> {
+        let mut days_buf = std::mem::MaybeUninit::<u16>::uninit();
+
+        u16::read(reader, &mut days_buf)?;
+
+        let days = unsafe { days_buf.assume_init() };
+
+        let date = EPOCH + chrono::Duration::days(days as i64);
+
+        dst.write(GameDate(date));
+        Ok(())
+    }
+}
+
+impl SchemaWrite for GameDate {
+    type Src = Self;
+
+    fn size_of(_src: &Self::Src) -> wincode::WriteResult<usize> {
+        Ok(2)
+    }
+
+    fn write(writer: &mut impl wincode::io::Writer, src: &Self::Src) -> wincode::WriteResult<()> {
+        let days = src.0.signed_duration_since(EPOCH).num_days();
+
+        // Clamp to u16 range (0-65535 days ~= 179 years)
+        let days_u16 = days.clamp(0, u16::MAX as i64) as u16;
+
+        u16::write(writer, &days_u16)
     }
 }
 

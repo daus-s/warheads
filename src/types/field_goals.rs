@@ -2,8 +2,9 @@ use crate::stats::shooting::{Attempts, Makes};
 use crate::stats::statify::SafetyValve;
 use serde::{Deserialize, Serialize, Serializer};
 use std::fmt::Display;
+use wincode::{SchemaRead, SchemaWrite};
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, SchemaWrite, SchemaRead)]
 pub struct FieldGoalAttempts(pub Option<u8>);
 
 impl Attempts for FieldGoalAttempts {
@@ -18,7 +19,7 @@ impl Display for FieldGoalAttempts {
     }
 }
 
-#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq, SchemaWrite, SchemaRead)]
 pub struct FieldGoalMakes(pub u8);
 
 impl Makes for FieldGoalMakes {

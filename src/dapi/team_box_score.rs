@@ -15,7 +15,9 @@ use crate::types::*;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+use wincode::{SchemaRead, SchemaWrite};
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, SchemaWrite, SchemaRead)]
 pub struct TeamBoxScore {
     // team identification
     pub team_id: TeamId,

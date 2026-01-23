@@ -1,9 +1,13 @@
 use crate::stats::shooting::{Attempts, Makes};
 use crate::stats::statify::SafetyValve;
+
 use serde::{Deserialize, Serialize, Serializer};
+
 use std::fmt::{Display, Formatter};
 
-#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
+use wincode::{SchemaRead, SchemaWrite};
+
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq, SchemaWrite, SchemaRead)]
 pub struct ThreePointAttempts(pub Option<u8>);
 
 impl Display for ThreePointAttempts {
@@ -18,7 +22,7 @@ impl Attempts for ThreePointAttempts {
     }
 }
 
-#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq, SchemaWrite, SchemaRead)]
 pub struct ThreePointMakes(pub Option<u8>);
 
 impl Display for ThreePointMakes {

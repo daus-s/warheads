@@ -224,6 +224,8 @@ pub enum ChronologyError {
 
 #[cfg(test)]
 mod test_chronology {
+    use std::time::Instant;
+
     use super::*;
 
     use crate::stats::season_period::SeasonPeriod::*;
@@ -371,5 +373,24 @@ mod test_chronology {
         ];
 
         assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_as_training_data() {
+        let chrono = Chronology::new();
+
+        let start = Instant::now();
+
+        assert!(
+            chrono.as_training_data().is_ok(),
+            "💀 failed to load chronology as training data"
+        );
+
+        let elapsed = start.elapsed();
+
+        println!(
+            "successfully loaded chronology as training data in time: {}ms",
+            elapsed.as_millis()
+        );
     }
 }
