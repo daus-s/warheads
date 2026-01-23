@@ -2,7 +2,9 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Copy, Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
+use wincode::{SchemaRead, SchemaWrite};
+
+#[derive(Copy, Clone, Debug, Serialize, Deserialize, Eq, PartialEq, SchemaWrite, SchemaRead)]
 pub enum Visiting {
     Home,
     Away,

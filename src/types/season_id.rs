@@ -8,6 +8,8 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 use std::fmt::{Display, Formatter};
 
+use wincode::{SchemaRead, SchemaWrite};
+
 ///
 /// season_id: SeasonId
 ///
@@ -33,7 +35,7 @@ use std::fmt::{Display, Formatter};
 ///
 /// assert_eq!(SeasonId::from((1946, RegularSeason)), s_id)
 ///```
-#[derive(Clone, Debug, Copy, PartialEq, Eq, PartialOrd, Hash)]
+#[derive(Clone, Debug, Copy, PartialEq, Eq, PartialOrd, Hash, SchemaRead, SchemaWrite)]
 pub struct SeasonId {
     year: i32,
     period: SeasonPeriod,

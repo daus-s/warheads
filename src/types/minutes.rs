@@ -1,7 +1,10 @@
 use serde::{Deserialize, Serialize};
+
 use std::fmt::{Display, Formatter};
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+use wincode::{SchemaRead, SchemaWrite};
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, SchemaWrite, SchemaRead)]
 pub struct Minutes(pub u8);
 
 impl Display for Minutes {

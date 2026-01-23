@@ -10,8 +10,9 @@ use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fmt::{Display, Formatter};
+use wincode::{SchemaRead, SchemaWrite};
 
-#[derive(Clone, Debug, Serialize, Deserialize, Builder, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, Builder, PartialEq, Eq, SchemaWrite, SchemaRead)]
 pub struct BoxScore {
     wl: GameResult,
 

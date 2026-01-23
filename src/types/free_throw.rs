@@ -1,9 +1,14 @@
 use crate::stats::shooting::{Attempts, Makes};
+
 use crate::stats::statify::SafetyValve;
+
 use serde::{Deserialize, Serialize, Serializer};
+
 use std::fmt::{Display, Formatter};
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+use wincode::{SchemaRead, SchemaWrite};
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, SchemaWrite, SchemaRead)]
 pub struct FreeThrowAttempts(pub Option<u8>);
 
 impl Display for FreeThrowAttempts {
@@ -18,7 +23,7 @@ impl Attempts for FreeThrowAttempts {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, SchemaWrite, SchemaRead)]
 pub struct FreeThrowMakes(pub u8);
 
 impl Display for FreeThrowMakes {
