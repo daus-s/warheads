@@ -37,8 +37,8 @@ impl Model for NelderMeadEloTracker {
     fn train(&mut self, games: &[(GameCard, GameObject)]) {
         let mut simplex = Simplex::from(&vec![
             Vector::from(vec![32., 400.]),
-            Vector::from(vec![24., 400.]),
-            Vector::from(vec![32., 500.]),
+            Vector::from(vec![31., 400.]),
+            Vector::from(vec![32., 410.]),
         ]);
 
         let mut cost = |v: &Vector| -> f64 {
@@ -50,7 +50,7 @@ impl Model for NelderMeadEloTracker {
                 return cached;
             }
 
-            let mut tracker = EloTracker::params(EloParams::new(v));
+            let mut tracker = EloTracker::with(dbg!(EloParams::new(v)));
             tracker.train(games);
 
             let result = tracker.evaluate();
@@ -64,23 +64,25 @@ impl Model for NelderMeadEloTracker {
             //minimum improvement of 5%
             nelder_mead(&mut cost, &mut simplex);
 
-            for params in simplex.iter() {
-                let new_performance = cost(params);
+            for argv in simplex.iter() {
+                let params = EloParams::new(argv);
+
+                let new_performance = cost(argv);
 
                 if new_performance > self.performance {
                     self.performance = new_performance;
-                    self.params = params.clone();
-                    self.model = Some(EloTracker::params(EloParams::new(params)));
+                    self.model = Some(EloTracker::with(params));
                 }
+                print!(
+                    "\rScore: {:.4} | Optimum: {:.4} | Baseline: {:.4} | step: {:.4} | scale: {:.4}",
+                    new_performance,
+                    self.performance,
+                    baseline,
+                    self.params.x(),
+                    self.params.y()
+                );
+                io::stdout().flush().unwrap();
             }
-            print!(
-                "\rScore: {:.4} | Baseline: {:.4} | step: {:.4} | scale: {:.4}",
-                self.performance,
-                baseline,
-                self.params.x(),
-                self.params.y()
-            );
-            io::stdout().flush().unwrap();
         }
         println!();
     }

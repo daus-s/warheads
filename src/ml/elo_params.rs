@@ -1,10 +1,12 @@
 use crate::ml::vector::Vector;
 
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub(crate) struct EloParams {
     k: f64, //default step size
     f: f64,
     initial_rating: i64,
 }
+
 impl EloParams {
     pub(crate) fn scale_factor(&self) -> f64 {
         self.f
@@ -21,6 +23,7 @@ impl EloParams {
     pub(crate) fn new(v: &Vector) -> Self {
         match v.dim() {
             2 => {
+                assert!(v.x() > 0.0 && v.y() > 0.0 && v.x() < v.y());
                 Self {
                     k: v.x(),
                     f: v.y(),

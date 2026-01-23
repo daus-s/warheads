@@ -17,6 +17,7 @@ pub struct GameRatings {
     game_card: GameCard,
     home_ratings: HashMap<PlayerId, (PlayerName, i64)>,
     away_ratings: HashMap<PlayerId, (PlayerName, i64)>,
+    scale_factor: f64,
 }
 
 impl GameRatings {
@@ -24,6 +25,7 @@ impl GameRatings {
         gamecard: &GameCard,
         chronology: &Chronology,
         ratings: &HashMap<PlayerId, i64>,
+        scale_factor: f64,
     ) -> Self {
         let home_expected_roster =
             chronology.get_expected_roster(gamecard.home().team_id(), gamecard.game_id());
@@ -58,10 +60,15 @@ impl GameRatings {
                     )
                 })
                 .collect(),
+            scale_factor,
         }
     }
 
-    pub fn from_games_ratings(game: &GameObject, ratings: &HashMap<PlayerId, i64>) -> Self {
+    pub fn from_games_ratings(
+        game: &GameObject,
+        ratings: &HashMap<PlayerId, i64>,
+        scale_factor: f64,
+    ) -> Self {
         let home_roster = game.home_roster();
 
         let home_ratings = home_roster
@@ -96,6 +103,7 @@ impl GameRatings {
             home_ratings,
             away_ratings,
             game_card: game.card(),
+            scale_factor,
         }
     }
 
@@ -204,7 +212,7 @@ impl TuiDisplay for GameRatings {
             .sum::<i64>() as f64
             / self.away_ratings.len() as f64;
 
-        let p_home = cdf::prob(home_avg - away_avg, 400.0);
+        let p_home = cdf::prob(home_avg - away_avg, self.scale_factor);
         let p_away = 1f64 - p_home;
 
         let home_prob_string = format!("({:.1}%)", p_home * 100.0);

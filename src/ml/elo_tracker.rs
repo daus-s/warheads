@@ -50,7 +50,8 @@ impl EloTracker {
         }
     }
 
-    pub(crate) fn params(params: EloParams) -> Self {
+    /// optionally, provide the parameters with which to train the elo tracker with.
+    pub(crate) fn with(params: EloParams) -> Self {
         Self {
             historical_ratings: Vec::new(),
             current_ratings: HashMap::new(),
@@ -139,11 +140,12 @@ impl EloTracker {
     }
 
     fn track_log_loss(&mut self, game: &GameObject, delta: f64) {
+        let scale_factor = self.scale_factor();
         let p = cdf::prob(delta, self.scale_factor());
         if p == 1f64 {
-            println!(
-                "{}",
-                GameRatings::from_games_ratings(game, &self.current_ratings)
+            print!(
+                "\n{}",
+                GameRatings::from_games_ratings(game, &self.current_ratings, scale_factor)
             );
         }
         let a = if game.winner() == game.home_team_id() {
@@ -229,7 +231,14 @@ impl EloTracker {
                 .load_era(game.season())
                 .expect(&format!("💀 failed to load season_era: {}", game.season()));
 
-            let game_ratings = GameRatings::new(&game, &mut chronology, &mut self.current_ratings);
+            let scale_factor = self.scale_factor();
+
+            let game_ratings = GameRatings::new(
+                &game,
+                &mut chronology,
+                &mut self.current_ratings,
+                scale_factor,
+            );
 
             println!("{}", game_ratings.display());
 
@@ -350,7 +359,7 @@ mod test_elo_tracker {
 
     #[test]
     fn test_process_elo() {
-        let mut tracker = EloTracker::params(EloParams::new(&Vector::from(vec![32.0, 400.0])));
+        let mut tracker = EloTracker::with(EloParams::new(&Vector::from(vec![32.0, 400.0])));
         let chronology = Chronology::new();
 
         let start = Instant::now();
@@ -379,7 +388,7 @@ mod test_elo_tracker {
 
     #[test]
     fn test_500_32() {
-        let mut tracker = EloTracker::params(EloParams::new(&Vector::from(vec![32.0, 500.0])));
+        let mut tracker = EloTracker::with(EloParams::new(&Vector::from(vec![32.0, 500.0])));
 
         let training_data = Chronology::new()
             .as_training_data()
