@@ -6,12 +6,12 @@ use std::fmt::Display;
 use std::fs;
 use thiserror::Error;
 
-use SaveGameError::{CreateDirectoryError, FileWriteError, SerializeJSONError};
+use SaveGameError::{CreateDirectoryError, FileWriteError, WincodeSerializationError};
 
 pub fn save_nba_game(roster: &GameObject) -> Result<(), SaveGameError> {
     let season = roster.season();
 
-    let contents = serde_json::to_string_pretty(&roster).map_err(|e| SerializeJSONError(e))?;
+    let contents = wincode::serialize(&roster).map_err(|e| WincodeSerializationError(e))?;
 
     let path = nba_storage_path(season);
 
@@ -28,7 +28,7 @@ pub fn save_nba_game(roster: &GameObject) -> Result<(), SaveGameError> {
 
 #[derive(Debug, Error)]
 pub enum SaveGameError {
-    SerializeJSONError(serde_json::Error),
+    WincodeSerializationError(wincode::WriteError),
     CreateDirectoryError(std::io::Error),
     FileWriteError(std::io::Error),
 }
@@ -36,8 +36,8 @@ pub enum SaveGameError {
 impl Display for SaveGameError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            SaveGameError::SerializeJSONError(e) => {
-                write!(f, "{}\n❌ failed to convert TeamBoxScore to JSON", e)
+            SaveGameError::WincodeSerializationError(e) => {
+                write!(f, "{}\n❌ failed to serialize TeamBoxScore as binary", e)
             }
             SaveGameError::CreateDirectoryError(e) => {
                 write!(f, "{}\n❌ failed to create directory", e)

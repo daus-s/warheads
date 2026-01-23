@@ -1,13 +1,17 @@
 use crate::stats::serde_enum::SerdeEnum;
+
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{json, Value};
+
 use std::fmt::{Debug, Display, Formatter};
 use std::str::FromStr;
+
+use wincode::{SchemaRead, SchemaWrite};
 
 /// `GameResult` is an enum that represents the result of a game a Win, Loss or a Draw (NFL only.)
 /// implements SerdeEnum as well as functions for `to_str` and `from_str`
 ///
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, SchemaWrite, SchemaRead)]
 pub enum GameResult {
     Win,
     Loss,

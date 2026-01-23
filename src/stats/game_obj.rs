@@ -21,7 +21,9 @@ use serde::{Deserialize, Serialize};
 
 use serde_json::Value::Null;
 
-#[derive(Serialize, Deserialize, PartialEq, Eq, Clone)]
+use wincode::{SchemaRead, SchemaWrite};
+
+#[derive(SchemaWrite, SchemaRead, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct GameObject {
     pub season_id: SeasonId,
 
