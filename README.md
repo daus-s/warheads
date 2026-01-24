@@ -6,7 +6,7 @@ warheads is a NBA prediction engine built off of the Elo algorithm and other mac
 
 ## Highlights
 - **62% accuracy and a log loss of 0.640**
-- **nelder mead optimization of `k` and `s` parameters**
+- **nelder mead optimization of `k` and `f` parameters**
 
 ## Usage
 this section will go over how to run the program and generate predictions for the next several days. 

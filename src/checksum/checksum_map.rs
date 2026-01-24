@@ -44,17 +44,17 @@ impl ChecksumMap {
         let mut errors = Vec::new();
 
         for path in self.map.keys() {
-            if let Some(self_checksum) = self.map.get(path) {
-                if let Some(other_checksum) = other.map.get(path) {
-                    if self_checksum != other_checksum {
-                        errors.push(path.clone());
-                    }
-                } else {
+            let self_checksum = self.map.get(path).expect(&format!(
+                "💀 ChecksumMap::verify_checksums: known key '{}' could not be found.",
+                path.display()
+            ));
+
+            if let Some(other_checksum) = other.map.get(path) {
+                if self_checksum != other_checksum {
                     errors.push(path.clone());
                 }
             } else {
-                //if its in keys and its not in self then how can it possibly exist ?
-                panic!("💀 ChecksumMap::verify_checksums: domain not found in self");
+                errors.push(path.clone());
             }
         }
 
@@ -94,8 +94,8 @@ impl ChecksumMap {
 
 #[derive(Error, Debug)]
 pub enum ChecksumMapError {
-    #[error("❌ failed to create or read checksum file. ")]
+    #[error("❌ {0}\n❌ ❌ failed to create or read checksum file. ")]
     ChecksumFileError(io::Error),
-    #[error("❌ failed to serialize checksums with serde_json formatter. ")]
+    #[error("❌ {0}\n❌ failed to serialize checksums with serde_json formatter. ")]
     ChecksumSerializerError(serde_json::Error),
 }

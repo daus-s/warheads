@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::f64::INFINITY;
 use std::io::{self, Write};
 
 use crate::ml::elo_params::EloParams;
@@ -16,9 +17,8 @@ use crate::stats::gamecard::GameCard;
 pub struct NelderMeadEloTracker {
     mapping: HashMap<u128, f64>,
     is_trained: bool,
-    params: Vector,
-    performance: f64,
-    model: Option<EloTracker>,
+    params: EloParams,
+    cost: f64,
 }
 
 impl NelderMeadEloTracker {
@@ -26,9 +26,9 @@ impl NelderMeadEloTracker {
         Self {
             mapping: HashMap::new(),
             is_trained: false,
-            params: Vector::from(vec![32., 400.]),
-            performance: 0.0,
-            model: None,
+            params: EloParams::try_from(&Vector::from(vec![32., 400.]))
+                .expect("💀 failed to construct elo parameters from default vector"),
+            cost: INFINITY,
         }
     }
 }
@@ -50,36 +50,47 @@ impl Model for NelderMeadEloTracker {
                 return cached;
             }
 
-            let mut tracker = EloTracker::with(dbg!(EloParams::new(v)));
-            tracker.train(games);
+            let performance = if let Ok(params) = EloParams::try_from(v) {
+                let mut tracker = EloTracker::with(params);
+                tracker.train(games);
 
-            let result = tracker.evaluate();
-            self.mapping.insert(hash, result);
-            result
+                let result = tracker.evaluate();
+                self.mapping.insert(hash, result);
+                result
+            } else {
+                self.mapping.insert(hash, INFINITY);
+
+                INFINITY
+            };
+
+            performance
         };
 
         let baseline = cost(&Vector::from(vec![32., 400.]));
 
-        while self.performance < baseline * 1.05 {
+        //todo!()
+        while self.cost > baseline * 0.95 {
             //minimum improvement of 5%
             nelder_mead(&mut cost, &mut simplex);
 
             for argv in simplex.iter() {
-                let params = EloParams::new(argv);
-
                 let new_performance = cost(argv);
 
-                if new_performance > self.performance {
-                    self.performance = new_performance;
-                    self.model = Some(EloTracker::with(params));
+                if new_performance > self.cost {
+                    self.cost = new_performance;
+                    self.params =
+                        EloParams::try_from(argv).expect("💀 optimal parameters must be valid. ")
                 }
+
                 print!(
-                    "\rScore: {:.4} | Optimum: {:.4} | Baseline: {:.4} | step: {:.4} | scale: {:.4}",
+                    "\rScore: {:.4} ({}, {}) | Optimum: {:.4} ({}, {})| Baseline: {:.4} (32, 400)",
                     new_performance,
-                    self.performance,
+                    argv.x(),
+                    argv.y(),
+                    self.cost,
+                    self.params.step(),
+                    self.params.scale_factor(),
                     baseline,
-                    self.params.x(),
-                    self.params.y()
                 );
                 io::stdout().flush().unwrap();
             }
@@ -91,11 +102,11 @@ impl Model for NelderMeadEloTracker {
         "nelder-mead elo".to_string()
     }
 
-    fn predict(&mut self, card: &crate::stats::gamecard::GameCard) -> f64 {
+    fn predict(&mut self, _card: &crate::stats::gamecard::GameCard) -> f64 {
         if !self.is_trained {
             panic!("💀 model not trained");
         }
-        self.model.as_mut().unwrap().predict(card)
+        todo!()
     }
 
     fn evaluate(&self) -> f64 {
@@ -103,7 +114,7 @@ impl Model for NelderMeadEloTracker {
             panic!("💀 model not trained");
         }
 
-        self.performance
+        self.cost
     }
 }
 
@@ -114,7 +125,7 @@ mod test_nelder_mead_elo {
     use super::*;
 
     #[test]
-    fn get_optimal_params() {
+    fn nelder_mead_optimization() {
         let mut tracker = NelderMeadEloTracker::new();
 
         let training_data = Chronology::new()
@@ -123,6 +134,6 @@ mod test_nelder_mead_elo {
 
         tracker.train(&training_data);
 
-        assert!(tracker.performance > 0.9708); //baseline from 32, 400
+        assert!(tracker.cost > 0.9708); //baseline from 32, 400
     }
 }

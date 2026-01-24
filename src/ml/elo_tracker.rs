@@ -359,7 +359,8 @@ mod test_elo_tracker {
 
     #[test]
     fn test_process_elo() {
-        let mut tracker = EloTracker::with(EloParams::new(&Vector::from(vec![32.0, 400.0])));
+        let mut tracker =
+            EloTracker::with(EloParams::try_from(&Vector::from(vec![32.0, 400.0])).expect(""));
         let chronology = Chronology::new();
 
         let start = Instant::now();
@@ -387,9 +388,9 @@ mod test_elo_tracker {
     }
 
     #[test]
-    fn test_500_32() {
-        let mut tracker = EloTracker::with(EloParams::new(&Vector::from(vec![32.0, 500.0])));
-
+    fn test_32_500() {
+        let mut tracker =
+            EloTracker::with(EloParams::try_from(&Vector::from(vec![32.0, 400.0])).expect(""));
         let training_data = Chronology::new()
             .as_training_data()
             .expect("failed to load data when testing nelder-mead-elo algorithm");
