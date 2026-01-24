@@ -382,7 +382,7 @@ mod test_chronology {
     }
 
     #[test]
-    fn test_as_training_data() {
+    fn load_training_data() {
         let chrono = Chronology::new();
 
         let start = Instant::now();

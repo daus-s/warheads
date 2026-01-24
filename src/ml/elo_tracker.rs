@@ -44,7 +44,7 @@ impl EloTracker {
         Self {
             historical_ratings: Vec::new(),
             current_ratings: HashMap::new(),
-            log_loss: LogLossTracker::model(ELO_VERSION.to_owned()),
+            log_loss: LogLossTracker::model(ELO_VERSION),
             predictions: vec![],
             params: EloParams::default(),
         }
@@ -55,7 +55,7 @@ impl EloTracker {
         Self {
             historical_ratings: Vec::new(),
             current_ratings: HashMap::new(),
-            log_loss: LogLossTracker::model(ELO_VERSION.to_owned()),
+            log_loss: LogLossTracker::model(ELO_VERSION),
             predictions: vec![],
             params,
         }

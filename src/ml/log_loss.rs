@@ -42,9 +42,9 @@ impl LogLossTracker {
         }
     }
 
-    pub fn model(model_name: String) -> Self {
+    pub fn model(model_name: &str) -> Self {
         LogLossTracker {
-            model_name,
+            model_name: model_name.to_owned(),
             measurements: Vec::new(),
         }
     }
@@ -99,7 +99,7 @@ mod serialize_log_loss {
 
     #[test]
     fn test_serialize_log_loss() {
-        let mut tracker = LogLossTracker::model("test_model".to_string());
+        let mut tracker = LogLossTracker::model("test_model");
         tracker.add_measurement(Measurement::new(1, 0.5));
         tracker.add_measurement(Measurement::new(0, 0.5));
 
