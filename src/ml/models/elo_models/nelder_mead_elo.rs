@@ -33,6 +33,42 @@ impl NelderMeadEloTracker {
     }
 }
 
+fn delta(x1: &Simplex, x2: &Simplex) -> (Vector, Vector) {
+    let mut delta = Vector::origin(2);
+    let mut changed = Vector::origin(2);
+
+    for v1 in x1.vertices() {
+        let mut found = false;
+        for v2 in x2.vertices() {
+            if v1 == v2 {
+                found = true;
+                break;
+            }
+        }
+
+        if !found {
+            changed = v1.clone();
+            delta -= v1;
+        }
+    }
+
+    for v2 in x2.vertices() {
+        let mut found = false;
+        for v1 in x1.vertices() {
+            if v1 == v2 {
+                found = true;
+                break;
+            }
+        }
+
+        if !found {
+            delta += v2;
+        }
+    }
+
+    (changed, delta)
+}
+
 impl Model for NelderMeadEloTracker {
     fn train(&mut self, games: &[(GameCard, GameObject)]) {
         let mut simplex = Simplex::from(&vec![
@@ -54,7 +90,7 @@ impl Model for NelderMeadEloTracker {
                 let mut tracker = EloTracker::with(params);
                 tracker.train(games);
 
-                let result = tracker.evaluate();
+                let result = 1. / tracker.evaluate();
                 self.mapping.insert(hash, result);
                 result
             } else {
@@ -68,23 +104,28 @@ impl Model for NelderMeadEloTracker {
 
         let baseline = cost(&Vector::from(vec![32., 400.]));
 
-        //todo!()
+        //todo: implement
+        // if the changes in the point are less than 0.001x of the original, so 0.1%, stop optimizing as (k, f) is likely a good candidate
+        //
+        //
+        //
+        let mut prev = simplex.clone();
+
         while self.cost > baseline * 0.95 {
-            //minimum improvement of 5%
             nelder_mead(&mut cost, &mut simplex);
 
-            for argv in simplex.iter() {
-                let new_performance = cost(argv);
+            for argv in simplex.vertices() {
+                let new_cost = cost(argv);
 
-                if new_performance > self.cost {
-                    self.cost = new_performance;
+                if new_cost < self.cost {
+                    self.cost = new_cost;
                     self.params =
                         EloParams::try_from(argv).expect("💀 optimal parameters must be valid. ")
                 }
 
                 print!(
                     "\rScore: {:.4} ({}, {}) | Optimum: {:.4} ({}, {})| Baseline: {:.4} (32, 400)",
-                    new_performance,
+                    new_cost,
                     argv.x(),
                     argv.y(),
                     self.cost,
@@ -94,8 +135,13 @@ impl Model for NelderMeadEloTracker {
                 );
                 io::stdout().flush().unwrap();
             }
+
+            let (v, d) = delta(&prev, &simplex);
+            if d.norm() < 0.001 * v.norm() {
+                break;
+            }
+            prev = simplex.clone();
         }
-        println!();
     }
 
     fn model_name(&self) -> String {

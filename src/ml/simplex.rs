@@ -13,7 +13,7 @@ pub struct Simplex {
 
 impl Simplex {
     pub fn new(n: usize) -> Self {
-        let vertices = Self::default(n);
+        let vertices = Self::identity(n);
 
         Simplex { vertices }
     }
@@ -40,7 +40,7 @@ impl Simplex {
         Simplex { vertices }
     }
 
-    fn default(n: usize) -> Vec<Vector> {
+    fn identity(n: usize) -> Vec<Vector> {
         let mut simplex = Vec::with_capacity(n + 1);
 
         simplex.push(Vector::from(vec![0.0; n]));
@@ -58,11 +58,11 @@ impl Simplex {
     }
 
     //replace iterator trait with iter method
-    pub fn iter(&self) -> impl Iterator<Item = &Vector> {
+    pub fn vertices(&self) -> impl Iterator<Item = &Vector> {
         self.vertices.iter()
     }
 
-    fn vertices(&self) -> usize {
+    fn size(&self) -> usize {
         self.vertices.len()
     }
 
@@ -72,7 +72,7 @@ impl Simplex {
         let mut second_worst = best.clone();
         let mut worst = best.clone();
 
-        for i in 1..self.vertices() {
+        for i in 1..self.size() {
             let x = self.n(i);
             let cost_x = cost(x);
 
