@@ -27,6 +27,7 @@ use crate::tui::tui_display::TuiDisplay;
 use crate::types::PlayerId;
 
 use std::collections::HashMap;
+use std::f64::INFINITY;
 use std::io;
 
 const ELO_VERSION: &str = "elo v1";
@@ -141,13 +142,16 @@ impl EloTracker {
 
     fn track_log_loss(&mut self, game: &GameObject, delta: f64) {
         let scale_factor = self.scale_factor();
-        let p = cdf::prob(delta, self.scale_factor());
+
+        let p = cdf::prob(delta, scale_factor);
+
         if p == 1f64 {
             print!(
                 "\n{}",
                 GameRatings::from_games_ratings(game, &self.current_ratings, scale_factor)
             );
         }
+
         let a = if game.winner() == game.home_team_id() {
             1
         } else if game.winner() == game.away_team_id() {
@@ -282,6 +286,22 @@ impl EloTracker {
 
     fn step(&self) -> f64 {
         self.params.step()
+    }
+
+    pub fn freq(&self) -> f64 {
+        if self.log_loss.is_empty() {
+            0.0
+        } else {
+            self.log_loss.freq()
+        }
+    }
+
+    pub fn log_loss(&self) -> f64 {
+        if self.log_loss.is_empty() {
+            INFINITY
+        } else {
+            self.log_loss.log_loss()
+        }
     }
 }
 
