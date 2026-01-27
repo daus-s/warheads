@@ -1,13 +1,9 @@
 pub mod cdf;
 pub mod cost;
 pub mod elo;
-mod elo_params;
-pub mod elo_tracker;
-mod elo_writer;
 pub mod log_loss;
 pub mod measurement;
 pub mod model;
-pub mod models;
 pub mod nelder_mead;
 mod simplex;
 mod tests;

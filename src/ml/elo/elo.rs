@@ -63,7 +63,7 @@ fn deserialize_rating_from_csv<'de, D: Deserializer<'de>>(
 #[cfg(test)]
 mod test_serde_elo {
     use crate::{
-        ml::elo::Elo,
+        ml::elo::elo::Elo,
         types::{GameId, PlayerId},
     };
 

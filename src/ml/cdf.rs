@@ -13,7 +13,8 @@ pub(crate) fn prob(diff: f64, scale_factor: f64) -> f64 {
 
 #[cfg(test)]
 mod test_cdf {
-    use crate::ml::elo_params;
+
+    use crate::ml::elo::elo_params;
 
     use super::*;
 

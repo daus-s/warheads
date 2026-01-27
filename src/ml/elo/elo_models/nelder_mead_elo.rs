@@ -3,8 +3,8 @@ use std::f64::INFINITY;
 use std::fs::File;
 use std::io::{self, Write};
 
-use crate::ml::elo_params::EloParams;
-use crate::ml::elo_tracker::EloTracker;
+use crate::ml::elo::elo_params::EloParams;
+use crate::ml::elo::elo_tracker::EloTracker;
 use crate::ml::model::Model;
 use crate::ml::nelder_mead::nelder_mead;
 use crate::ml::simplex::Simplex;
@@ -32,7 +32,8 @@ impl HashKey {
         Self((vec.x().to_bits() as u128) << 64 | vec.y().to_bits() as u128)
     }
 
-    pub fn from_hash(&self) -> Vector {
+    #[allow(dead_code)]
+    pub fn to_vec(&self) -> Vector {
         let x = f64::from_ne_bytes(((self.0 >> 64) as u64).to_ne_bytes());
         let y = f64::from_ne_bytes(((self.0 & 0xFFFFFFFFFFFFFFFF) as u64).to_ne_bytes());
         Vector::from(vec![x, y])
@@ -73,10 +74,20 @@ impl NelderMeadEloTracker {
 
     //save results
     pub fn serialize(&self) -> Result<(), io::Error> {
-        let mut file = File::create(format!("nelder_mead_elo_results.csv"))?;
+        let mut mesh = File::create(format!("nelder_mead_elo_results.csv"))?;
+
+        writeln!(mesh, "step,scale_factor,freq,log_loss")?;
 
         for (hash, result) in &self.mapping {
-            writeln!(file, "{:?},{:?},{:?}", hash, result.freq, result.log_loss)?;
+            let v = hash.to_vec();
+            writeln!(
+                mesh,
+                "{},{},{:.6},{:.6}",
+                v.x(),
+                v.y(),
+                result.freq,
+                result.log_loss
+            )?;
         }
 
         todo!();
@@ -243,8 +254,19 @@ mod test_nme_helpers {
 
         let hash = HashKey::from_vec(&expected_vec);
 
-        let actual_vec = hash.from_hash();
+        let actual_vec = hash.to_vec();
 
         assert_eq!(expected_vec, actual_vec);
+    }
+
+    #[test]
+    fn test_vec_from_hash() {
+        let expected_hash = HashKey::from_vec(&Vector::from(vec![1.0, 2.0]));
+
+        let vec = expected_hash.to_vec();
+
+        let actual_hash = HashKey::from_vec(&vec);
+
+        assert_eq!(expected_hash, actual_hash);
     }
 }

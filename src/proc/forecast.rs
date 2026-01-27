@@ -1,7 +1,7 @@
 use crate::dapi::timeline_manager::get_next_n_dates;
 
 use crate::format::parse::parse_gamecards;
-use crate::ml::elo_tracker::EloTracker;
+use crate::ml::elo::elo_tracker::EloTracker;
 
 use crate::proc::prophet::write_predictions;
 use crate::proc::query::get_gamecard_json;

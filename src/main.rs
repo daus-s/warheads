@@ -1,6 +1,6 @@
-use warheads::ml::elo_tracker::EloTracker;
+use warheads::ml::elo::elo_models::nelder_mead_elo::NelderMeadEloTracker;
+use warheads::ml::elo::elo_tracker::EloTracker;
 use warheads::ml::model::Model;
-use warheads::ml::models::elo_models::nelder_mead_elo::NelderMeadEloTracker;
 use warheads::proc::forecast::forecast_nba;
 use warheads::proc::historian::{chronicle_nba, observe_nba, rate_nba};
 use warheads::stats::chronology::Chronology;
@@ -24,6 +24,8 @@ async fn main() {
     // forecast_nba(&mut elo).await;
     //
     //
+    //
+    //todo: implement dispatch for models here
     let chrono = Chronology::new();
 
     let mut nm_elo = NelderMeadEloTracker::new();
@@ -33,4 +35,8 @@ async fn main() {
         .expect("failed to convert chronology object to training data");
 
     nm_elo.train(&training_data);
+
+    nm_elo
+        .serialize()
+        .expect("failed to serialize nelder mead elo tracker");
 }

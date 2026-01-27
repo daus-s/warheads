@@ -6,7 +6,7 @@ use crate::dapi::season_manager::{get_current_era, nba_lifespan_period};
 
 use crate::format::path_manager::nba_checksum_file;
 
-use crate::ml::elo_tracker::EloTracker;
+use crate::ml::elo::elo_tracker::EloTracker;
 use crate::ml::model::Model;
 
 use crate::proc::gather::fetch_and_save_nba_stats;

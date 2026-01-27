@@ -6,7 +6,7 @@ use std::path::Path;
 
 use csv::Writer;
 
-use crate::ml::elo::Elo;
+use crate::ml::elo::elo::Elo;
 
 pub struct EloWriter {
     file: Writer<File>,
