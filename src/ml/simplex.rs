@@ -125,6 +125,45 @@ impl Simplex {
     }
 }
 
+/// find the original point that is changed in the simplex and return the vector that
+/// is applied to the other vector.
+/// todo: proof
+pub(crate) fn delta(x1: &Simplex, x2: &Simplex) -> (Vector, Vector) {
+    let mut delta = Vector::origin(2);
+    let mut changed = Vector::origin(2);
+
+    for v1 in x1.vertices() {
+        let mut found = false;
+        for v2 in x2.vertices() {
+            if v1 == v2 {
+                found = true;
+                break;
+            }
+        }
+
+        if !found {
+            changed = v1.clone();
+            delta -= v1;
+        }
+    }
+
+    for v2 in x2.vertices() {
+        let mut found = false;
+        for v1 in x1.vertices() {
+            if v1 == v2 {
+                found = true;
+                break;
+            }
+        }
+
+        if !found {
+            delta += v2;
+        }
+    }
+
+    (changed, delta)
+}
+
 impl Index<usize> for Simplex {
     type Output = Vector;
 

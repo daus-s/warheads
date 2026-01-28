@@ -1,13 +1,14 @@
 use std::collections::HashMap;
 use std::f64::INFINITY;
-use std::fs::File;
+use std::fs::{create_dir_all, File};
 use std::io::{self, Write};
 
+use crate::format::path_manager;
 use crate::ml::elo::elo_params::EloParams;
 use crate::ml::elo::elo_tracker::EloTracker;
 use crate::ml::model::Model;
 use crate::ml::nelder_mead::nelder_mead;
-use crate::ml::simplex::Simplex;
+use crate::ml::simplex::{self, Simplex};
 use crate::ml::vector::Vector;
 
 use crate::stats::game_obj::GameObject;
@@ -17,6 +18,7 @@ use crate::stats::gamecard::GameCard;
 /// the algorithm also uses a initial rating of 0 for symmetry.
 pub struct NelderMeadEloTracker {
     mapping: HashMap<HashKey, Results>,
+    mesh: Vec<(Vector, Results)>,
     is_trained: bool,
     params: EloParams,
     cost: f64,
@@ -65,6 +67,7 @@ impl NelderMeadEloTracker {
     pub fn new() -> Self {
         Self {
             mapping: HashMap::new(),
+            mesh: vec![],
             is_trained: false,
             params: EloParams::try_from(&Vector::from(vec![32., 400.]))
                 .expect("💀 failed to construct elo parameters from default vector"),
@@ -74,14 +77,20 @@ impl NelderMeadEloTracker {
 
     //save results
     pub fn serialize(&self) -> Result<(), io::Error> {
-        let mut mesh = File::create(format!("nelder_mead_elo_results.csv"))?;
+        let dir = path_manager::model_directory(self);
 
-        writeln!(mesh, "step,scale_factor,freq,log_loss")?;
+        create_dir_all(&dir)?;
+
+        let iterations = dir.join("iterations.csv");
+
+        let mut iter_file = File::create(&iterations)?;
+
+        writeln!(iter_file, "step,scale_factor,freq,log_loss")?;
 
         for (hash, result) in &self.mapping {
             let v = hash.to_vec();
             writeln!(
-                mesh,
+                iter_file,
                 "{},{},{:.6},{:.6}",
                 v.x(),
                 v.y(),
@@ -90,48 +99,68 @@ impl NelderMeadEloTracker {
             )?;
         }
 
-        todo!();
+        let mesh = dir.join("mesh.csv");
+        let mut mesh_file = File::create(&mesh)?;
+
+        writeln!(iter_file, "step,scale_factor,freq,log_loss")?;
+
+        for (hash, result) in &self.mapping {
+            let v = hash.to_vec();
+            writeln!(
+                mesh_file,
+                "{},{},{:.6},{:.6}",
+                v.x(),
+                v.y(),
+                result.freq,
+                result.log_loss
+            )?;
+        }
+
+        writeln!(mesh_file, "step,scale_factor,freq,log_loss")?;
+
+        for (v, result) in &self.mesh {
+            writeln!(
+                mesh_file,
+                "{},{},{:.6},{:.6}",
+                v.x(),
+                v.y(),
+                result.freq,
+                result.log_loss
+            )?;
+        }
+
+        Ok(())
     }
-}
 
-fn delta(x1: &Simplex, x2: &Simplex) -> (Vector, Vector) {
-    let mut delta = Vector::origin(2);
-    let mut changed = Vector::origin(2);
+    fn compute_mesh(&mut self, games: &[(GameCard, GameObject)]) {
+        let mut mesh = Vec::new();
 
-    for v1 in x1.vertices() {
-        let mut found = false;
-        for v2 in x2.vertices() {
-            if v1 == v2 {
-                found = true;
-                break;
+        for k in 10..=100 {
+            for f in (100..=1000).step_by(10) {
+                if f < 10 * k || f > 100 * k {
+                    continue;
+                }
+                let v = Vector::from(vec![k as f64, f as f64]);
+
+                //if this has errors it is pure skill issues coding
+                let mut tracker = EloTracker::with(EloParams::try_from(&v).expect(
+                    "💀 invalid mesh parameters. expected a solution to the inequality 0 < k, f < 0, 10k <  f <= 100k",
+                ));
+                tracker.train(games);
+
+                let result = Results::new(tracker.freq(), tracker.log_loss());
+                mesh.push((v, result));
             }
         }
 
-        if !found {
-            changed = v1.clone();
-            delta -= v1;
-        }
+        self.mesh = mesh;
     }
-
-    for v2 in x2.vertices() {
-        let mut found = false;
-        for v1 in x1.vertices() {
-            if v1 == v2 {
-                found = true;
-                break;
-            }
-        }
-
-        if !found {
-            delta += v2;
-        }
-    }
-
-    (changed, delta)
 }
 
 impl Model for NelderMeadEloTracker {
     fn train(&mut self, games: &[(GameCard, GameObject)]) {
+        self.compute_mesh(games);
+
         let mut simplex = Simplex::from(&vec![
             Vector::from(vec![32., 400.]),
             Vector::from(vec![31., 400.]),
@@ -196,7 +225,7 @@ impl Model for NelderMeadEloTracker {
                 io::stdout().flush().unwrap();
             }
 
-            let (v, d) = delta(&prev, &simplex);
+            let (v, d) = simplex::delta(&prev, &simplex);
             if d.norm() < 0.001 * v.norm() {
                 break;
             }

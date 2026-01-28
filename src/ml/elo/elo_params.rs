@@ -31,7 +31,7 @@ pub(crate) enum EloParamError {
     #[error("❌ parameter f must be greater than 0. {0} < 0")]
     NegativeF(f64),
     #[error(
-        "❌ parameters k and f must have a ratio greater than 10k:f and less than 20k:f \n❌ (k, f) = ({0}, {1}) => {2}"
+        "❌ parameters k and f must have a ratio greater than 10k:f and less than 100k:f \n❌ (k, f) = ({0}, {1}) => {2}"
     )]
     InvalidRatio(f64, f64, f64),
 }
@@ -48,7 +48,7 @@ impl TryFrom<&Vector> for EloParams {
                 if v.y() < 0. {
                     return Err(EloParamError::NegativeF(v.y()));
                 }
-                if v.y() / v.x() < 10. || v.y() / v.x() > 20. {
+                if v.y() / v.x() < 10. || v.y() / v.x() > 100. {
                     return Err(EloParamError::InvalidRatio(v.x(), v.y(), v.y() / v.x()));
                 }
 

@@ -145,3 +145,7 @@ pub fn nba_prediction_file<M: Model>(model: &M, date: GameDate) -> PathBuf {
 
     path
 }
+
+pub fn model_directory<M: Model>(model: &M) -> PathBuf {
+    PathBuf::from(format!("{}/nba/{}", *DATA, model.model_name()))
+}
