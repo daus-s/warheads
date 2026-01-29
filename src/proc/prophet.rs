@@ -1,5 +1,4 @@
-use crate::format::path_manager::nba_prediction_file;
-
+use crate::format::path_manager::model_directory;
 use crate::ml::model::Model;
 
 use crate::stats::prediction::Prediction;
@@ -26,7 +25,10 @@ pub fn write_predictions<M: Model>(
     }
 
     for (date, predictions) in date_map {
-        write_serializable_with_directory(&nba_prediction_file(model, date), &predictions)?;
+        write_serializable_with_directory(
+            &model_directory(model).join("").join(date.to_filename()),
+            &predictions,
+        )?;
     }
 
     Ok(())

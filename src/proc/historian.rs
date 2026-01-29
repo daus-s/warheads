@@ -107,7 +107,7 @@ pub fn rate_nba(elo_tracker: &mut EloTracker) {
         }
     }
 
-    if let Err(e) = elo_tracker.save() {
+    if let Err(e) = elo_tracker.serialize() {
         println!("{}\n❌ failed to serialize elo tracker.", e);
     };
 }

@@ -14,7 +14,7 @@ mod test_extract {
 mod test_path_manager {
     use crate::constants::paths::data;
     use crate::format::path_manager::{
-        nba_prediction_file, nba_storage_file, nba_storage_path, nba_team_correction_file,
+        model_directory, nba_storage_file, nba_storage_path, nba_team_correction_file,
     };
     use crate::ml::model::Model;
     use crate::stats::game_obj::GameObject;
@@ -73,7 +73,9 @@ mod test_path_manager {
         let expected_file =
             PathBuf::from(format!("{}/nba/{}/predictions/2025_04_30", *DATA, MODEL));
 
-        let actual_file = nba_prediction_file(&TestModel, GameDate::ymd(2025, 4, 30).unwrap());
+        let actual_file = model_directory(&TestModel)
+            .join("predictions")
+            .join(GameDate::ymd(2025, 4, 30).unwrap().to_filename());
 
         assert_eq!(expected_file, actual_file);
     }
@@ -85,7 +87,9 @@ mod test_path_manager {
         let expected_file =
             PathBuf::from(format!("{}/nba/{}/predictions/2025_04_09", *DATA, MODEL));
 
-        let actual_file = nba_prediction_file(&TestModel, GameDate::ymd(2025, 4, 9).unwrap());
+        let actual_file = model_directory(&TestModel)
+            .join("predictions")
+            .join(GameDate::ymd(2025, 4, 9).unwrap().to_filename());
 
         assert_eq!(expected_file, actual_file);
     }
@@ -97,7 +101,9 @@ mod test_path_manager {
         let expected_file =
             PathBuf::from(format!("{}/nba/{}/predictions/2025_01_09", *DATA, MODEL));
 
-        let actual_file = nba_prediction_file(&TestModel, GameDate::ymd(2025, 1, 9).unwrap());
+        let actual_file = model_directory(&TestModel)
+            .join("predictions")
+            .join(GameDate::ymd(2025, 1, 9).unwrap().to_filename());
 
         assert_eq!(expected_file, actual_file);
     }

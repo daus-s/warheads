@@ -1,7 +1,6 @@
 use thiserror::Error;
 
-use crate::format::path_manager::{records_path, results_path};
-
+use crate::format::path_manager;
 use crate::ml::cdf;
 use crate::ml::elo::elo::Elo;
 use crate::ml::elo::elo_params::EloParams;
@@ -9,8 +8,6 @@ use crate::ml::elo::elo_writer::{EloWriter, EloWriterError};
 use crate::ml::log_loss::LogLossTracker;
 use crate::ml::measurement::Measurement;
 use crate::ml::model::Model;
-
-use crate::proc::prophet;
 
 use crate::stats::chronology::Chronology;
 use crate::stats::game_obj::GameObject;
@@ -167,8 +164,8 @@ impl EloTracker {
 
     // SERIALIZATION
 
-    pub fn save(&self) -> Result<(), EloTrackerError> {
-        self.save_records()?;
+    pub fn serialize(&self) -> Result<(), EloTrackerError> {
+        self.save_ratings()?;
 
         self.save_results()?;
 
@@ -177,8 +174,8 @@ impl EloTracker {
         Ok(())
     }
 
-    fn save_records(&self) -> Result<(), EloTrackerError> {
-        let records_filename = records_path(self);
+    fn save_ratings(&self) -> Result<(), EloTrackerError> {
+        let records_filename = path_manager::model_directory(self).join("ratings.csv");
 
         let mut writer = EloWriter::new(records_filename)
             .map_err(|e| EloTrackerError::WriterCreationError(e))?;
@@ -193,14 +190,16 @@ impl EloTracker {
     }
 
     fn save_results(&self) -> Result<(), EloTrackerError> {
-        let results_filename = results_path(self);
+        let results_filename = path_manager::model_directory(self).join("performance.csv");
 
         write_serializable_with_directory(results_filename, &self.log_loss)
             .map_err(|e| EloTrackerError::WriteResultsError(e))
     }
 
     fn save_predictions(&self) -> Result<(), EloTrackerError> {
-        prophet::write_predictions(self, &self.predictions)
+        let prediction_filename = path_manager::model_directory(self).join("predictions.csv");
+
+        write_serializable_with_directory(prediction_filename, &self.predictions)
             .map_err(|e| EloTrackerError::WritePredictionError(e))
     }
 

@@ -5,7 +5,7 @@ use crate::ml::model::Model;
 use crate::stats::identity::Identity;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::nba_kind::NBAStatKind::{Player, Team};
-use crate::types::{GameDate, GameId, PlayerId, SeasonId, TeamId};
+use crate::types::{GameId, PlayerId, SeasonId, TeamId};
 use once_cell::sync::Lazy;
 use std::path::PathBuf;
 
@@ -109,41 +109,6 @@ pub fn nba_storage_file(season_id: SeasonId, game_id: GameId) -> PathBuf {
 
 pub fn nba_checksum_file() -> PathBuf {
     PathBuf::from(format!("{}/nba/checksum/checksums.json", *DATA))
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////
-//// Model Paths ///////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////
-
-pub fn records_path<M: Model>(model: &M) -> PathBuf {
-    static DATA: Lazy<String> = Lazy::new(data);
-
-    PathBuf::from(format!(
-        "{}/nba/{}/records/records.csv",
-        *DATA,
-        model.model_name()
-    ))
-}
-
-/// results_path generates the path to where the model accuracy is stored.
-pub fn results_path<M: Model>(model: &M) -> PathBuf {
-    static DATA: Lazy<String> = Lazy::new(data);
-
-    PathBuf::from(format!(
-        "{}/nba/{}/results/results",
-        *DATA,
-        model.model_name()
-    ))
-}
-
-pub fn nba_prediction_file<M: Model>(model: &M, date: GameDate) -> PathBuf {
-    let d = date.to_filename();
-
-    let mut path = PathBuf::from(format!("{}/nba/{}/predictions", *DATA, model.model_name()));
-
-    path.push(d);
-
-    path
 }
 
 pub fn model_directory<M: Model>(model: &M) -> PathBuf {
