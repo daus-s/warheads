@@ -5,7 +5,6 @@ use serde::Serialize;
 use crate::ml::measurement::{Measureable, Measurement};
 
 pub struct LogLossTracker {
-    model_name: String,
     measurements: Vec<Measurement>,
 }
 
@@ -37,14 +36,6 @@ impl LogLossTracker {
 
     pub fn new() -> Self {
         LogLossTracker {
-            model_name: format!(""),
-            measurements: Vec::new(),
-        }
-    }
-
-    pub fn model(model_name: &str) -> Self {
-        LogLossTracker {
-            model_name: model_name.to_owned(),
             measurements: Vec::new(),
         }
     }
@@ -66,8 +57,7 @@ impl Display for LogLossTracker {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{} {{ log_loss: {}, freq: {} }}",
-            self.model_name,
+            "{{ log_loss: {}, freq: {} }}",
             self.log_loss(),
             self.freq()
         )
@@ -79,17 +69,12 @@ impl Serialize for LogLossTracker {
     where
         S: serde::Serializer,
     {
-        use serde::ser::SerializeMap;
-
-        let mut map = serializer.serialize_map(Some(1))?;
-
         let value = serde_json::json!({
             "log_loss": self.log_loss(),
             "freq": self.freq()
         });
 
-        map.serialize_entry(&self.model_name, &value)?;
-        map.end()
+        value.serialize(serializer)
     }
 }
 
@@ -99,12 +84,12 @@ mod serialize_log_loss {
 
     #[test]
     fn test_serialize_log_loss() {
-        let mut tracker = LogLossTracker::model("test_model");
+        let mut tracker = LogLossTracker::new();
         tracker.add_measurement(Measurement::new(1, 0.5));
         tracker.add_measurement(Measurement::new(0, 0.5));
 
         let serialized = serde_json::to_string(&tracker).unwrap();
-        let expected = r#"{"test_model":{"log_loss":0.6931471805599453,"freq":0.0}}"#;
+        let expected = r#"{"log_loss":0.6931471805599453,"freq":0.0}"#;
         assert_eq!(serialized, expected);
     }
 }
