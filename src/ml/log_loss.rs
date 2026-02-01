@@ -2,13 +2,14 @@ use std::fmt::Display;
 
 use serde::Serialize;
 
-use crate::ml::measurement::{Measureable, Measurement};
+use crate::ml::measurement::Measurement;
+use crate::stats::key::Key;
 
-pub struct LogLossTracker {
-    measurements: Vec<Measurement>,
+pub struct LogLossTracker<K: Key> {
+    measurements: Vec<(K, Measurement)>,
 }
 
-impl LogLossTracker {
+impl<K: Key> LogLossTracker<K> {
     pub fn log_loss(&self) -> f64 {
         let count = self.measurements.len();
         if count == 0 {
@@ -16,7 +17,7 @@ impl LogLossTracker {
         } else {
             self.measurements
                 .iter()
-                .fold(0.0, |acc, m| acc + m.log_loss())
+                .fold(0.0, |acc, (_k, m)| acc + m.log_loss())
                 / count as f64
         }
     }
@@ -26,7 +27,7 @@ impl LogLossTracker {
     pub fn freq(&self) -> f64 {
         let mut successes = 0;
 
-        for measurement in &self.measurements {
+        for (_k, measurement) in &self.measurements {
             if measurement.classification_success() {
                 successes += 1;
             }
@@ -40,12 +41,8 @@ impl LogLossTracker {
         }
     }
 
-    pub fn add_measurement(&mut self, m: Measurement) {
-        self.measurements.push(m);
-    }
-
-    pub fn add_measurable(&mut self, event: &Box<dyn Measureable>) {
-        self.add_measurement(event.into_measurement());
+    pub fn add_measurement(&mut self, k: K, m: Measurement) {
+        self.measurements.push((k, m));
     }
 
     pub fn is_empty(&self) -> bool {
@@ -53,7 +50,7 @@ impl LogLossTracker {
     }
 }
 
-impl Display for LogLossTracker {
+impl<K: Key> Display for LogLossTracker<K> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -64,7 +61,7 @@ impl Display for LogLossTracker {
     }
 }
 
-impl Serialize for LogLossTracker {
+impl<K: Key> Serialize for LogLossTracker<K> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -82,11 +79,13 @@ impl Serialize for LogLossTracker {
 mod serialize_log_loss {
     use super::*;
 
+    impl Key for u8 {}
+
     #[test]
     fn test_serialize_log_loss() {
         let mut tracker = LogLossTracker::new();
-        tracker.add_measurement(Measurement::new(1, 0.5));
-        tracker.add_measurement(Measurement::new(0, 0.5));
+        tracker.add_measurement(0, Measurement::new(1, 0.5));
+        tracker.add_measurement(1, Measurement::new(0, 0.5));
 
         let serialized = serde_json::to_string(&tracker).unwrap();
         let expected = r#"{"log_loss":0.6931471805599453,"freq":0.0}"#;

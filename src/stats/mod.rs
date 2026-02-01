@@ -8,6 +8,7 @@ pub mod game_obj;
 pub mod gamecard;
 pub mod identity;
 pub mod itemize;
+pub mod key;
 pub mod nba_kind;
 pub mod nba_stat;
 pub mod prediction;

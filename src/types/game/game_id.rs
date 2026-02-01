@@ -4,6 +4,8 @@ use wincode::{SchemaRead, SchemaWrite};
 
 use std::fmt::{Debug, Display, Formatter};
 
+use crate::stats::key::Key;
+
 /// ## GameId
 ///
 /// ### Ordering & Properties
@@ -70,3 +72,5 @@ impl Serialize for GameId {
         serializer.serialize_str(&format!("{:0>10}", self.0))
     }
 }
+
+impl Key for GameId {}

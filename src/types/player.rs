@@ -3,6 +3,8 @@ use std::fmt::{Display, Formatter};
 use serde::{Deserialize, Serialize};
 use wincode::{SchemaRead, SchemaWrite};
 
+use crate::stats::key::Key;
+
 /// `PlayerName` is a  StringWrapper for player names. Included only as a String Wrapper,
 /// no added functionality is provided.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, SchemaWrite, SchemaRead)]
@@ -37,3 +39,5 @@ impl Display for PlayerId {
         write!(f, "{}", self.0)
     }
 }
+
+impl Key for PlayerId {}

@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use wincode::{SchemaRead, SchemaWrite};
+
+use crate::stats::key::Key;
 #[derive(
     Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize, SchemaWrite, SchemaRead,
 )]
@@ -34,6 +36,8 @@ impl Display for TeamId {
         write!(f, "{}", self.0)
     }
 }
+
+impl Key for TeamId {}
 
 /// `TeamAbbreviation` is a String wrapper that enforces the 3-character Limit, as well as the
 /// existence & correctness of the abbreviation.

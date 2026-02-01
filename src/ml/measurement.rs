@@ -1,7 +1,10 @@
+use serde::Serialize;
+
 pub trait Measureable {
     fn into_measurement(&self) -> Measurement;
 }
 
+#[derive(Debug, Clone, Serialize)]
 pub struct Measurement {
     actual: u8, //assert 0 or 1
     prob: f64,
@@ -33,8 +36,6 @@ impl Measurement {
     pub fn classification_success(&self) -> bool {
         if self.actual == 1 && self.prob > 0.5 || self.actual == 0 && self.prob < 0.5 {
             true
-        } else if self.prob == 0.5 {
-            false //dont reward not making a prediction
         } else {
             false
         }

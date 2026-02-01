@@ -21,7 +21,7 @@ use crate::storage::write::write_serializable_with_directory;
 use crate::tui::game_ratings::GameRatings;
 use crate::tui::tui_display::TuiDisplay;
 
-use crate::types::PlayerId;
+use crate::types::{GameId, PlayerId};
 
 use std::collections::HashMap;
 use std::f64::INFINITY;
@@ -32,7 +32,7 @@ const ELO_VERSION: &str = "elo v1";
 pub struct EloTracker {
     historical_ratings: Vec<Elo>,
     current_ratings: HashMap<PlayerId, i64>,
-    log_loss: LogLossTracker,
+    log_loss: LogLossTracker<GameId>,
     predictions: Vec<Prediction>,
     params: EloParams,
 }
@@ -159,7 +159,7 @@ impl EloTracker {
 
         let m = Measurement::new(a, p);
 
-        self.log_loss.add_measurement(m);
+        self.log_loss.add_measurement(game.game_id(), m);
     }
 
     // SERIALIZATION
