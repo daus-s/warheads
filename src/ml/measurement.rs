@@ -6,8 +6,8 @@ pub trait Measureable {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Measurement {
-    actual: u8, //assert 0 or 1
-    prob: f64,
+    outcome: u8, //assert 0 or 1
+    probability: f64,
 }
 
 impl Measurement {
@@ -23,21 +23,34 @@ impl Measurement {
             prob
         );
 
-        Measurement { actual, prob }
+        Measurement {
+            outcome: actual,
+            probability: prob,
+        }
     }
 
     // L = = -(y⋅ln*(p))+(1-y⋅ln*(1-p))
     pub fn log_loss(&self) -> f64 {
         -1f64
-            * (self.actual as f64 * self.prob.ln()
-                + (1f64 - self.actual as f64) * (1f64 - self.prob).ln())
+            * (self.outcome as f64 * self.probability.ln()
+                + (1f64 - self.outcome as f64) * (1f64 - self.probability).ln())
     }
 
     pub fn classification_success(&self) -> bool {
-        if self.actual == 1 && self.prob > 0.5 || self.actual == 0 && self.prob < 0.5 {
+        if self.outcome == 1 && self.probability > 0.5
+            || self.outcome == 0 && self.probability < 0.5
+        {
             true
         } else {
             false
         }
+    }
+
+    pub fn probability(&self) -> f64 {
+        self.probability
+    }
+
+    pub fn outcome(&self) -> u8 {
+        self.outcome
     }
 }
