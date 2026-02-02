@@ -5,11 +5,11 @@ use serde::Serialize;
 use crate::ml::measurement::Measurement;
 use crate::stats::key::Key;
 
-pub struct LogLossTracker<K: Key> {
+pub struct LogLossTracker<K: Key + Display> {
     measurements: Vec<(K, Measurement)>,
 }
 
-impl<K: Key> LogLossTracker<K> {
+impl<K: Key + Display> LogLossTracker<K> {
     pub fn log_loss(&self) -> f64 {
         let count = self.measurements.len();
         if count == 0 {
@@ -48,9 +48,36 @@ impl<K: Key> LogLossTracker<K> {
     pub fn is_empty(&self) -> bool {
         self.measurements.is_empty()
     }
+
+    pub fn serialize(&self) -> String {
+        let mut contents = "gameid,probability,outcome,logloss,frequency\n".to_owned();
+
+        let mut i = 0;
+        let mut log_loss_acc = 0.0;
+        let mut correct_classifications = 0;
+
+        for (k, m) in &self.measurements {
+            log_loss_acc += m.log_loss();
+            if m.classification_success() {
+                correct_classifications += 1;
+            }
+            i += 1;
+
+            contents.push_str(&format!(
+                "{},{},{},{},{}\n",
+                k,
+                m.probability(),
+                m.outcome(),
+                log_loss_acc / i as f64,
+                correct_classifications as f64 / i as f64
+            ));
+        }
+
+        contents
+    }
 }
 
-impl<K: Key> Display for LogLossTracker<K> {
+impl<K: Key + Display> Display for LogLossTracker<K> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -58,20 +85,6 @@ impl<K: Key> Display for LogLossTracker<K> {
             self.log_loss(),
             self.freq()
         )
-    }
-}
-
-impl<K: Key> Serialize for LogLossTracker<K> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        let value = serde_json::json!({
-            "log_loss": self.log_loss(),
-            "freq": self.freq()
-        });
-
-        value.serialize(serializer)
     }
 }
 
@@ -87,8 +100,11 @@ mod serialize_log_loss {
         tracker.add_measurement(0, Measurement::new(1, 0.5));
         tracker.add_measurement(1, Measurement::new(0, 0.5));
 
-        let serialized = serde_json::to_string(&tracker).unwrap();
-        let expected = r#"{"log_loss":0.6931471805599453,"freq":0.0}"#;
+        let serialized = tracker.serialize();
+        let expected = r#"gameid,probability,outcome,logloss,frequency
+0,0.5,1,0.6931471805599453,0
+1,0.5,0,0.6931471805599453,0
+"#;
         assert_eq!(serialized, expected);
     }
 }

@@ -192,8 +192,7 @@ impl EloTracker {
     fn save_results(&self) -> Result<(), EloTrackerError> {
         let results_filename = path_manager::model_directory(self).join("performance.csv");
 
-        write_serializable_with_directory(results_filename, &self.log_loss)
-            .map_err(|e| EloTrackerError::WriteResultsError(e))
+        todo!()
     }
 
     fn save_predictions(&self) -> Result<(), EloTrackerError> {
