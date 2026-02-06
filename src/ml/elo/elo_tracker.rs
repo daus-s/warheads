@@ -25,6 +25,7 @@ use crate::types::{GameId, PlayerId};
 
 use std::collections::HashMap;
 use std::f64::INFINITY;
+use std::fs;
 use std::io;
 
 const ELO_VERSION: &str = "elo v1";
@@ -192,7 +193,12 @@ impl EloTracker {
     fn save_results(&self) -> Result<(), EloTrackerError> {
         let results_filename = path_manager::model_directory(self).join("performance.csv");
 
-        todo!()
+        if let Some(parent) = results_filename.parent() {
+            fs::create_dir_all(parent).map_err(EloTrackerError::WriteResultsError)?;
+        }
+
+        fs::write(&results_filename, self.log_loss.serialize())
+            .map_err(EloTrackerError::WriteResultsError)
     }
 
     fn save_predictions(&self) -> Result<(), EloTrackerError> {

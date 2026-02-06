@@ -1,7 +1,5 @@
 use std::fmt::Display;
 
-use serde::Serialize;
-
 use crate::ml::measurement::Measurement;
 use crate::stats::key::Key;
 
