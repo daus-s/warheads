@@ -1,5 +1,5 @@
-use crate::corrections::correction_builder::CorrectionBuilder;
-use crate::corrections::correction_loader::load_single_correction;
+use crate::edit::edit_builder::EditBuilder;
+use crate::edit::edit_loader::load_single_correction;
 
 use crate::dapi::from_value::FromValue;
 use crate::dapi::player_box_score::PlayerBoxScore;
@@ -92,9 +92,9 @@ pub(crate) fn season(
     rows: Vec<Value>,
     headers: Vec<String>,
     stat: NBAStatKind,
-) -> Result<Vec<(Identity, NBABoxScore)>, Vec<CorrectionBuilder>> {
+) -> Result<Vec<(Identity, NBABoxScore)>, Vec<EditBuilder>> {
     let mut season: Vec<(Identity, NBABoxScore)> = Vec::new();
-    let mut corrections: Vec<CorrectionBuilder> = Vec::new();
+    let mut corrections: Vec<EditBuilder> = Vec::new();
 
     for row in rows {
         if let Some(row_data) = row.as_array() {
@@ -146,7 +146,7 @@ pub(crate) fn season(
 
 fn fields_to_team_box_score(
     s: &HashMap<StatColumn, Value>,
-) -> Result<Option<(Identity, TeamBoxScore)>, CorrectionBuilder> {
+) -> Result<Option<(Identity, TeamBoxScore)>, EditBuilder> {
     //if it fails to parse the identifier then it will crash
 
     let mut box_score_builder = BoxScoreBuilder::default();
@@ -180,7 +180,7 @@ fn fields_to_team_box_score(
         game_date,
     };
 
-    let mut correction_builder = CorrectionBuilder::new(
+    let mut correction_builder = EditBuilder::new(
         game_id.clone(),
         season_id,
         None,
@@ -329,7 +329,7 @@ fn fields_to_team_box_score(
 ///
 fn fields_to_player_box_score(
     s: &HashMap<StatColumn, Value>,
-) -> Result<Option<(Identity, PlayerBoxScore)>, CorrectionBuilder> {
+) -> Result<Option<(Identity, PlayerBoxScore)>, EditBuilder> {
     //if it fails to parse the identifier then it will crash
 
     let mut box_score_builder = BoxScoreBuilder::default();
@@ -360,7 +360,7 @@ fn fields_to_player_box_score(
         game_id,
     };
 
-    let mut correction_builder = CorrectionBuilder::new(
+    let mut correction_builder = EditBuilder::new(
         game_id.clone(),
         season_id,
         Some(player_id),

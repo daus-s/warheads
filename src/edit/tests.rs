@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod correct_columns {
-    use crate::corrections::correction::Correction;
+    use crate::edit::edit::Edit;
     use crate::stats::nba_kind::NBAStatKind;
     use crate::stats::season_period::SeasonPeriod;
     use crate::stats::stat_column::StatColumn;
@@ -361,8 +361,8 @@ mod correct_columns {
     //
     // helper functions
     //
-    fn sample_correction() -> Correction {
-        Correction {
+    fn sample_correction() -> Edit {
+        Edit {
             game_id: GameId(123),
             game_date: GameDate(Default::default()),
             season: SeasonId::from(20024),
@@ -383,7 +383,7 @@ mod correct_columns {
 
 #[cfg(test)]
 mod serialize_corrections {
-    use crate::corrections::correction::Correction;
+    use crate::edit::edit::Edit;
 
     use crate::stats::nba_kind::NBAStatKind;
     use crate::stats::season_period::SeasonPeriod;
@@ -399,7 +399,7 @@ mod serialize_corrections {
 
     #[test]
     pub fn serialize_correction() {
-        let correction = Correction {
+        let correction = Edit {
             game_id: GameId::from("0025900253"),
             game_date: "2000-02-05".parse().unwrap(),
             season: SeasonId::from(22000),

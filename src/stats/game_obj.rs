@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use crate::corrections::correction_builder::CorrectionBuilder;
+use crate::edit::edit_builder::EditBuilder;
 
 use crate::dapi::player_box_score::PlayerBoxScore;
 use crate::dapi::team_box_score::TeamBoxScore;
@@ -42,8 +42,8 @@ impl GameObject {
         game1: TeamBoxScore,
         id2: Identity,
         game2: TeamBoxScore,
-    ) -> Result<GameObject, Vec<CorrectionBuilder>> {
-        let mut correction1 = CorrectionBuilder::new(
+    ) -> Result<GameObject, Vec<EditBuilder>> {
+        let mut correction1 = EditBuilder::new(
             id1.game_id,
             id1.season_id,
             None,
@@ -52,7 +52,7 @@ impl GameObject {
             NBAStatKind::Team,
             id1.game_date,
         );
-        let mut correction2 = CorrectionBuilder::new(
+        let mut correction2 = EditBuilder::new(
             id2.game_id,
             id2.season_id,
             None,

@@ -1,6 +1,6 @@
 pub mod constants;
 
-pub mod corrections;
+pub mod edit;
 
 pub mod dapi;
 

@@ -1,5 +1,5 @@
-use crate::corrections::correction_builder::CorrectionBuilder;
 use crate::dapi::box_score_stat::BoxScoreStat;
+use crate::edit::edit_builder::EditBuilder;
 use crate::format::language::box_score_value_to_string;
 use crate::stats::box_score::BoxScoreBuilder;
 use crate::stats::identity::{Identifiable, Identity};
@@ -51,7 +51,7 @@ pub fn get_rows(set: &Value) -> Result<Vec<Value>, String> {
 pub fn record_stat<T>(
     entry: Result<T, StatColumn>,
     box_score: &mut BoxScoreBuilder,
-    correction: &mut CorrectionBuilder,
+    correction: &mut EditBuilder,
 ) where
     T: Into<BoxScoreStat>,
 {
@@ -124,7 +124,7 @@ pub fn record_stat<T>(
 pub fn record_usable_stat<T>(
     entry: Result<T, StatColumn>,
     box_score: &mut BoxScoreBuilder,
-    correction: &mut CorrectionBuilder,
+    correction: &mut EditBuilder,
 ) -> Result<T, StatColumn>
 where
     T: Clone,

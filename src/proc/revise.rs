@@ -1,6 +1,6 @@
 use std::fs;
 
-use crate::corrections::correction_loader::load_season_correction_maps;
+use crate::edit::edit_loader::load_season_correction_maps;
 
 use crate::dapi::team_box_score::TeamBoxScore;
 

@@ -1,4 +1,4 @@
-use crate::corrections::correction_builder::CorrectionBuilder;
+use crate::edit::edit_builder::EditBuilder;
 
 use crate::dapi::team_box_score::TeamBoxScore;
 
@@ -95,9 +95,9 @@ fn sub_save(season: Vec<GameObject>) {
 
 pub(crate) type TeamGame = (Identity, TeamBoxScore);
 
-pub(crate) fn pair_off(games: Vec<TeamGame>) -> Result<Vec<GameObject>, Vec<CorrectionBuilder>> {
+pub(crate) fn pair_off(games: Vec<TeamGame>) -> Result<Vec<GameObject>, Vec<EditBuilder>> {
     let mut pairs = HashMap::<GameId, (Option<TeamGame>, Option<TeamGame>)>::new();
-    let mut corrections: Vec<CorrectionBuilder> = Vec::new();
+    let mut corrections: Vec<EditBuilder> = Vec::new();
 
     let l = games.len();
 
@@ -136,7 +136,7 @@ pub(crate) fn pair_off(games: Vec<TeamGame>) -> Result<Vec<GameObject>, Vec<Corr
                     game_date,
                 } = game.0.clone();
 
-                let mut correction_builder = CorrectionBuilder::new(
+                let mut correction_builder = EditBuilder::new(
                     game_id,
                     season_id,
                     player_id,

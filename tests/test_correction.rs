@@ -3,8 +3,8 @@ use pretty_assertions::assert_eq;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::str::FromStr;
-use warheads::corrections::correction::Correction;
-use warheads::corrections::correction_loader::load_season_corrections;
+use warheads::edit::edit::Edit;
+use warheads::edit::edit_loader::load_season_corrections;
 use warheads::format::path_manager::nba_correction_dir;
 use warheads::stats::nba_kind::NBAStatKind::Player;
 use warheads::stats::serde_enum::SerdeEnum;
@@ -38,13 +38,13 @@ pub fn test_load_correction() {
     assert_eq!(actual_corrections, expected_corrections);
 }
 
-fn expected_corrections() -> Vec<Correction> {
+fn expected_corrections() -> Vec<Edit> {
     let season_id = SeasonId::from(21959);
     let postseason_id = SeasonId::from(41959);
     let kind = Player;
 
     vec![
-        Correction {
+        Edit {
             game_id: GameId::from("0025900249"),
             game_date: GameDate(NaiveDate::from_ymd_opt(1960, 02, 18).unwrap()),
             season: season_id,
@@ -62,7 +62,7 @@ fn expected_corrections() -> Vec<Correction> {
                 cs
             },
         },
-        Correction {
+        Edit {
             game_id: GameId::from("0025900179"),
             game_date: GameDate(NaiveDate::from_ymd_opt(1960, 1, 19).unwrap()),
             season: season_id,
@@ -80,7 +80,7 @@ fn expected_corrections() -> Vec<Correction> {
                 cs
             },
         },
-        Correction {
+        Edit {
             game_id: GameId::from("0025900010"),
             game_date: GameDate(NaiveDate::from_ymd_opt(1959, 10, 31).unwrap()),
             season: season_id,
@@ -98,7 +98,7 @@ fn expected_corrections() -> Vec<Correction> {
                 cs
             },
         },
-        Correction {
+        Edit {
             game_id: GameId::from("0025900033"),
             game_date: GameDate(NaiveDate::from_ymd_opt(1959, 11, 12).unwrap()),
             season: season_id,
@@ -116,7 +116,7 @@ fn expected_corrections() -> Vec<Correction> {
                 cs
             },
         },
-        Correction {
+        Edit {
             game_id: GameId::from("0025900033"),
             game_date: GameDate(NaiveDate::from_ymd_opt(1959, 11, 12).unwrap()),
             season: season_id,
@@ -134,7 +134,7 @@ fn expected_corrections() -> Vec<Correction> {
                 cs
             },
         },
-        Correction {
+        Edit {
             game_id: GameId::from("0025900079"),
             game_date: GameDate(NaiveDate::from_ymd_opt(1959, 12, 03).unwrap()),
             season: season_id,
@@ -152,7 +152,7 @@ fn expected_corrections() -> Vec<Correction> {
                 cs
             },
         },
-        Correction {
+        Edit {
             game_id: GameId::from("0025900080"),
             game_date: GameDate(NaiveDate::from_ymd_opt(1959, 12, 04).unwrap()),
             season: season_id,
@@ -170,7 +170,7 @@ fn expected_corrections() -> Vec<Correction> {
                 cs
             },
         },
-        Correction {
+        Edit {
             game_id: GameId::from("0025900207"),
             game_date: GameDate(NaiveDate::from_ymd_opt(1960, 2, 01).unwrap()),
             season: season_id,
@@ -188,7 +188,7 @@ fn expected_corrections() -> Vec<Correction> {
                 cs
             },
         },
-        Correction {
+        Edit {
             game_id: GameId::from("0025900253"),
             game_date: GameDate(NaiveDate::from_ymd_opt(1960, 02, 20).unwrap()),
             season: season_id,
@@ -206,7 +206,7 @@ fn expected_corrections() -> Vec<Correction> {
                 cs
             },
         },
-        Correction {
+        Edit {
             game_id: GameId::from("0025900257"),
             game_date: GameDate(NaiveDate::from_ymd_opt(1960, 02, 21).unwrap()),
             season: season_id,
@@ -224,7 +224,7 @@ fn expected_corrections() -> Vec<Correction> {
                 cs
             },
         },
-        Correction {
+        Edit {
             game_id: GameId::from("0045900321"),
             game_date: GameDate(NaiveDate::from_ymd_opt(1960, 03, 16).unwrap()),
             season: postseason_id,

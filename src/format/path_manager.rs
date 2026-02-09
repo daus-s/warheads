@@ -46,6 +46,10 @@ pub fn universal_nba_source_path(season: SeasonId, kind: NBAStatKind) -> PathBuf
     ))
 }
 
+pub fn nba_edit_file() -> PathBuf {
+    PathBuf::from(format!("{}/nba/edits/edits.json", *DATA))
+}
+
 pub fn nba_correction_dir(season: SeasonId, kind: NBAStatKind) -> String {
     format!(
         "{}/nba/corrections/{}/{}/{}",

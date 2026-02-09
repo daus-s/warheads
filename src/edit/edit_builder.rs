@@ -1,5 +1,5 @@
-use crate::corrections::correction::Correction;
-use crate::corrections::correction_loader::load_single_correction;
+use crate::edit::edit::Edit;
+use crate::edit::edit_loader::load_single_correction;
 
 use crate::format::percent::PercentGeneric;
 
@@ -29,12 +29,12 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 
 #[derive(Debug)]
-pub struct CorrectionBuilder {
-    correction: Correction,
+pub struct EditBuilder {
+    correction: Edit,
     display: Option<GameDisplay>,
 }
 
-impl CorrectionBuilder {
+impl EditBuilder {
     pub fn new(
         game_id: GameId,
         season: SeasonId,
@@ -44,8 +44,8 @@ impl CorrectionBuilder {
         kind: NBAStatKind,
         game_date: GameDate,
     ) -> Self {
-        CorrectionBuilder {
-            correction: Correction {
+        EditBuilder {
+            correction: Edit {
                 game_id,
                 game_date,
                 season,
@@ -73,7 +73,7 @@ impl CorrectionBuilder {
         self.correction.corrections.remove(&col);
     }
 
-    pub fn create_and_save(&mut self) -> Correction {
+    pub fn create_and_save(&mut self) -> Edit {
         use std::io::{stdout, Write};
 
         let (mut corrections, display_option) = (self.correction.clone(), self.display.clone());
@@ -237,12 +237,12 @@ impl CorrectionBuilder {
         self.correction.delete = delete;
     }
 
-    pub fn correction(&self) -> &Correction {
+    pub fn correction(&self) -> &Edit {
         &self.correction
     }
 }
 
-fn save_correction(correction: &Correction) {
+fn save_correction(correction: &Edit) {
     match correction.save() {
         Ok(_) => {
             println!(

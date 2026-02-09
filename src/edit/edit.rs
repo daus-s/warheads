@@ -1,30 +1,32 @@
-use crate::corrections::correction_builder::CorrectionBuilder;
 use crate::dapi::from_value::FromValue;
+use crate::edit::edit_builder::EditBuilder;
 use crate::format::language::Columnizable;
 use crate::format::path_manager::{
     nba_correction_dir, nba_player_correction_file, nba_team_correction_file,
 };
 use crate::stats::visiting::Visiting;
 
-use serde::{Deserialize, Serialize};
-
+use crate::stats::identity::{Identifiable, Identity};
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::season_period::SeasonPeriod;
 use crate::stats::stat_column::{player_column_index, team_column_index, StatColumn};
-
-use std::collections::HashMap;
-use std::fmt::{Debug, Formatter};
 
 use crate::stats::box_score::{BoxScore, BoxScoreBuilder};
 use crate::stats::nba_kind::NBAStatKind::{LineUp, Player, Team};
 use crate::stats::statify::StatPair;
 use crate::types::{GameDate, GameId, PlayerId, SeasonId, TeamAbbreviation, TeamId};
+
 use serde_json::Value;
+
+use serde::{Deserialize, Serialize};
+
+use std::collections::HashMap;
+use std::fmt::{Debug, Formatter};
 use std::path::{Path, PathBuf};
 use std::{fs, io};
 
 #[derive(Serialize, Deserialize, Clone, Eq, PartialEq)]
-pub struct Correction {
+pub struct Edit {
     pub game_id: GameId,
 
     pub game_date: GameDate,
@@ -46,8 +48,8 @@ pub struct Correction {
     pub corrections: HashMap<StatColumn, Value>,
 }
 
-impl Correction {
-    pub fn load(filename: &str) -> Result<Correction, String> {
+impl Edit {
+    pub fn load(filename: &str) -> Result<Edit, String> {
         let path = Path::new(filename);
 
         // Read the file content
@@ -55,7 +57,7 @@ impl Correction {
             .map_err(|e| format!("Failed to read file {}: {}", filename, e))?;
 
         // Deserialize the content into a Correction struct
-        let correction: Correction = serde_json::from_str(&content)
+        let correction: Edit = serde_json::from_str(&content)
             .map_err(|e| format!("Failed to deserialize file {}: {}", filename, e))?;
 
         //todo: assert eq the path info and the file content
@@ -150,7 +152,7 @@ impl Correction {
         self.team_abbr.clone()
     }
 
-    pub fn correct_box_score(&mut self, game: &mut BoxScore) {
+    pub fn edit_box_score(&mut self, game: &mut BoxScore) {
         self.corrections
             .retain(|col, val| match game.try_set_col(col, val) {
                 Ok(_) => false, //remove entries that are not successfully applied
@@ -164,7 +166,7 @@ impl Correction {
     pub fn correct_box_score_builder(
         &mut self,
         box_score_builder: &mut BoxScoreBuilder,
-        correction_builder: &mut CorrectionBuilder,
+        correction_builder: &mut EditBuilder,
     ) {
         let keys = self.corrections.keys();
 
@@ -303,7 +305,7 @@ impl Correction {
     }
 
     //consume the other correction and merge the fields into the self.
-    pub fn merge(&mut self, other: Correction) {
+    pub fn merge(&mut self, other: Edit) {
         let other_fields = other.corrections;
 
         for (k, v) in other_fields {
@@ -333,7 +335,7 @@ impl Correction {
     }
 }
 
-impl Debug for Correction {
+impl Debug for Edit {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -362,5 +364,37 @@ impl Debug for Correction {
                 ),
             }
         )
+    }
+}
+
+impl Identifiable for Edit {
+    fn identity(&self) -> Identity {
+        // eprintln!("parsing gameid as u64: {}", match self.gameid.replace("\"", "").parse::<u64>() {
+        //     Ok(_) => "success",
+        //     Err(_) => "failure"
+        // });
+
+        match self.kind {
+            NBAStatKind::Team => Identity {
+                season_id: self.season,
+                game_id: self.game_id.clone(),
+                player_id: None,
+                team_id: self.team_id,
+                game_date: self.game_date,
+                team_abbr: self.team_abbr.clone(),
+            },
+            NBAStatKind::Player => Identity {
+                season_id: self.season,
+                game_id: self.game_id.clone(),
+                player_id: Some(
+                    self.player_id
+                        .expect("💀 no player id for a player correction object. "),
+                ),
+                team_id: self.team_id,
+                game_date: self.game_date,
+                team_abbr: self.team_abbr.clone(),
+            },
+            NBAStatKind::LineUp => todo!("lineup stats not yet implemented"),
+        }
     }
 }

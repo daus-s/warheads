@@ -1,4 +1,4 @@
-use crate::corrections::correction::Correction;
+use crate::edit::edit::Edit;
 
 use crate::dapi::from_value::FromValue;
 use crate::dapi::player_box_score::PlayerBoxScore;
@@ -99,11 +99,11 @@ impl TeamBoxScore {
         player_ids
     }
 
-    pub fn correct_box_score(&mut self, correction: &mut Correction) {
-        correction.correct_box_score(&mut self.box_score);
+    pub fn correct_box_score(&mut self, edit: &mut Edit) {
+        edit.edit_box_score(&mut self.box_score);
     }
 
-    pub(crate) fn reorient(&mut self, correction: &mut Correction) {
+    pub(crate) fn reorient(&mut self, correction: &mut Edit) {
         /*
          *
          * pub team_abbreviation: TeamAbbreviation,
