@@ -420,7 +420,7 @@ mod serialize_corrections {
 
         let serialized = serde_json::to_string(&correction).unwrap();
 
-        let expected = r#"{"game_id":"0025900253","game_date":"2000-02-05","season":"22000","player_id":69420,"team_id":1610612755,"team_abbr":"SEA","kind":"Player","period":"RegularSeason","delete":false,"corrections":{"WL":"L"}}"#;
+        let expected = r#"{"game_id":"0025900253","game_date":"2000-02-05","season":"22000","team_id":1610612755,"player_id":69420,"team_abbr":"SEA","kind":"Player","period":"RegularSeason","delete":false,"corrections":{"WL":"L"}}"#;
 
         pretty_assertions::assert_eq!(serialized, expected.trim_end());
     }
