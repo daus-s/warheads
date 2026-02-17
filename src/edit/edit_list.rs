@@ -15,6 +15,10 @@ impl EditList {
     pub fn edits(&self) -> &Vec<Edit> {
         &self.edits
     }
+
+    pub fn into_edits(self) -> Vec<Edit> {
+        self.edits
+    }
 }
 
 impl<'de> Deserialize<'de> for EditList {

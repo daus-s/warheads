@@ -248,8 +248,6 @@ mod test_edit_order {
             },
         ];
 
-        dbg!(edits.len());
-
         assert!(edits.is_sorted())
     }
 }

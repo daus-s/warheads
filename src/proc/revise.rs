@@ -1,6 +1,6 @@
 use std::fs;
 
-use crate::edit::edit_loader::load_season_correction_maps;
+use crate::edit::edit_loader::{load_edit_list, split_edit_list};
 
 use crate::dapi::team_box_score::TeamBoxScore;
 
@@ -15,10 +15,10 @@ pub fn revise_nba_season(
     games: &mut Vec<(Identity, TeamBoxScore)>,
 ) -> Result<(), ()> {
     let (mut player_corrections, mut team_corrections) =
-        load_season_correction_maps(era.year()).map_err(|_e| ())?;
+        split_edit_list(load_edit_list().map_err(|_| ())?);
 
     //only delete if the team correction says the game shouldnt be recorded
-    for correction in team_corrections.values() {
+    for correction in team_corrections.iter() {
         if correction.delete {
             let id = correction.identity();
 
@@ -37,21 +37,22 @@ pub fn revise_nba_season(
     }
 
     for (identity, game) in games.iter_mut() {
-        if let Some(correction) = team_corrections.get_mut(&identity) {
+        if let Some(correction) = team_corrections
+            .iter_mut()
+            .find(|c| c.identity() == *identity)
+        {
             game.reorient(correction);
-
             game.correct_box_score(correction);
         }
 
-        //apply player corrections
         for player in game.roster_mut() {
             let mut player_identity = identity.clone();
-
             player_identity.player_id = Some(player.player_id());
-
-            if let Some(correction) = player_corrections.get_mut(&player_identity) {
+            if let Some(correction) = player_corrections
+                .iter_mut()
+                .find(|c| c.identity() == player_identity)
+            {
                 player.reorient(correction);
-
                 player.correct_box_score(correction);
             }
         }

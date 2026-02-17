@@ -298,7 +298,7 @@ impl Edit {
                 | StatColumn::GAME_ID
                 | StatColumn::GAME_DATE
                 | StatColumn::MATCHUP => {
-                    panic!("💀 {column} is requireed for generating a unique identifier for the game and cannot be corrected in the BoxScore. ")
+                    panic!("💀 {column} is required for generating a unique identifier for the game and cannot be corrected in the BoxScore. ")
                 }
             }
         }
