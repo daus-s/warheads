@@ -4,7 +4,7 @@ use crate::dapi::team_box_score::TeamBoxScore;
 
 use crate::format::season::season_fmt;
 
-use crate::proc::hunting::load_nba_season_from_source;
+use crate::proc::hunting::load_season_from_source;
 use crate::proc::revise::revise_nba_season;
 
 use crate::stats::game_obj::GameObject;
@@ -18,7 +18,7 @@ use indicatif::{ProgressBar, ProgressStyle};
 use std::collections::HashMap;
 
 pub fn store_nba_season(era: SeasonId) {
-    let mut team_games = load_nba_season_from_source(era);
+    let mut team_games = load_season_from_source(era);
 
     match revise_nba_season(era, &mut team_games) {
         Ok(_) => {

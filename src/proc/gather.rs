@@ -1,11 +1,16 @@
+use std::fs::File;
+use std::io::Read;
+
 use crate::dapi::player_box_score::PlayerBoxScore;
 use crate::dapi::team_box_score::TeamBoxScore;
 
+use crate::edit::edit_list::{self, EditList};
+use crate::format::parse::parse_season;
 use crate::format::path_manager::nba_source_path;
 
 use crate::proc::error::ReadProcessError;
 use crate::proc::query;
-use crate::proc::rip::read_and_process_nba_games;
+use crate::proc::rip::process_nba_games;
 
 use crate::stats::identity::Identity;
 use crate::stats::nba_kind::NBAStatKind;
@@ -15,22 +20,56 @@ use crate::storage::write::write_serializable_with_directory;
 
 use crate::types::SeasonId;
 
-pub fn player_games(season: SeasonId) -> Result<Vec<(Identity, PlayerBoxScore)>, ReadProcessError> {
-    Ok(read_and_process_nba_games(season, NBAStatKind::Player)?
-        .into_iter()
-        .filter_map(|(id, stat)| match stat {
-            Player(box_score) => Some((id, box_score)),
-            _ => None,
-        })
-        .collect::<Vec<(Identity, PlayerBoxScore)>>())
+pub fn load_player_games_from_source(
+    season_id: SeasonId,
+    edit_list: &EditList,
+) -> Result<Vec<(Identity, PlayerBoxScore)>, ReadProcessError> {
+    let player_source_path = nba_source_path(season_id, NBAStatKind::Player);
+
+    let mut file = File::open(player_source_path).map_err(|e| ReadProcessError::IOError(e))?;
+
+    let mut contents = String::new();
+
+    file.read_to_string(&mut contents)
+        .map_err(|e| ReadProcessError::IOError(e))?;
+
+    let json = serde_json::from_str(&contents).map_err(|e| ReadProcessError::JSONParseError(e))?;
+
+    let (rows, headers) =
+        parse_season(json).map_err(|e| ReadProcessError::ObjectStructureError(e))?;
+
+    Ok(
+        process_nba_games(season_id, NBAStatKind::Player, headers, rows, edit_list)?
+            .into_iter()
+            .filter_map(|(id, stat)| match stat {
+                Player(box_score) => Some((id, box_score)),
+                _ => None,
+            })
+            .collect::<Vec<(Identity, PlayerBoxScore)>>(),
+    )
 }
 
-pub fn team_games(
-    season: SeasonId,
-    roster: Vec<(Identity, PlayerBoxScore)>,
+pub fn load_team_games_from_source(
+    season_id: SeasonId,
+    player_games: Vec<(Identity, PlayerBoxScore)>,
+    edit_list: &EditList,
 ) -> Result<Vec<(Identity, TeamBoxScore)>, ReadProcessError> {
+    let team_source_path = nba_source_path(season_id, NBAStatKind::Team);
+
+    let mut file = File::open(team_source_path).map_err(|e| ReadProcessError::IOError(e))?;
+
+    let mut contents = String::new();
+
+    file.read_to_string(&mut contents)
+        .map_err(|e| ReadProcessError::IOError(e))?;
+
+    let json = serde_json::from_str(&contents).map_err(|e| ReadProcessError::JSONParseError(e))?;
+
+    let (rows, headers) =
+        parse_season(json).map_err(|e| ReadProcessError::ObjectStructureError(e))?;
+
     let mut games: Vec<(Identity, TeamBoxScore)> =
-        read_and_process_nba_games(season, NBAStatKind::Team)?
+        process_nba_games(season_id, NBAStatKind::Team, headers, rows, edit_list)?
             .into_iter()
             .filter_map(|(id, stat)| match stat {
                 Team(t) => Some((id, t)),
@@ -38,8 +77,7 @@ pub fn team_games(
             })
             .collect();
 
-    // uh oh
-    for (p_id, player_box_score) in roster.into_iter() {
+    for (p_id, player_box_score) in player_games.into_iter() {
         for (t_id, team_box_score) in games.iter_mut() {
             if p_id.game() == t_id.game() {
                 team_box_score.add_player_stats(player_box_score.clone());

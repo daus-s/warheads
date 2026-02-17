@@ -33,9 +33,9 @@ pub struct Edit {
 
     pub season: SeasonId,
 
-    pub player_id: Option<PlayerId>,
-
     pub team_id: TeamId,
+
+    pub player_id: Option<PlayerId>,
 
     pub team_abbr: TeamAbbreviation,
 

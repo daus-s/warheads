@@ -1,6 +1,7 @@
 use thiserror::Error;
 
 use crate::edit::edit::Edit;
+use crate::edit::edit_list::EditList;
 use crate::format::path_manager::{
     correction_path_from_identity, nba_correction_dir, nba_edit_file,
 };
@@ -18,7 +19,7 @@ use std::{fs, io};
 
 use EditLoadingError::*;
 
-pub fn load_edit_file() -> Result<Vec<Edit>, EditLoadingError> {
+pub fn load_edit_list() -> Result<EditList, EditLoadingError> {
     let filepath = nba_edit_file();
 
     let mut file =
@@ -29,13 +30,13 @@ pub fn load_edit_file() -> Result<Vec<Edit>, EditLoadingError> {
     file.read_to_string(&mut contents)
         .map_err(|e| EditLoadingError::FileError(e, filepath.clone()))?;
 
-    let edits: Vec<Edit> = serde_json::from_str(&contents)
+    let edits: EditList = serde_json::from_str(&contents)
         .map_err(|e| EditLoadingError::ParseError(e, filepath.clone()))?;
 
     Ok(edits)
 }
 
-pub fn load_season_corrections(year: i32, kind: NBAStatKind) -> Result<Vec<Edit>, String> {
+fn load_season_corrections(year: i32, kind: NBAStatKind) -> Result<Vec<Edit>, String> {
     let season = minimum_spanning_era(year);
 
     let mut edits = Vec::new();
@@ -146,7 +147,7 @@ mod load_edits {
 
     use crate::{
         dapi::season_manager::nba_lifespan,
-        edit::edit_loader::{load_edit_file, load_season_correction_maps},
+        edit::edit_loader::{load_edit_list, load_season_correction_maps},
         stats::identity::Identifiable,
     };
 
@@ -165,10 +166,11 @@ mod load_edits {
         println!("edits loading v1: {:?}", start_old.elapsed());
 
         let start_new = Instant::now();
-        let new_edits = load_edit_file()
+        let new_edits = load_edit_list()
             .expect("failed to load edits from new fs")
-            .into_iter()
-            .map(|e| (e.identity(), e))
+            .edits()
+            .iter()
+            .map(|e| (e.identity(), e.clone()))
             .collect::<HashMap<_, _>>();
         println!("edits loading v2: {:?}", start_new.elapsed());
 

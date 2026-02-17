@@ -1,4 +1,5 @@
 use crate::edit::edit_builder::EditBuilder;
+use crate::edit::edit_list::EditList;
 use crate::edit::edit_loader::load_single_correction;
 
 use crate::dapi::from_value::FromValue;
@@ -31,22 +32,17 @@ use std::fs::{self, File};
 use std::io::{self, Read};
 use std::path::PathBuf;
 
-//TODO: implement the return as a result marking complete failure vs just needing to return corrections.
-pub fn read_and_process_nba_games(
+// TODO: implement the return as a result marking complete failure vs just needing to
+// return corrections.
+pub fn process_nba_games(
     season_id: SeasonId,
     kind: NBAStatKind,
+    headers: Vec<String>,
+    rows: Vec<Value>,
+    edits: &EditList,
 ) -> Result<Vec<(Identity, NBABoxScore)>, ReadProcessError> {
-    let path = nba_source_path(season_id, kind);
-
-    let json_str = read_nba_file(&path).map_err(|e| ReadProcessError::IOError(e))?;
-
-    let json = from_str(&json_str).map_err(|e| ReadProcessError::JSONParseError(e))?;
-
-    let (rows, headers) =
-        parse_season(json).map_err(|e| ReadProcessError::ObjectStructureError(e))?;
-
     // process
-    match season(rows, headers, kind) {
+    match season(rows.clone(), headers.clone(), kind) {
         Ok(games) => Ok(games),
 
         // handle corrections, maybe use something other than `result` in the future
@@ -73,19 +69,9 @@ pub fn read_and_process_nba_games(
                 }
             }
 
-            read_and_process_nba_games(season_id, kind)
+            process_nba_games(season_id, kind, headers, rows, edits)
         }
     }
-}
-
-fn read_nba_file(file_path: &PathBuf) -> Result<String, io::Error> {
-    let mut file = File::open(file_path)?;
-
-    let mut contents = String::new();
-
-    file.read_to_string(&mut contents)?;
-
-    Ok(contents)
 }
 
 pub(crate) fn season(
@@ -114,6 +100,7 @@ pub(crate) fn season(
                         //any exceptions
                         if correction.correction().game_date.is_today() {
                             //omit games that are wrong if they are potentially still being recorded
+                            println!("⏳ game is live. omitting stats.")
                         } else {
                             corrections.push(correction);
                         }
@@ -126,7 +113,7 @@ pub(crate) fn season(
                     Ok(None) => {} //dont create a box score if it needs to be deleted
                     Err(correction) => {
                         if correction.correction().game_date.is_today() {
-                            //omit games that are wrong if they are potentially still being recorded
+                            println!("⏳ game is live. omitting stats.")
                         } else {
                             corrections.push(correction);
                         }
@@ -149,7 +136,7 @@ fn fields_to_team_box_score(
 ) -> Result<Option<(Identity, TeamBoxScore)>, EditBuilder> {
     //if it fails to parse the identifier then it will crash
 
-    let mut box_score_builder = BoxScoreBuilder::default();
+    let mut box_score = BoxScoreBuilder::default();
 
     let game_id = s.game_id().expect(
         "💀 couldn't get GameId from map which is necessary for (Identity, CorrectionBuilder).",
@@ -180,7 +167,7 @@ fn fields_to_team_box_score(
         game_date,
     };
 
-    let mut correction_builder = EditBuilder::new(
+    let mut edit_builder = EditBuilder::new(
         game_id.clone(),
         season_id,
         None,
@@ -200,7 +187,7 @@ fn fields_to_team_box_score(
     let matchup_string = s.get(&MATCHUP).expect("💀 couldn't get Matchup from map, which is necessary for checking Matchup-TeamAbbreviation validity. ").as_str().expect("💀 Matchup in HashMap is not of type JSON::String");
 
     if !is_matchup_for_team(matchup_string, &team_abbr) {
-        correction_builder.add_missing_field(MATCHUP, Null);
+        edit_builder.add_missing_field(MATCHUP, Null);
     }
 
     let mut visiting = matchup
@@ -213,87 +200,35 @@ fn fields_to_team_box_score(
 
     let meta = GameDisplay::new(matchup.clone(), game_date, None, team_name.clone());
 
-    correction_builder.update_display(meta);
+    edit_builder.update_display(meta);
 
-    record_stat(
-        s.game_result(),
-        &mut box_score_builder,
-        &mut correction_builder,
-    );
-    record_stat(s.minutes(), &mut box_score_builder, &mut correction_builder);
-    record_stat(
-        s.field_goal_makes(),
-        &mut box_score_builder,
-        &mut correction_builder,
-    );
-    record_stat(
-        s.field_goal_attempts(),
-        &mut box_score_builder,
-        &mut correction_builder,
-    );
-    record_stat(
-        s.three_point_makes(),
-        &mut box_score_builder,
-        &mut correction_builder,
-    );
-    record_stat(
-        s.three_point_attempts(),
-        &mut box_score_builder,
-        &mut correction_builder,
-    );
-    record_stat(
-        s.free_throw_makes(),
-        &mut box_score_builder,
-        &mut correction_builder,
-    );
-    record_stat(
-        s.free_throw_attempts(),
-        &mut box_score_builder,
-        &mut correction_builder,
-    );
-    record_stat(
-        s.offensive_rebounds(),
-        &mut box_score_builder,
-        &mut correction_builder,
-    );
-    record_stat(
-        s.defensive_rebounds(),
-        &mut box_score_builder,
-        &mut correction_builder,
-    );
-    record_stat(
-        s.rebounds(),
-        &mut box_score_builder,
-        &mut correction_builder,
-    );
-    record_stat(s.assists(), &mut box_score_builder, &mut correction_builder);
-    record_stat(s.steals(), &mut box_score_builder, &mut correction_builder);
-    record_stat(s.blocks(), &mut box_score_builder, &mut correction_builder);
-    record_stat(
-        s.turnovers(),
-        &mut box_score_builder,
-        &mut correction_builder,
-    );
-    record_stat(
-        s.personal_fouls(),
-        &mut box_score_builder,
-        &mut correction_builder,
-    );
-    record_stat(s.points(), &mut box_score_builder, &mut correction_builder);
-    record_stat(
-        s.plus_minus(),
-        &mut box_score_builder,
-        &mut correction_builder,
-    );
+    record_stat(s.game_result(), &mut box_score, &mut edit_builder);
+    record_stat(s.minutes(), &mut box_score, &mut edit_builder);
+    record_stat(s.field_goal_makes(), &mut box_score, &mut edit_builder);
+    record_stat(s.field_goal_attempts(), &mut box_score, &mut edit_builder);
+    record_stat(s.three_point_makes(), &mut box_score, &mut edit_builder);
+    record_stat(s.three_point_attempts(), &mut box_score, &mut edit_builder);
+    record_stat(s.free_throw_makes(), &mut box_score, &mut edit_builder);
+    record_stat(s.free_throw_attempts(), &mut box_score, &mut edit_builder);
+    record_stat(s.offensive_rebounds(), &mut box_score, &mut edit_builder);
+    record_stat(s.defensive_rebounds(), &mut box_score, &mut edit_builder);
+    record_stat(s.rebounds(), &mut box_score, &mut edit_builder);
+    record_stat(s.assists(), &mut box_score, &mut edit_builder);
+    record_stat(s.steals(), &mut box_score, &mut edit_builder);
+    record_stat(s.blocks(), &mut box_score, &mut edit_builder);
+    record_stat(s.turnovers(), &mut box_score, &mut edit_builder);
+    record_stat(s.personal_fouls(), &mut box_score, &mut edit_builder);
+    record_stat(s.points(), &mut box_score, &mut edit_builder);
+    record_stat(s.plus_minus(), &mut box_score, &mut edit_builder);
 
     let mut delete: bool = false;
     //take the preexisting corrections and apply them to the box score builder
-    if let Ok(mut correction) = load_single_correction(&identity) {
-        correction.correct_matchup(&mut visiting, &team_abbr);
+    if let Ok(mut existing) = load_single_correction(&identity) {
+        existing.correct_matchup(&mut visiting, &team_abbr);
 
-        correction.correct_box_score_builder(&mut box_score_builder, &mut correction_builder);
+        existing.correct_box_score_builder(&mut box_score, &mut edit_builder);
 
-        delete = correction.delete;
+        delete = existing.delete;
     };
 
     if delete {
@@ -304,12 +239,14 @@ fn fields_to_team_box_score(
         };
 
         Ok(None)
-    } else if correction_builder.has_corrections() {
-        eprintln!("\n❌ failed to create a TeamBoxScore for {team_name}. id: {team_id} game id: {game_id}");
+    } else if edit_builder.has_corrections() {
+        println!(
+            "❌ failed to create a TeamBoxScore for {team_name}. id: {team_id} game id: {game_id}"
+        );
 
-        Err(correction_builder)
+        Err(edit_builder)
     } else {
-        let box_score = box_score_builder.build()
+        let box_score = box_score.build()
             .map_err(|e| format!("{e}"))
             .unwrap_or_else(|e| panic!("💀 failed to create TeamBoxScore: {e}\n💀 GameId: {game_id}\n💀 SeasonId: {season_id}\n💀 TeamId: {team_id}\n💀 TeamAbbreviation: {team_abbr}"));
 
@@ -332,7 +269,7 @@ fn fields_to_player_box_score(
 ) -> Result<Option<(Identity, PlayerBoxScore)>, EditBuilder> {
     //if it fails to parse the identifier then it will crash
 
-    let mut box_score_builder = BoxScoreBuilder::default();
+    let mut box_score = BoxScoreBuilder::default();
 
     let game_id = s
         .game_id()
@@ -360,7 +297,7 @@ fn fields_to_player_box_score(
         game_id,
     };
 
-    let mut correction_builder = EditBuilder::new(
+    let mut edit_builder = EditBuilder::new(
         game_id.clone(),
         season_id,
         Some(player_id),
@@ -386,96 +323,43 @@ fn fields_to_player_box_score(
         team_name.clone(),
     );
 
-    correction_builder.update_display(meta);
+    edit_builder.update_display(meta);
 
-    record_stat(
-        s.game_result(),
-        &mut box_score_builder,
-        &mut correction_builder,
-    );
-    record_stat(s.minutes(), &mut box_score_builder, &mut correction_builder);
-    record_stat(
-        s.field_goal_makes(),
-        &mut box_score_builder,
-        &mut correction_builder,
-    );
-    record_stat(
-        s.field_goal_attempts(),
-        &mut box_score_builder,
-        &mut correction_builder,
-    );
-    record_stat(
-        s.three_point_makes(),
-        &mut box_score_builder,
-        &mut correction_builder,
-    );
-    record_stat(
-        s.three_point_attempts(),
-        &mut box_score_builder,
-        &mut correction_builder,
-    );
-    record_stat(
-        s.free_throw_makes(),
-        &mut box_score_builder,
-        &mut correction_builder,
-    );
-    record_stat(
-        s.free_throw_attempts(),
-        &mut box_score_builder,
-        &mut correction_builder,
-    );
-    record_stat(
-        s.offensive_rebounds(),
-        &mut box_score_builder,
-        &mut correction_builder,
-    );
-    record_stat(
-        s.defensive_rebounds(),
-        &mut box_score_builder,
-        &mut correction_builder,
-    );
-    record_stat(
-        s.rebounds(),
-        &mut box_score_builder,
-        &mut correction_builder,
-    );
-    record_stat(s.assists(), &mut box_score_builder, &mut correction_builder);
-    record_stat(s.steals(), &mut box_score_builder, &mut correction_builder);
-    record_stat(s.blocks(), &mut box_score_builder, &mut correction_builder);
-    record_stat(
-        s.turnovers(),
-        &mut box_score_builder,
-        &mut correction_builder,
-    );
-    record_stat(
-        s.personal_fouls(),
-        &mut box_score_builder,
-        &mut correction_builder,
-    );
-    record_stat(s.points(), &mut box_score_builder, &mut correction_builder);
-    record_stat(
-        s.plus_minus(),
-        &mut box_score_builder,
-        &mut correction_builder,
-    );
+    record_stat(s.game_result(), &mut box_score, &mut edit_builder);
+    record_stat(s.minutes(), &mut box_score, &mut edit_builder);
+    record_stat(s.field_goal_makes(), &mut box_score, &mut edit_builder);
+    record_stat(s.field_goal_attempts(), &mut box_score, &mut edit_builder);
+    record_stat(s.three_point_makes(), &mut box_score, &mut edit_builder);
+    record_stat(s.three_point_attempts(), &mut box_score, &mut edit_builder);
+    record_stat(s.free_throw_makes(), &mut box_score, &mut edit_builder);
+    record_stat(s.free_throw_attempts(), &mut box_score, &mut edit_builder);
+    record_stat(s.offensive_rebounds(), &mut box_score, &mut edit_builder);
+    record_stat(s.defensive_rebounds(), &mut box_score, &mut edit_builder);
+    record_stat(s.rebounds(), &mut box_score, &mut edit_builder);
+    record_stat(s.assists(), &mut box_score, &mut edit_builder);
+    record_stat(s.steals(), &mut box_score, &mut edit_builder);
+    record_stat(s.blocks(), &mut box_score, &mut edit_builder);
+    record_stat(s.turnovers(), &mut box_score, &mut edit_builder);
+    record_stat(s.personal_fouls(), &mut box_score, &mut edit_builder);
+    record_stat(s.points(), &mut box_score, &mut edit_builder);
+    record_stat(s.plus_minus(), &mut box_score, &mut edit_builder);
 
     let mut delete = false;
     //take the preexisting corrections and apply them to the box score builder
     if let Ok(mut correction) = load_single_correction(&identity) {
-        correction.correct_box_score_builder(&mut box_score_builder, &mut correction_builder);
+        correction.correct_box_score_builder(&mut box_score, &mut edit_builder);
 
         delete = correction.delete;
     };
 
     if delete {
         Ok(None)
-    } else if correction_builder.has_corrections() {
-        eprintln!("\n❌ failed to create a PlayerBoxScore for {player_name}. id: {player_id} game id: {game_id}.");
+    } else if edit_builder.has_corrections() {
+        println!("❌ failed to create a PlayerBoxScore for {player_name}. id: {player_id} game id: {game_id}.");
 
-        Err(correction_builder)
+        Err(edit_builder)
     } else {
-        let box_score = box_score_builder.build()
-            .map_err(|e| format!("{e}"))
+        let box_score = box_score.build()
             .unwrap_or_else(|e| panic!("💀 failed to create PlayerBoxScore: {e}\n💀 GameId: {game_id}\n💀 PlayerId: {player_id}\n💀 SeasonId: {season_id}\n💀 TeamId: {team_id}\n💀 TeamAbbreviation: {team_abbr}"));
 
         let player = PlayerBoxScore::construct(player_id, player_name, box_score);

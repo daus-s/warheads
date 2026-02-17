@@ -3,7 +3,18 @@ use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use wincode::{SchemaRead, SchemaWrite};
 #[derive(
-    Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize, SchemaWrite, SchemaRead,
+    Clone,
+    Copy,
+    Debug,
+    Eq,
+    PartialEq,
+    Ord,
+    PartialOrd,
+    Hash,
+    Serialize,
+    Deserialize,
+    SchemaWrite,
+    SchemaRead,
 )]
 pub struct TeamId(pub u64);
 
