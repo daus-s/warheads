@@ -36,11 +36,12 @@ pub fn load_edit_list() -> Result<EditList, EditLoadingError> {
     Ok(edits)
 }
 
-pub fn split_edit_list(edits: EditList) -> (Vec<Edit>, Vec<Edit>) {
+pub fn split_edit_list(edits: &EditList) -> (Vec<Edit>, Vec<Edit>) {
     edits
+        .clone()
         .into_edits()
         .into_iter()
-        .partition(|edit| edit.kind == NBAStatKind::Player)
+        .partition(|edit| edit.kind() == NBAStatKind::Player)
 }
 
 fn load_season_corrections(year: i32, kind: NBAStatKind) -> Result<Vec<Edit>, String> {

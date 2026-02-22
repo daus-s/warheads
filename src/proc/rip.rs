@@ -57,7 +57,7 @@ pub fn process_nba_games(
             );
 
             for mut correction_builder in correction_builders {
-                let correction = correction_builder.create_and_save();
+                let correction = correction_builder.create();
 
                 for loaded_correction in corrections.iter() {
                     if loaded_correction == &correction {
@@ -173,7 +173,6 @@ fn fields_to_team_box_score(
         None,
         team_id,
         team_abbr.clone(),
-        Team,
         game_date,
     );
 
@@ -303,7 +302,6 @@ fn fields_to_player_box_score(
         Some(player_id),
         team_id,
         team_abbr.clone(),
-        Player,
         game_date,
     );
 

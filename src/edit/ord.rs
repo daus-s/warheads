@@ -62,7 +62,7 @@ mod test_edit_order {
                 team_id: TeamId(1),
                 team_abbr: TeamAbbreviation::from_str("LAL")
                     .expect("Failed to create TeamAbbreviation"),
-                kind: NBAStatKind::Team,
+
                 period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
@@ -78,7 +78,7 @@ mod test_edit_order {
                 team_id: TeamId(1),
                 team_abbr: TeamAbbreviation::from_str("LAL")
                     .expect("Failed to create TeamAbbreviation"),
-                kind: NBAStatKind::Player,
+
                 period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
@@ -94,7 +94,7 @@ mod test_edit_order {
                 team_id: TeamId(1),
                 team_abbr: TeamAbbreviation::from_str("LAL")
                     .expect("Failed to create TeamAbbreviation"),
-                kind: NBAStatKind::Player,
+
                 period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
@@ -110,7 +110,7 @@ mod test_edit_order {
                 team_id: TeamId(2),
                 team_abbr: TeamAbbreviation::from_str("GSW")
                     .expect("Failed to create TeamAbbreviation"),
-                kind: NBAStatKind::Team,
+
                 period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
@@ -126,7 +126,7 @@ mod test_edit_order {
                 team_id: TeamId(2),
                 team_abbr: TeamAbbreviation::from_str("GSW")
                     .expect("Failed to create TeamAbbreviation"),
-                kind: NBAStatKind::Player,
+
                 period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
@@ -142,7 +142,7 @@ mod test_edit_order {
                 team_id: TeamId(2),
                 team_abbr: TeamAbbreviation::from_str("GSW")
                     .expect("Failed to create TeamAbbreviation"),
-                kind: NBAStatKind::Player,
+
                 period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
@@ -158,7 +158,7 @@ mod test_edit_order {
                 team_id: TeamId(3),
                 team_abbr: TeamAbbreviation::from_str("BOS")
                     .expect("Failed to create TeamAbbreviation"),
-                kind: NBAStatKind::Team,
+
                 period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
@@ -174,7 +174,7 @@ mod test_edit_order {
                 team_id: TeamId(3),
                 team_abbr: TeamAbbreviation::from_str("BOS")
                     .expect("Failed to create TeamAbbreviation"),
-                kind: NBAStatKind::Player,
+
                 period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
@@ -190,7 +190,6 @@ mod test_edit_order {
                 team_id: TeamId(3),
                 team_abbr: TeamAbbreviation::from_str("BOS")
                     .expect("Failed to create TeamAbbreviation"),
-                kind: NBAStatKind::Player,
                 period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
@@ -206,7 +205,6 @@ mod test_edit_order {
                 team_id: TeamId(4),
                 team_abbr: TeamAbbreviation::from_str("MIA")
                     .expect("Failed to create TeamAbbreviation"),
-                kind: NBAStatKind::Team,
                 period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
@@ -222,7 +220,7 @@ mod test_edit_order {
                 team_id: TeamId(4),
                 team_abbr: TeamAbbreviation::from_str("MIA")
                     .expect("Failed to create TeamAbbreviation"),
-                kind: NBAStatKind::Player,
+
                 period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
@@ -238,12 +236,140 @@ mod test_edit_order {
                 team_id: TeamId(4),
                 team_abbr: TeamAbbreviation::from_str("MIA")
                     .expect("Failed to create TeamAbbreviation"),
-                kind: NBAStatKind::Player,
+
                 period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
                     (StatColumn::BLK, Value::from(4)),
                     (StatColumn::REB, Value::from(13)),
+                ]),
+            },
+            Edit {
+                game_id: GameId(3),
+                game_date: GameDate::ymd(2022, 3, 17).expect("Failed to create GameDate"),
+                season: SeasonId::from(22021),
+                player_id: None,
+                team_id: TeamId(3),
+                team_abbr: TeamAbbreviation::from_str("BOS")
+                    .expect("Failed to create TeamAbbreviation"),
+
+                period: SeasonPeriod::RegularSeason,
+                delete: false,
+                corrections: HashMap::from([
+                    (StatColumn::PTS, Value::from(120)),
+                    (StatColumn::REB, Value::from(48)),
+                ]),
+            },
+            Edit {
+                game_id: GameId(3),
+                game_date: GameDate::ymd(2022, 3, 17).expect("Failed to create GameDate"),
+                season: SeasonId::from(22021),
+                player_id: Some(PlayerId(301)),
+                team_id: TeamId(3),
+                team_abbr: TeamAbbreviation::from_str("BOS")
+                    .expect("Failed to create TeamAbbreviation"),
+
+                period: SeasonPeriod::RegularSeason,
+                delete: false,
+                corrections: HashMap::from([
+                    (StatColumn::PTS, Value::from(35)),
+                    (StatColumn::REB, Value::from(9)),
+                ]),
+            },
+            Edit {
+                game_id: GameId(3),
+                game_date: GameDate::ymd(2022, 3, 17).expect("Failed to create GameDate"),
+                season: SeasonId::from(22021),
+                player_id: None,
+                team_id: TeamId(4),
+                team_abbr: TeamAbbreviation::from_str("MIA")
+                    .expect("Failed to create TeamAbbreviation"),
+
+                period: SeasonPeriod::RegularSeason,
+                delete: false,
+                corrections: HashMap::from([
+                    (StatColumn::PTS, Value::from(125)),
+                    (StatColumn::BLK, Value::from(9)),
+                ]),
+            },
+            Edit {
+                game_id: GameId(3),
+                game_date: GameDate::ymd(2022, 3, 17).expect("Failed to create GameDate"),
+                season: SeasonId::from(22021),
+                player_id: Some(PlayerId(401)),
+                team_id: TeamId(4),
+                team_abbr: TeamAbbreviation::from_str("MIA")
+                    .expect("Failed to create TeamAbbreviation"),
+
+                period: SeasonPeriod::RegularSeason,
+                delete: false,
+                corrections: HashMap::from([
+                    (StatColumn::PTS, Value::from(30)),
+                    (StatColumn::AST, Value::from(9)),
+                ]),
+            },
+            Edit {
+                game_id: GameId(4),
+                game_date: GameDate::ymd(2022, 6, 1).expect("Failed to create GameDate"),
+                season: SeasonId::from(22022),
+                player_id: None,
+                team_id: TeamId(1),
+                team_abbr: TeamAbbreviation::from_str("BRK")
+                    .expect("Failed to create TeamAbbreviation"),
+
+                period: SeasonPeriod::RegularSeason,
+                delete: false,
+                corrections: HashMap::from([
+                    (StatColumn::PTS, Value::from(150)), // Changed PTS value for team statistics
+                    (StatColumn::REB, Value::from(40)),  // Changed REB value for team statistics
+                ]),
+            },
+            Edit {
+                game_id: GameId(4),
+                game_date: GameDate::ymd(2022, 6, 1).expect("Failed to create GameDate"),
+                season: SeasonId::from(22022),
+                player_id: Some(PlayerId(601)), // Player Id for the player statistics edit
+                team_id: TeamId(1),
+                team_abbr: TeamAbbreviation::from_str("BRK")
+                    .expect("Failed to create TeamAbbreviation"),
+
+                period: SeasonPeriod::RegularSeason,
+                delete: false,
+                corrections: HashMap::from([
+                    (StatColumn::PTS, Value::from(40)), // Changed PTS value for player statistics
+                    (StatColumn::AST, Value::from(25)), // Changed AST value for player statistics
+                ]),
+            },
+            Edit {
+                game_id: GameId(4),
+                game_date: GameDate::ymd(2022, 3, 30).expect("Failed to create GameDate"),
+                season: SeasonId::from(22022),
+                player_id: None,
+                team_id: TeamId(2),
+                team_abbr: TeamAbbreviation::from_str("TOR")
+                    .expect("Failed to create TeamAbbreviation"),
+
+                period: SeasonPeriod::RegularSeason,
+                delete: false,
+                corrections: HashMap::from([
+                    (StatColumn::PTS, Value::from(160)), // Changed PTS value for team statistics
+                    (StatColumn::REB, Value::from(45)),  // Changed REB value for team statistics
+                ]),
+            },
+            Edit {
+                game_id: GameId(4),
+                game_date: GameDate::ymd(2022, 6, 1).expect("Failed to create GameDate"),
+                season: SeasonId::from(22022),
+                player_id: Some(PlayerId(501)), // Player Id for the player statistics edit
+                team_id: TeamId(2),
+                team_abbr: TeamAbbreviation::from_str("TOR")
+                    .expect("Failed to create TeamAbbreviation"),
+
+                period: SeasonPeriod::RegularSeason,
+                delete: false,
+                corrections: HashMap::from([
+                    (StatColumn::PTS, Value::from(30)), // Changed PTS value for player statistics
+                    (StatColumn::AST, Value::from(15)), // Changed AST value for player statistics
                 ]),
             },
         ];

@@ -51,7 +51,7 @@ impl PlayerBoxScore {
         edit.edit_box_score(&mut self.box_score);
     }
 
-    pub(crate) fn reorient(&mut self, correction: &mut Edit) {
+    pub(crate) fn correct_identifiers(&mut self, correction: &mut Edit) {
         correction.corrections.retain(|key, value| match key {
             PLAYER_ID => {
                 if let Ok(player_id) = value.player_id() {

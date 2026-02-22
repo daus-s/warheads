@@ -103,7 +103,7 @@ impl TeamBoxScore {
         edit.edit_box_score(&mut self.box_score);
     }
 
-    pub(crate) fn reorient(&mut self, correction: &mut Edit) {
+    pub(crate) fn correct_identifiers(&mut self, correction: &mut Edit) {
         /*
          *
          * pub team_abbreviation: TeamAbbreviation,

@@ -9,7 +9,6 @@ use crate::format::game_object_formatter::GameIdentity;
 use crate::stats::game_display::GameDisplay;
 use crate::stats::gamecard::GameCard;
 use crate::stats::identity::Identity;
-use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::stat_column::StatColumn::{GAME_DATE, MATCHUP, WL};
 use crate::stats::visiting::Visiting;
 
@@ -43,22 +42,20 @@ impl GameObject {
         id2: Identity,
         game2: TeamBoxScore,
     ) -> Result<GameObject, Vec<EditBuilder>> {
-        let mut correction1 = EditBuilder::new(
+        let mut edit1 = EditBuilder::new(
             id1.game_id,
             id1.season_id,
             None,
             id1.team_id,
             id1.team_abbr(),
-            NBAStatKind::Team,
             id1.game_date,
         );
-        let mut correction2 = EditBuilder::new(
+        let mut edit2 = EditBuilder::new(
             id2.game_id,
             id2.season_id,
             None,
             id2.team_id,
             id2.team_abbr(),
-            NBAStatKind::Team,
             id2.game_date,
         );
 
@@ -67,20 +64,20 @@ impl GameObject {
         }
 
         if game1.box_score().wl() == game2.box_score().wl() {
-            correction1.add_missing_field(WL, Null);
-            correction2.add_missing_field(WL, Null);
+            edit1.add_missing_field(WL, Null);
+            edit2.add_missing_field(WL, Null);
         }
 
         if id1.game_date != id2.game_date {
-            correction1.add_missing_field(GAME_DATE, Null);
-            correction2.add_missing_field(GAME_DATE, Null);
+            edit1.add_missing_field(GAME_DATE, Null);
+            edit2.add_missing_field(GAME_DATE, Null);
         }
 
         //draconian yes, but if there isn't a roster for the team we're not gonna study it.
         if game1.roster_box_scores().len() == 0 || game2.roster_box_scores().len() == 0 {
             println!("No roster data available for one or both teams. {id1:?}, {id2:?}");
-            correction1.set_delete(true);
-            correction2.set_delete(true);
+            edit1.set_delete(true);
+            edit2.set_delete(true);
         }
 
         let mut matchup: Matchup = Default::default();
@@ -93,28 +90,28 @@ impl GameObject {
                 (home, away)
             })
             .map_err(|(a, b)| {
-                correction1.add_missing_field(MATCHUP, Null);
-                correction2.add_missing_field(MATCHUP, Null);
+                edit1.add_missing_field(MATCHUP, Null);
+                edit2.add_missing_field(MATCHUP, Null);
 
                 //despite this not being correct, we have ensured that the matchup need be corrected before using this data
                 matchup = Matchup::from_matchup(a.team_abbr(), b.team_abbr());
             });
 
-        correction1.update_display(GameDisplay::new(
+        edit1.update_display(GameDisplay::new(
             matchup.clone(),
             id1.game_date,
             None,
             game1.team_name(),
         ));
-        correction2.update_display(GameDisplay::new(
+        edit2.update_display(GameDisplay::new(
             matchup.clone(),
             id2.game_date,
             None,
             game2.team_name(),
         ));
 
-        if correction1.has_corrections() || correction2.has_corrections() {
-            Err(vec![correction1, correction2])
+        if edit1.has_corrections() || edit2.has_corrections() {
+            Err(vec![edit1, edit2])
         } else {
             let (home, away) = game
                 .expect("💀 if home_and_away errs it must be covered in the correcting branch.");

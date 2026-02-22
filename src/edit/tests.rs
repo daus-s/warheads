@@ -369,7 +369,6 @@ mod correct_columns {
             player_id: Some(PlayerId(23)),
             team_id: TeamId(151),
             team_abbr: TeamAbbreviation("LOL".to_string()),
-            kind: NBAStatKind::Player,
             period: SeasonPeriod::RegularSeason,
             delete: false,
             corrections: HashMap::new(),
@@ -385,7 +384,6 @@ mod correct_columns {
 mod serialize_corrections {
     use crate::edit::edit::Edit;
 
-    use crate::stats::nba_kind::NBAStatKind;
     use crate::stats::season_period::SeasonPeriod;
     use crate::stats::serde_enum::SerdeEnum;
     use crate::stats::stat_column::StatColumn;
@@ -406,7 +404,6 @@ mod serialize_corrections {
             player_id: Some(PlayerId(69420)),
             team_id: TeamId::from(1610612755),
             team_abbr: "SEA".parse().unwrap(),
-            kind: NBAStatKind::Player,
             delete: false,
             corrections: {
                 let mut cs: HashMap<StatColumn, Value> = HashMap::new();
@@ -420,7 +417,7 @@ mod serialize_corrections {
 
         let serialized = serde_json::to_string(&correction).unwrap();
 
-        let expected = r#"{"game_id":"0025900253","game_date":"2000-02-05","season":"22000","team_id":1610612755,"player_id":69420,"team_abbr":"SEA","kind":"Player","period":"RegularSeason","delete":false,"corrections":{"WL":"L"}}"#;
+        let expected = r#"{"game_id":"0025900253","game_date":"2000-02-05","season":"22000","team_id":1610612755,"player_id":69420,"team_abbr":"SEA","period":"RegularSeason","delete":false,"corrections":{"WL":"L"}}"#;
 
         pretty_assertions::assert_eq!(serialized, expected.trim_end());
     }

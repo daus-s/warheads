@@ -11,7 +11,7 @@ use crate::ml::model::Model;
 
 use crate::proc::gather::fetch_and_save_nba_stats;
 use crate::proc::hunting::compare_and_fetch;
-use crate::proc::store::store_nba_season;
+use crate::proc::store::inscribe;
 
 use crate::stats::chronology::Chronology;
 use crate::stats::nba_kind::NBAStatKind;
@@ -69,13 +69,13 @@ pub async fn observe_nba() {
 pub fn chronicle_nba() {
     for era in nba_lifespan_period() {
         if let Err(_) = read_nba_season(era) {
-            store_nba_season(era);
+            inscribe(era);
         }
     }
 
     let current_era = get_current_era();
 
-    store_nba_season(current_era); //always update the current year's season
+    inscribe(current_era); //always update the current year's season
 }
 
 pub fn rate_nba(elo_tracker: &mut EloTracker) {

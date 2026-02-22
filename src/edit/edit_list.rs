@@ -19,6 +19,17 @@ impl EditList {
     pub fn into_edits(self) -> Vec<Edit> {
         self.edits
     }
+
+    pub fn insert(&mut self, edit: Edit) {
+        match self.edits.binary_search(&edit) {
+            Ok(i) => {
+                self.edits[i].merge(edit);
+            }
+            Err(i) => {
+                self.edits.insert(i, edit);
+            }
+        }
+    }
 }
 
 impl<'de> Deserialize<'de> for EditList {
@@ -34,5 +45,79 @@ impl<'de> Deserialize<'de> for EditList {
 impl Default for EditList {
     fn default() -> Self {
         Self { edits: Vec::new() }
+    }
+}
+
+#[cfg(test)]
+mod test_edit_list {
+    use std::{collections::HashMap, str::FromStr};
+
+    use serde_json::Value;
+
+    use crate::stats::nba_kind::NBAStatKind;
+    use crate::stats::season_period::SeasonPeriod;
+    use crate::stats::stat_column::StatColumn;
+
+    use crate::types::{GameDate, GameId, SeasonId, TeamAbbreviation, TeamId};
+
+    use super::*;
+
+    #[test]
+    fn test_insert() {
+        let edit_v = vec![
+            Edit {
+                game_id: GameId(1),
+                game_date: GameDate::ymd(2022, 1, 15).expect("Failed to create GameDate"),
+                season: SeasonId::from(22021),
+                player_id: None,
+                team_id: TeamId(1),
+                team_abbr: TeamAbbreviation::from_str("LAL")
+                    .expect("Failed to create TeamAbbreviation"),
+                period: SeasonPeriod::RegularSeason,
+                delete: false,
+                corrections: HashMap::from([
+                    (StatColumn::PTS, Value::from(110)),
+                    (StatColumn::REB, Value::from(45)),
+                ]),
+            },
+            Edit {
+                game_id: GameId(3),
+                game_date: GameDate::ymd(2022, 3, 17).expect("Failed to create GameDate"),
+                season: SeasonId::from(22021),
+                player_id: None,
+                team_id: TeamId(3),
+                team_abbr: TeamAbbreviation::from_str("BOS")
+                    .expect("Failed to create TeamAbbreviation"),
+                period: SeasonPeriod::RegularSeason,
+                delete: false,
+                corrections: HashMap::from([
+                    (StatColumn::PTS, Value::from(120)),
+                    (StatColumn::REB, Value::from(48)),
+                ]),
+            },
+        ];
+
+        let mut edits = EditList::new(edit_v);
+
+        let x = Edit {
+            game_id: GameId(2),
+            game_date: GameDate::ymd(2022, 3, 10).expect("Failed to create GameDate"),
+            season: SeasonId::from(22021),
+            player_id: None,
+            team_id: TeamId(3),
+            team_abbr: TeamAbbreviation::from_str("BOS")
+                .expect("Failed to create TeamAbbreviation"),
+            period: SeasonPeriod::RegularSeason,
+            delete: false,
+            corrections: HashMap::from([
+                (StatColumn::PTS, Value::from(115)),
+                (StatColumn::REB, Value::from(52)),
+            ]),
+        };
+
+        edits.insert(x);
+
+        dbg!(&edits);
+        assert!(edits.edits.is_sorted())
     }
 }

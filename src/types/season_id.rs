@@ -1,3 +1,4 @@
+use crate::dapi::season_manager::get_current_era;
 use crate::format::season::season_fmt;
 use crate::stats::season_period::SeasonPeriod;
 use crate::stats::season_period::SeasonPeriod::{
@@ -106,6 +107,10 @@ impl SeasonId {
             year: prev_year,
             period: prev_period,
         }
+    }
+
+    pub fn is_current_era(&self) -> bool {
+        *self == get_current_era()
     }
 }
 

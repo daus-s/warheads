@@ -39,8 +39,6 @@ pub struct Edit {
 
     pub team_abbr: TeamAbbreviation,
 
-    pub kind: NBAStatKind,
-
     pub period: SeasonPeriod,
 
     pub delete: bool,
@@ -68,13 +66,13 @@ impl Edit {
     /// Saves the correction to the file:
     /// `corrections/{season_file}/{NBAStatType}/{}.json`
     pub fn save(&self) -> io::Result<()> {
-        let path = nba_correction_dir(self.season, self.kind);
+        let path = nba_correction_dir(self.season, self.kind());
 
         fs::create_dir_all(&path)?;
 
         let json = serde_json::to_string_pretty(self)?;
 
-        let filepath = match self.kind {
+        let filepath = match self.kind() {
             Team => nba_team_correction_file(self.season, self.game_id.clone(), self.team_id),
             Player => nba_player_correction_file(
                 self.season,
@@ -88,6 +86,29 @@ impl Edit {
         fs::write(filepath, json)?;
 
         Ok(())
+    }
+
+    pub fn kind(&self) -> NBAStatKind {
+        match self.player_id {
+            Some(_) => NBAStatKind::Player,
+            None => NBAStatKind::Team,
+        }
+    }
+
+    pub fn len(&self) -> usize {
+        self.corrections.len()
+    }
+
+    pub fn domain(&self) -> (SeasonId, NBAStatKind) {
+        (self.season, self.kind())
+    }
+
+    pub fn set_delete(&mut self, delete: bool) {
+        self.delete = delete
+    }
+
+    pub fn team_abbr(&self) -> TeamAbbreviation {
+        self.team_abbr.clone()
     }
 
     ///
@@ -118,7 +139,7 @@ impl Edit {
             Some(corrected_string)
         }
 
-        match (columns.as_slice(), self.kind) {
+        match (columns.as_slice(), self.kind()) {
             (
                 [_season_id, _player_id, _player_name, _team_id, _team_abbreviation, _team_name, _game_id, _game_date, _matchup, _wl, _min, _fgm, _fga, _fg_pct, _fg3m, _fg3a, _fg3_pct, _ftm, _fta, _ft_pct, _oreb, _dreb, _reb, _ast, _stl, _blk, _tov, _pf, _pts, _plus_minus, _fantasy_pts, _video_available],
                 Player,
@@ -134,22 +155,6 @@ impl Edit {
                 game.to_string()
             }
         }
-    }
-
-    pub fn len(&self) -> usize {
-        self.corrections.len()
-    }
-
-    pub fn domain(&self) -> (SeasonId, NBAStatKind) {
-        (self.season, self.kind)
-    }
-
-    pub fn set_delete(&mut self, delete: bool) {
-        self.delete = delete
-    }
-
-    pub fn team_abbr(&self) -> TeamAbbreviation {
-        self.team_abbr.clone()
     }
 
     pub fn edit_box_score(&mut self, game: &mut BoxScore) {
@@ -339,15 +344,15 @@ impl Debug for Edit {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "szn: {}:{}\n{}-{} ({})\n{}",
-            self.season,
+            "game_id: {} {}\t{}-{} ({})\t{}",
             self.game_id,
+            self.season,
             self.team_abbr,
             match self.player_id {
                 Some(pid) => pid.to_string(),
                 None => self.team_id.to_string(),
             },
-            match self.kind {
+            match self.kind() {
                 Team => "team",
                 Player => "player",
                 LineUp => "lineup",
@@ -374,7 +379,7 @@ impl Identifiable for Edit {
         //     Err(_) => "failure"
         // });
 
-        match self.kind {
+        match self.kind() {
             NBAStatKind::Team => Identity {
                 season_id: self.season,
                 game_id: self.game_id.clone(),

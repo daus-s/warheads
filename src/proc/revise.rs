@@ -1,6 +1,7 @@
 use std::fs;
 
-use crate::edit::edit_loader::{load_edit_list, split_edit_list};
+use crate::edit::edit_list::EditList;
+use crate::edit::edit_loader::split_edit_list;
 
 use crate::dapi::team_box_score::TeamBoxScore;
 
@@ -13,9 +14,12 @@ use crate::types::SeasonId;
 pub fn revise_nba_season(
     era: SeasonId,
     games: &mut Vec<(Identity, TeamBoxScore)>,
+    edits: &EditList,
 ) -> Result<(), ()> {
-    let (mut player_corrections, mut team_corrections) =
-        split_edit_list(load_edit_list().map_err(|_| ())?);
+    let (mut player_corrections, mut team_corrections) = split_edit_list(edits);
+
+    player_corrections.retain(|c| c.season == era);
+    team_corrections.retain(|c| c.season == era);
 
     //only delete if the team correction says the game shouldnt be recorded
     for correction in team_corrections.iter() {
@@ -41,7 +45,7 @@ pub fn revise_nba_season(
             .iter_mut()
             .find(|c| c.identity() == *identity)
         {
-            game.reorient(correction);
+            game.correct_identifiers(correction);
             game.correct_box_score(correction);
         }
 
@@ -52,7 +56,7 @@ pub fn revise_nba_season(
                 .iter_mut()
                 .find(|c| c.identity() == player_identity)
             {
-                player.reorient(correction);
+                player.correct_identifiers(correction);
                 player.correct_box_score(correction);
             }
         }

@@ -1,6 +1,7 @@
-use crate::edit::edit_builder::EditBuilder;
-
 use crate::dapi::team_box_score::TeamBoxScore;
+
+use crate::edit::edit_builder::EditBuilder;
+use crate::edit::edit_loader::load_edit_list;
 
 use crate::format::season::season_fmt;
 
@@ -9,7 +10,8 @@ use crate::proc::revise::revise_nba_season;
 
 use crate::stats::game_obj::GameObject;
 use crate::stats::identity::Identity;
-use crate::stats::nba_kind::NBAStatKind::{Player, Team};
+
+use crate::storage::store_disk::{save_nba_game, SaveGameError};
 
 use crate::types::{GameId, SeasonId};
 
@@ -17,10 +19,12 @@ use indicatif::{ProgressBar, ProgressStyle};
 
 use std::collections::HashMap;
 
-pub fn store_nba_season(era: SeasonId) {
+pub fn inscribe(era: SeasonId) -> Result<(), ()> {
+    let mut edits = load_edit_list().map_err(|_| ())?;
+
     let mut team_games = load_season_from_source(era);
 
-    match revise_nba_season(era, &mut team_games) {
+    match revise_nba_season(era, &mut team_games, &edits) {
         Ok(_) => {
             println!(
                 "✅ corrections for the {} NBA season have been written successfully.",
@@ -37,33 +41,29 @@ pub fn store_nba_season(era: SeasonId) {
 
     let pairs = pair_off(team_games);
 
-    if let Err(mut correction_builders) = pairs {
-        println!(
-            "ℹ️  there are {} {} corrections to make for the {} season.",
-            correction_builders.len(),
-            Team,
-            era
-        );
+    match pairs {
+        Err(mut correction_builders) => {
+            println!(
+                "ℹ️  there are {} corrections to make to Team box scores for the {} season.",
+                correction_builders.len(),
+                era
+            );
 
-        for correction in correction_builders.iter_mut() {
-            correction.create_and_save();
+            for correction in correction_builders.iter_mut() {
+                edits.insert(correction.create());
+            }
+
+            inscribe(era)
         }
-
-        store_nba_season(era);
-    } else if let Ok(games) = pairs {
-        sub_save(games);
-    } else {
-        unreachable!("💀 result variant is neither Err nor Ok. ")
+        Ok(games) => save_game_object(games).map_err(|_| ()),
     }
 }
 
-fn sub_save(season: Vec<GameObject>) {
-    // let client = crate::storage::client::create().await;
-
+fn save_game_object(season: Vec<GameObject>) -> Result<(), SaveGameError> {
     let num_games = season.len();
 
     if num_games == 0 {
-        return;
+        return Ok(());
     }
 
     let szn = season[0].season().year();
@@ -85,12 +85,13 @@ fn sub_save(season: Vec<GameObject>) {
     ));
 
     for game in &season {
-        crate::storage::store_disk::save_nba_game(game).unwrap();
+        save_nba_game(game)?;
 
         pb.inc(1);
     }
 
     pb.finish_with_message(format!("saved {} season.", season_fmt(szn)));
+    Ok(())
 }
 
 pub(crate) type TeamGame = (Identity, TeamBoxScore);
@@ -136,18 +137,8 @@ pub(crate) fn pair_off(games: Vec<TeamGame>) -> Result<Vec<GameObject>, Vec<Edit
                     game_date,
                 } = game.0.clone();
 
-                let mut correction_builder = EditBuilder::new(
-                    game_id,
-                    season_id,
-                    player_id,
-                    team_id,
-                    team_abbr,
-                    match player_id {
-                        Some(_id) => Player,
-                        None => Team,
-                    },
-                    game_date,
-                );
+                let mut correction_builder =
+                    EditBuilder::new(game_id, season_id, player_id, team_id, team_abbr, game_date);
 
                 correction_builder.set_delete(true);
 

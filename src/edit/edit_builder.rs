@@ -41,7 +41,6 @@ impl EditBuilder {
         player_id: Option<PlayerId>,
         team_id: TeamId,
         team_abbr: TeamAbbreviation,
-        kind: NBAStatKind,
         game_date: GameDate,
     ) -> Self {
         EditBuilder {
@@ -53,7 +52,6 @@ impl EditBuilder {
                 team_id,
                 team_abbr: team_abbr.clone(),
                 period: season.period(),
-                kind,
                 delete: false,
                 corrections: HashMap::new(),
             },
@@ -73,7 +71,7 @@ impl EditBuilder {
         self.correction.corrections.remove(&col);
     }
 
-    pub fn create_and_save(&mut self) -> Edit {
+    pub fn create(&mut self) -> Edit {
         use std::io::{stdout, Write};
 
         let (mut corrections, display_option) = (self.correction.clone(), self.display.clone());
@@ -223,7 +221,6 @@ impl EditBuilder {
                 println!("{}: {}", col, value); // New value
             }
         }
-        save_correction(&corrections);
 
         corrections
     }
