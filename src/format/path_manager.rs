@@ -47,7 +47,7 @@ pub fn universal_nba_source_path(season: SeasonId, kind: NBAStatKind) -> PathBuf
 }
 
 pub fn nba_edit_file() -> PathBuf {
-    PathBuf::from(format!("{}/nba/edits/edits.json", *DATA))
+    PathBuf::from(format!("{}/nba/edits.json", *DATA))
 }
 
 pub fn nba_correction_dir(season: SeasonId, kind: NBAStatKind) -> String {
@@ -112,7 +112,7 @@ pub fn nba_storage_file(season_id: SeasonId, game_id: GameId) -> PathBuf {
 }
 
 pub fn nba_checksum_file() -> PathBuf {
-    PathBuf::from(format!("{}/nba/checksum/checksums.json", *DATA))
+    PathBuf::from(format!("{}/nba/checksums.json", *DATA))
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
