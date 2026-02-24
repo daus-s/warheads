@@ -1,6 +1,12 @@
+use std::fs;
+
 use serde::{Deserialize, Serialize};
 
-use crate::edit::edit::Edit;
+use crate::{
+    edit::edit::Edit,
+    format::path_manager,
+    stats::identity::{Identifiable, Identity},
+};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct EditList {
@@ -30,6 +36,21 @@ impl EditList {
             }
         }
     }
+
+    pub fn write_to_file(&self) -> Result<(), ()> {
+        let file_path = path_manager::nba_edit_file();
+
+        let json = serde_json::to_string(self).map_err(|_| ())?;
+
+        fs::write(file_path, json).map_err(|_| ())
+    }
+
+    pub fn get(&self, identity: &Identity) -> Option<Edit> {
+        self.edits
+            .iter()
+            .find(|edit| edit.identity() == *identity)
+            .cloned()
+    }
 }
 
 impl<'de> Deserialize<'de> for EditList {
@@ -54,7 +75,6 @@ mod test_edit_list {
 
     use serde_json::Value;
 
-    use crate::stats::nba_kind::NBAStatKind;
     use crate::stats::season_period::SeasonPeriod;
     use crate::stats::stat_column::StatColumn;
 

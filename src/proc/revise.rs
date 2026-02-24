@@ -1,7 +1,7 @@
 use std::fs;
 
 use crate::edit::edit_list::EditList;
-use crate::edit::edit_loader::split_edit_list;
+use crate::edit::edit_loader::partition_edit_list;
 
 use crate::dapi::team_box_score::TeamBoxScore;
 
@@ -16,7 +16,7 @@ pub fn revise_nba_season(
     games: &mut Vec<(Identity, TeamBoxScore)>,
     edits: &EditList,
 ) -> Result<(), ()> {
-    let (mut player_corrections, mut team_corrections) = split_edit_list(edits);
+    let (mut player_corrections, mut team_corrections) = partition_edit_list(edits);
 
     player_corrections.retain(|c| c.season == era);
     team_corrections.retain(|c| c.season == era);

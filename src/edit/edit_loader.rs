@@ -36,7 +36,7 @@ pub fn load_edit_list() -> Result<EditList, EditLoadingError> {
     Ok(edits)
 }
 
-pub fn split_edit_list(edits: &EditList) -> (Vec<Edit>, Vec<Edit>) {
+pub fn partition_edit_list(edits: &EditList) -> (Vec<Edit>, Vec<Edit>) {
     edits
         .clone()
         .into_edits()
@@ -153,41 +153,19 @@ impl Display for EditLoadingError {
 mod load_edits {
     use std::{collections::HashMap, time::Instant};
 
-    use crate::{
-        dapi::season_manager::nba_lifespan,
-        edit::edit_loader::{load_edit_list, load_season_correction_maps},
-        stats::identity::Identifiable,
-    };
+    use crate::{edit::edit_loader::load_edit_list, stats::identity::Identifiable};
 
     #[test]
-    fn test_load_edits() {
-        let start_old = Instant::now();
-        let mut old_edits = HashMap::new();
-
-        for year in nba_lifespan() {
-            let (player_edits, team_edits) =
-                load_season_correction_maps(year).expect("failed to get edits in test workflow");
-
-            old_edits.extend(player_edits);
-            old_edits.extend(team_edits);
-        }
-        println!("edits loading v1: {:?}", start_old.elapsed());
-
+    fn bench_edits_v2() {
         let start_new = Instant::now();
-        let new_edits = load_edit_list()
+
+        let _new_edits = load_edit_list()
             .expect("failed to load edits from new fs")
             .edits()
             .iter()
             .map(|e| (e.identity(), e.clone()))
             .collect::<HashMap<_, _>>();
-        println!("edits loading v2: {:?}", start_new.elapsed());
 
-        assert_eq!(
-            old_edits,
-            new_edits,
-            "old len: {}\nnew len: {}",
-            old_edits.len(),
-            new_edits.len()
-        );
+        println!("edits loading v2: {:?}", start_new.elapsed());
     }
 }

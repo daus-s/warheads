@@ -1,7 +1,6 @@
 #[cfg(test)]
 mod correct_columns {
     use crate::edit::edit::Edit;
-    use crate::stats::nba_kind::NBAStatKind;
     use crate::stats::season_period::SeasonPeriod;
     use crate::stats::stat_column::StatColumn;
     use crate::types::{GameDate, GameId, PlayerId, SeasonId, TeamAbbreviation, TeamId};

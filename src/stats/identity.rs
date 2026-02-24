@@ -56,6 +56,14 @@ impl Identity {
     pub fn team_abbr(&self) -> TeamAbbreviation {
         self.team_abbr.to_owned()
     }
+
+    pub fn team_or_player(&self) -> NBAStatKind {
+        if self.player_id.is_some() {
+            NBAStatKind::Player
+        } else {
+            NBAStatKind::Team
+        }
+    }
 }
 
 ///

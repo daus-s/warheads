@@ -1,5 +1,7 @@
+use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::stat_column::StatColumn::*;
 use crate::stats::statify::StatPair;
+
 use serde_json::Value;
 
 // this file feels like Times New Roman. I am not sure why.
@@ -128,5 +130,15 @@ pub fn box_score_value_to_string(value: &Value) -> String {
 
             String::new()
         }
+    }
+}
+
+pub fn recognize_stat_kind(headers: &[String]) -> NBAStatKind {
+    if headers.len() == 29 {
+        NBAStatKind::Team
+    } else if headers.len() == 32 {
+        NBAStatKind::Player
+    } else {
+        panic!("unrecognized headers format");
     }
 }

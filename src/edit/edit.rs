@@ -1,5 +1,6 @@
 use crate::dapi::from_value::FromValue;
 use crate::edit::edit_builder::EditBuilder;
+use crate::edit::edit_loader::load_edit_list;
 use crate::format::language::Columnizable;
 use crate::format::path_manager::{
     nba_correction_dir, nba_player_correction_file, nba_team_correction_file,
@@ -84,6 +85,17 @@ impl Edit {
 
         // Write the JSON string to the file
         fs::write(filepath, json)?;
+
+        Ok(())
+    }
+
+    /// insert an edit record directly to the json file. this is not as performant and requires reading, parsing
+    /// and a O(logn) insert in the edit list loaded from file. if you are creating many edits, use a reference
+    /// to an edit list and keep in memory.
+    pub fn insert_to_file(&self, edit: Edit) -> Result<(), ()> {
+        let mut edit_list = load_edit_list().map_err(|_| ())?;
+
+        edit_list.insert(edit);
 
         Ok(())
     }

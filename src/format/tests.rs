@@ -1,16 +1,4 @@
 #[cfg(test)]
-mod test_extract {
-    #[test]
-    fn test_json_to_hashmap() {
-        let left = true;
-
-        let right = true;
-
-        assert_eq!(left, right);
-    }
-}
-
-#[cfg(test)]
 mod test_path_manager {
     use crate::constants::paths::data;
     use crate::format::path_manager::{

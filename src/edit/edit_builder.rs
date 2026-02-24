@@ -5,7 +5,6 @@ use crate::format::percent::PercentGeneric;
 
 use crate::stats::game_display::GameDisplay;
 use crate::stats::identity::Identifiable;
-use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::stat_column::StatColumn;
 use crate::stats::types::BoolInt;
 
@@ -30,7 +29,7 @@ use std::fmt::Debug;
 
 #[derive(Debug)]
 pub struct EditBuilder {
-    correction: Edit,
+    edit: Edit,
     display: Option<GameDisplay>,
 }
 
@@ -44,7 +43,7 @@ impl EditBuilder {
         game_date: GameDate,
     ) -> Self {
         EditBuilder {
-            correction: Edit {
+            edit: Edit {
                 game_id,
                 game_date,
                 season,
@@ -64,17 +63,17 @@ impl EditBuilder {
     }
 
     pub fn add_missing_field(&mut self, col: StatColumn, val: Value) {
-        self.correction.corrections.insert(col, val);
+        self.edit.corrections.insert(col, val);
     }
 
     pub fn remove(&mut self, col: StatColumn) {
-        self.correction.corrections.remove(&col);
+        self.edit.corrections.remove(&col);
     }
 
     pub fn create(&mut self) -> Edit {
         use std::io::{stdout, Write};
 
-        let (mut corrections, display_option) = (self.correction.clone(), self.display.clone());
+        let (mut corrections, display_option) = (self.edit.clone(), self.display.clone());
 
         let (display_string, confirmation) = match display_option {
             Some(display) => (format!("{display}"), display.display_name()),
@@ -84,7 +83,7 @@ impl EditBuilder {
             ),
         };
 
-        if let Ok(preexisting) = load_single_correction(&self.correction.identity()) {
+        if let Ok(preexisting) = load_single_correction(&self.edit.identity()) {
             corrections.merge(preexisting);
         }
 
@@ -227,15 +226,19 @@ impl EditBuilder {
 
     /// Returns whether the correction builder has any corrections to apply. It does not specify whether the record should be deleted.
     pub fn has_corrections(&self) -> bool {
-        self.correction.len() > 0 || self.correction.delete
+        self.edit.len() > 0 || self.edit.delete
     }
 
     pub fn set_delete(&mut self, delete: bool) {
-        self.correction.delete = delete;
+        self.edit.delete = delete;
     }
 
     pub fn correction(&self) -> &Edit {
-        &self.correction
+        &self.edit
+    }
+
+    pub fn date(&self) -> &GameDate {
+        &self.edit.game_date
     }
 }
 
@@ -249,7 +252,7 @@ fn save_correction(correction: &Edit) {
         }
         Err(e) => {
             eprintln!(
-                "❌ failed to save corrections for {}: {e}",
+                "❌ failed to serialize corrections for {}: {e}",
                 correction.identity()
             );
         }

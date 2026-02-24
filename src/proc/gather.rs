@@ -4,13 +4,13 @@ use std::io::Read;
 use crate::dapi::player_box_score::PlayerBoxScore;
 use crate::dapi::team_box_score::TeamBoxScore;
 
-use crate::edit::edit_list::{self, EditList};
+use crate::edit::edit_list::EditList;
 use crate::format::parse::parse_season;
 use crate::format::path_manager::nba_source_path;
 
 use crate::proc::error::ReadProcessError;
 use crate::proc::query;
-use crate::proc::rip::process_nba_games;
+use crate::proc::rip::generate_nba_games_from_data;
 
 use crate::stats::identity::Identity;
 use crate::stats::nba_kind::NBAStatKind;
@@ -22,7 +22,7 @@ use crate::types::SeasonId;
 
 pub fn load_player_games_from_source(
     season_id: SeasonId,
-    edit_list: &EditList,
+    edit_list: &mut EditList,
 ) -> Result<Vec<(Identity, PlayerBoxScore)>, ReadProcessError> {
     let player_source_path = nba_source_path(season_id, NBAStatKind::Player);
 
@@ -38,21 +38,19 @@ pub fn load_player_games_from_source(
     let (rows, headers) =
         parse_season(json).map_err(|e| ReadProcessError::ObjectStructureError(e))?;
 
-    Ok(
-        process_nba_games(season_id, NBAStatKind::Player, headers, rows, edit_list)?
-            .into_iter()
-            .filter_map(|(id, stat)| match stat {
-                Player(box_score) => Some((id, box_score)),
-                _ => None,
-            })
-            .collect::<Vec<(Identity, PlayerBoxScore)>>(),
-    )
+    Ok(generate_nba_games_from_data(headers, rows, edit_list)?
+        .into_iter()
+        .filter_map(|(id, stat)| match stat {
+            Player(box_score) => Some((id, box_score)),
+            _ => None,
+        })
+        .collect::<Vec<(Identity, PlayerBoxScore)>>())
 }
 
 pub fn load_team_games_from_source(
     season_id: SeasonId,
     player_games: Vec<(Identity, PlayerBoxScore)>,
-    edit_list: &EditList,
+    edit_list: &mut EditList,
 ) -> Result<Vec<(Identity, TeamBoxScore)>, ReadProcessError> {
     let team_source_path = nba_source_path(season_id, NBAStatKind::Team);
 
@@ -69,7 +67,7 @@ pub fn load_team_games_from_source(
         parse_season(json).map_err(|e| ReadProcessError::ObjectStructureError(e))?;
 
     let mut games: Vec<(Identity, TeamBoxScore)> =
-        process_nba_games(season_id, NBAStatKind::Team, headers, rows, edit_list)?
+        generate_nba_games_from_data(headers, rows, edit_list)?
             .into_iter()
             .filter_map(|(id, stat)| match stat {
                 Team(t) => Some((id, t)),

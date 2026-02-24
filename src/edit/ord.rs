@@ -46,7 +46,7 @@ mod test_edit_order {
 
     use super::*;
     use crate::{
-        stats::{nba_kind::NBAStatKind, season_period::SeasonPeriod, stat_column::StatColumn},
+        stats::{season_period::SeasonPeriod, stat_column::StatColumn},
         types::{GameDate, GameId, PlayerId, SeasonId, TeamAbbreviation, TeamId},
     };
 
