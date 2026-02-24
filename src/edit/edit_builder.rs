@@ -50,7 +50,6 @@ impl EditBuilder {
                 player_id,
                 team_id,
                 team_abbr: team_abbr.clone(),
-                period: season.period(),
                 delete: false,
                 corrections: HashMap::new(),
             },

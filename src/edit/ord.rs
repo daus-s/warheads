@@ -46,7 +46,7 @@ mod test_edit_order {
 
     use super::*;
     use crate::{
-        stats::{season_period::SeasonPeriod, stat_column::StatColumn},
+        stats::stat_column::StatColumn,
         types::{GameDate, GameId, PlayerId, SeasonId, TeamAbbreviation, TeamId},
     };
 
@@ -62,8 +62,6 @@ mod test_edit_order {
                 team_id: TeamId(1),
                 team_abbr: TeamAbbreviation::from_str("LAL")
                     .expect("Failed to create TeamAbbreviation"),
-
-                period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
                     (StatColumn::PTS, Value::from(110)),
@@ -78,8 +76,6 @@ mod test_edit_order {
                 team_id: TeamId(1),
                 team_abbr: TeamAbbreviation::from_str("LAL")
                     .expect("Failed to create TeamAbbreviation"),
-
-                period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
                     (StatColumn::PTS, Value::from(28)),
@@ -94,8 +90,6 @@ mod test_edit_order {
                 team_id: TeamId(1),
                 team_abbr: TeamAbbreviation::from_str("LAL")
                     .expect("Failed to create TeamAbbreviation"),
-
-                period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
                     (StatColumn::PTS, Value::from(22)),
@@ -110,8 +104,6 @@ mod test_edit_order {
                 team_id: TeamId(2),
                 team_abbr: TeamAbbreviation::from_str("GSW")
                     .expect("Failed to create TeamAbbreviation"),
-
-                period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
                     (StatColumn::PTS, Value::from(108)),
@@ -126,8 +118,6 @@ mod test_edit_order {
                 team_id: TeamId(2),
                 team_abbr: TeamAbbreviation::from_str("GSW")
                     .expect("Failed to create TeamAbbreviation"),
-
-                period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
                     (StatColumn::PTS, Value::from(32)),
@@ -142,8 +132,6 @@ mod test_edit_order {
                 team_id: TeamId(2),
                 team_abbr: TeamAbbreviation::from_str("GSW")
                     .expect("Failed to create TeamAbbreviation"),
-
-                period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
                     (StatColumn::AST, Value::from(9)),
@@ -158,8 +146,6 @@ mod test_edit_order {
                 team_id: TeamId(3),
                 team_abbr: TeamAbbreviation::from_str("BOS")
                     .expect("Failed to create TeamAbbreviation"),
-
-                period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
                     (StatColumn::PTS, Value::from(115)),
@@ -174,8 +160,6 @@ mod test_edit_order {
                 team_id: TeamId(3),
                 team_abbr: TeamAbbreviation::from_str("BOS")
                     .expect("Failed to create TeamAbbreviation"),
-
-                period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
                     (StatColumn::PTS, Value::from(30)),
@@ -190,7 +174,6 @@ mod test_edit_order {
                 team_id: TeamId(3),
                 team_abbr: TeamAbbreviation::from_str("BOS")
                     .expect("Failed to create TeamAbbreviation"),
-                period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
                     (StatColumn::PTS, Value::from(25)),
@@ -205,7 +188,6 @@ mod test_edit_order {
                 team_id: TeamId(4),
                 team_abbr: TeamAbbreviation::from_str("MIA")
                     .expect("Failed to create TeamAbbreviation"),
-                period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
                     (StatColumn::PTS, Value::from(112)),
@@ -220,8 +202,6 @@ mod test_edit_order {
                 team_id: TeamId(4),
                 team_abbr: TeamAbbreviation::from_str("MIA")
                     .expect("Failed to create TeamAbbreviation"),
-
-                period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
                     (StatColumn::PTS, Value::from(27)),
@@ -236,8 +216,6 @@ mod test_edit_order {
                 team_id: TeamId(4),
                 team_abbr: TeamAbbreviation::from_str("MIA")
                     .expect("Failed to create TeamAbbreviation"),
-
-                period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
                     (StatColumn::BLK, Value::from(4)),
@@ -252,8 +230,6 @@ mod test_edit_order {
                 team_id: TeamId(3),
                 team_abbr: TeamAbbreviation::from_str("BOS")
                     .expect("Failed to create TeamAbbreviation"),
-
-                period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
                     (StatColumn::PTS, Value::from(120)),
@@ -268,8 +244,6 @@ mod test_edit_order {
                 team_id: TeamId(3),
                 team_abbr: TeamAbbreviation::from_str("BOS")
                     .expect("Failed to create TeamAbbreviation"),
-
-                period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
                     (StatColumn::PTS, Value::from(35)),
@@ -284,8 +258,6 @@ mod test_edit_order {
                 team_id: TeamId(4),
                 team_abbr: TeamAbbreviation::from_str("MIA")
                     .expect("Failed to create TeamAbbreviation"),
-
-                period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
                     (StatColumn::PTS, Value::from(125)),
@@ -300,8 +272,6 @@ mod test_edit_order {
                 team_id: TeamId(4),
                 team_abbr: TeamAbbreviation::from_str("MIA")
                     .expect("Failed to create TeamAbbreviation"),
-
-                period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
                     (StatColumn::PTS, Value::from(30)),
@@ -316,8 +286,6 @@ mod test_edit_order {
                 team_id: TeamId(1),
                 team_abbr: TeamAbbreviation::from_str("BRK")
                     .expect("Failed to create TeamAbbreviation"),
-
-                period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
                     (StatColumn::PTS, Value::from(150)), // Changed PTS value for team statistics
@@ -332,8 +300,6 @@ mod test_edit_order {
                 team_id: TeamId(1),
                 team_abbr: TeamAbbreviation::from_str("BRK")
                     .expect("Failed to create TeamAbbreviation"),
-
-                period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
                     (StatColumn::PTS, Value::from(40)), // Changed PTS value for player statistics
@@ -348,8 +314,6 @@ mod test_edit_order {
                 team_id: TeamId(2),
                 team_abbr: TeamAbbreviation::from_str("TOR")
                     .expect("Failed to create TeamAbbreviation"),
-
-                period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
                     (StatColumn::PTS, Value::from(160)), // Changed PTS value for team statistics
@@ -364,8 +328,6 @@ mod test_edit_order {
                 team_id: TeamId(2),
                 team_abbr: TeamAbbreviation::from_str("TOR")
                     .expect("Failed to create TeamAbbreviation"),
-
-                period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
                     (StatColumn::PTS, Value::from(30)), // Changed PTS value for player statistics

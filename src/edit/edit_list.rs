@@ -75,7 +75,6 @@ mod test_edit_list {
 
     use serde_json::Value;
 
-    use crate::stats::season_period::SeasonPeriod;
     use crate::stats::stat_column::StatColumn;
 
     use crate::types::{GameDate, GameId, SeasonId, TeamAbbreviation, TeamId};
@@ -93,7 +92,6 @@ mod test_edit_list {
                 team_id: TeamId(1),
                 team_abbr: TeamAbbreviation::from_str("LAL")
                     .expect("Failed to create TeamAbbreviation"),
-                period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
                     (StatColumn::PTS, Value::from(110)),
@@ -108,7 +106,6 @@ mod test_edit_list {
                 team_id: TeamId(3),
                 team_abbr: TeamAbbreviation::from_str("BOS")
                     .expect("Failed to create TeamAbbreviation"),
-                period: SeasonPeriod::RegularSeason,
                 delete: false,
                 corrections: HashMap::from([
                     (StatColumn::PTS, Value::from(120)),
@@ -127,7 +124,6 @@ mod test_edit_list {
             team_id: TeamId(3),
             team_abbr: TeamAbbreviation::from_str("BOS")
                 .expect("Failed to create TeamAbbreviation"),
-            period: SeasonPeriod::RegularSeason,
             delete: false,
             corrections: HashMap::from([
                 (StatColumn::PTS, Value::from(115)),

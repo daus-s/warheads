@@ -9,7 +9,6 @@ use crate::stats::visiting::Visiting;
 
 use crate::stats::identity::{Identifiable, Identity};
 use crate::stats::nba_kind::NBAStatKind;
-use crate::stats::season_period::SeasonPeriod;
 use crate::stats::stat_column::{player_column_index, team_column_index, StatColumn};
 
 use crate::stats::box_score::{BoxScore, BoxScoreBuilder};
@@ -39,8 +38,6 @@ pub struct Edit {
     pub player_id: Option<PlayerId>,
 
     pub team_abbr: TeamAbbreviation,
-
-    pub period: SeasonPeriod,
 
     pub delete: bool,
 
