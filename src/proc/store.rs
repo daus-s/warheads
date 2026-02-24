@@ -42,15 +42,17 @@ pub fn inscribe(era: SeasonId) -> Result<(), ()> {
     let pairs = pair_off(team_games);
 
     match pairs {
-        Err(mut correction_builders) => {
+        Err(mut edit_builders) => {
             println!(
                 "ℹ️  there are {} corrections to make to Team box scores for the {} season.",
-                correction_builders.len(),
+                edit_builders.len(),
                 era
             );
 
-            for correction in correction_builders.iter_mut() {
-                edits.insert(correction.create());
+            for edit_builder in edit_builders.iter_mut() {
+                let edit = edit_builder.create();
+
+                edits.insert(edit);
             }
 
             inscribe(era)

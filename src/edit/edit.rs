@@ -2,9 +2,7 @@ use crate::dapi::from_value::FromValue;
 use crate::edit::edit_builder::EditBuilder;
 use crate::edit::edit_loader::load_edit_list;
 use crate::format::language::Columnizable;
-use crate::format::path_manager::{
-    nba_correction_dir, nba_player_correction_file, nba_team_correction_file,
-};
+
 use crate::stats::visiting::Visiting;
 
 use crate::stats::identity::{Identifiable, Identity};
@@ -22,8 +20,8 @@ use serde::{Deserialize, Serialize};
 
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
-use std::path::{Path, PathBuf};
-use std::{fs, io};
+use std::fs;
+use std::path::Path;
 
 #[derive(Serialize, Deserialize, Clone, Eq, PartialEq)]
 pub struct Edit {
@@ -59,31 +57,6 @@ impl Edit {
         //todo: assert eq the path info and the file content
 
         Ok(correction)
-    }
-
-    /// Saves the correction to the file:
-    /// `corrections/{season_file}/{NBAStatType}/{}.json`
-    pub fn save(&self) -> io::Result<()> {
-        let path = nba_correction_dir(self.season, self.kind());
-
-        fs::create_dir_all(&path)?;
-
-        let json = serde_json::to_string_pretty(self)?;
-
-        let filepath = match self.kind() {
-            Team => nba_team_correction_file(self.season, self.game_id.clone(), self.team_id),
-            Player => nba_player_correction_file(
-                self.season,
-                self.game_id.clone(),
-                self.player_id.unwrap().clone(),
-            ),
-            LineUp => unimplemented!("lineup stats not yet implemented"),
-        };
-
-        // Write the JSON string to the file
-        fs::write(filepath, json)?;
-
-        Ok(())
     }
 
     /// insert an edit record directly to the json file. this is not as performant and requires reading, parsing
@@ -339,13 +312,6 @@ impl Edit {
                 }
             }
         };
-    }
-
-    pub fn file_path(&self) -> PathBuf {
-        match self.player_id {
-            Some(pid) => nba_player_correction_file(self.season, self.game_id, pid),
-            None => nba_team_correction_file(self.season, self.game_id, self.team_id),
-        }
     }
 }
 

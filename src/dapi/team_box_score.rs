@@ -103,7 +103,7 @@ impl TeamBoxScore {
         edit.edit_box_score(&mut self.box_score);
     }
 
-    pub(crate) fn correct_identifiers(&mut self, correction: &mut Edit) {
+    pub(crate) fn correct_identifiers(&mut self, edit: &mut Edit) {
         /*
          *
          * pub team_abbreviation: TeamAbbreviation,
@@ -111,9 +111,8 @@ impl TeamBoxScore {
          * home or away
          * pub visiting: Visiting,
          */
-        let correction_file = correction.file_path();
 
-        correction.corrections.retain(|key, value| match key {
+        edit.corrections.retain(|key, value| match key {
             TEAM_ID => {
                 if let Ok(team_id) = value.team_id() {
                     self.team_id = team_id;
@@ -145,7 +144,9 @@ impl TeamBoxScore {
                         self.visiting = visiting;
                         false
                     } else {
-                        panic!("💀 matchup string provided by correction doesn't match team identity.\nfile:{}", correction_file.display())
+                        panic!(
+                            "💀 matchup string provided by correction doesn't match team identity. check that you are correcting the correct record. "
+                        )
                     }
                 } else {
                     true

@@ -1,11 +1,14 @@
 use crate::constants::paths::data;
+
 use crate::format::season::season_path;
 use crate::format::stat_path_formatter::StatPathFormatter as SPF;
+
 use crate::ml::model::Model;
-use crate::stats::identity::Identity;
+
 use crate::stats::nba_kind::NBAStatKind;
-use crate::stats::nba_kind::NBAStatKind::{Player, Team};
-use crate::types::{GameDate, GameId, PlayerId, SeasonId, TeamId};
+
+use crate::types::{GameDate, GameId, SeasonId};
+
 use once_cell::sync::Lazy;
 use std::path::PathBuf;
 
@@ -48,47 +51,6 @@ pub fn universal_nba_source_path(season: SeasonId, kind: NBAStatKind) -> PathBuf
 
 pub fn nba_edit_file() -> PathBuf {
     PathBuf::from(format!("{}/nba/edits.json", *DATA))
-}
-
-pub fn nba_correction_dir(season: SeasonId, kind: NBAStatKind) -> String {
-    format!(
-        "{}/nba/corrections/{}/{}/{}",
-        *DATA,
-        kind.path_specifier(),
-        season_path(season),
-        season.period().path_specifier(),
-    )
-}
-
-pub fn nba_player_correction_file(
-    season: SeasonId,
-    game_id: GameId,
-    player_id: PlayerId,
-) -> PathBuf {
-    PathBuf::from(format!(
-        "{}/{}_{}.corr",
-        nba_correction_dir(season, Player),
-        game_id,
-        player_id
-    ))
-}
-
-pub fn nba_team_correction_file(season: SeasonId, game_id: GameId, team_id: TeamId) -> PathBuf {
-    PathBuf::from(format!(
-        "{}/{}_{}.corr",
-        nba_correction_dir(season, Team),
-        game_id,
-        team_id
-    ))
-}
-
-pub fn correction_path_from_identity(identity: &Identity) -> PathBuf {
-    match identity.player_id {
-        Some(player_id) => {
-            nba_player_correction_file(identity.season_id, identity.game_id, player_id)
-        }
-        None => nba_team_correction_file(identity.season_id, identity.game_id, identity.team_id),
-    }
 }
 
 /// `nba_storage_path` returns the PathBuf to the location of the processed nba data for storage on

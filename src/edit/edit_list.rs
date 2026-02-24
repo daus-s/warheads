@@ -1,6 +1,6 @@
 use std::fs;
 
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::{
     edit::edit::Edit,
@@ -8,7 +8,7 @@ use crate::{
     stats::identity::{Identifiable, Identity},
 };
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub struct EditList {
     edits: Vec<Edit>,
 }
@@ -40,7 +40,7 @@ impl EditList {
     pub fn write_to_file(&self) -> Result<(), ()> {
         let file_path = path_manager::nba_edit_file();
 
-        let json = serde_json::to_string(self).map_err(|_| ())?;
+        let json = serde_json::to_string(self.edits()).map_err(|_| ())?;
 
         fs::write(file_path, json).map_err(|_| ())
     }

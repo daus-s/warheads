@@ -1,5 +1,4 @@
 use crate::edit::edit::Edit;
-use crate::edit::edit_loader::load_single_correction;
 
 use crate::format::percent::PercentGeneric;
 
@@ -72,52 +71,43 @@ impl EditBuilder {
     pub fn create(&mut self) -> Edit {
         use std::io::{stdout, Write};
 
-        let (mut corrections, display_option) = (self.edit.clone(), self.display.clone());
+        let (mut edit, display_option) = (self.edit.clone(), self.display.clone());
 
         let (display_string, confirmation) = match display_option {
             Some(display) => (format!("{display}"), display.display_name()),
             None => (
-                format!("🚫 no game display data 🚫"),
+                format!("🚫 no game display data"),
                 String::from("GENERIC DELETE"),
             ),
         };
 
-        if let Ok(preexisting) = load_single_correction(&self.edit.identity()) {
-            corrections.merge(preexisting);
-        }
-
         println!("{}", display_string);
 
         //if the correctionbuilder is provided as deleting it is from a source that needs to delete the data so we should not check again.
-        if corrections.delete {
-            println!("🗑️ deleting {}", corrections.identity());
+        if edit.delete {
+            println!("🗑️ deleting {}", edit.identity());
 
-            save_correction(&corrections);
-
-            return corrections.clone();
+            return edit.clone();
         } else {
             let delete = prompt_and_delete(&confirmation);
 
-            corrections.set_delete(delete);
+            edit.set_delete(delete);
 
             if delete {
-                println!("🗑️ deleting {}", corrections.identity());
+                println!("🗑️ deleting {}", edit.identity());
 
-                save_correction(&corrections);
-
-                return corrections.clone(); //if we are deleting we don't need any values for the corrections
+                return edit.clone(); //if we are deleting we don't need any values for the corrections
             }
         }
 
-        let mut fields_to_correct: Vec<StatColumn> =
-            corrections.corrections.keys().cloned().collect();
+        let mut fields_to_correct: Vec<StatColumn> = edit.corrections.keys().cloned().collect();
 
         fields_to_correct.sort();
 
         let mut stdout = stdout();
 
         for col in fields_to_correct {
-            if let Some(val) = corrections.corrections.get(&col) {
+            if let Some(val) = edit.corrections.get(&col) {
                 // Display the column name and current value (grayed out if not confirmed) //id like this to update after the new value is completed is that possible
                 println!("\x1b[90m{}: {}\x1b[0m", col, val);
                 stdout.flush().unwrap();
@@ -147,7 +137,7 @@ impl EditBuilder {
                         prompt_and_validate::<String>(format!("enter {}", col).as_str())
                     }
                     StatColumn::MATCHUP => {
-                        let tm = corrections.team_abbr();
+                        let tm = edit.team_abbr();
 
                         if let Some(display) = self.display.clone() {
                             prompt_with_options::<(Matchup, TeamAbbreviation)>(
@@ -212,7 +202,7 @@ impl EditBuilder {
                 };
 
                 // Lock in the value
-                corrections.corrections.insert(col, value.clone()); //only cloned for display below
+                edit.corrections.insert(col, value.clone()); //only cloned for display below
 
                 // Display the confirmed value
                 print!("\x1B[2A\x1B[0J"); // Move up 2 lines and clear from cursor to end
@@ -220,7 +210,7 @@ impl EditBuilder {
             }
         }
 
-        corrections
+        edit
     }
 
     /// Returns whether the correction builder has any corrections to apply. It does not specify whether the record should be deleted.
@@ -239,21 +229,4 @@ impl EditBuilder {
     pub fn date(&self) -> &GameDate {
         &self.edit.game_date
     }
-}
-
-fn save_correction(correction: &Edit) {
-    match correction.save() {
-        Ok(_) => {
-            println!(
-                "✅ successfully saved corrections for {}",
-                correction.identity()
-            );
-        }
-        Err(e) => {
-            eprintln!(
-                "❌ failed to serialize corrections for {}: {e}",
-                correction.identity()
-            );
-        }
-    };
 }

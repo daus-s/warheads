@@ -4,7 +4,8 @@ use crate::checksum::read_checksum::read_checksum;
 use crate::dapi::team_box_score::TeamBoxScore;
 
 use crate::edit::edit_list::EditList;
-use crate::edit::edit_loader::load_edit_list;
+use crate::edit::edit_loader::{load_edit_list, save_edit_list};
+
 use crate::format::path_manager::{nba_source_path, universal_nba_source_path};
 
 use crate::proc::gather;
@@ -44,6 +45,8 @@ pub fn load_season_from_source(era: SeasonId) -> Vec<(Identity, TeamBoxScore)> {
                 );
             },
         );
+
+    save_edit_list(&edit_list).expect("💀 failed to serialize edit list. ");
 
     team_games_vec.extend(team_games_of_period);
 
