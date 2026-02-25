@@ -71,7 +71,7 @@ pub fn chronicle_nba() {
         if read_nba_season(season).is_err() || season.is_current_era() {
             match inscribe(season) {
                 Ok(_) => println!("✅ successfully chronicled {}", season),
-                Err(_) => println!("❌ failed to chronicle {}", season),
+                Err(e) => println!("{e}\n❌ failed to chronicle {}", season),
             }
         }
     }

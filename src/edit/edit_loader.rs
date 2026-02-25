@@ -27,7 +27,7 @@ pub fn load_edit_list() -> Result<EditList, EditLoadingError> {
     let mut edits: EditList = serde_json::from_str(&contents)
         .map_err(|e| EditLoadingError::ParseError(e, filepath.clone()))?;
 
-    edits.organize();
+    edits.sort();
 
     Ok(edits)
 }

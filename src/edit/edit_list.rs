@@ -52,7 +52,7 @@ impl EditList {
             .cloned()
     }
 
-    pub fn organize(&mut self) {
+    pub fn sort(&mut self) {
         self.edits.sort();
     }
 }
@@ -79,7 +79,7 @@ mod test_edit_list {
 
     use serde_json::Value;
 
-    use crate::edit::edit_loader::load_edit_list;
+    use crate::edit::edit_loader::{load_edit_list, save_edit_list};
     use crate::stats::stat_column::StatColumn;
 
     use crate::types::{GameDate, GameId, SeasonId, TeamAbbreviation, TeamId};
@@ -143,13 +143,17 @@ mod test_edit_list {
     }
 
     #[test]
-    fn test_load() {
+    fn test_edit_list_lifecycle() {
         let result = load_edit_list();
 
         assert!(result.is_ok());
 
         let edits = result.unwrap();
 
-        assert!(edits.list().is_sorted())
+        assert!(edits.list().is_sorted());
+
+        let result = save_edit_list(&edits);
+
+        assert!(result.is_ok());
     }
 }

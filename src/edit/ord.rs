@@ -4,6 +4,12 @@ use crate::edit::edit::Edit;
 
 impl Ord for Edit {
     fn cmp(&self, other: &Self) -> Ordering {
+        self.partial_cmp(other).unwrap()
+    }
+}
+
+impl PartialOrd for Edit {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         // Sort by game_id first (chronological game order)
         match self.game_id.cmp(&other.game_id) {
             Ordering::Equal => {
@@ -13,28 +19,23 @@ impl Ord for Edit {
                         // Within same team, sort by player_id
                         // None (team edits) comes before Some (player edits)
                         match (&self.player_id, &other.player_id) {
-                            (None, Some(_)) => Ordering::Less, // Team edit before player edit
-                            (Some(_), None) => Ordering::Greater, // Player edit after team edit
-                            (Some(a), Some(b)) => a.cmp(b),
-                            (None, None) => {
-                                panic!(
-                                    "💀 multiple edit objects for the same entity found: team_id={}",
-                                    self.team_id
-                                )
-                            } // Sort players by ID
+                            (None, Some(_)) => Some(Ordering::Less), // Team edit before player edit
+                            (Some(_), None) => Some(Ordering::Greater), // Player edit after team edit
+                            (Some(a), Some(b)) => {
+                                if a == b {
+                                    None
+                                } else {
+                                    Some(a.cmp(b))
+                                }
+                            }
+                            (None, None) => None, // Sort players by ID
                         }
                     }
-                    other_ordering => other_ordering,
+                    other_ordering => Some(other_ordering),
                 }
             }
-            other_ordering => other_ordering,
+            other_ordering => Some(other_ordering),
         }
-    }
-}
-
-impl PartialOrd for Edit {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
     }
 }
 

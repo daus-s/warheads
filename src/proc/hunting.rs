@@ -8,6 +8,7 @@ use crate::edit::edit_loader::{load_edit_list, save_edit_list};
 
 use crate::format::path_manager::{nba_source_path, universal_nba_source_path};
 
+use crate::proc::error::ReadProcessError;
 use crate::proc::gather;
 use crate::proc::gather::{load_player_games_from_source, load_team_games_from_source};
 
@@ -21,36 +22,24 @@ use crate::types::SeasonId;
     this shit is NOT easy for me f*ck
 */
 
-pub fn load_season_from_source(era: SeasonId) -> Vec<(Identity, TeamBoxScore)> {
+//change to result
+pub fn load_season_from_source(
+    era: SeasonId,
+) -> Result<Vec<(Identity, TeamBoxScore)>, ReadProcessError> {
     let mut edit_list: EditList = load_edit_list().unwrap_or_default();
 
     let mut team_games_vec = Vec::new();
 
-    let player_games_of_period =
-        load_player_games_from_source(era, &mut edit_list).unwrap_or_else(|e| {
-            panic!(
-                "{e}\n\
-                💀 failed to load and parse {era} player games as JSON.\n\
-                run `cargo test checksum::assert_checksums`"
-            );
-        });
+    let player_games_of_period = load_player_games_from_source(era, &mut edit_list)?;
 
     let team_games_of_period =
-        load_team_games_from_source(era, player_games_of_period, &mut edit_list).unwrap_or_else(
-            |e| {
-                panic!(
-                    "{e}\n\
-                    💀 failed to load and parse team games as JSON.\n\
-                    run `cargo test checksum::assert_checksums`"
-                );
-            },
-        );
+        load_team_games_from_source(era, player_games_of_period, &mut edit_list)?;
 
-    save_edit_list(&edit_list).expect("💀 failed to serialize edit list. ");
+    save_edit_list(&edit_list).map_err(|_| ReadProcessError::SerializeEditError)?;
 
     team_games_vec.extend(team_games_of_period);
 
-    team_games_vec
+    Ok(team_games_vec)
 }
 
 /// Compare the checksums of a NBA data source file and if it matches the expected checksum we can bypass refetching from

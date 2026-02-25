@@ -20,8 +20,25 @@ use std::fmt::{Debug, Display, Formatter};
 /// ### Serialization & Deserialization
 /// `GameId` is a number represented in the NBA data by a JSON String, but we will use it as an int.
 ///
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Ord, PartialOrd, SchemaRead, SchemaWrite)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, SchemaRead, SchemaWrite)]
 pub struct GameId(pub u64);
+
+impl GameId {
+    fn basis(&self) -> (i32, u32) {
+        //ex:0022501229
+
+        let truncated = self.0 % 10000000;
+        let mut year = (truncated / 100000) as i64;
+        dbg!(year);
+        if year > 46 {
+            year += 1900;
+        } else {
+            year += 2000;
+        }
+        let game_number = (truncated % 10000) as u32;
+        (year as i32, game_number)
+    }
+}
 
 impl Display for GameId {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -69,4 +86,23 @@ impl Serialize for GameId {
     {
         serializer.serialize_str(&format!("{:0>10}", self.0))
     }
+}
+
+impl Ord for GameId {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.partial_cmp(other).unwrap()
+    }
+}
+
+impl PartialOrd for GameId {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.basis().partial_cmp(&other.basis())
+    }
+}
+
+#[test]
+fn test_basis() {
+    assert_eq!(GameId(0022501229).basis(), (2025, 1229));
+
+    assert_eq!(GameId(0045900321).basis(), (1959, 321));
 }

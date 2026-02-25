@@ -1,10 +1,11 @@
 use crate::dapi::team_box_score::TeamBoxScore;
 
 use crate::edit::edit_builder::EditBuilder;
-use crate::edit::edit_loader::load_edit_list;
+use crate::edit::edit_loader::{load_edit_list, save_edit_list, EditLoadingError};
 
 use crate::format::season::season_fmt;
 
+use crate::proc::error::ReadProcessError;
 use crate::proc::hunting::load_season_from_source;
 use crate::proc::revise::revise_nba_season;
 
@@ -16,28 +17,31 @@ use crate::storage::store_disk::{save_nba_game, SaveGameError};
 use crate::types::{GameId, SeasonId};
 
 use indicatif::{ProgressBar, ProgressStyle};
+use thiserror::Error;
 
 use std::collections::HashMap;
 
-pub fn inscribe(era: SeasonId) -> Result<(), ()> {
-    let mut edits = load_edit_list().map_err(|_| ())?;
+#[derive(Error, Debug)]
+pub enum InscriptionError {
+    #[error("❌ {0}\n❌ edit file failed serialization. ")]
+    LoadEditListError(EditLoadingError),
+    #[error("❌ {0}\n❌ Save Game Error")]
+    FileError(ReadProcessError),
+    #[error("❌ failed to revise NBA games.")]
+    RevisionError,
+    #[error("❌ failed to save NBA games.")]
+    SerializeGameError(SaveGameError),
+    #[error("❌ failed to save edit list.")]
+    SaveEditListError,
+}
 
-    let mut team_games = load_season_from_source(era);
+pub fn inscribe(era: SeasonId) -> Result<(), InscriptionError> {
+    let mut edits = load_edit_list().map_err(|e| InscriptionError::LoadEditListError(e))?;
 
-    match revise_nba_season(era, &mut team_games, &edits) {
-        Ok(_) => {
-            println!(
-                "✅ corrections for the {} NBA season have been written successfully.",
-                era
-            );
-        }
-        Err(_) => {
-            eprintln!(
-                "❌ corrections for the {} NBA season have failed to save.",
-                era
-            );
-        }
-    };
+    let mut team_games =
+        load_season_from_source(era).map_err(|e| InscriptionError::FileError(e))?;
+
+    revise_nba_season(era, &mut team_games, &edits).map_err(|_| InscriptionError::RevisionError)?;
 
     let pairs = pair_off(team_games);
 
@@ -55,9 +59,11 @@ pub fn inscribe(era: SeasonId) -> Result<(), ()> {
                 edits.insert(edit);
             }
 
+            save_edit_list(&edits).map_err(|_| InscriptionError::SaveEditListError)?;
+
             inscribe(era)
         }
-        Ok(games) => save_game_object(games).map_err(|_| ()),
+        Ok(games) => save_game_object(games).map_err(|e| InscriptionError::SerializeGameError(e)),
     }
 }
 

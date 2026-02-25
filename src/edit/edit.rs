@@ -23,7 +23,7 @@ use std::fmt::{Debug, Formatter};
 use std::fs;
 use std::path::Path;
 
-#[derive(Serialize, Deserialize, Clone, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Eq)]
 pub struct Edit {
     pub game_id: GameId,
 
@@ -376,5 +376,14 @@ impl Identifiable for Edit {
             },
             NBAStatKind::LineUp => todo!("lineup stats not yet implemented"),
         }
+    }
+}
+
+impl PartialEq for Edit {
+    fn eq(&self, other: &Self) -> bool {
+        self.game_id == other.game_id
+            && self.season == other.season
+            && self.team_id == other.team_id
+            && self.player_id == other.player_id
     }
 }
