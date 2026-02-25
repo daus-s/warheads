@@ -18,7 +18,7 @@ impl EditList {
         Self { edits }
     }
 
-    pub fn edits(&self) -> &Vec<Edit> {
+    pub fn list(&self) -> &Vec<Edit> {
         &self.edits
     }
 
@@ -40,7 +40,7 @@ impl EditList {
     pub fn write_to_file(&self) -> Result<(), ()> {
         let file_path = path_manager::nba_edit_file();
 
-        let json = serde_json::to_string(self.edits()).map_err(|_| ())?;
+        let json = serde_json::to_string(self.list()).map_err(|_| ())?;
 
         fs::write(file_path, json).map_err(|_| ())
     }
@@ -50,6 +50,10 @@ impl EditList {
             .iter()
             .find(|edit| edit.identity() == *identity)
             .cloned()
+    }
+
+    pub fn organize(&mut self) {
+        self.edits.sort();
     }
 }
 
@@ -75,6 +79,7 @@ mod test_edit_list {
 
     use serde_json::Value;
 
+    use crate::edit::edit_loader::load_edit_list;
     use crate::stats::stat_column::StatColumn;
 
     use crate::types::{GameDate, GameId, SeasonId, TeamAbbreviation, TeamId};
@@ -135,5 +140,16 @@ mod test_edit_list {
 
         dbg!(&edits);
         assert!(edits.edits.is_sorted())
+    }
+
+    #[test]
+    fn test_load() {
+        let result = load_edit_list();
+
+        assert!(result.is_ok());
+
+        let edits = result.unwrap();
+
+        assert!(edits.list().is_sorted())
     }
 }

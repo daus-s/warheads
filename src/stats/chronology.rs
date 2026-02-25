@@ -381,10 +381,9 @@ mod test_chronology {
 
         let start = Instant::now();
 
-        assert!(
-            chrono.as_training_data().is_ok(),
-            "💀 failed to load chronology as training data"
-        );
+        let _ = chrono
+            .as_training_data()
+            .expect("💀 failed to load chronology as training data");
 
         let elapsed = start.elapsed();
 

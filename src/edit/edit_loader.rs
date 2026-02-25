@@ -24,16 +24,20 @@ pub fn load_edit_list() -> Result<EditList, EditLoadingError> {
     file.read_to_string(&mut contents)
         .map_err(|e| EditLoadingError::FileError(e, filepath.clone()))?;
 
-    let edits: EditList = serde_json::from_str(&contents)
+    let mut edits: EditList = serde_json::from_str(&contents)
         .map_err(|e| EditLoadingError::ParseError(e, filepath.clone()))?;
+
+    edits.organize();
 
     Ok(edits)
 }
 
 pub fn save_edit_list(edits: &EditList) -> Result<(), ()> {
+    assert!(edits.list().is_sorted(), "💀 cannot serialize unsorted edit list. this will break the checksum validations on the host server.");
+
     let path = path_manager::nba_edit_file();
 
-    let contents = serde_json::to_string(edits.edits()).map_err(|_| ())?;
+    let contents = serde_json::to_string(edits.list()).map_err(|_| ())?;
 
     fs::write(path, contents).map_err(|_| ())
 }
@@ -89,7 +93,7 @@ mod load_edits {
 
         let _new_edits = load_edit_list()
             .expect("failed to load edits from new fs")
-            .edits()
+            .list()
             .iter()
             .map(|e| (e.identity(), e.clone()))
             .collect::<HashMap<_, _>>();
