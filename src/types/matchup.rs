@@ -1,12 +1,12 @@
+use crate::dapi::team_box_score::TeamBoxScore;
+use crate::stats::itemize::Itemize;
 use crate::stats::visiting::Visiting;
 use crate::stats::visiting::Visiting::{Away, Home};
 use crate::types::TeamAbbreviation;
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
+use serde_json::{json, Value};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
-use serde_json::{json, Value};
-use crate::dapi::team_box_score::TeamBoxScore;
-use crate::stats::itemize::Itemize;
 
 /// `MatchupString` is a String wrapper that is
 /// enforced by its `fn parse() -> Self`
@@ -127,14 +127,16 @@ pub fn is_matchup_for_team(matchup_as_string: &str, team_abbreviation: &TeamAbbr
     }
 }
 
-pub fn home_and_away(team1: TeamBoxScore, team2: TeamBoxScore) -> Result<(TeamBoxScore, TeamBoxScore), (TeamBoxScore, TeamBoxScore)> {
+pub fn home_and_away(
+    team1: TeamBoxScore,
+    team2: TeamBoxScore,
+) -> Result<(TeamBoxScore, TeamBoxScore), (TeamBoxScore, TeamBoxScore)> {
     match (team1.visiting(), team2.visiting()) {
         (Home, Away) => Ok((team1, team2)),
         (Away, Home) => Ok((team2, team1)),
-        _ => Err((team1, team2))
+        _ => Err((team1, team2)),
     }
 }
-
 
 impl Itemize for (Matchup, TeamAbbreviation) {
     fn itemize(&self) -> Vec<Value> {
@@ -153,6 +155,5 @@ impl Itemize for (Matchup, TeamAbbreviation) {
         } else {
             panic!("💀 TeamAbbreviation is not in their given Matchup. ")
         }
-
     }
 }

@@ -10,6 +10,8 @@ pub enum ReadProcessError {
     JSONParseError(serde_json::Error),
     #[error("❌ {0}\n❌ Object Structure Error")]
     ObjectStructureError(parse::ParseError),
-    #[error("❌ Serialize Edit Error")]
+    #[error("❌ could not write edits to edit.json")]
     SerializeEditError,
+    #[error("❌ could not create a new edit object")]
+    BuildEditError,
 }

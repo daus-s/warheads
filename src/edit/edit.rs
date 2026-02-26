@@ -1,29 +1,31 @@
 use crate::dapi::from_value::FromValue;
+
 use crate::edit::edit_builder::EditBuilder;
 use crate::edit::edit_loader::load_edit_list;
+
 use crate::format::language::Columnizable;
 
 use crate::stats::visiting::Visiting;
 
+use crate::stats::box_score::{BoxScore, BoxScoreBuilder};
 use crate::stats::identity::{Identifiable, Identity};
 use crate::stats::nba_kind::NBAStatKind;
-use crate::stats::stat_column::{player_column_index, team_column_index, StatColumn};
-
-use crate::stats::box_score::{BoxScore, BoxScoreBuilder};
 use crate::stats::nba_kind::NBAStatKind::{LineUp, Player, Team};
+use crate::stats::stat_column::{player_column_index, team_column_index, StatColumn};
 use crate::stats::statify::StatPair;
-use crate::types::{GameDate, GameId, PlayerId, SeasonId, TeamAbbreviation, TeamId};
+
+use crate::types::{GameDate, GameId, Matchup, PlayerId, SeasonId, TeamAbbreviation, TeamId};
 
 use serde_json::Value;
 
 use serde::{Deserialize, Serialize};
 
 use std::collections::HashMap;
-use std::fmt::{Debug, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 use std::fs;
 use std::path::Path;
 
-#[derive(Serialize, Deserialize, Clone, Eq)]
+#[derive(Serialize, Deserialize, Clone, Eq, Debug)]
 pub struct Edit {
     pub game_id: GameId,
 
@@ -313,9 +315,47 @@ impl Edit {
             }
         };
     }
+
+    pub fn corrects(&self, matchup: &StatColumn) -> bool {
+        self.corrections.contains_key(matchup)
+    }
+
+    pub fn matchup_as_value(&self) -> Option<Value> {
+        let matchup = self
+            .corrections
+            .get(&StatColumn::MATCHUP)?
+            .as_str()?
+            .parse::<Matchup>()
+            .ok()?;
+
+        let s = if matchup.home == self.team_abbr() {
+            format!("{} vs. {}", self.team_abbr(), matchup.away)
+        } else {
+            format!("{} @ {}", self.team_abbr(), matchup.home)
+        };
+
+        Some(Value::String(s))
+    }
+
+    pub fn inverse_matchup_as_value(&self) -> Option<Value> {
+        let matchup = self
+            .corrections
+            .get(&StatColumn::MATCHUP)?
+            .as_str()?
+            .parse::<Matchup>()
+            .ok()?;
+
+        let s = if matchup.home == self.team_abbr() {
+            format!("{} @ {}", matchup.away, self.team_abbr())
+        } else {
+            format!("{} vs. {}", matchup.home, self.team_abbr())
+        };
+
+        Some(Value::String(s))
+    }
 }
 
-impl Debug for Edit {
+impl Display for Edit {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,

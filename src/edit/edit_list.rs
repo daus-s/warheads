@@ -6,6 +6,7 @@ use crate::{
     edit::edit::Edit,
     format::path_manager,
     stats::identity::{Identifiable, Identity},
+    types::{GameId, TeamAbbreviation},
 };
 
 #[derive(Debug, Clone)]
@@ -54,6 +55,15 @@ impl EditList {
 
     pub fn sort(&mut self) {
         self.edits.sort();
+    }
+
+    pub fn find_sibling(&self, game_id: GameId, team_abbr: &TeamAbbreviation) -> Option<Edit> {
+        for edit in &self.edits {
+            if edit.game_id == game_id && edit.team_abbr() != *team_abbr {
+                return Some(edit.clone());
+            }
+        }
+        None
     }
 }
 
@@ -138,7 +148,6 @@ mod test_edit_list {
 
         edits.insert(x);
 
-        dbg!(&edits);
         assert!(edits.edits.is_sorted())
     }
 

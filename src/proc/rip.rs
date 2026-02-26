@@ -55,7 +55,9 @@ pub fn generate_nba_games_from_data(
                 if edit_builder.date().is_today() {
                     println!("⏳ game is live. omitting stats.")
                 } else {
-                    let edit = edit_builder.create(); //starts the tui prompter
+                    edit_builder.prompt(); //starts the tui prompter
+
+                    let edit = edit_builder.build().ok_or(ReadProcessError::BuildEditError)?;
 
                     edits.insert(edit);
 

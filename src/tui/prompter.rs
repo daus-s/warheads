@@ -1,4 +1,6 @@
+use crate::stats::itemize::Itemize;
 use crate::stats::serde_enum::SerdeEnum;
+
 use dialoguer::console::style;
 use dialoguer::{theme::ColorfulTheme, Input, Select};
 use serde::Serialize;
@@ -6,7 +8,6 @@ use serde_json::{json, Value};
 use std::any::type_name;
 use std::fmt::Debug;
 use std::str::FromStr;
-use crate::stats::itemize::Itemize;
 
 pub fn prompt_and_validate<T>(prompt: &str) -> Value
 where
@@ -43,10 +44,13 @@ where
     }
 
     match type_name::<T>() {
-        _ => input
-            .parse::<T>()
-            .map(|_| ())
-            .map_err(|_| format!("⚠️ could not parse a {} from \"{}\".", type_name::<T>(), input)),
+        _ => input.parse::<T>().map(|_| ()).map_err(|_| {
+            format!(
+                "⚠️ could not parse a {} from \"{}\".",
+                type_name::<T>(),
+                input
+            )
+        }),
     }
 }
 
@@ -70,7 +74,8 @@ where
 }
 
 pub fn prompt_with_options<I>(prompt: &str, i: I) -> Value
-where I: Itemize
+where
+    I: Itemize,
 {
     let options = i.itemize();
 

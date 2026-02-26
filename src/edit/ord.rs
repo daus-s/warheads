@@ -28,7 +28,7 @@ impl PartialOrd for Edit {
                                     Some(a.cmp(b))
                                 }
                             }
-                            (None, None) => None, // Sort players by ID
+                            (None, None) => Some(Ordering::Equal),
                         }
                     }
                     other_ordering => Some(other_ordering),

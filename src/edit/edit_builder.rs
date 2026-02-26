@@ -68,13 +68,19 @@ impl EditBuilder {
         self.edit.corrections.remove(&col);
     }
 
-    pub fn create(&mut self) -> Edit {
+    pub fn build(&self) -> Option<Edit> {
+        if self.edit.corrections.iter().any(|(_, val)| val.is_null()) {
+            None
+        } else {
+            Some(self.edit.clone())
+        }
+    }
+
+    pub fn prompt(&mut self) {
         use std::io::{stdout, Write};
 
-        let (mut edit, display_option) = (self.edit.clone(), self.display.clone());
-
-        let (display_string, confirmation) = match display_option {
-            Some(display) => (format!("{display}"), display.display_name()),
+        let (display_string, confirmation) = match self.display {
+            Some(ref display) => (format!("{display}"), display.display_name()),
             None => (
                 format!("🚫 no game display data"),
                 String::from("GENERIC DELETE"),
@@ -84,30 +90,27 @@ impl EditBuilder {
         println!("{}", display_string);
 
         //if the correctionbuilder is provided as deleting it is from a source that needs to delete the data so we should not check again.
-        if edit.delete {
-            println!("🗑️ deleting {}", edit.identity());
-
-            return edit.clone();
+        if self.edit.delete {
+            println!("🗑️ deleting {}", self.edit.identity());
         } else {
             let delete = prompt_and_delete(&confirmation);
 
-            edit.set_delete(delete);
+            self.edit.set_delete(delete);
 
             if delete {
-                println!("🗑️ deleting {}", edit.identity());
-
-                return edit.clone(); //if we are deleting we don't need any values for the corrections
+                println!("🗑️ deleting {}", self.edit.identity());
             }
         }
 
-        let mut fields_to_correct: Vec<StatColumn> = edit.corrections.keys().cloned().collect();
+        let mut fields_to_correct: Vec<StatColumn> =
+            self.edit.corrections.keys().cloned().collect();
 
         fields_to_correct.sort();
 
         let mut stdout = stdout();
 
         for col in fields_to_correct {
-            if let Some(val) = edit.corrections.get(&col) {
+            if let Some(val) = self.edit.corrections.get(&col) {
                 // Display the column name and current value (grayed out if not confirmed) //id like this to update after the new value is completed is that possible
                 println!("\x1b[90m{}: {}\x1b[0m", col, val);
                 stdout.flush().unwrap();
@@ -137,7 +140,7 @@ impl EditBuilder {
                         prompt_and_validate::<String>(format!("enter {}", col).as_str())
                     }
                     StatColumn::MATCHUP => {
-                        let tm = edit.team_abbr();
+                        let tm = self.edit.team_abbr();
 
                         if let Some(display) = self.display.clone() {
                             prompt_with_options::<(Matchup, TeamAbbreviation)>(
@@ -145,7 +148,7 @@ impl EditBuilder {
                                 (display.matchup(), tm),
                             )
                         } else {
-                            eprintln!("❌ cannot correct matchup. assigning new matchup to Null");
+                            println!("❌ cannot correct matchup. assigning new matchup to Null");
 
                             Value::Null
                         }
@@ -202,15 +205,16 @@ impl EditBuilder {
                 };
 
                 // Lock in the value
-                edit.corrections.insert(col, value.clone()); //only cloned for display below
+                //
+
+                let s = format!("{}: {}", col, value);
+                self.edit.corrections.insert(col, value);
 
                 // Display the confirmed value
                 print!("\x1B[2A\x1B[0J"); // Move up 2 lines and clear from cursor to end
-                println!("{}: {}", col, value); // New value
+                println!("{s}");
             }
         }
-
-        edit
     }
 
     /// Returns whether the correction builder has any corrections to apply. It does not specify whether the record should be deleted.
@@ -228,5 +232,13 @@ impl EditBuilder {
 
     pub fn date(&self) -> &GameDate {
         &self.edit.game_date
+    }
+
+    pub fn game_id(&self) -> GameId {
+        self.edit.game_id
+    }
+
+    pub fn team_abbr(&self) -> &TeamAbbreviation {
+        &self.edit.team_abbr
     }
 }

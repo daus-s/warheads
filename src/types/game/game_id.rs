@@ -29,12 +29,13 @@ impl GameId {
 
         let truncated = self.0 % 10000000;
         let mut year = (truncated / 100000) as i64;
-        dbg!(year);
+
         if year > 46 {
             year += 1900;
         } else {
             year += 2000;
         }
+
         let game_number = (truncated % 10000) as u32;
         (year as i32, game_number)
     }

@@ -12,6 +12,7 @@ use crate::proc::revise::revise_nba_season;
 use crate::stats::game_obj::GameObject;
 use crate::stats::identity::Identity;
 
+use crate::stats::stat_column::StatColumn;
 use crate::storage::store_disk::{save_nba_game, SaveGameError};
 
 use crate::types::{GameId, SeasonId};
@@ -33,6 +34,8 @@ pub enum InscriptionError {
     SerializeGameError(SaveGameError),
     #[error("❌ failed to save edit list.")]
     SaveEditListError,
+    #[error("❌ failed to construct an edit, some fields were missing.")]
+    BuildEditError,
 }
 
 pub fn inscribe(era: SeasonId) -> Result<(), InscriptionError> {
@@ -54,9 +57,29 @@ pub fn inscribe(era: SeasonId) -> Result<(), InscriptionError> {
             );
 
             for edit_builder in edit_builders.iter_mut() {
-                let edit = edit_builder.create();
+                let game_id = edit_builder.game_id();
 
-                edits.insert(edit);
+                // look in already-loaded edits for the sibling with same game_id, different team
+                if let Some(resolved) = edits.find_sibling(game_id, edit_builder.team_abbr()) {
+                    if resolved.corrects(&StatColumn::MATCHUP) {
+                        let matchup = resolved.inverse_matchup_as_value().unwrap();
+
+                        edit_builder.add_missing_field(StatColumn::MATCHUP, matchup);
+
+                        if let Some(edit) = edit_builder.build() {
+                            edits.insert(edit);
+                        }
+                    }
+                } else {
+                    edit_builder.prompt(); //
+
+                    if let Some(edit) = edit_builder.build() {
+                        edits.insert(edit);
+                    } else {
+                        return Err(InscriptionError::BuildEditError);
+                    }
+                }
+                // otherwise: write it out, wait for manual input next run
             }
 
             save_edit_list(&edits).map_err(|_| InscriptionError::SaveEditListError)?;
