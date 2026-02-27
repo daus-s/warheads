@@ -11,7 +11,7 @@ use crate::ml::model::Model;
 
 use crate::proc::gather::fetch_and_save_nba_stats;
 use crate::proc::hunting::compare_and_fetch;
-use crate::proc::store::store_nba_season;
+use crate::proc::store::inscribe;
 
 use crate::stats::chronology::Chronology;
 use crate::stats::nba_kind::NBAStatKind;
@@ -67,15 +67,14 @@ pub async fn observe_nba() {
 /// this module contains functions for writing the history of the nba stats
 /// you can build around this function but not from it... this is the one function to start the nba into memory then iterate over elo.
 pub fn chronicle_nba() {
-    for era in nba_lifespan_period() {
-        if let Err(_) = read_nba_season(era) {
-            store_nba_season(era);
+    for season in nba_lifespan_period() {
+        if read_nba_season(season).is_err() || season.is_current_era() {
+            match inscribe(season) {
+                Ok(_) => println!("✅ successfully chronicled {}", season),
+                Err(e) => println!("{e}\n❌ failed to chronicle {}", season),
+            }
         }
     }
-
-    let current_era = get_current_era();
-
-    store_nba_season(current_era); //always update the current year's season
 }
 
 pub fn rate_nba(elo_tracker: &mut EloTracker) {

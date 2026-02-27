@@ -1,8 +1,6 @@
 #[cfg(test)]
 mod correct_columns {
-    use crate::corrections::correction::Correction;
-    use crate::stats::nba_kind::NBAStatKind;
-    use crate::stats::season_period::SeasonPeriod;
+    use crate::edit::edit::Edit;
     use crate::stats::stat_column::StatColumn;
     use crate::types::{GameDate, GameId, PlayerId, SeasonId, TeamAbbreviation, TeamId};
     use serde_json::json;
@@ -361,16 +359,14 @@ mod correct_columns {
     //
     // helper functions
     //
-    fn sample_correction() -> Correction {
-        Correction {
+    fn sample_correction() -> Edit {
+        Edit {
             game_id: GameId(123),
             game_date: GameDate(Default::default()),
             season: SeasonId::from(20024),
             player_id: Some(PlayerId(23)),
             team_id: TeamId(151),
             team_abbr: TeamAbbreviation("LOL".to_string()),
-            kind: NBAStatKind::Player,
-            period: SeasonPeriod::RegularSeason,
             delete: false,
             corrections: HashMap::new(),
         }
@@ -383,14 +379,12 @@ mod correct_columns {
 
 #[cfg(test)]
 mod serialize_corrections {
-    use crate::corrections::correction::Correction;
+    use crate::edit::edit::Edit;
 
-    use crate::stats::nba_kind::NBAStatKind;
-    use crate::stats::season_period::SeasonPeriod;
     use crate::stats::serde_enum::SerdeEnum;
     use crate::stats::stat_column::StatColumn;
 
-    use crate::types::GameResult::Loss;
+    use crate::types::GameResult::Win;
     use crate::types::{GameId, PlayerId, SeasonId, TeamId};
 
     use std::collections::HashMap;
@@ -399,28 +393,26 @@ mod serialize_corrections {
 
     #[test]
     pub fn serialize_correction() {
-        let correction = Correction {
+        let correction = Edit {
             game_id: GameId::from("0025900253"),
             game_date: "2000-02-05".parse().unwrap(),
             season: SeasonId::from(22000),
             player_id: Some(PlayerId(69420)),
             team_id: TeamId::from(1610612755),
             team_abbr: "SEA".parse().unwrap(),
-            kind: NBAStatKind::Player,
             delete: false,
             corrections: {
                 let mut cs: HashMap<StatColumn, Value> = HashMap::new();
 
-                cs.insert(StatColumn::WL, Loss.evaluate());
+                cs.insert(StatColumn::WL, Win.evaluate());
 
                 cs
             },
-            period: SeasonPeriod::RegularSeason,
         };
 
         let serialized = serde_json::to_string(&correction).unwrap();
 
-        let expected = r#"{"game_id":"0025900253","game_date":"2000-02-05","season":"22000","player_id":69420,"team_id":1610612755,"team_abbr":"SEA","kind":"Player","period":"RegularSeason","delete":false,"corrections":{"WL":"L"}}"#;
+        let expected = r#"{"game_id":"0025900253","game_date":"2000-02-05","season":"22000","team_id":1610612755,"player_id":69420,"team_abbr":"SEA","delete":false,"corrections":{"WL":"W"}}"#;
 
         pretty_assertions::assert_eq!(serialized, expected.trim_end());
     }

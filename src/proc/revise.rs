@@ -1,6 +1,7 @@
 use std::fs;
 
-use crate::corrections::correction_loader::load_season_correction_maps;
+use crate::edit::edit_list::EditList;
+use crate::edit::edit_loader::partition_edit_list;
 
 use crate::dapi::team_box_score::TeamBoxScore;
 
@@ -13,12 +14,15 @@ use crate::types::SeasonId;
 pub fn revise_nba_season(
     era: SeasonId,
     games: &mut Vec<(Identity, TeamBoxScore)>,
+    edits: &EditList,
 ) -> Result<(), ()> {
-    let (mut player_corrections, mut team_corrections) =
-        load_season_correction_maps(era.year()).map_err(|_e| ())?;
+    let (mut player_corrections, mut team_corrections) = partition_edit_list(edits);
+
+    player_corrections.retain(|c| c.season == era);
+    team_corrections.retain(|c| c.season == era);
 
     //only delete if the team correction says the game shouldnt be recorded
-    for correction in team_corrections.values() {
+    for correction in team_corrections.iter() {
         if correction.delete {
             let id = correction.identity();
 
@@ -37,21 +41,22 @@ pub fn revise_nba_season(
     }
 
     for (identity, game) in games.iter_mut() {
-        if let Some(correction) = team_corrections.get_mut(&identity) {
-            game.reorient(correction);
-
+        if let Some(correction) = team_corrections
+            .iter_mut()
+            .find(|c| c.identity() == *identity)
+        {
+            game.correct_identifiers(correction);
             game.correct_box_score(correction);
         }
 
-        //apply player corrections
         for player in game.roster_mut() {
             let mut player_identity = identity.clone();
-
             player_identity.player_id = Some(player.player_id());
-
-            if let Some(correction) = player_corrections.get_mut(&player_identity) {
-                player.reorient(correction);
-
+            if let Some(correction) = player_corrections
+                .iter_mut()
+                .find(|c| c.identity() == player_identity)
+            {
+                player.correct_identifiers(correction);
                 player.correct_box_score(correction);
             }
         }

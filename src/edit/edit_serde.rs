@@ -9,11 +9,10 @@ pub fn serialize<S>(cs: &HashMap<StatColumn, Value>, serializer: S) -> Result<S:
 where
     S: Serializer,
 {
-    let mut map: HashMap<String, Value> = HashMap::new();
-    for (key, value) in cs.clone() {
-        map.insert(format!("{}", key), value);
-    }
-    map.serialize(serializer)
+    cs.iter()
+        .map(|(key, value)| (format!("{}", key), value.clone()))
+        .collect::<HashMap<String, Value>>()
+        .serialize(serializer)
 }
 
 #[allow(dead_code)] // required for deserialize

@@ -1,53 +1,51 @@
-use crate::corrections::correction_builder::CorrectionBuilder;
 use crate::dapi::from_value::FromValue;
+
+use crate::edit::edit_builder::EditBuilder;
+use crate::edit::edit_loader::load_edit_list;
+
 use crate::format::language::Columnizable;
-use crate::format::path_manager::{
-    nba_correction_dir, nba_player_correction_file, nba_team_correction_file,
-};
+
 use crate::stats::visiting::Visiting;
+
+use crate::stats::box_score::{BoxScore, BoxScoreBuilder};
+use crate::stats::identity::{Identifiable, Identity};
+use crate::stats::nba_kind::NBAStatKind;
+use crate::stats::nba_kind::NBAStatKind::{LineUp, Player, Team};
+use crate::stats::stat_column::{player_column_index, team_column_index, StatColumn};
+use crate::stats::statify::StatPair;
+
+use crate::types::{GameDate, GameId, Matchup, PlayerId, SeasonId, TeamAbbreviation, TeamId};
+
+use serde_json::Value;
 
 use serde::{Deserialize, Serialize};
 
-use crate::stats::nba_kind::NBAStatKind;
-use crate::stats::season_period::SeasonPeriod;
-use crate::stats::stat_column::{player_column_index, team_column_index, StatColumn};
-
 use std::collections::HashMap;
-use std::fmt::{Debug, Formatter};
+use std::fmt::{Debug, Display, Formatter};
+use std::fs;
+use std::path::Path;
 
-use crate::stats::box_score::{BoxScore, BoxScoreBuilder};
-use crate::stats::nba_kind::NBAStatKind::{LineUp, Player, Team};
-use crate::stats::statify::StatPair;
-use crate::types::{GameDate, GameId, PlayerId, SeasonId, TeamAbbreviation, TeamId};
-use serde_json::Value;
-use std::path::{Path, PathBuf};
-use std::{fs, io};
-
-#[derive(Serialize, Deserialize, Clone, Eq, PartialEq)]
-pub struct Correction {
+#[derive(Serialize, Deserialize, Clone, Eq, Debug)]
+pub struct Edit {
     pub game_id: GameId,
 
     pub game_date: GameDate,
 
     pub season: SeasonId,
 
-    pub player_id: Option<PlayerId>,
-
     pub team_id: TeamId,
 
+    pub player_id: Option<PlayerId>,
+
     pub team_abbr: TeamAbbreviation,
-
-    pub kind: NBAStatKind,
-
-    pub period: SeasonPeriod,
 
     pub delete: bool,
 
     pub corrections: HashMap<StatColumn, Value>,
 }
 
-impl Correction {
-    pub fn load(filename: &str) -> Result<Correction, String> {
+impl Edit {
+    pub fn load(filename: &str) -> Result<Edit, String> {
         let path = Path::new(filename);
 
         // Read the file content
@@ -55,7 +53,7 @@ impl Correction {
             .map_err(|e| format!("Failed to read file {}: {}", filename, e))?;
 
         // Deserialize the content into a Correction struct
-        let correction: Correction = serde_json::from_str(&content)
+        let correction: Edit = serde_json::from_str(&content)
             .map_err(|e| format!("Failed to deserialize file {}: {}", filename, e))?;
 
         //todo: assert eq the path info and the file content
@@ -63,29 +61,38 @@ impl Correction {
         Ok(correction)
     }
 
-    /// Saves the correction to the file:
-    /// `corrections/{season_file}/{NBAStatType}/{}.json`
-    pub fn save(&self) -> io::Result<()> {
-        let path = nba_correction_dir(self.season, self.kind);
+    /// insert an edit record directly to the json file. this is not as performant and requires reading, parsing
+    /// and a O(logn) insert in the edit list loaded from file. if you are creating many edits, use a reference
+    /// to an edit list and keep in memory.
+    pub fn insert_to_file(&self, edit: Edit) -> Result<(), ()> {
+        let mut edit_list = load_edit_list().map_err(|_| ())?;
 
-        fs::create_dir_all(&path)?;
-
-        let json = serde_json::to_string_pretty(self)?;
-
-        let filepath = match self.kind {
-            Team => nba_team_correction_file(self.season, self.game_id.clone(), self.team_id),
-            Player => nba_player_correction_file(
-                self.season,
-                self.game_id.clone(),
-                self.player_id.unwrap().clone(),
-            ),
-            LineUp => unimplemented!("lineup stats not yet implemented"),
-        };
-
-        // Write the JSON string to the file
-        fs::write(filepath, json)?;
+        edit_list.insert(edit);
 
         Ok(())
+    }
+
+    pub fn kind(&self) -> NBAStatKind {
+        match self.player_id {
+            Some(_) => NBAStatKind::Player,
+            None => NBAStatKind::Team,
+        }
+    }
+
+    pub fn len(&self) -> usize {
+        self.corrections.len()
+    }
+
+    pub fn domain(&self) -> (SeasonId, NBAStatKind) {
+        (self.season, self.kind())
+    }
+
+    pub fn set_delete(&mut self, delete: bool) {
+        self.delete = delete
+    }
+
+    pub fn team_abbr(&self) -> TeamAbbreviation {
+        self.team_abbr.clone()
     }
 
     ///
@@ -116,7 +123,7 @@ impl Correction {
             Some(corrected_string)
         }
 
-        match (columns.as_slice(), self.kind) {
+        match (columns.as_slice(), self.kind()) {
             (
                 [_season_id, _player_id, _player_name, _team_id, _team_abbreviation, _team_name, _game_id, _game_date, _matchup, _wl, _min, _fgm, _fga, _fg_pct, _fg3m, _fg3a, _fg3_pct, _ftm, _fta, _ft_pct, _oreb, _dreb, _reb, _ast, _stl, _blk, _tov, _pf, _pts, _plus_minus, _fantasy_pts, _video_available],
                 Player,
@@ -134,23 +141,7 @@ impl Correction {
         }
     }
 
-    pub fn len(&self) -> usize {
-        self.corrections.len()
-    }
-
-    pub fn domain(&self) -> (SeasonId, NBAStatKind) {
-        (self.season, self.kind)
-    }
-
-    pub fn set_delete(&mut self, delete: bool) {
-        self.delete = delete
-    }
-
-    pub fn team_abbr(&self) -> TeamAbbreviation {
-        self.team_abbr.clone()
-    }
-
-    pub fn correct_box_score(&mut self, game: &mut BoxScore) {
+    pub fn edit_box_score(&mut self, game: &mut BoxScore) {
         self.corrections
             .retain(|col, val| match game.try_set_col(col, val) {
                 Ok(_) => false, //remove entries that are not successfully applied
@@ -164,7 +155,7 @@ impl Correction {
     pub fn correct_box_score_builder(
         &mut self,
         box_score_builder: &mut BoxScoreBuilder,
-        correction_builder: &mut CorrectionBuilder,
+        correction_builder: &mut EditBuilder,
     ) {
         let keys = self.corrections.keys();
 
@@ -296,14 +287,14 @@ impl Correction {
                 | StatColumn::GAME_ID
                 | StatColumn::GAME_DATE
                 | StatColumn::MATCHUP => {
-                    panic!("💀 {column} is requireed for generating a unique identifier for the game and cannot be corrected in the BoxScore. ")
+                    panic!("💀 {column} is required for generating a unique identifier for the game and cannot be corrected in the BoxScore. ")
                 }
             }
         }
     }
 
     //consume the other correction and merge the fields into the self.
-    pub fn merge(&mut self, other: Correction) {
+    pub fn merge(&mut self, other: Edit) {
         let other_fields = other.corrections;
 
         for (k, v) in other_fields {
@@ -325,27 +316,58 @@ impl Correction {
         };
     }
 
-    pub fn file_path(&self) -> PathBuf {
-        match self.player_id {
-            Some(pid) => nba_player_correction_file(self.season, self.game_id, pid),
-            None => nba_team_correction_file(self.season, self.game_id, self.team_id),
-        }
+    pub fn corrects(&self, matchup: &StatColumn) -> bool {
+        self.corrections.contains_key(matchup)
+    }
+
+    pub fn matchup_as_value(&self) -> Option<Value> {
+        let matchup = self
+            .corrections
+            .get(&StatColumn::MATCHUP)?
+            .as_str()?
+            .parse::<Matchup>()
+            .ok()?;
+
+        let s = if matchup.home == self.team_abbr() {
+            format!("{} vs. {}", self.team_abbr(), matchup.away)
+        } else {
+            format!("{} @ {}", self.team_abbr(), matchup.home)
+        };
+
+        Some(Value::String(s))
+    }
+
+    pub fn inverse_matchup_as_value(&self) -> Option<Value> {
+        let matchup = self
+            .corrections
+            .get(&StatColumn::MATCHUP)?
+            .as_str()?
+            .parse::<Matchup>()
+            .ok()?;
+
+        let s = if matchup.home == self.team_abbr() {
+            format!("{} @ {}", matchup.away, self.team_abbr())
+        } else {
+            format!("{} vs. {}", matchup.home, self.team_abbr())
+        };
+
+        Some(Value::String(s))
     }
 }
 
-impl Debug for Correction {
+impl Display for Edit {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "szn: {}:{}\n{}-{} ({})\n{}",
-            self.season,
+            "game_id: {} {}\t{}-{} ({})\t{}",
             self.game_id,
+            self.season,
             self.team_abbr,
             match self.player_id {
                 Some(pid) => pid.to_string(),
                 None => self.team_id.to_string(),
             },
-            match self.kind {
+            match self.kind() {
                 Team => "team",
                 Player => "player",
                 LineUp => "lineup",
@@ -362,5 +384,46 @@ impl Debug for Correction {
                 ),
             }
         )
+    }
+}
+
+impl Identifiable for Edit {
+    fn identity(&self) -> Identity {
+        // eprintln!("parsing gameid as u64: {}", match self.gameid.replace("\"", "").parse::<u64>() {
+        //     Ok(_) => "success",
+        //     Err(_) => "failure"
+        // });
+
+        match self.kind() {
+            NBAStatKind::Team => Identity {
+                season_id: self.season,
+                game_id: self.game_id.clone(),
+                player_id: None,
+                team_id: self.team_id,
+                game_date: self.game_date,
+                team_abbr: self.team_abbr.clone(),
+            },
+            NBAStatKind::Player => Identity {
+                season_id: self.season,
+                game_id: self.game_id.clone(),
+                player_id: Some(
+                    self.player_id
+                        .expect("💀 no player id for a player correction object. "),
+                ),
+                team_id: self.team_id,
+                game_date: self.game_date,
+                team_abbr: self.team_abbr.clone(),
+            },
+            NBAStatKind::LineUp => todo!("lineup stats not yet implemented"),
+        }
+    }
+}
+
+impl PartialEq for Edit {
+    fn eq(&self, other: &Self) -> bool {
+        self.game_id == other.game_id
+            && self.season == other.season
+            && self.team_id == other.team_id
+            && self.player_id == other.player_id
     }
 }

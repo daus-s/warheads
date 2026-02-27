@@ -1,5 +1,5 @@
 use crate::format::box_score_formatter::format_player_box_score;
-use crate::{corrections::correction::Correction, dapi::from_value::FromValue};
+use crate::{dapi::from_value::FromValue, edit::edit::Edit};
 
 use crate::stats::box_score::BoxScore;
 use crate::stats::stat_column::StatColumn::*;
@@ -47,11 +47,11 @@ impl PlayerBoxScore {
         &self.box_score
     }
 
-    pub fn correct_box_score(&mut self, correction: &mut Correction) {
-        correction.correct_box_score(&mut self.box_score);
+    pub fn correct_box_score(&mut self, edit: &mut Edit) {
+        edit.edit_box_score(&mut self.box_score);
     }
 
-    pub(crate) fn reorient(&mut self, correction: &mut Correction) {
+    pub(crate) fn correct_identifiers(&mut self, correction: &mut Edit) {
         correction.corrections.retain(|key, value| match key {
             PLAYER_ID => {
                 if let Ok(player_id) = value.player_id() {

@@ -1,9 +1,11 @@
 use crate::format::language::Columnizable;
-use crate::format::path_manager::{nba_player_correction_file, nba_team_correction_file};
+
 use crate::stats::domain::Domain;
 use crate::stats::game_data::GameData;
 use crate::stats::nba_kind::NBAStatKind::{self, Player, Team};
+
 use crate::types::{GameDate, GameId, PlayerId, SeasonId, TeamAbbreviation, TeamId};
+
 use chrono::NaiveDate;
 use serde::Serialize;
 use serde_json::Value;
@@ -16,7 +18,7 @@ pub trait Identifiable {
     fn identity(&self) -> Identity;
 }
 
-#[derive(Eq, PartialEq, Hash, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct Identity {
     pub season_id: SeasonId,
 
@@ -55,6 +57,14 @@ impl Identity {
 
     pub fn team_abbr(&self) -> TeamAbbreviation {
         self.team_abbr.to_owned()
+    }
+
+    pub fn team_or_player(&self) -> NBAStatKind {
+        if self.player_id.is_some() {
+            NBAStatKind::Player
+        } else {
+            NBAStatKind::Team
+        }
     }
 }
 
@@ -192,18 +202,6 @@ impl Display for Identity {
                 self.team_abbr, self.season_id, self.game_id
             ),
         }
-    }
-}
-
-impl Debug for Identity {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let data = serde_json::to_string_pretty(self).map_err(|_| std::fmt::Error)?;
-        let file_path = match self.player_id {
-            Some(id) => nba_player_correction_file(self.season_id, self.game_id, id),
-            None => nba_team_correction_file(self.season_id, self.game_id, self.team_id),
-        };
-
-        write!(f, "{}\n{}", file_path.display(), data)
     }
 }
 

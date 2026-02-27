@@ -1,69 +1,100 @@
-use crate::corrections::correction_builder::CorrectionBuilder;
-
 use crate::dapi::team_box_score::TeamBoxScore;
+
+use crate::edit::edit_builder::EditBuilder;
+use crate::edit::edit_loader::{load_edit_list, save_edit_list, EditLoadingError};
 
 use crate::format::season::season_fmt;
 
-use crate::proc::hunting::load_nba_season_from_source;
+use crate::proc::error::ReadProcessError;
+use crate::proc::hunting::load_season_from_source;
 use crate::proc::revise::revise_nba_season;
 
 use crate::stats::game_obj::GameObject;
 use crate::stats::identity::Identity;
-use crate::stats::nba_kind::NBAStatKind::{Player, Team};
+
+use crate::stats::stat_column::StatColumn;
+use crate::storage::store_disk::{save_nba_game, SaveGameError};
 
 use crate::types::{GameId, SeasonId};
 
 use indicatif::{ProgressBar, ProgressStyle};
+use thiserror::Error;
 
 use std::collections::HashMap;
 
-pub fn store_nba_season(era: SeasonId) {
-    let mut team_games = load_nba_season_from_source(era);
+#[derive(Error, Debug)]
+pub enum InscriptionError {
+    #[error("❌ {0}\n❌ edit file failed serialization. ")]
+    LoadEditListError(EditLoadingError),
+    #[error("❌ {0}\n❌ Save Game Error")]
+    FileError(ReadProcessError),
+    #[error("❌ failed to revise NBA games.")]
+    RevisionError,
+    #[error("❌ failed to save NBA games.")]
+    SerializeGameError(SaveGameError),
+    #[error("❌ failed to save edit list.")]
+    SaveEditListError,
+    #[error("❌ failed to construct an edit, some fields were missing.")]
+    BuildEditError,
+}
 
-    match revise_nba_season(era, &mut team_games) {
-        Ok(_) => {
-            println!(
-                "✅ corrections for the {} NBA season have been written successfully.",
-                era
-            );
-        }
-        Err(_) => {
-            eprintln!(
-                "❌ corrections for the {} NBA season have failed to save.",
-                era
-            );
-        }
-    };
+pub fn inscribe(era: SeasonId) -> Result<(), InscriptionError> {
+    let mut edits = load_edit_list().map_err(|e| InscriptionError::LoadEditListError(e))?;
+
+    let mut team_games =
+        load_season_from_source(era).map_err(|e| InscriptionError::FileError(e))?;
+
+    revise_nba_season(era, &mut team_games, &edits).map_err(|_| InscriptionError::RevisionError)?;
 
     let pairs = pair_off(team_games);
 
-    if let Err(mut correction_builders) = pairs {
-        println!(
-            "ℹ️  there are {} {} corrections to make for the {} season.",
-            correction_builders.len(),
-            Team,
-            era
-        );
+    match pairs {
+        Err(mut edit_builders) => {
+            println!(
+                "ℹ️  there are {} corrections to make to Team box scores for the {} season.",
+                edit_builders.len(),
+                era
+            );
 
-        for correction in correction_builders.iter_mut() {
-            correction.create_and_save();
+            for edit_builder in edit_builders.iter_mut() {
+                let game_id = edit_builder.game_id();
+
+                // look in already-loaded edits for the sibling with same game_id, different team
+                if let Some(resolved) = edits.find_sibling(game_id, edit_builder.team_abbr()) {
+                    if resolved.corrects(&StatColumn::MATCHUP) {
+                        let matchup = resolved.inverse_matchup_as_value().unwrap();
+
+                        edit_builder.add_missing_field(StatColumn::MATCHUP, matchup);
+
+                        if let Some(edit) = edit_builder.build() {
+                            edits.insert(edit);
+                        }
+                    }
+                } else {
+                    edit_builder.prompt(); //
+
+                    if let Some(edit) = edit_builder.build() {
+                        edits.insert(edit);
+                    } else {
+                        return Err(InscriptionError::BuildEditError);
+                    }
+                }
+                // otherwise: write it out, wait for manual input next run
+            }
+
+            save_edit_list(&edits).map_err(|_| InscriptionError::SaveEditListError)?;
+
+            inscribe(era)
         }
-
-        store_nba_season(era);
-    } else if let Ok(games) = pairs {
-        sub_save(games);
-    } else {
-        unreachable!("💀 result variant is neither Err nor Ok. ")
+        Ok(games) => save_game_object(games).map_err(|e| InscriptionError::SerializeGameError(e)),
     }
 }
 
-fn sub_save(season: Vec<GameObject>) {
-    // let client = crate::storage::client::create().await;
-
+fn save_game_object(season: Vec<GameObject>) -> Result<(), SaveGameError> {
     let num_games = season.len();
 
     if num_games == 0 {
-        return;
+        return Ok(());
     }
 
     let szn = season[0].season().year();
@@ -85,19 +116,20 @@ fn sub_save(season: Vec<GameObject>) {
     ));
 
     for game in &season {
-        crate::storage::store_disk::save_nba_game(game).unwrap();
+        save_nba_game(game)?;
 
         pb.inc(1);
     }
 
     pb.finish_with_message(format!("saved {} season.", season_fmt(szn)));
+    Ok(())
 }
 
 pub(crate) type TeamGame = (Identity, TeamBoxScore);
 
-pub(crate) fn pair_off(games: Vec<TeamGame>) -> Result<Vec<GameObject>, Vec<CorrectionBuilder>> {
+pub(crate) fn pair_off(games: Vec<TeamGame>) -> Result<Vec<GameObject>, Vec<EditBuilder>> {
     let mut pairs = HashMap::<GameId, (Option<TeamGame>, Option<TeamGame>)>::new();
-    let mut corrections: Vec<CorrectionBuilder> = Vec::new();
+    let mut corrections: Vec<EditBuilder> = Vec::new();
 
     let l = games.len();
 
@@ -136,18 +168,8 @@ pub(crate) fn pair_off(games: Vec<TeamGame>) -> Result<Vec<GameObject>, Vec<Corr
                     game_date,
                 } = game.0.clone();
 
-                let mut correction_builder = CorrectionBuilder::new(
-                    game_id,
-                    season_id,
-                    player_id,
-                    team_id,
-                    team_abbr,
-                    match player_id {
-                        Some(_id) => Player,
-                        None => Team,
-                    },
-                    game_date,
-                );
+                let mut correction_builder =
+                    EditBuilder::new(game_id, season_id, player_id, team_id, team_abbr, game_date);
 
                 correction_builder.set_delete(true);
 

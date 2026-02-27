@@ -1,5 +1,5 @@
-use crate::corrections::correction::Correction;
-use crate::corrections::overwrite;
+use crate::edit::edit::Edit;
+use crate::edit::overwrite;
 
 use crate::dapi::archive::Archive;
 
@@ -10,12 +10,12 @@ use crate::stats::identity::{Identifiable, Identity};
 
 use std::collections::HashMap;
 
-pub trait Corrector {
+pub trait Editor {
     ///applies the corrections from the self and writes it to an Archive object
     fn apply<A: Archive>(&self, archives: &mut HashMap<Domain, A>) -> Result<(), String>;
 }
 
-impl Corrector for Vec<Correction> {
+impl Editor for Vec<Edit> {
     fn apply<A>(&self, archives: &mut HashMap<Domain, A>) -> Result<(), String>
     where
         A: Archive,
@@ -31,20 +31,20 @@ impl Corrector for Vec<Correction> {
         // there are always fewer corrections than games so we iterate over the corrections and then
         // search with O(1) lookup in hashmap (hash might be slow for Identity)
 
-        for correction in self {
-            let domain = correction.domain();
+        for edit in self {
+            let domain = edit.domain();
 
             let map = files.get_mut(&domain).ok_or_else(|| {
                 "⚠️ correction didnt have a relevant archive to be applied to".to_string()
             })?;
 
-            let id = correction.identity();
+            let id = edit.identity();
 
             if let Some(game) = map.get_mut(&id) {
-                if correction.delete {
+                if edit.delete {
                     to_remove.push(id);
                 } else {
-                    *game = correction.correct_source_data(game.to_string());
+                    *game = edit.correct_source_data(game.to_string());
                 }
             }
         }
