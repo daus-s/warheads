@@ -8,13 +8,15 @@ use crate::stats::nba_kind::NBAStatKind;
 
 use crate::types::{GameDate, SeasonId};
 
-use std::fmt::{Debug, Display};
+use std::fmt::Debug;
 
 use reqwest::{Client, Response};
 
 use serde_json::Value;
 
 use thiserror::Error;
+
+/// HISTORY
 
 pub async fn nba_history_json(
     season: SeasonId,
@@ -32,7 +34,10 @@ pub async fn nba_history_json(
 
         Ok(json)
     } else {
-        Err(NBAQueryError::ResponseError(response))
+        Err(NBAQueryError::ResponseError {
+            status: response.status(),
+            url: response.url().to_string(),
+        })
     }
 }
 
@@ -79,6 +84,8 @@ fn build_nba_history_url(
     )
 }
 
+/// GAMECARD
+
 pub async fn get_gamecard_json(date: GameDate) -> Result<Value, NBAQueryError> {
     let response = make_nba_gamecard_request(date).await?;
 
@@ -90,7 +97,7 @@ pub async fn get_gamecard_json(date: GameDate) -> Result<Value, NBAQueryError> {
     Ok(json)
 }
 
-pub(crate) async fn make_nba_gamecard_request(date: GameDate) -> Result<Response, NBAQueryError> {
+async fn make_nba_gamecard_request(date: GameDate) -> Result<Response, NBAQueryError> {
     let client = Client::builder()
         .gzip(true)
         .brotli(true)
@@ -114,46 +121,57 @@ fn build_nba_gamecard_url(date: GameDate) -> String {
     )
 }
 
-#[derive(Error)]
+/// EDITS
+
+pub(crate) async fn nba_annotation_file() -> Result<Value, NBAQueryError> {
+    let response = make_nba_annotations_request().await?;
+
+    let json = response
+        .json()
+        .await
+        .map_err(|e| NBAQueryError::FormatError(e))?;
+
+    Ok(json)
+}
+
+async fn make_nba_annotations_request() -> Result<Response, NBAQueryError> {
+    let client = Client::new();
+
+    let url = build_nba_annotations_url();
+
+    client
+        .get(&url)
+        .send()
+        .await
+        .map_err(|_| NBAQueryError::DriveResourceError)
+}
+
+fn build_nba_annotations_url() -> String {
+    //publicly shared, no worries about leaking secrets
+    "https://drive.google.com/file/d/1r8XyRZN14Z1Q9_7F6KyHOJapd4PUSzaC".to_owned()
+}
+
+#[derive(Error, Debug)]
 pub enum NBAQueryError {
-    ClientError(reqwest::Error),
+    #[error("❌ {0}\n❌ HTTP request failed")]
     RequestError(reqwest::Error),
-    ResponseError(reqwest::Response),
+
+    #[error("{0}\n❌ failed to construct client")]
+    ClientError(reqwest::Error),
+
+    #[error("❌ {}\n❌ request succeed but failed with code {}", status, url)]
+    ResponseError {
+        status: reqwest::StatusCode,
+        url: String,
+    },
+    #[error("{0}\n❌ failed to parse response as json.")]
     FormatError(reqwest::Error),
+
+    #[error("{0}\n❌ unexpected json object structure.")]
     ObjectStructureError(parse::ParseError),
-}
 
-impl Debug for NBAQueryError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            NBAQueryError::RequestError(e) => {
-                write!(f, "{}\n❌ request failed with error", e)
-            }
-            NBAQueryError::ResponseError(res) => {
-                write!(
-                    f,
-                    "❌ {}\n❌ request succeed but failed with code {}",
-                    res.status(),
-                    res.url()
-                )
-            }
-            NBAQueryError::ClientError(error) => {
-                write!(f, "{}\n❌ failed to construct client", error)
-            }
-            NBAQueryError::FormatError(error) => {
-                write!(f, "{}\n❌ failed to parse response as json.", error)
-            }
-            NBAQueryError::ObjectStructureError(error) => {
-                write!(f, "{}\n❌ unexpected json object structure.", error)
-            }
-        }
-    }
-}
-
-impl Display for NBAQueryError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
+    #[error("Drive Resource Error")]
+    DriveResourceError,
 }
 
 #[cfg(test)]
@@ -175,6 +193,17 @@ mod test_queries {
         let response = make_nba_gamecard_request(GameDate::from("10/21/2025"))
             .await
             .expect("💀 failed to fetch nba timeline records. ");
+
+        assert!(response.status().is_success());
+    }
+
+    #[tokio::test]
+    async fn test_annotations_query() {
+        let response = make_nba_annotations_request()
+            .await
+            .expect("💀 failed to fetch nba annotations records. ");
+
+        dbg!(&response);
 
         assert!(response.status().is_success());
     }

@@ -1,3 +1,4 @@
+pub mod dispatch;
 pub mod error;
 pub mod forecast;
 pub mod gather;

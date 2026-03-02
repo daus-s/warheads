@@ -4,13 +4,16 @@ use crate::checksum::sign::sign_nba;
 use crate::dapi::currency::source_data_current;
 use crate::dapi::season_manager::{get_current_era, nba_lifespan_period};
 
-use crate::format::path_manager::nba_checksum_file;
+use crate::edit::edit_list::EditList;
+use crate::edit::edit_loader::load_edit_list;
+use crate::format::path_manager::{nba_checksum_file, nba_edit_file};
 
 use crate::ml::elo_tracker::EloTracker;
 use crate::ml::model::Model;
 
 use crate::proc::gather::fetch_and_save_nba_stats;
 use crate::proc::hunting::compare_and_fetch;
+use crate::proc::query::nba_annotation_file;
 use crate::proc::store::inscribe;
 
 use crate::stats::chronology::Chronology;
@@ -109,4 +112,23 @@ pub fn rate_nba(elo_tracker: &mut EloTracker) {
     if let Err(e) = elo_tracker.save() {
         println!("{}\n❌ failed to serialize elo tracker.", e);
     };
+}
+
+pub(crate) async fn annotate_nba() {
+    match nba_annotation_file().await {
+        Ok(json) => {
+            let mut previous = load_edit_list().unwrap_or_default();
+
+            let new = serde_json::from_str::<EditList>(&json.to_string()).unwrap_or_default();
+
+            previous.merge(new);
+
+            if let Err(_) = previous.write_to_file() {
+                println!("❌ failed to write edit list to file.");
+            }
+        }
+        Err(e) => {
+            println!("{e}\n❌ failed to fetch nba annotation file.");
+        }
+    }
 }

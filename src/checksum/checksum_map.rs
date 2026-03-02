@@ -90,6 +90,26 @@ impl ChecksumMap {
 
         Ok(())
     }
+
+    pub fn diff(&self, other: &ChecksumMap) -> Vec<PathBuf> {
+        let mut diffs = Vec::new();
+
+        // Check all keys in self
+        for (k, v) in self.map.iter() {
+            if other.get(k) != Some(v) {
+                diffs.push(k.clone());
+            }
+        }
+
+        // Check for keys that exist in other but not in self
+        for k in other.map.keys() {
+            if !self.map.contains_key(k) {
+                diffs.push(k.clone());
+            }
+        }
+
+        diffs
+    }
 }
 
 #[derive(Error, Debug)]

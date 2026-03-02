@@ -1,0 +1,117 @@
+use std::env;
+use thiserror::Error;
+use DispatchError::*;
+
+use crate::{
+    checksum::{checksum_map::ChecksumMap, generate::generate_checksums},
+    proc::historian::{annotate_nba, observe_nba},
+};
+
+/// dispatch models to be evalutated and return results
+pub struct Dispatch {
+    args: Vec<String>,
+}
+
+impl Dispatch {
+    pub fn new() -> Self {
+        let args = env::args().collect();
+
+        Dispatch { args }
+    }
+
+    pub async fn dispatch(&self) -> Result<(), DispatchError> {
+        if self.args.len() > 1 {
+            println!("{}", USAGE);
+            return Ok(());
+        }
+
+        match self.args[1].as_str() {
+            "init" => initialize().await,
+            "sync" => {
+                // fetch current data for nba
+                todo!()
+            }
+            "train" => {
+                assert!(self.args.len() > 2, "todo: write model training usage");
+                //replace with trainable trait include in model?
+                match self.args[1].as_str() {
+                    "elo-tracker" => {
+                        todo!("add options")
+                    }
+                    _ => {
+                        todo!("model usage")
+                    }
+                }
+            }
+            "help" => {
+                println!("{}", USAGE);
+                Ok(())
+            }
+            "checksums" => {
+                //todo add options verify and generate?
+                if let Ok(expected) = ChecksumMap::load() {
+                    let actual = generate_checksums();
+
+                    if expected != actual {
+                        let mismatched_eras = expected.diff(&actual);
+
+                        let mut f_str = String::new();
+
+                        for era in mismatched_eras {
+                            f_str.push_str(&format!("\n📄 {}", era.display()));
+                        }
+                        println!("❌ checksums do not match for eras:{f_str}",);
+                    } else {
+                        println!("✅ checksums match serialized checksum map. data is intact. ")
+                    }
+
+                    Ok(())
+                } else {
+                    println!("checksums not yet initialized. run `warheads init` to generate generate data");
+
+                    Err(SourceDataError)
+                }
+            }
+            x => Err(UnrecognizedCommand(x.to_owned())),
+        }
+    }
+}
+
+const USAGE: &'static str = r#"                                    warheads API
+this program provides a frameowrk to generate and train ML models on nba data.
+it requires network access and will make minimal requests to the
+===============================================================================
+USAGE
+
+DATA
+    warheads init
+
+MODELS
+the model trait and API is exposed to the user. see the model module for more
+documentation.
+
+to run and train. if data cannot be loaded these procedures may tell you to run
+other routines to update data.
+===============================================================================
+LICENSE
+===============================================================================
+
+"#;
+
+#[derive(Debug, Clone, Error)]
+pub enum DispatchError {
+    #[error("❌ the argument {0} is not a known command. for known commands run warheads help")]
+    UnrecognizedCommand(String),
+    #[error("❌ source data was not correctly serialized. ")]
+    SourceDataError,
+    #[error("❌ failed to initialize NBA data. ")]
+    InitializationError,
+}
+
+async fn initialize() -> Result<(), DispatchError> {
+    observe_nba().await;
+
+    annotate_nba().await;
+
+    todo!()
+}

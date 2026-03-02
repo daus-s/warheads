@@ -65,6 +65,12 @@ impl EditList {
         }
         None
     }
+
+    pub(crate) fn merge(&mut self, new: EditList) {
+        for edit in new.into_edits() {
+            self.insert(edit);
+        }
+    }
 }
 
 impl<'de> Deserialize<'de> for EditList {
