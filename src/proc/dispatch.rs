@@ -4,7 +4,10 @@ use DispatchError::*;
 
 use crate::{
     checksum::{checksum_map::ChecksumMap, generate::generate_checksums},
-    proc::historian::{annotate_nba, chronicle_nba, observe_nba},
+    proc::{
+        historian::{annotate_nba, chronicle_nba, observe_nba},
+        refresher::update_source_data,
+    },
 };
 
 /// dispatch models to be evalutated and return results
@@ -27,10 +30,16 @@ impl Dispatch {
 
         match self.args[1].as_str() {
             "init" => initialize().await,
-            "sync" => {
-                // fetch current data for nba
-                todo!()
-            }
+            "sync" => match update_source_data().await {
+                Ok(_) => {
+                    println!("✅ successfully updated source data. ");
+                    Ok(())
+                }
+                Err(_) => {
+                    println!("❌ failed to update source data. ");
+                    Err(DispatchError::SourceDataError)
+                }
+            },
             "train" => {
                 assert!(self.args.len() > 2, "todo: write model training usage");
                 //replace with trainable trait include in model?
@@ -115,5 +124,6 @@ async fn initialize() -> Result<(), DispatchError> {
 
     chronicle_nba();
 
+    println!("✅ successfully initialized NBA data in warheads directory. ");
     Ok(())
 }
