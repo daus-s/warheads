@@ -48,7 +48,7 @@ pub(crate) async fn compare_and_fetch(
     season_id: SeasonId,
     kind: NBAStatKind,
     checksums: &ChecksumMap,
-) -> u8 {
+) {
     let source_path = nba_source_path(season_id, kind);
     let checksum_path = universal_nba_source_path(season_id, kind);
 
@@ -64,13 +64,10 @@ pub(crate) async fn compare_and_fetch(
     {
         if let Err(msg) = gather::fetch_and_save_nba_stats(season_id, kind).await {
             println!("{}", msg);
-            return 1;
         } else {
             println!("✅ successfully wrote {kind} data to file for the {season_id}");
-            return 1;
         }
     } else {
         println!("✅ bypassing fetching {kind} data for the {season_id}, checksums match. ");
-        return 0;
     }
 }

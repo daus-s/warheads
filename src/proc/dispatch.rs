@@ -4,7 +4,7 @@ use DispatchError::*;
 
 use crate::{
     checksum::{checksum_map::ChecksumMap, generate::generate_checksums},
-    proc::historian::{annotate_nba, observe_nba},
+    proc::historian::{annotate_nba, chronicle_nba, observe_nba},
 };
 
 /// dispatch models to be evalutated and return results
@@ -20,7 +20,7 @@ impl Dispatch {
     }
 
     pub async fn dispatch(&self) -> Result<(), DispatchError> {
-        if self.args.len() > 1 {
+        if self.args.len() < 2 {
             println!("{}", USAGE);
             return Ok(());
         }
@@ -113,5 +113,7 @@ async fn initialize() -> Result<(), DispatchError> {
 
     annotate_nba().await;
 
-    todo!()
+    chronicle_nba();
+
+    Ok(())
 }

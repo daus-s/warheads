@@ -123,32 +123,28 @@ fn build_nba_gamecard_url(date: GameDate) -> String {
 
 /// EDITS
 
-pub(crate) async fn nba_annotation_file() -> Result<Value, NBAQueryError> {
-    let response = make_nba_annotations_request().await?;
-
-    let json = response
-        .json()
-        .await
-        .map_err(|e| NBAQueryError::FormatError(e))?;
-
-    Ok(json)
-}
-
-async fn make_nba_annotations_request() -> Result<Response, NBAQueryError> {
+pub(crate) async fn nba_annotation_file() -> Result<String, NBAQueryError> {
     let client = Client::new();
 
     let url = build_nba_annotations_url();
 
-    client
+    let response = client
         .get(&url)
         .send()
         .await
-        .map_err(|_| NBAQueryError::DriveResourceError)
+        .map_err(|_| NBAQueryError::DriveResourceError)?;
+
+    let body = response
+        .text()
+        .await
+        .map_err(|e| NBAQueryError::FormatError(e))?;
+
+    Ok(body)
 }
 
 fn build_nba_annotations_url() -> String {
     //publicly shared, no worries about leaking secrets
-    "https://drive.google.com/file/d/1r8XyRZN14Z1Q9_7F6KyHOJapd4PUSzaC".to_owned()
+    "https://drive.google.com/uc?export=download&id=1r8XyRZN14Z1Q9_7F6KyHOJapd4PUSzaC".to_owned()
 }
 
 #[derive(Error, Debug)]
@@ -164,18 +160,20 @@ pub enum NBAQueryError {
         status: reqwest::StatusCode,
         url: String,
     },
-    #[error("{0}\n❌ failed to parse response as json.")]
+    #[error("❌ {0}\n❌ failed to parse response as json.")]
     FormatError(reqwest::Error),
 
-    #[error("{0}\n❌ unexpected json object structure.")]
+    #[error("❌ {0}\n❌ unexpected json object structure.")]
     ObjectStructureError(parse::ParseError),
 
-    #[error("Drive Resource Error")]
+    #[error("❌ Drive Resource Error")]
     DriveResourceError,
 }
 
 #[cfg(test)]
 mod test_queries {
+    use crate::edit::edit_list::EditList;
+
     use super::*;
 
     #[tokio::test]
@@ -199,12 +197,10 @@ mod test_queries {
 
     #[tokio::test]
     async fn test_annotations_query() {
-        let response = make_nba_annotations_request()
+        let body = nba_annotation_file()
             .await
             .expect("💀 failed to fetch nba annotations records. ");
 
-        dbg!(&response);
-
-        assert!(response.status().is_success());
+        serde_json::from_str::<EditList>(&body).unwrap();
     }
 }

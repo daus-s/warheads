@@ -1,8 +1,5 @@
-use crate::dapi::season_manager::get_era_by_date;
+use crate::format::path_manager::nba_storage_file;
 
-use crate::format::path_manager::{nba_source_path, nba_storage_file};
-
-use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::record::Record;
 use crate::stats::teamcard::TeamCard;
 use crate::stats::visiting::Visiting;
@@ -12,7 +9,6 @@ use crate::tui::tui_display::TuiDisplay;
 use crate::types::{GameDate, GameId, PlayerId, SeasonId};
 
 use std::fmt::Display;
-use std::fs;
 use std::path::PathBuf;
 
 use derive_builder::Builder;
@@ -45,23 +41,6 @@ impl GameCard {
             home,
             away,
         }
-    }
-
-    //is this seach inefficient reading the file each time for each game?
-    pub fn check_source_data(&self) -> bool {
-        let era = get_era_by_date(self.date);
-
-        let team_source_path = nba_source_path(era, NBAStatKind::Team);
-
-        let contents = match fs::read_to_string(team_source_path) {
-            Ok(contents) => contents,
-            Err(_) => return false,
-        };
-
-        let home_regex = self.home_regex();
-        let away_regex = self.away_regex();
-
-        home_regex.is_match(&contents) && away_regex.is_match(&contents)
     }
 
     pub fn get_storage_path(&self) -> PathBuf {

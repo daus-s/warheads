@@ -1,12 +1,11 @@
 use crate::checksum::checksum_map::ChecksumMap;
 use crate::checksum::sign::sign_nba;
 
-use crate::dapi::currency::source_data_current;
 use crate::dapi::season_manager::{get_current_era, nba_lifespan_period};
 
 use crate::edit::edit_list::EditList;
 use crate::edit::edit_loader::load_edit_list;
-use crate::format::path_manager::{nba_checksum_file, nba_edit_file};
+use crate::format::path_manager::nba_checksum_file;
 
 use crate::ml::elo_tracker::EloTracker;
 use crate::ml::model::Model;
@@ -24,45 +23,64 @@ use crate::storage::read_disk::read_nba_season;
 pub async fn observe_nba() {
     match ChecksumMap::load() {
         Ok(checksums) => {
-            let mut errors = 0;
-
             let eras = nba_lifespan_period();
-
             for era in &eras[0..eras.len() - 1] {
-                errors += compare_and_fetch(*era, NBAStatKind::Player, &checksums).await;
-                errors += compare_and_fetch(*era, NBAStatKind::Team, &checksums).await;
+                compare_and_fetch(*era, NBAStatKind::Player, &checksums).await;
+                compare_and_fetch(*era, NBAStatKind::Team, &checksums).await;
             }
-
             let current_era = get_current_era();
-
-            if !source_data_current().await {
-                let _ = fetch_and_save_nba_stats(current_era, NBAStatKind::Player).await;
-                let _ = fetch_and_save_nba_stats(current_era, NBAStatKind::Team).await;
-
-                errors += 1;
-                errors += 1;
+            match fetch_and_save_nba_stats(current_era, NBAStatKind::Player).await {
+                Ok(_) => {
+                    println!("✅ successfully fetched and saved nba player stats for {current_era}")
+                }
+                Err(e) => {
+                    println!("❌ failed to fetch and save nba player stats for {current_era}\n{e}")
+                }
             }
-
-            if errors > 0 {
-                match sign_nba() {
-                    Ok(_) => println!(
-                        "✅ successfully signed nba data with checksums in {}",
-                        nba_checksum_file().display()
-                    ),
-                    Err(_) => println!(
-                        "❌ failed to sign nba data with checksums in {}",
-                        nba_checksum_file().display()
-                    ),
-                };
+            match fetch_and_save_nba_stats(current_era, NBAStatKind::Team).await {
+                Ok(_) => {
+                    println!("✅ successfully fetched and saved nba team stats for {current_era}")
+                }
+                Err(e) => {
+                    println!("❌ failed to fetch and save nba team stats for {current_era}\n{e}")
+                }
+            }
+            match sign_nba() {
+                Ok(_) => println!(
+                    "✅ successfully signed nba data with checksums in {}",
+                    nba_checksum_file().display()
+                ),
+                Err(_) => println!(
+                    "❌ failed to sign nba data with checksums in {}",
+                    nba_checksum_file().display()
+                ),
             }
         }
         Err(_) => {
             for era in nba_lifespan_period() {
-                let _ = fetch_and_save_nba_stats(era, NBAStatKind::Player).await;
-                let _ = fetch_and_save_nba_stats(era, NBAStatKind::Team).await;
+                match fetch_and_save_nba_stats(era, NBAStatKind::Player).await {
+                    Ok(_) => {
+                        println!("✅ successfully fetched and saved nba player stats for {era}")
+                    }
+                    Err(e) => {
+                        println!("❌ failed to fetch and save nba player stats for {era}\n{e}")
+                    }
+                }
+                match fetch_and_save_nba_stats(era, NBAStatKind::Team).await {
+                    Ok(_) => println!("✅ successfully fetched and saved nba team stats for {era}"),
+                    Err(e) => println!("❌ failed to fetch and save nba team stats for {era}\n{e}"),
+                }
             }
-
-            sign_nba().expect("💀 should be able to write checksums. ");
+            match sign_nba() {
+                Ok(_) => println!(
+                    "✅ successfully signed nba data with checksums in {}",
+                    nba_checksum_file().display()
+                ),
+                Err(_) => println!(
+                    "❌ failed to sign nba data with checksums in {}",
+                    nba_checksum_file().display()
+                ),
+            }
         }
     }
 }

@@ -23,7 +23,7 @@ impl PartialOrd for Edit {
                             (Some(_), None) => Some(Ordering::Greater), // Player edit after team edit
                             (Some(a), Some(b)) => {
                                 if a == b {
-                                    None
+                                    Some(Ordering::Equal)
                                 } else {
                                     Some(a.cmp(b))
                                 }
