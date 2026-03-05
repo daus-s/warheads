@@ -2,13 +2,12 @@ use std::env;
 use thiserror::Error;
 use DispatchError::*;
 
-use crate::{
-    checksum::{checksum_map::ChecksumMap, generate::generate_checksums},
-    proc::{
-        historian::{annotate_nba, chronicle_nba, observe_nba},
-        refresher::update_source_data,
-    },
-};
+use crate::checksum::checksum_map::{ChecksumMap, ChecksumMapError};
+use crate::checksum::generate::generate_checksums;
+
+use crate::format::path_manager::nba_checksum_file;
+use crate::proc::historian::{annotate_nba, chronicle_nba, observe_nba};
+use crate::proc::refresher::update_source_data;
 
 /// dispatch models to be evalutated and return results
 pub struct Dispatch {
@@ -57,29 +56,48 @@ impl Dispatch {
                 Ok(())
             }
             "checksums" => {
-                //todo add options verify and generate?
-                if let Ok(expected) = ChecksumMap::load() {
-                    let actual = generate_checksums();
+                assert!(self.args.len() > 2, "todo: write checksums usage");
 
-                    if expected != actual {
-                        let mismatched_eras = expected.diff(&actual);
+                match self.args[2].as_str() {
+                    "verify" => {
+                        // let actual = generate_checksums();
+                        let expected =
+                            ChecksumMap::load().map_err(|e| DispatchError::ChecksumLoadError(e))?;
+                        let actual = generate_checksums();
 
-                        let mut f_str = String::new();
+                        if expected != actual {
+                            let mismatched_eras = expected.diff(&actual);
 
-                        for era in mismatched_eras {
-                            f_str.push_str(&format!("\n📄 {}", era.display()));
+                            let mut f_str = String::new();
+
+                            for era in mismatched_eras {
+                                f_str.push_str(&format!("\n📄 {}", era.display()));
+                            }
+                            println!("❌ checksums do not match for eras:{f_str}",);
+                        } else {
+                            println!("✅ checksums match serialized checksum map. data is intact. ")
                         }
-                        println!("❌ checksums do not match for eras:{f_str}",);
-                    } else {
-                        println!("✅ checksums match serialized checksum map. data is intact. ")
+
+                        Ok(())
                     }
+                    "generate" => {
+                        //todo: generate checksums
+                        //
+                        let checksums = generate_checksums();
 
-                    Ok(())
-                } else {
-                    println!("checksums not yet initialized. run `warheads init` to generate generate data");
+                        checksums
+                            .save()
+                            .map_err(|_| DispatchError::ChecksumSerializationError)?;
 
-                    Err(SourceDataError)
+                        Ok(())
+                    }
+                    _ => {
+                        todo!("checksums usage")
+                    }
                 }
+            }
+            "forecast" => {
+                todo!("implement forecast")
             }
             x => Err(UnrecognizedCommand(x.to_owned())),
         }
@@ -93,7 +111,7 @@ it requires network access and will make minimal requests to the
 USAGE
 
 DATA
-    warheads init
+    init - initializes
 
 MODELS
 the model trait and API is exposed to the user. see the model module for more
@@ -107,7 +125,7 @@ LICENSE
 
 "#;
 
-#[derive(Debug, Clone, Error)]
+#[derive(Debug, Error)]
 pub enum DispatchError {
     #[error("❌ the argument {0} is not a known command. for known commands run warheads help")]
     UnrecognizedCommand(String),
@@ -115,6 +133,10 @@ pub enum DispatchError {
     SourceDataError,
     #[error("❌ failed to initialize NBA data. ")]
     InitializationError,
+    #[error("{0}\n❌ failed to load checksums from file.")]
+    ChecksumLoadError(ChecksumMapError),
+    #[error("❌ failed to serialize checksums to file: {}", nba_checksum_file().display())]
+    ChecksumSerializationError,
 }
 
 async fn initialize() -> Result<(), DispatchError> {

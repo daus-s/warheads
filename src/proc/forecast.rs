@@ -8,7 +8,7 @@ use crate::proc::query::get_gamecard_json;
 use crate::stats::gamecard::GameCard;
 use crate::types::GameDate;
 
-pub async fn forecast_nba(elo: &mut EloTracker) {
+pub(crate) async fn forecast_nba(elo: &mut EloTracker) {
     let gamecard_response = get_upcoming_games().await;
 
     let upcoming_games = if let Ok(games) = gamecard_response {

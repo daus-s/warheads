@@ -2,5 +2,12 @@ use warheads::proc::dispatch::Dispatch;
 
 #[tokio::main]
 async fn main() {
-    Dispatch::new().dispatch().await.expect("dispatch failed");
+    match Dispatch::new().dispatch().await {
+        Ok(_) => {
+            println!("successfully completed command.\ngoodbye!")
+        }
+        Err(e) => {
+            eprintln!("{}\n failed to run command", e);
+        }
+    }
 }
