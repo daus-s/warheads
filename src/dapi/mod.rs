@@ -6,6 +6,7 @@ pub mod player_directory;
 pub mod season_manager;
 pub mod stat_builder;
 pub mod team_box_score;
+pub mod team_directory;
 mod test_season_manager;
 mod tests;
 pub mod timeline;

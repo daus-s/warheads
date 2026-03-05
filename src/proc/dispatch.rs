@@ -6,6 +6,7 @@ use crate::checksum::checksum_map::{ChecksumMap, ChecksumMapError};
 use crate::checksum::generate::generate_checksums;
 
 use crate::format::path_manager::nba_checksum_file;
+use crate::proc::forecast::forecast_nba;
 use crate::proc::historian::{annotate_nba, chronicle_nba, observe_nba};
 use crate::proc::refresher::update_source_data;
 
@@ -97,7 +98,14 @@ impl Dispatch {
                 }
             }
             "forecast" => {
-                todo!("implement forecast")
+                let ratings = load_historical_ratings();
+
+                forecast_nba(elo).await;
+
+                Ok(())
+            }
+            "tweet" => {
+                todo!("implement tweet")
             }
             x => Err(UnrecognizedCommand(x.to_owned())),
         }
