@@ -10,6 +10,7 @@ use crate::ml::log_loss::LogLossTracker;
 use crate::ml::measurement::Measurement;
 use crate::ml::model::Model;
 
+use crate::proc::forecast::Forecaster;
 use crate::proc::prophet;
 
 use crate::stats::chronology::Chronology;
@@ -204,13 +205,15 @@ impl EloTracker {
     //      panic the program if called incorrectly.
     //
     // mayeb dont add this and suffer a teensy performance hit
-    pub fn normalized_ratings_from_iter(&mut self, iter: impl Iterator<Item = PlayerId>) -> f64 {
-        let init = self.initial_rating();
-
+    pub fn normalized_ratings_from_iter(&self, iter: impl Iterator<Item = PlayerId>) -> f64 {
         let (count, sum) = iter.fold((0usize, 0i64), |acc, id| {
             (
                 acc.0 + 1,
-                acc.1 + *self.current_ratings.entry(id).or_insert(init),
+                acc.1
+                    + *self
+                        .current_ratings
+                        .get(&id)
+                        .unwrap_or(&self.initial_rating()),
             )
         });
 
@@ -220,49 +223,6 @@ impl EloTracker {
         }
 
         sum as f64 / count as f64
-    }
-
-    pub fn predict_cards(&mut self, gamecards: Vec<GameCard>) -> Vec<Prediction> {
-        let mut chronology = Chronology::new();
-        let mut predictions = Vec::new();
-
-        for mut game in gamecards.into_iter() {
-            chronology
-                .load_era(game.season())
-                .expect(&format!("💀 failed to load season_era: {}", game.season()));
-
-            let game_ratings = GameRatings::new(&game, &mut chronology, &mut self.current_ratings);
-
-            println!("{}", game_ratings.display());
-
-            chronology
-                .load_era(game.season())
-                .expect("Failed to load year from storage");
-
-            game.add_record(
-                Visiting::Home,
-                chronology.calculate_record(game.home().team_id()),
-            );
-            game.add_record(
-                Visiting::Away,
-                chronology.calculate_record(game.away().team_id()),
-            );
-
-            let home_roster = chronology.get_expected_roster(game.home().team_id(), game.game_id());
-            let away_roster = chronology.get_expected_roster(game.away().team_id(), game.game_id());
-
-            let home_rating = self.normalized_ratings_from_iter(home_roster.into_iter());
-            let away_rating = self.normalized_ratings_from_iter(away_roster.into_iter());
-
-            //that home wins
-            let prob = cdf::prob(home_rating - away_rating, self.scale_factor());
-
-            let prediction = Prediction::from(game, prob);
-
-            predictions.push(prediction);
-        }
-
-        predictions
     }
 
     fn scale_factor(&self) -> f64 {
@@ -321,6 +281,51 @@ impl Model for EloTracker {
 
     fn train(&mut self, games: &[(GameCard, GameObject)]) {
         self.process_elo(games);
+    }
+}
+
+impl Forecaster for EloTracker {
+    fn forecast(&self, gamecards: Vec<GameCard>) -> Vec<Prediction> {
+        let mut chronology = Chronology::new();
+        let mut predictions = Vec::new();
+
+        for mut game in gamecards.into_iter() {
+            chronology
+                .load_era(game.season())
+                .expect(&format!("💀 failed to load season_era: {}", game.season()));
+
+            let game_ratings = GameRatings::new(&game, &chronology, &self.current_ratings);
+
+            println!("{}", game_ratings.display());
+
+            chronology
+                .load_era(game.season())
+                .expect("Failed to load year from storage");
+
+            game.add_record(
+                Visiting::Home,
+                chronology.calculate_record(game.home().team_id()),
+            );
+            game.add_record(
+                Visiting::Away,
+                chronology.calculate_record(game.away().team_id()),
+            );
+
+            let home_roster = chronology.get_expected_roster(game.home().team_id(), game.game_id());
+            let away_roster = chronology.get_expected_roster(game.away().team_id(), game.game_id());
+
+            let home_rating = self.normalized_ratings_from_iter(home_roster.into_iter());
+            let away_rating = self.normalized_ratings_from_iter(away_roster.into_iter());
+
+            //that home wins
+            let prob = cdf::prob(home_rating - away_rating, self.scale_factor());
+
+            let prediction = Prediction::from(game, prob);
+
+            predictions.push(prediction);
+        }
+
+        predictions
     }
 }
 

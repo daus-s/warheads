@@ -6,9 +6,12 @@ use crate::checksum::checksum_map::{ChecksumMap, ChecksumMapError};
 use crate::checksum::generate::generate_checksums;
 
 use crate::format::path_manager::nba_checksum_file;
-use crate::proc::forecast::forecast_nba;
+use crate::ml::elo_tracker::EloTracker;
+use crate::ml::model::Model;
+use crate::proc::forecast::{forecast_nba, ForecastError};
 use crate::proc::historian::{annotate_nba, chronicle_nba, observe_nba};
 use crate::proc::refresher::update_source_data;
+use crate::stats::chronology::{Chronology, ChronologyError};
 
 /// dispatch models to be evalutated and return results
 pub struct Dispatch {
@@ -98,11 +101,21 @@ impl Dispatch {
                 }
             }
             "forecast" => {
-                todo!();
+                let mut model = EloTracker::new();
 
-                // let ratings = load_historical_ratings();
+                let data = Chronology::new()
+                    .as_training_data()
+                    .map_err(|e| DispatchError::HistoryError(e))?;
 
-                // forecast_nba(ratings).await;
+                model.train(&data);
+
+                let predictions = forecast_nba(model)
+                    .await
+                    .map_err(|e| DispatchError::ForecastError(e))?;
+
+                for prediction in predictions {
+                    println!("{prediction:?}");
+                }
 
                 Ok(())
             }
@@ -137,16 +150,20 @@ LICENSE
 
 #[derive(Debug, Error)]
 pub enum DispatchError {
-    #[error("❌ the argument {0} is not a known command. for known commands run warheads help")]
+    #[error("❌ the argument {0} is not a known command. for known commands run `warheads help`")]
     UnrecognizedCommand(String),
     #[error("❌ source data was not correctly serialized. ")]
     SourceDataError,
+    #[error("{0}\n❌ nba files in storage are malformed: training data could not be interpreted")]
+    HistoryError(ChronologyError),
     #[error("❌ failed to initialize NBA data. ")]
     InitializationError,
     #[error("{0}\n❌ failed to load checksums from file.")]
     ChecksumLoadError(ChecksumMapError),
     #[error("❌ failed to serialize checksums to file: {}", nba_checksum_file().display())]
     ChecksumSerializationError,
+    #[error("{0}\n ❌ failed to create predictions for upcoming NBA games. ")]
+    ForecastError(ForecastError),
 }
 
 async fn initialize() -> Result<(), DispatchError> {

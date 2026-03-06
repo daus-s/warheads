@@ -1,35 +1,27 @@
 use std::collections::HashMap;
 
+use thiserror::Error;
+
 use crate::dapi::timeline_manager::get_next_n_dates;
 
-use crate::format::parse::parse_gamecards;
+use crate::format::parse::{parse_gamecards, ParseError};
 
 use crate::proc::prophet::write_predictions;
-use crate::proc::query::get_gamecard_json;
+use crate::proc::query::{get_gamecard_json, NBAQueryError};
+use crate::stats::chronology::Chronology;
 use crate::stats::gamecard::GameCard;
+use crate::stats::prediction::Prediction;
 use crate::types::{GameDate, PlayerId};
 
-pub(crate) async fn forecast_nba(ratings: &mut HashMap<PlayerId, i64>) {
-    let gamecard_response = get_upcoming_games(7).await;
+pub(crate) async fn forecast_nba(
+    forecaster: impl Forecaster,
+) -> Result<Vec<Prediction>, ForecastError> {
+    let cards = get_upcoming_games(7).await?;
 
-    let upcoming_games = if let Ok(games) = gamecard_response {
-        games
-    } else if let Err(e) = gamecard_response {
-        panic!("{e}\n💀 failed to fetch upcoming games")
-    } else {
-        unreachable!()
-    };
-
-    todo!();
-
-    // let predictions = predict_cards(ratings, upcoming_games);
-
-    // if let Err(e) = write_predictions(ratings, &predictions) {
-    //     println!("{e}\n⚠️ predictions were generated but failed to write predictions to file. ")
-    // };
+    Ok(forecaster.forecast(cards))
 }
 
-async fn get_upcoming_games(n: usize) -> Result<Vec<GameCard>, Box<dyn std::error::Error>> {
+async fn get_upcoming_games(n: usize) -> Result<Vec<GameCard>, ForecastError> {
     // Forecast NBA games
     let today = GameDate::today();
 
@@ -37,12 +29,27 @@ async fn get_upcoming_games(n: usize) -> Result<Vec<GameCard>, Box<dyn std::erro
     // find upcoming games todo: optionally, set this to run until the end of the regular season.
     for day in get_next_n_dates(today, n) {
         // Fetch games for the day
-        let daily_game_card = get_gamecard_json(day).await?;
+        let daily_game_card = get_gamecard_json(day)
+            .await
+            .map_err(|e| ForecastError::APIError(e))?;
 
-        let gamecards = parse_gamecards(daily_game_card)?;
+        let gamecards =
+            parse_gamecards(daily_game_card).map_err(|e| ForecastError::ParseError(e))?;
 
         upcoming_games.extend(gamecards);
     }
 
     Ok(upcoming_games)
+}
+
+#[derive(Debug, Error)]
+pub enum ForecastError {
+    #[error("{0}\n❌ failed to access NBA API. ")]
+    APIError(NBAQueryError),
+    #[error("{0}\n❌ failed to parse JSON response as gamecards. ")]
+    ParseError(ParseError),
+}
+
+pub trait Forecaster {
+    fn forecast(&self, cards: Vec<GameCard>) -> Vec<Prediction>;
 }

@@ -214,7 +214,7 @@ impl Chronology {
 
 #[derive(Debug, Error)]
 pub enum ChronologyError {
-    #[error("❌ failed to read season data from storage")]
+    #[error("{0}\n❌ failed to read season data from storage")]
     ReadSeasonError(NBAReadError),
     #[error(
         "❌ chronology implementation error \n❌ couldn't access games after a successful load"
