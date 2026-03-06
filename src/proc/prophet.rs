@@ -4,7 +4,7 @@ use crate::ml::model::Model;
 
 use crate::stats::prediction::Prediction;
 
-use crate::storage::write::write_serializable_with_directory;
+use crate::dapi::write::write_serializable_with_directory;
 
 use crate::types::GameDate;
 

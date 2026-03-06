@@ -1,22 +1,21 @@
-use std::collections::HashMap;
-
 use thiserror::Error;
 
 use crate::dapi::timeline_manager::get_next_n_dates;
 
 use crate::format::parse::{parse_gamecards, ParseError};
 
-use crate::proc::prophet::write_predictions;
 use crate::proc::query::{get_gamecard_json, NBAQueryError};
-use crate::stats::chronology::Chronology;
+
 use crate::stats::gamecard::GameCard;
 use crate::stats::prediction::Prediction;
-use crate::types::{GameDate, PlayerId};
+
+use crate::types::GameDate;
 
 pub(crate) async fn forecast_nba(
     forecaster: impl Forecaster,
+    days: usize,
 ) -> Result<Vec<Prediction>, ForecastError> {
-    let cards = get_upcoming_games(7).await?;
+    let cards = get_upcoming_games(days).await?;
 
     Ok(forecaster.forecast(cards))
 }

@@ -20,7 +20,7 @@ use wincode::{SchemaRead, SchemaWrite};
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, SchemaWrite, SchemaRead)]
 pub struct TeamBoxScore {
     // team identification
-    pub team_id: TeamId,
+    team_id: TeamId,
     team_abbreviation: TeamAbbreviation,
     team_name: TeamName,
 
@@ -46,6 +46,10 @@ impl TeamBoxScore {
             self.team_abbreviation.clone(),
             Record { wins: 0, losses: 0 },
         )
+    }
+
+    pub fn team_id(&self) -> TeamId {
+        self.team_id
     }
 
     pub fn team_abbr(&self) -> TeamAbbreviation {

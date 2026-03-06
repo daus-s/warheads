@@ -23,6 +23,12 @@ impl TeamDirectory {
     }
 }
 
+impl Default for TeamDirectory {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[test]
 fn gen_dict() {
     let games = super::super::stats::chronology::Chronology::new()

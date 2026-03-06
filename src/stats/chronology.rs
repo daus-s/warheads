@@ -1,11 +1,12 @@
 use crate::dapi::player_directory::PlayerDirectory;
 use crate::dapi::season_manager::nba_lifespan_period;
 
+use crate::dapi::team_directory::TeamDirectory;
 use crate::stats::game_obj::GameObject;
 use crate::stats::gamecard::GameCard;
 use crate::stats::record::Record;
 
-use crate::storage::read_disk::{read_nba_season, NBAReadError};
+use crate::dapi::read_disk::{read_nba_season, NBAReadError};
 
 use crate::types::{GameId, PlayerId, SeasonId, TeamId};
 
@@ -19,6 +20,7 @@ pub struct Chronology {
     games: Option<Vec<GameObject>>,
     era: Option<SeasonId>,
     player_directory: PlayerDirectory,
+    team_directory: TeamDirectory,
 }
 
 impl Chronology {
@@ -27,6 +29,7 @@ impl Chronology {
             games: None,
             era: None,
             player_directory: Default::default(),
+            team_directory: Default::default(),
         }
     }
 
@@ -45,9 +48,20 @@ impl Chronology {
             return Ok(());
         }
 
-        let season = read_nba_season(era).map_err(|e| ChronologyError::ReadSeasonError(e))?;
+        let games = read_nba_season(era).map_err(|e| ChronologyError::ReadSeasonError(e))?;
 
-        season.iter().for_each(|game| {
+        games.iter().for_each(|game| {
+            self.team_directory.insert((
+                game.away().team_id(),
+                game.away().team_abbr().clone(),
+                game.away().team_name().clone(),
+            ));
+            self.team_directory.insert((
+                game.home().team_id(),
+                game.home().team_abbr().clone(),
+                game.home().team_name().clone(),
+            ));
+
             for p in game.away_roster().iter().chain(game.home_roster().iter()) {
                 self.player_directory
                     .insert(p.player_id(), p.player_name().clone())
@@ -55,7 +69,7 @@ impl Chronology {
         });
 
         self.era = Some(era);
-        self.games = Some(season);
+        self.games = Some(games);
 
         Ok(())
     }
@@ -209,6 +223,10 @@ impl Chronology {
 
     pub fn player_directory(&self) -> &PlayerDirectory {
         &self.player_directory
+    }
+
+    pub fn team_directory(&self) -> &TeamDirectory {
+        &self.team_directory
     }
 }
 

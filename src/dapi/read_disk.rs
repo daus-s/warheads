@@ -76,22 +76,30 @@ impl Display for NBAReadError {
             NBAReadError::DirectoryError(e, path) => {
                 write!(
                     f,
-                    "❗ {e}:\n{}\n❗ failed to read directory",
+                    "❌ {e}:\n❌ dir: {}\n❌ failed to read directory",
                     path.display()
                 )
             }
             NBAReadError::FileReadError(e, path) => {
-                write!(f, "❗  {e}:\n{}\n❗  failed to read file", path.display())
+                write!(
+                    f,
+                    "❌ {e}:\n❌ file: {}\n❌ failed to read file",
+                    path.display()
+                )
             }
             NBAReadError::WincodeParseError(e, path) => {
                 write!(
                     f,
-                    "❗  {e}:\n{}\n❗  failed to parse game file as wincode binary",
+                    "❌  {e}:\n❌ file: {}\n❌ failed to parse game file as wincode binary",
                     path.display()
                 )
             }
             NBAReadError::FileEntryError(e, path) => {
-                write!(f, "❗  {e}:\n{}\n❗  failed to get entry", path.display())
+                write!(
+                    f,
+                    "❌  {e}:\n❌ file: {}\n❌ failed to get entry",
+                    path.display()
+                )
             }
         }
     }
@@ -99,7 +107,7 @@ impl Display for NBAReadError {
 
 #[cfg(test)]
 mod test_read_data {
-    use crate::storage::read_disk::read_nba_year;
+    use crate::dapi::read_disk::read_nba_year;
 
     #[test]
     fn assert_well_ordered() {

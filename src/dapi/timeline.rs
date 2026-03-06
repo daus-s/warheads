@@ -5,7 +5,7 @@ use crate::dapi::season_manager::nba_lifespan_period;
 use crate::stats::gamecard::GameCard;
 use crate::stats::visiting::Visiting;
 
-use crate::storage::read_disk::{read_nba_season, NBAReadError};
+use crate::dapi::read_disk::{read_nba_season, NBAReadError};
 
 use crate::types::GameDate;
 
@@ -55,6 +55,6 @@ pub fn nba_timeline() -> Result<HashMap<GameDate, Vec<GameCard>>, NBATimelineErr
 
 #[derive(Error, Debug)]
 pub enum NBATimelineError {
-    #[error("❌ {0}\n❌ failed to read a season while generating a timeline.")]
+    #[error("{0}\n❌ failed to read a season while generating a timeline.")]
     SeasonReadError(NBAReadError),
 }

@@ -16,7 +16,7 @@ use crate::stats::identity::Identity;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::nba_stat::NBABoxScore::{Player, Team};
 
-use crate::storage::write::write_serializable_with_directory;
+use crate::dapi::write::write_serializable_with_directory;
 
 use crate::types::SeasonId;
 

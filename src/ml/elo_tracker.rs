@@ -19,9 +19,9 @@ use crate::stats::gamecard::GameCard;
 use crate::stats::prediction::Prediction;
 use crate::stats::visiting::Visiting;
 
-use crate::storage::read_disk::NBAReadError;
+use crate::dapi::read_disk::NBAReadError;
 
-use crate::storage::write::write_serializable_with_directory;
+use crate::dapi::write::write_serializable_with_directory;
 use crate::tui::game_ratings::GameRatings;
 use crate::tui::tui_display::TuiDisplay;
 

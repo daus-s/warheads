@@ -18,7 +18,7 @@ use crate::proc::store::inscribe;
 use crate::stats::chronology::Chronology;
 use crate::stats::nba_kind::NBAStatKind;
 
-use crate::storage::read_disk::read_nba_season;
+use crate::dapi::read_disk::read_nba_season;
 
 pub async fn observe_nba() {
     match ChecksumMap::load() {

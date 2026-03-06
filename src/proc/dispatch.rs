@@ -101,6 +101,21 @@ impl Dispatch {
                 }
             }
             "forecast" => {
+                let days = if self.args.len() == 3 {
+                    let int_string = &self.args[2];
+
+                    if let Ok(u) = int_string.parse::<usize>() {
+                        u
+                    } else {
+                        return Err(
+                            DispatchError::UsageError(
+                                format!("forecast expects a number. could not parse an unsigned int from argument '{int_string}'.")
+                            )
+                        );
+                    }
+                } else {
+                    7
+                };
                 let mut model = EloTracker::new();
 
                 let data = Chronology::new()
@@ -109,7 +124,7 @@ impl Dispatch {
 
                 model.train(&data);
 
-                let predictions = forecast_nba(model)
+                let predictions = forecast_nba(model, days)
                     .await
                     .map_err(|e| DispatchError::ForecastError(e))?;
 
@@ -162,8 +177,10 @@ pub enum DispatchError {
     ChecksumLoadError(ChecksumMapError),
     #[error("❌ failed to serialize checksums to file: {}", nba_checksum_file().display())]
     ChecksumSerializationError,
-    #[error("{0}\n ❌ failed to create predictions for upcoming NBA games. ")]
+    #[error("{0}\n❌ failed to create predictions for upcoming NBA games. ")]
     ForecastError(ForecastError),
+    #[error("❌ {0}\n ❌ check usage of command. ")]
+    UsageError(String),
 }
 
 async fn initialize() -> Result<(), DispatchError> {
