@@ -98,9 +98,11 @@ impl Dispatch {
                 }
             }
             "forecast" => {
-                let ratings = load_historical_ratings();
+                todo!();
 
-                forecast_nba(elo).await;
+                // let ratings = load_historical_ratings();
+
+                // forecast_nba(ratings).await;
 
                 Ok(())
             }

@@ -20,11 +20,13 @@ pub(crate) async fn forecast_nba(ratings: &mut HashMap<PlayerId, i64>) {
         unreachable!()
     };
 
-    let predictions = predict_cards(ratings, upcoming_games);
+    todo!();
 
-    if let Err(e) = write_predictions(ratings, &predictions) {
-        println!("{e}\n⚠️ predictions were generated but failed to write predictions to file. ")
-    };
+    // let predictions = predict_cards(ratings, upcoming_games);
+
+    // if let Err(e) = write_predictions(ratings, &predictions) {
+    //     println!("{e}\n⚠️ predictions were generated but failed to write predictions to file. ")
+    // };
 }
 
 async fn get_upcoming_games(n: usize) -> Result<Vec<GameCard>, Box<dyn std::error::Error>> {
