@@ -1,6 +1,5 @@
-use std::env;
+use clap::{Parser, Subcommand};
 use thiserror::Error;
-use DispatchError::*;
 
 use crate::checksum::checksum_map::{ChecksumMap, ChecksumMapError};
 use crate::checksum::generate::generate_checksums;
@@ -13,109 +12,121 @@ use crate::proc::historian::{annotate_nba, chronicle_nba, observe_nba};
 use crate::proc::refresher::update_source_data;
 use crate::stats::chronology::{Chronology, ChronologyError};
 
-/// dispatch models to be evalutated and return results
+#[derive(Parser)]
+#[command(name = "warheads")]
+#[command(about = "ML models on NBA data")]
+#[command(
+    long_about = "This program provides a framework to generate and train ML models on NBA data.\nIt requires network access and will make minimal requests to the NBA API."
+)]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// Initialize NBA data
+    Init,
+
+    /// Sync source data
+    Sync,
+
+    /// Train a model
+    Train {
+        #[command(subcommand)]
+        model: TrainCommand,
+    },
+
+    /// Forecast NBA games
+    Forecast {
+        /// Number of days to forecast (default: 7)
+        #[arg(default_value = "7")]
+        days: usize,
+    },
+
+    /// Verify and manage checksums
+    Checksums {
+        #[command(subcommand)]
+        action: ChecksumCommand,
+    },
+
+    /// Tweet predictions
+    Tweet,
+}
+
+#[derive(Subcommand)]
+enum TrainCommand {
+    /// Train ELO tracker model
+    Elo {
+        /// Name of the model
+        #[arg(long)]
+        model_name: String,
+
+        /// Learning rate
+        #[arg(long)]
+        lr: Option<f32>,
+
+        /// Number of epochs
+        #[arg(long)]
+        epochs: Option<u32>,
+    },
+    // Add more model types here as needed
+}
+
+#[derive(Subcommand)]
+enum ChecksumCommand {
+    /// Verify checksums match serialized map
+    Verify,
+
+    /// Generate and save checksums
+    Generate,
+}
+
+/// Dispatch models to be evaluated and return results
 pub struct Dispatch {
-    args: Vec<String>,
+    cli: Cli,
 }
 
 impl Dispatch {
     pub fn new() -> Self {
-        let args = env::args().collect();
-
-        Dispatch { args }
+        let cli = Cli::parse();
+        Dispatch { cli }
     }
 
     pub async fn dispatch(&self) -> Result<(), DispatchError> {
-        if self.args.len() < 2 {
-            println!("{}", USAGE);
-            return Ok(());
-        }
+        match &self.cli.command {
+            Commands::Init => initialize().await,
 
-        match self.args[1].as_str() {
-            "init" => initialize().await,
-            "sync" => match update_source_data().await {
+            Commands::Sync => match update_source_data().await {
                 Ok(_) => {
-                    println!("✅ successfully updated source data. ");
+                    println!("✅ successfully updated source data.");
                     Ok(())
                 }
                 Err(_) => {
-                    println!("❌ failed to update source data. ");
+                    println!("❌ failed to update source data.");
                     Err(DispatchError::SourceDataError)
                 }
             },
-            "train" => {
-                assert!(self.args.len() > 2, "todo: write model training usage");
-                //replace with trainable trait include in model?
-                match self.args[1].as_str() {
-                    "elo-tracker" => {
-                        todo!("add options")
+
+            Commands::Train { model } => match model {
+                TrainCommand::Elo {
+                    model_name,
+                    lr,
+                    epochs,
+                } => {
+                    println!("Training ELO tracker: {}", model_name);
+                    if let Some(learning_rate) = lr {
+                        println!("  Learning rate: {}", learning_rate);
                     }
-                    _ => {
-                        todo!("model usage")
+                    if let Some(num_epochs) = epochs {
+                        println!("  Epochs: {}", num_epochs);
                     }
+                    // Your training logic here
+                    Ok(())
                 }
-            }
-            "help" => {
-                println!("{}", USAGE);
-                Ok(())
-            }
-            "checksums" => {
-                assert!(self.args.len() > 2, "todo: write checksums usage");
+            },
 
-                match self.args[2].as_str() {
-                    "verify" => {
-                        // let actual = generate_checksums();
-                        let expected =
-                            ChecksumMap::load().map_err(|e| DispatchError::ChecksumLoadError(e))?;
-                        let actual = generate_checksums();
-
-                        if expected != actual {
-                            let mismatched_eras = expected.diff(&actual);
-
-                            let mut f_str = String::new();
-
-                            for era in mismatched_eras {
-                                f_str.push_str(&format!("\n📄 {}", era.display()));
-                            }
-                            println!("❌ checksums do not match for eras:{f_str}",);
-                        } else {
-                            println!("✅ checksums match serialized checksum map. data is intact. ")
-                        }
-
-                        Ok(())
-                    }
-                    "generate" => {
-                        //todo: generate checksums
-                        //
-                        let checksums = generate_checksums();
-
-                        checksums
-                            .save()
-                            .map_err(|_| DispatchError::ChecksumSerializationError)?;
-
-                        Ok(())
-                    }
-                    _ => {
-                        todo!("checksums usage")
-                    }
-                }
-            }
-            "forecast" => {
-                let days = if self.args.len() == 3 {
-                    let int_string = &self.args[2];
-
-                    if let Ok(u) = int_string.parse::<usize>() {
-                        u
-                    } else {
-                        return Err(
-                            DispatchError::UsageError(
-                                format!("forecast expects a number. could not parse an unsigned int from argument '{int_string}'.")
-                            )
-                        );
-                    }
-                } else {
-                    7
-                };
+            Commands::Forecast { days } => {
                 let mut model = EloTracker::new();
 
                 let data = Chronology::new()
@@ -124,7 +135,7 @@ impl Dispatch {
 
                 model.train(&data);
 
-                let predictions = forecast_nba(model, days)
+                let predictions = forecast_nba(model, *days)
                     .await
                     .map_err(|e| DispatchError::ForecastError(e))?;
 
@@ -134,39 +145,47 @@ impl Dispatch {
 
                 Ok(())
             }
-            "tweet" => {
+
+            Commands::Checksums { action } => match action {
+                ChecksumCommand::Verify => {
+                    let expected =
+                        ChecksumMap::load().map_err(|e| DispatchError::ChecksumLoadError(e))?;
+                    let actual = generate_checksums();
+
+                    if expected != actual {
+                        let mismatched_eras = expected.diff(&actual);
+                        let mut f_str = String::new();
+
+                        for era in mismatched_eras {
+                            f_str.push_str(&format!("\n📄 {}", era.display()));
+                        }
+                        println!("❌ checksums do not match for eras:{f_str}");
+                    } else {
+                        println!("✅ checksums match serialized checksum map. data is intact.");
+                    }
+
+                    Ok(())
+                }
+
+                ChecksumCommand::Generate => {
+                    let checksums = generate_checksums();
+                    checksums
+                        .save()
+                        .map_err(|_| DispatchError::ChecksumSerializationError)?;
+
+                    Ok(())
+                }
+            },
+
+            Commands::Tweet => {
                 todo!("implement tweet")
             }
-            x => Err(UnrecognizedCommand(x.to_owned())),
         }
     }
 }
 
-const USAGE: &'static str = r#"                                    warheads API
-this program provides a frameowrk to generate and train ML models on nba data.
-it requires network access and will make minimal requests to the
-===============================================================================
-USAGE
-
-DATA
-    init - initializes
-
-MODELS
-the model trait and API is exposed to the user. see the model module for more
-documentation.
-
-to run and train. if data cannot be loaded these procedures may tell you to run
-other routines to update data.
-===============================================================================
-LICENSE
-===============================================================================
-
-"#;
-
 #[derive(Debug, Error)]
 pub enum DispatchError {
-    #[error("❌ the argument {0} is not a known command. for known commands run `warheads help`")]
-    UnrecognizedCommand(String),
     #[error("❌ source data was not correctly serialized. ")]
     SourceDataError,
     #[error("{0}\n❌ nba files in storage are malformed: training data could not be interpreted")]
@@ -179,17 +198,12 @@ pub enum DispatchError {
     ChecksumSerializationError,
     #[error("{0}\n❌ failed to create predictions for upcoming NBA games. ")]
     ForecastError(ForecastError),
-    #[error("❌ {0}\n ❌ check usage of command. ")]
-    UsageError(String),
 }
 
 async fn initialize() -> Result<(), DispatchError> {
     observe_nba().await;
-
     annotate_nba().await;
-
     chronicle_nba();
-
-    println!("✅ successfully initialized NBA data in warheads directory. ");
+    println!("✅ successfully initialized NBA data in warheads directory.");
     Ok(())
 }
