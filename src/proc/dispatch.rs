@@ -75,11 +75,8 @@ enum TrainCommand {
 
 #[derive(Subcommand)]
 enum ChecksumCommand {
-    /// Verify checksums match serialized map
+    Fingerprint,
     Verify,
-
-    /// Generate and save checksums
-    Generate,
 }
 
 /// Dispatch models to be evaluated and return results
@@ -108,23 +105,9 @@ impl Dispatch {
                 }
             },
 
-            Commands::Train { model } => match model {
-                TrainCommand::Elo {
-                    model_name,
-                    lr,
-                    epochs,
-                } => {
-                    println!("Training ELO tracker: {}", model_name);
-                    if let Some(learning_rate) = lr {
-                        println!("  Learning rate: {}", learning_rate);
-                    }
-                    if let Some(num_epochs) = epochs {
-                        println!("  Epochs: {}", num_epochs);
-                    }
-                    // Your training logic here
-                    Ok(())
-                }
-            },
+            Commands::Train { model } => {
+                todo!()
+            }
 
             Commands::Forecast { days } => {
                 let mut model = EloTracker::new();
@@ -167,7 +150,7 @@ impl Dispatch {
                     Ok(())
                 }
 
-                ChecksumCommand::Generate => {
+                ChecksumCommand::Fingerprint => {
                     let checksums = generate_checksums();
                     checksums
                         .save()
