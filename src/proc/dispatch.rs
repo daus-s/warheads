@@ -25,32 +25,24 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Initialize NBA data
     Init,
-
-    /// Sync source data
     Sync,
-
-    /// Train a model
-    Train {
-        #[command(subcommand)]
-        model: TrainCommand,
-    },
-
-    /// Forecast NBA games
-    Forecast {
-        /// Number of days to forecast (default: 7)
-        #[arg(default_value = "7")]
-        days: usize,
-    },
-
-    /// Verify and manage checksums
     Checksums {
         #[command(subcommand)]
         action: ChecksumCommand,
     },
-
-    /// Tweet predictions
+    Train {
+        #[command(subcommand)]
+        model: TrainCommand,
+    },
+    Evaluate {
+        #[command(subcommand)]
+        model: EvaluateCommand,
+    },
+    Forecast {
+        #[arg(default_value = "7")]
+        days: usize,
+    },
     Tweet,
 }
 

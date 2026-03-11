@@ -10,6 +10,7 @@ use crate::ml::log_loss::LogLossTracker;
 use crate::ml::measurement::Measurement;
 use crate::ml::model::Model;
 
+use crate::ml::models::registration::Registration;
 use crate::proc::forecast::Forecaster;
 use crate::proc::prophet;
 
@@ -283,6 +284,11 @@ impl Model for EloTracker {
         self.process_elo(games);
     }
 }
+
+inventory::submit!(Registration {
+    model_name: ELO_VERSION,
+    factory: || Box::new(EloTracker::new()),
+});
 
 impl Forecaster for EloTracker {
     fn forecast(&self, gamecards: Vec<GameCard>) -> Vec<Prediction> {

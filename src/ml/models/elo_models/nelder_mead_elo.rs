@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use crate::ml::elo_params::EloParams;
 use crate::ml::elo_tracker::EloTracker;
 use crate::ml::model::Model;
+use crate::ml::models::registration::Registration;
 use crate::ml::nelder_mead::nelder_mead;
 use crate::ml::simplex::Simplex;
 use crate::ml::vector::Vector;
@@ -121,3 +122,8 @@ mod test_nelder_mead_elo {
         assert!(tracker.performance > 0.46304378813918995 * 0.7);
     }
 }
+
+inventory::submit!(Registration {
+    model_name: "nelder-mead elo v1",
+    factory: || Box::new(NelderMeadEloTracker::new()),
+});
