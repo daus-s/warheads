@@ -7,6 +7,7 @@ use crate::checksum::generate::generate_checksums;
 use crate::format::path_manager::nba_checksum_file;
 use crate::ml::elo_tracker::EloTracker;
 use crate::ml::model::Model;
+use crate::ml::models::registration::Registration;
 use crate::proc::forecast::{forecast_nba, ForecastError};
 use crate::proc::historian::{annotate_nba, chronicle_nba, observe_nba};
 use crate::proc::refresher::update_source_data;
@@ -32,14 +33,15 @@ enum Commands {
         action: ChecksumCommand,
     },
     Train {
-        #[command(subcommand)]
-        model: TrainCommand,
+        model_name: String,
+        //optional params
     },
+    #[command(name = "eval")]
     Evaluate {
-        #[command(subcommand)]
-        model: EvaluateCommand,
+        model_name: String,
     },
     Forecast {
+        model_name: String,
         #[arg(default_value = "7")]
         days: usize,
     },
@@ -47,23 +49,7 @@ enum Commands {
 }
 
 #[derive(Subcommand)]
-enum TrainCommand {
-    /// Train ELO tracker model
-    Elo {
-        /// Name of the model
-        #[arg(long)]
-        model_name: String,
-
-        /// Learning rate
-        #[arg(long)]
-        lr: Option<f32>,
-
-        /// Number of epochs
-        #[arg(long)]
-        epochs: Option<u32>,
-    },
-    // Add more model types here as needed
-}
+enum TrainCommand {}
 
 #[derive(Subcommand)]
 enum ChecksumCommand {
@@ -79,11 +65,13 @@ pub struct Dispatch {
 impl Dispatch {
     pub fn new() -> Self {
         let cli = Cli::parse();
+
         Dispatch { cli }
     }
 
     pub async fn dispatch(&self) -> Result<(), DispatchError> {
         match &self.cli.command {
+            // data procedures
             Commands::Init => initialize().await,
 
             Commands::Sync => match update_source_data().await {
@@ -96,30 +84,6 @@ impl Dispatch {
                     Err(DispatchError::SourceDataError)
                 }
             },
-
-            Commands::Train { model } => {
-                todo!()
-            }
-
-            Commands::Forecast { days } => {
-                let mut model = EloTracker::new();
-
-                let data = Chronology::new()
-                    .as_training_data()
-                    .map_err(|e| DispatchError::HistoryError(e))?;
-
-                model.train(&data);
-
-                let predictions = forecast_nba(model, *days)
-                    .await
-                    .map_err(|e| DispatchError::ForecastError(e))?;
-
-                for prediction in predictions {
-                    println!("{prediction:?}");
-                }
-
-                Ok(())
-            }
 
             Commands::Checksums { action } => match action {
                 ChecksumCommand::Verify => {
@@ -144,6 +108,7 @@ impl Dispatch {
 
                 ChecksumCommand::Fingerprint => {
                     let checksums = generate_checksums();
+
                     checksums
                         .save()
                         .map_err(|_| DispatchError::ChecksumSerializationError)?;
@@ -151,6 +116,45 @@ impl Dispatch {
                     Ok(())
                 }
             },
+            // model prodecures
+            Commands::Train { model_name } => {
+                todo!()
+            }
+
+            Commands::Forecast { model_name, days } => {
+                let mut model = EloTracker::new();
+
+                let data = Chronology::new()
+                    .as_training_data()
+                    .map_err(|e| DispatchError::HistoryError(e))?;
+
+                model.train(&data);
+
+                let predictions = forecast_nba(model, *days)
+                    .await
+                    .map_err(|e| DispatchError::ForecastError(e))?;
+
+                for prediction in predictions {
+                    println!("{prediction:?}");
+                }
+
+                Ok(())
+            }
+
+            Commands::Evaluate { model_name } => {
+                let model_factory = inventory::iter::<Registration>()
+                    .find(|r| r.model_name == model_name)
+                    .ok_or_else(|| DispatchError::UnknownModel(model_name.clone()))?
+                    .factory;
+
+                let model = model_factory();
+
+                let results = model.evaluate();
+
+                println!("{results:?}");
+
+                Ok(())
+            }
 
             Commands::Tweet => {
                 todo!("implement tweet")
@@ -173,6 +177,8 @@ pub enum DispatchError {
     ChecksumSerializationError,
     #[error("{0}\n❌ failed to create predictions for upcoming NBA games. ")]
     ForecastError(ForecastError),
+    #[error("❌ unknown model '{0}'. ")]
+    UnknownModel(String),
 }
 
 async fn initialize() -> Result<(), DispatchError> {
