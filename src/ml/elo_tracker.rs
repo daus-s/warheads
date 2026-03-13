@@ -1,3 +1,5 @@
+use clap::Arg;
+
 use thiserror::Error;
 
 use crate::format::path_manager::{records_path, results_path};
@@ -29,7 +31,7 @@ use crate::tui::tui_display::TuiDisplay;
 use crate::types::PlayerId;
 
 use std::collections::HashMap;
-use std::io;
+use std::{fs, io};
 
 const ELO_VERSION: &str = "elo v1";
 
@@ -271,11 +273,40 @@ impl Model for EloTracker {
 
     fn evaluate(&self) -> f64 {
         if self.log_loss.is_empty() {
-            panic!("💀 LogLossTracker is empty, no measurements have been recorded.")
+            match fs::read_to_string(results_path(self)) {
+                Ok(contents) => match serde_json::from_str::<serde_json::Value>(&contents) {
+                    Ok(parsed) => {
+                        if let Some(metrics) = parsed.get(&self.model_name()) {
+                            let freq = metrics["freq"].as_f64().unwrap_or(0.0);
+                            let log_loss = metrics["log_loss"].as_f64().unwrap_or(1.0);
+
+                            if log_loss == 0.0 {
+                                println!("❌ Cannot evaluate: log_loss is zero");
+                                return f64::NAN;
+                            }
+                            return freq / log_loss;
+                        } else {
+                            println!("❌ Model '{}' not found in results", self.model_name());
+                        }
+                    }
+                    Err(e) => {
+                        println!("{e}\n❌ Failed to parse results JSON");
+                    }
+                },
+                Err(e) => {
+                    println!("{e}\n❌ model has not yet been trained. no results file was found for this model: {}", self.model_name());
+                }
+            }
+            return f64::NAN;
         }
 
         let f = self.log_loss.freq();
         let logloss = self.log_loss.log_loss();
+
+        if logloss == 0.0 {
+            println!("❌ Cannot evaluate: log_loss is zero");
+            return f64::NAN;
+        }
 
         f / logloss
     }
@@ -287,7 +318,34 @@ impl Model for EloTracker {
 
 inventory::submit!(Registration {
     model_name: ELO_VERSION,
-    factory: || Box::new(EloTracker::new()),
+    args_schema: || clap::Command::new("elo tracker")
+        .arg(
+            Arg::new("scale-factor")
+                .long("scale-factor")
+                .value_parser(clap::value_parser!(f64))
+                .default_value("400.0")
+        )
+        .arg(
+            Arg::new("step")
+                .long("step")
+                .value_parser(clap::value_parser!(i64))
+                .default_value("32")
+        ),
+    factory: |args| {
+        let scale_factor = args
+            .get_one::<f64>("scale-factor")
+            .copied()
+            .unwrap_or(400.0);
+
+        let step = args.get_one::<i64>("step").copied().unwrap_or(32);
+
+        let mut params = EloParams::default();
+
+        params.set_scale_factor(scale_factor);
+        params.set_step(step);
+
+        Box::new(EloTracker::params(params))
+    },
 });
 
 impl Forecaster for EloTracker {

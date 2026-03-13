@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use clap::Arg;
+
 use crate::ml::elo_params::EloParams;
 use crate::ml::elo_tracker::EloTracker;
 use crate::ml::model::Model;
@@ -125,5 +127,11 @@ mod test_nelder_mead_elo {
 
 inventory::submit!(Registration {
     model_name: "nelder-mead elo v1",
-    factory: || Box::new(NelderMeadEloTracker::new()),
+    args_schema: || clap::Command::new("nelder-mead optimizated elo. ").arg(
+        Arg::new("mesh")
+            .long("mesh")
+            .value_parser(clap::value_parser!(bool))
+            .default_value("false")
+    ),
+    factory: |_args| Box::new(NelderMeadEloTracker::new()),
 });

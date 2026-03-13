@@ -6,6 +6,14 @@ pub(crate) struct EloParams {
     initial_rating: i64,
 }
 impl EloParams {
+    pub(crate) fn set_scale_factor(&mut self, f: f64) {
+        self.f = f;
+    }
+
+    pub(crate) fn set_step(&mut self, k: i64) {
+        self.k = k;
+    }
+
     pub(crate) fn scale_factor(&self) -> f64 {
         self.f
     }

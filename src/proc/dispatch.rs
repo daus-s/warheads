@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand};
+use clap::{ArgMatches, Parser, Subcommand};
 use thiserror::Error;
 
 use crate::checksum::checksum_map::{ChecksumMap, ChecksumMapError};
@@ -34,7 +34,8 @@ enum Commands {
     },
     Train {
         model_name: String,
-        //optional params
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        args: Vec<String>,
     },
     #[command(name = "eval")]
     Evaluate {
@@ -117,7 +118,7 @@ impl Dispatch {
                 }
             },
             // model prodecures
-            Commands::Train { model_name } => {
+            Commands::Train { model_name, args } => {
                 todo!()
             }
 
@@ -142,12 +143,15 @@ impl Dispatch {
             }
 
             Commands::Evaluate { model_name } => {
-                let model_factory = inventory::iter::<Registration>()
+                let registration = inventory::iter::<Registration>()
                     .find(|r| r.model_name == model_name)
-                    .ok_or_else(|| DispatchError::UnknownModel(model_name.clone()))?
-                    .factory;
+                    .ok_or_else(|| DispatchError::UnknownModel(model_name.clone()))?;
 
-                let model = model_factory();
+                let matches = (registration.args_schema)()
+                    .try_get_matches_from(vec![""].iter())
+                    .map_err(|e| DispatchError::ArgumentParseError(e))?;
+
+                let model = (registration.factory)(&matches);
 
                 let results = model.evaluate();
 
@@ -179,6 +183,8 @@ pub enum DispatchError {
     ForecastError(ForecastError),
     #[error("❌ unknown model '{0}'. ")]
     UnknownModel(String),
+    #[error("{0}\n❌ failed to parse command line arguments.")]
+    ArgumentParseError(clap::error::Error),
 }
 
 async fn initialize() -> Result<(), DispatchError> {
