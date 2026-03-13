@@ -308,9 +308,13 @@ impl Model for EloTracker {
     fn predict(&mut self, card: &GameCard) -> f64 {
         if self.current_ratings.is_empty() {
             //load from csv
-            if let Err(_e) = Self::from_csv() {
-                println!("☢️  model is not trained or could not be loaded from file (elo v1/records/records.csv)");
-                return 0.5;
+            match Self::from_csv() {
+                Err(_e) => println!("☢️  model is not trained or could not be loaded from file (elo v1/records/records.csv)"),
+                Ok(tracker) => {
+                    self.historical_ratings = tracker.historical_ratings;
+                    self.current_ratings = tracker.current_ratings;
+                    //other fields not used for predictions
+                },
             }
         }
 

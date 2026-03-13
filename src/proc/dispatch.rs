@@ -1,19 +1,21 @@
-use clap::{ArgMatches, Parser, Subcommand};
+use clap::{Parser, Subcommand};
+
 use thiserror::Error;
 
 use crate::checksum::checksum_map::{ChecksumMap, ChecksumMapError};
 use crate::checksum::generate::generate_checksums;
 
-use crate::dapi::season_manager::get_current_era;
+use crate::format;
 use crate::format::path_manager::nba_checksum_file;
-use crate::ml::elo_tracker::EloTracker;
+
 use crate::ml::model::Model;
 use crate::ml::models::registration::Registration;
+
 use crate::proc::forecast::{forecast_nba, ForecastError};
 use crate::proc::historian::{annotate_nba, chronicle_nba, observe_nba};
 use crate::proc::refresher::update_source_data;
-use crate::stats::chronology::{Chronology, ChronologyError};
-use crate::tui::game_ratings::GameRatings;
+
+use crate::stats::chronology::ChronologyError;
 
 #[derive(Parser)]
 #[command(name = "warheads")]
@@ -131,6 +133,7 @@ impl Dispatch {
                     .await
                     .map_err(|e| DispatchError::ForecastError(e))?;
 
+                println!("{}", format::bar(80));
                 for prediction in predictions {
                     println!("{prediction}");
                 }

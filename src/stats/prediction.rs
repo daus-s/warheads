@@ -46,8 +46,8 @@ impl Display for Prediction {
         let matchup_string = format!(
             "{} - ({})",
             Matchup::from_matchup(
-                self.card.away().team_abbr().clone(),
-                self.card.home().team_abbr().clone()
+                self.card.home().team_abbr().clone(),
+                self.card.away().team_abbr().clone()
             ),
             self.card.date()
         );
@@ -87,38 +87,73 @@ impl Display for Prediction {
             }
         }
 
-        let (home_p_bar, home_a_bar) = if self.probability > 0.5 {
+        let (home_p_bar, away_p_bar) = if self.probability > 0.5 {
             //home team gets favored green
             //
             (
-                format!("{}", "🟩".repeat(home_count - 5)),
-                format!("{}", "🟥".repeat(away_count - 5)),
+                format!(
+                    "{}",
+                    "🟩".repeat(if home_count > 5 { home_count - 5 } else { 0 })
+                ),
+                format!(
+                    "{}",
+                    "🟥".repeat(if away_count > 5 { away_count - 5 } else { 0 })
+                ),
             )
         } else {
             (
-                format!("{}", "🟥".repeat(home_count - 5)),
-                format!("{}", "🟩".repeat(away_count - 5)),
+                format!(
+                    "{}",
+                    "🟥".repeat(if home_count > 5 { home_count - 5 } else { 0 })
+                ),
+                format!(
+                    "{}",
+                    "🟩".repeat(if away_count > 5 { away_count - 5 } else { 0 })
+                ),
+            )
+        };
+
+        let (home_start_seq, home_end_seq, away_start_seq, away_end_seq) = if self.probability > 0.5
+        {
+            //home team gets favored green
+            //
+            (
+                format!("\x1b[42m"),
+                format!("\x1b[0m"),
+                format!("\x1b[41m"),
+                format!("\x1b[0m"),
+            )
+        } else {
+            (
+                format!("\x1b[41m"),
+                format!("\x1b[0m"),
+                format!("\x1b[42m"),
+                format!("\x1b[0m"),
             )
         };
 
         writeln!(
             f,
-            "|   {}{}|",
+            "░   {}{}░",
             matchup_string,
             format::space(75 - matchup_string.len())
         )?;
-        writeln!(f, "{}", format::underline(80))?;
+        writeln!(f, "░{}░", format::space(78))?;
         writeln!(
             f,
-            "|{:^16}|{:.1}%{}{}{:.1}%|{:^16}|",
+            "░{:^16}|{}{:.1}%{}{}{}{}{:.1}%{}|{:^16}░",
             self.card.away().team_name().0,
+            away_start_seq,
             away_prob,
-            home_a_bar,
+            away_end_seq,
+            away_p_bar,
             home_p_bar,
+            home_start_seq,
             home_prob,
+            home_end_seq,
             self.card.home().team_name().0,
         )?;
-        write!(f, "{}", format::underline(80))
+        write!(f, "{}", format::bar(80))
     }
 }
 
