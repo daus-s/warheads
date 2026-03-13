@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use clap::{Parser, Subcommand};
 
 use thiserror::Error;
@@ -15,7 +17,7 @@ use crate::proc::forecast::{forecast_nba, ForecastError};
 use crate::proc::historian::{annotate_nba, chronicle_nba, observe_nba};
 use crate::proc::refresher::update_source_data;
 
-use crate::stats::chronology::ChronologyError;
+use crate::stats::chronology::{Chronology, ChronologyError};
 
 #[derive(Parser)]
 #[command(name = "warheads")]
@@ -97,11 +99,11 @@ impl Dispatch {
                     let actual = generate_checksums();
 
                     if expected != actual {
-                        let mismatched_eras = expected.diff(&actual);
+                        let mismatched_era_paths = expected.diff(&actual);
                         let mut f_str = String::new();
 
-                        for era in mismatched_eras {
-                            f_str.push_str(&format!("\n📄 {}", era.display()));
+                        for path in mismatched_era_paths {
+                            f_str.push_str(&format!("\n📄 {}", path.display()));
                         }
                         println!("❌ checksums do not match for eras:{f_str}");
                     } else {
@@ -123,7 +125,22 @@ impl Dispatch {
             },
             // model prodecures
             Commands::Train { model_name, args } => {
-                todo!()
+                let mut model = get_model_from_inventory(model_name)?;
+
+                let data = Chronology::new()
+                    .as_training_data()
+                    .map_err(|e| DispatchError::HistoryError(e))?;
+
+                let start = Instant::now();
+
+                model.train(&data);
+
+                println!(
+                    "✅ successfully trained {} in {}ms",
+                    model.model_name(),
+                    start.elapsed().as_millis()
+                );
+                Ok(())
             }
 
             Commands::Forecast { model_name, days } => {
