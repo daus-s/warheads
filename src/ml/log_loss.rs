@@ -6,51 +6,49 @@ use crate::ml::measurement::{Measureable, Measurement};
 
 pub struct LogLossTracker {
     model_name: String,
-    measurements: Vec<Measurement>,
+    log_loss: f64,
+    freq: u64,
+    length: u64,
 }
 
 impl LogLossTracker {
     pub fn log_loss(&self) -> f64 {
-        let count = self.measurements.len();
+        let count = self.length;
         if count == 0 {
-            0.0
+            f64::NAN
         } else {
-            self.measurements
-                .iter()
-                .fold(0.0, |acc, m| acc + m.log_loss())
-                / count as f64
+            self.log_loss / self.length as f64
         }
     }
 
     /// return the frequency of the models performance based on whether its naive? classification
     /// would create the best prediction.
     pub fn freq(&self) -> f64 {
-        let mut successes = 0;
-
-        for measurement in &self.measurements {
-            if measurement.classification_success() {
-                successes += 1;
-            }
-        }
-        successes as f64 / self.measurements.len() as f64
+        self.freq as f64 / self.length as f64
     }
 
     pub fn new() -> Self {
         LogLossTracker {
             model_name: format!(""),
-            measurements: Vec::new(),
+            log_loss: f64::NAN,
+            freq: 0,
+            length: 0,
         }
     }
 
     pub fn model(model_name: String) -> Self {
         LogLossTracker {
             model_name,
-            measurements: Vec::new(),
+            log_loss: f64::NAN,
+            freq: 0,
+            length: 0,
         }
     }
 
     pub fn add_measurement(&mut self, m: Measurement) {
-        self.measurements.push(m);
+        self.log_loss += m.log_loss();
+        self.freq += m.classification_success() as u64;
+        self.length += 1;
     }
 
     pub fn add_measurable(&mut self, event: &Box<dyn Measureable>) {
@@ -58,7 +56,7 @@ impl LogLossTracker {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.measurements.is_empty()
+        self.length == 0
     }
 }
 
@@ -85,7 +83,8 @@ impl Serialize for LogLossTracker {
 
         let value = serde_json::json!({
             "log_loss": self.log_loss(),
-            "freq": self.freq()
+            "freq": self.freq(),
+            "len": self.length,
         });
 
         map.serialize_entry(&self.model_name, &value)?;

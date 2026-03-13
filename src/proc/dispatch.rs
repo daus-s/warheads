@@ -4,6 +4,7 @@ use thiserror::Error;
 use crate::checksum::checksum_map::{ChecksumMap, ChecksumMapError};
 use crate::checksum::generate::generate_checksums;
 
+use crate::dapi::season_manager::get_current_era;
 use crate::format::path_manager::nba_checksum_file;
 use crate::ml::elo_tracker::EloTracker;
 use crate::ml::model::Model;
@@ -12,6 +13,7 @@ use crate::proc::forecast::{forecast_nba, ForecastError};
 use crate::proc::historian::{annotate_nba, chronicle_nba, observe_nba};
 use crate::proc::refresher::update_source_data;
 use crate::stats::chronology::{Chronology, ChronologyError};
+use crate::tui::game_ratings::GameRatings;
 
 #[derive(Parser)]
 #[command(name = "warheads")]
@@ -123,35 +125,21 @@ impl Dispatch {
             }
 
             Commands::Forecast { model_name, days } => {
-                let mut model = EloTracker::new();
-
-                let data = Chronology::new()
-                    .as_training_data()
-                    .map_err(|e| DispatchError::HistoryError(e))?;
-
-                model.train(&data);
+                let model = get_model_from_inventory(model_name)?;
 
                 let predictions = forecast_nba(model, *days)
                     .await
                     .map_err(|e| DispatchError::ForecastError(e))?;
 
                 for prediction in predictions {
-                    println!("{prediction:?}");
+                    println!("{prediction}");
                 }
 
                 Ok(())
             }
 
             Commands::Evaluate { model_name } => {
-                let registration = inventory::iter::<Registration>()
-                    .find(|r| r.model_name == model_name)
-                    .ok_or_else(|| DispatchError::UnknownModel(model_name.clone()))?;
-
-                let matches = (registration.args_schema)()
-                    .try_get_matches_from(vec![""].iter())
-                    .map_err(|e| DispatchError::ArgumentParseError(e))?;
-
-                let model = (registration.factory)(&matches);
+                let model = get_model_from_inventory(model_name)?;
 
                 let results = model.evaluate();
 
@@ -165,6 +153,20 @@ impl Dispatch {
             }
         }
     }
+}
+
+fn get_model_from_inventory(model_name: &str) -> Result<Box<dyn Model>, DispatchError> {
+    let registration = inventory::iter::<Registration>()
+        .find(|r| r.model_name == model_name)
+        .ok_or_else(|| DispatchError::UnknownModel(model_name.to_owned()))?;
+
+    let matches = (registration.args_schema)()
+        .try_get_matches_from(vec![""].iter())
+        .map_err(|e| DispatchError::ArgumentParseError(e))?;
+
+    let model = (registration.factory)(&matches);
+
+    Ok(model)
 }
 
 #[derive(Debug, Error)]

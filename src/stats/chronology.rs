@@ -107,8 +107,8 @@ impl Chronology {
             games.into_iter().map(|game| (game.card(), game)).collect();
 
         for (card, game) in &mut pairs {
-            card.add_away_ratings(self.get_expected_roster(game.away_team_id(), game.game_id()));
-            card.add_home_ratings(self.get_expected_roster(game.home_team_id(), game.game_id()));
+            card.add_away_roster(self.get_expected_roster(game.away_team_id(), game.game_id()));
+            card.add_home_roster(self.get_expected_roster(game.home_team_id(), game.game_id()));
         }
 
         Ok(pairs)

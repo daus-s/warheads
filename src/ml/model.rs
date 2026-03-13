@@ -13,3 +13,21 @@ pub trait Model {
 // predict - given some trait like predictable or something?
 // evaluate - calculate log loss or residuals or something? calculate the Objective. Create an ObjectiveTrait that does somethign idk
 //
+
+impl Model for Box<dyn Model> {
+    fn model_name(&self) -> String {
+        (**self).model_name()
+    }
+
+    fn train(&mut self, data: &[(GameCard, GameObject)]) {
+        (**self).train(data)
+    }
+
+    fn evaluate(&self) -> f64 {
+        (**self).evaluate()
+    }
+
+    fn predict(&mut self, obj: &GameCard) -> f64 {
+        (**self).predict(obj)
+    }
+}

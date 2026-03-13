@@ -91,11 +91,11 @@ impl GameCard {
         }
     }
 
-    pub fn add_home_ratings(&mut self, roster: Vec<PlayerId>) {
+    pub fn add_home_roster(&mut self, roster: Vec<PlayerId>) {
         self.home.add_roster(roster);
     }
 
-    pub fn add_away_ratings(&mut self, roster: Vec<PlayerId>) {
+    pub fn add_away_roster(&mut self, roster: Vec<PlayerId>) {
         self.away.add_roster(roster);
     }
 

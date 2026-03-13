@@ -111,11 +111,11 @@ pub fn rate_nba(elo_tracker: &mut EloTracker) {
                 .map(|game| {
                     let mut card = game.card();
 
-                    card.add_home_ratings(
+                    card.add_home_roster(
                         chronology.get_expected_roster(card.home().team_id(), card.game_id()),
                     );
 
-                    card.add_away_ratings(
+                    card.add_away_roster(
                         chronology.get_expected_roster(card.away().team_id(), card.game_id()),
                     );
 

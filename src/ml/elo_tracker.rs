@@ -11,29 +11,24 @@ use crate::ml::elo_writer::{EloWriter, EloWriterError};
 use crate::ml::log_loss::LogLossTracker;
 use crate::ml::measurement::Measurement;
 use crate::ml::model::Model;
-
 use crate::ml::models::registration::Registration;
-use crate::proc::forecast::Forecaster;
+
 use crate::proc::prophet;
 
-use crate::stats::chronology::Chronology;
 use crate::stats::game_obj::GameObject;
 use crate::stats::gamecard::GameCard;
 use crate::stats::prediction::Prediction;
-use crate::stats::visiting::Visiting;
 
 use crate::dapi::read_disk::NBAReadError;
 
 use crate::dapi::write::write_serializable_with_directory;
-use crate::tui::game_ratings::GameRatings;
-use crate::tui::tui_display::TuiDisplay;
 
-use crate::types::PlayerId;
+use crate::types::{GameId, PlayerId};
 
 use std::collections::HashMap;
 use std::{fs, io};
 
-const ELO_VERSION: &str = "elo v1";
+const ELO_VERSION: &str = "elo-v1";
 
 pub struct EloTracker {
     historical_ratings: Vec<Elo>,
@@ -62,6 +57,58 @@ impl EloTracker {
             predictions: vec![],
             params,
         }
+    }
+
+    pub fn from_csv() -> Result<Self, EloTrackerError> {
+        let mut tracker = Self::new();
+
+        let path = records_path(&tracker);
+
+        let contents = fs::read_to_string(path).map_err(|e| EloTrackerError::CSVError(e))?;
+
+        for line in contents.lines().skip(1) {
+            let fields: Vec<&str> = line.split(',').collect();
+            if fields.len() != 3 {
+                return Err(EloTrackerError::CSVError(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    format!("❌ historical entry is badly shaped: {}", line),
+                )));
+            }
+            let player_id = PlayerId(fields[0].parse::<u64>().map_err(|e| {
+                EloTrackerError::CSVError(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    format!("❌{e}\n❌ failed to read col 0 as a player id (integer)."),
+                ))
+            })?);
+            let game_id = GameId(fields[1].parse::<u64>().map_err(|e| {
+                EloTrackerError::CSVError(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    format!("❌{e}\n❌ failed to read col 1 as a game id (integer)."),
+                ))
+            })?);
+            let rating = fields[2].parse::<i64>().map_err(|e| {
+                EloTrackerError::CSVError(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    format!("❌{e}\n❌ failed to read col 2 as a rating (signed integer)."),
+                ))
+            })?;
+            tracker.historical_ratings.push(Elo {
+                game_id,
+                player_id,
+                rating,
+            });
+        }
+
+        tracker.current_ratings =
+            tracker
+                .historical_ratings
+                .iter()
+                .fold(HashMap::new(), |mut map, elo| {
+                    map.insert(elo.player_id, elo.rating);
+                    map
+                });
+
+        Ok(tracker)
     }
 
     fn process_elo(&mut self, games: &[(GameCard, GameObject)]) {
@@ -253,10 +300,20 @@ pub enum EloTrackerError {
     WriteResultsError(io::Error),
     #[error("❌ {0}\n❌ error writing elo records to file. ")]
     WriteEloError(EloWriterError),
+    #[error("❌ {0}\n❌ failed to construct historical records from csv file. ")]
+    CSVError(io::Error),
 }
 
 impl Model for EloTracker {
     fn predict(&mut self, card: &GameCard) -> f64 {
+        if self.current_ratings.is_empty() {
+            //load from csv
+            if let Err(_e) = Self::from_csv() {
+                println!("☢️  model is not trained or could not be loaded from file (elo v1/records/records.csv)");
+                return 0.5;
+            }
+        }
+
         let home_rating =
             self.normalized_ratings_from_iter(card.home_roster().into_iter().map(|x| *x));
         let away_rating =
@@ -348,54 +405,9 @@ inventory::submit!(Registration {
     },
 });
 
-impl Forecaster for EloTracker {
-    fn forecast(&self, gamecards: Vec<GameCard>) -> Vec<Prediction> {
-        let mut chronology = Chronology::new();
-        let mut predictions = Vec::new();
-
-        for mut game in gamecards.into_iter() {
-            chronology
-                .load_era(game.season())
-                .expect(&format!("💀 failed to load season_era: {}", game.season()));
-
-            let game_ratings = GameRatings::new(&game, &chronology, &self.current_ratings);
-
-            println!("{}", game_ratings.display());
-
-            chronology
-                .load_era(game.season())
-                .expect("Failed to load year from storage");
-
-            game.add_record(
-                Visiting::Home,
-                chronology.calculate_record(game.home().team_id()),
-            );
-            game.add_record(
-                Visiting::Away,
-                chronology.calculate_record(game.away().team_id()),
-            );
-
-            let home_roster = chronology.get_expected_roster(game.home().team_id(), game.game_id());
-            let away_roster = chronology.get_expected_roster(game.away().team_id(), game.game_id());
-
-            let home_rating = self.normalized_ratings_from_iter(home_roster.into_iter());
-            let away_rating = self.normalized_ratings_from_iter(away_roster.into_iter());
-
-            //that home wins
-            let prob = cdf::prob(home_rating - away_rating, self.scale_factor());
-
-            let prediction = Prediction::from(game, prob);
-
-            predictions.push(prediction);
-        }
-
-        predictions
-    }
-}
-
 #[cfg(test)]
 mod test_elo_tracker {
-    use crate::{ml::vector::Vector, types::SeasonId};
+    use crate::{ml::vector::Vector, stats::chronology::Chronology, types::SeasonId};
 
     use super::*;
 
@@ -436,8 +448,8 @@ mod test_elo_tracker {
             let home_expected =
                 chronology.get_expected_roster(slip.home().team_id(), slip.game_id());
 
-            slip.add_away_ratings(away_expected);
-            slip.add_home_ratings(home_expected);
+            slip.add_away_roster(away_expected);
+            slip.add_home_roster(home_expected);
         }
 
         dbg!(&pairs);

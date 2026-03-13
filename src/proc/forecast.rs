@@ -1,23 +1,46 @@
 use thiserror::Error;
 
+use crate::dapi::season_manager::get_current_era;
 use crate::dapi::timeline_manager::get_next_n_dates;
 
 use crate::format::parse::{parse_gamecards, ParseError};
 
+use crate::ml::model::Model;
 use crate::proc::query::{get_gamecard_json, NBAQueryError};
 
+use crate::stats::chronology::Chronology;
 use crate::stats::gamecard::GameCard;
 use crate::stats::prediction::Prediction;
 
 use crate::types::GameDate;
 
 pub(crate) async fn forecast_nba(
-    forecaster: impl Forecaster,
+    mut model: impl Model,
     days: usize,
 ) -> Result<Vec<Prediction>, ForecastError> {
-    let cards = get_upcoming_games(days).await?;
+    println!("📥 fetching upcoming games from nba.com...");
 
-    Ok(forecaster.forecast(cards))
+    let mut cards = get_upcoming_games(days).await?;
+
+    println!("🗓️  successfully got upcoming nba schedule");
+
+    println!("📜 loading current era chronology...");
+
+    let chronology = Chronology::from_era(get_current_era());
+
+    println!("📖 loaded current era chronology.");
+
+    for card in cards.iter_mut() {
+        card.add_away_roster(chronology.get_expected_roster(card.away().team_id(), card.game_id()));
+        card.add_home_roster(chronology.get_expected_roster(card.home().team_id(), card.game_id()));
+    }
+    println!("📖 assigned expected rosters to all cards");
+
+    println!("🔮 generating predictions...");
+    Ok(cards
+        .iter()
+        .map(|card| Prediction::new(card, model.predict(&card)))
+        .collect())
 }
 
 async fn get_upcoming_games(n: usize) -> Result<Vec<GameCard>, ForecastError> {
@@ -47,8 +70,4 @@ pub enum ForecastError {
     APIError(NBAQueryError),
     #[error("{0}\n❌ failed to parse JSON response as gamecards. ")]
     ParseError(ParseError),
-}
-
-pub trait Forecaster {
-    fn forecast(&self, cards: Vec<GameCard>) -> Vec<Prediction>;
 }

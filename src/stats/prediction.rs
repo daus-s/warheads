@@ -1,6 +1,13 @@
-use crate::{stats::gamecard::GameCard, types::GameDate};
+use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
+
+use crate::format;
+
+use crate::stats::gamecard::GameCard;
+
+use crate::stats::visiting::Visiting;
+use crate::types::{GameDate, Matchup};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Prediction {
@@ -31,6 +38,87 @@ impl Prediction {
     ////////////////////////////////////////////////////////////////////////////////////////
     pub fn date(&self) -> GameDate {
         self.card.date()
+    }
+}
+
+impl Display for Prediction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let matchup_string = format!(
+            "{} - ({})",
+            Matchup::from_matchup(
+                self.card.away().team_abbr().clone(),
+                self.card.home().team_abbr().clone()
+            ),
+            self.card.date()
+        );
+
+        let away_prob = (1.0 - self.probability) * 100.0;
+        let home_prob = self.probability * 100.0;
+
+        let mut away_count = (27f64 * away_prob / 100.0).round() as usize;
+        let mut home_count = (27f64 * home_prob / 100.0).round() as usize;
+
+        let mut state = Visiting::Away;
+
+        while away_count + home_count > 27 {
+            match state {
+                Visiting::Away => {
+                    away_count -= 1;
+                    state = Visiting::Home;
+                }
+                Visiting::Home => {
+                    home_count -= 1;
+                    state = Visiting::Away;
+                }
+            }
+        }
+
+        state = Visiting::Home;
+        while away_count + home_count < 27 {
+            match state {
+                Visiting::Away => {
+                    away_count += 1;
+                    state = Visiting::Home;
+                }
+                Visiting::Home => {
+                    home_count += 1;
+                    state = Visiting::Away;
+                }
+            }
+        }
+
+        let (home_p_bar, home_a_bar) = if self.probability > 0.5 {
+            //home team gets favored green
+            //
+            (
+                format!("{}", "🟩".repeat(home_count - 5)),
+                format!("{}", "🟥".repeat(away_count - 5)),
+            )
+        } else {
+            (
+                format!("{}", "🟥".repeat(home_count - 5)),
+                format!("{}", "🟩".repeat(away_count - 5)),
+            )
+        };
+
+        writeln!(
+            f,
+            "|   {}{}|",
+            matchup_string,
+            format::space(75 - matchup_string.len())
+        )?;
+        writeln!(f, "{}", format::underline(80))?;
+        writeln!(
+            f,
+            "|{:^16}|{:.1}%{}{}{:.1}%|{:^16}|",
+            self.card.away().team_name().0,
+            away_prob,
+            home_a_bar,
+            home_p_bar,
+            home_prob,
+            self.card.home().team_name().0,
+        )?;
+        write!(f, "{}", format::underline(80))
     }
 }
 
