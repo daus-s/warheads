@@ -55,12 +55,14 @@ impl Display for Prediction {
         let away_prob = (1.0 - self.probability) * 100.0;
         let home_prob = self.probability * 100.0;
 
-        let mut away_count = (27f64 * away_prob / 100.0).round() as usize;
-        let mut home_count = (27f64 * home_prob / 100.0).round() as usize;
+        let width = 44f64;
+
+        let mut away_count = (width * away_prob / 100.0).round() as usize;
+        let mut home_count = (width * home_prob / 100.0).round() as usize;
 
         let mut state = Visiting::Away;
 
-        while away_count + home_count > 27 {
+        while away_count + home_count > width as usize {
             match state {
                 Visiting::Away => {
                     away_count -= 1;
@@ -74,7 +76,7 @@ impl Display for Prediction {
         }
 
         state = Visiting::Home;
-        while away_count + home_count < 27 {
+        while away_count + home_count < width as usize {
             match state {
                 Visiting::Away => {
                     away_count += 1;
@@ -93,22 +95,22 @@ impl Display for Prediction {
             (
                 format!(
                     "{}",
-                    "🟩".repeat(if home_count > 5 { home_count - 5 } else { 0 })
+                    format::space(if home_count > 5 { home_count - 5 } else { 0 })
                 ),
                 format!(
                     "{}",
-                    "🟥".repeat(if away_count > 5 { away_count - 5 } else { 0 })
+                    format::space(if away_count > 5 { away_count - 5 } else { 0 })
                 ),
             )
         } else {
             (
                 format!(
                     "{}",
-                    "🟥".repeat(if home_count > 5 { home_count - 5 } else { 0 })
+                    format::space(if home_count > 5 { home_count - 5 } else { 0 })
                 ),
                 format!(
                     "{}",
-                    "🟩".repeat(if away_count > 5 { away_count - 5 } else { 0 })
+                    format::space(if away_count > 5 { away_count - 5 } else { 0 })
                 ),
             )
         };
@@ -145,10 +147,10 @@ impl Display for Prediction {
             self.card.away().team_name().0,
             away_start_seq,
             away_prob,
-            away_end_seq,
             away_p_bar,
-            home_p_bar,
+            away_end_seq,
             home_start_seq,
+            home_p_bar,
             home_prob,
             home_end_seq,
             self.card.home().team_name().0,
