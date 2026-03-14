@@ -44,7 +44,7 @@ impl Vector {
             "💀 vector is {}-dimensional and tried to access 2nd dimension.",
             self.dim
         );
-        self.vec[3]
+        self.vec[2]
     }
 
     pub fn norm(&self) -> f64 {
