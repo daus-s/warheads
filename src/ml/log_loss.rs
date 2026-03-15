@@ -5,7 +5,6 @@ use serde::Serialize;
 use crate::ml::measurement::{Measureable, Measurement};
 
 pub struct LogLossTracker {
-    model_name: String,
     log_loss: f64,
     freq: u64,
     length: u64,
@@ -29,17 +28,7 @@ impl LogLossTracker {
 
     pub fn new() -> Self {
         LogLossTracker {
-            model_name: format!(""),
-            log_loss: f64::NAN,
-            freq: 0,
-            length: 0,
-        }
-    }
-
-    pub fn model(model_name: String) -> Self {
-        LogLossTracker {
-            model_name,
-            log_loss: f64::NAN,
+            log_loss: 0f64,
             freq: 0,
             length: 0,
         }
@@ -64,10 +53,10 @@ impl Display for LogLossTracker {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{} {{ log_loss: {}, freq: {} }}",
-            self.model_name,
+            "log_loss: {}\n freq: {}\n len: {}",
             self.log_loss(),
-            self.freq()
+            self.freq(),
+            self.length
         )
     }
 }
@@ -79,15 +68,12 @@ impl Serialize for LogLossTracker {
     {
         use serde::ser::SerializeMap;
 
-        let mut map = serializer.serialize_map(Some(1))?;
+        let mut map = serializer.serialize_map(Some(3))?;
 
-        let value = serde_json::json!({
-            "log_loss": self.log_loss(),
-            "freq": self.freq(),
-            "len": self.length,
-        });
+        map.serialize_entry("log_loss", &self.log_loss())?;
+        map.serialize_entry("freq", &self.freq())?;
+        map.serialize_entry("len", &self.length)?;
 
-        map.serialize_entry(&self.model_name, &value)?;
         map.end()
     }
 }
@@ -98,12 +84,12 @@ mod serialize_log_loss {
 
     #[test]
     fn test_serialize_log_loss() {
-        let mut tracker = LogLossTracker::model("test_model".to_string());
+        let mut tracker = LogLossTracker::new();
         tracker.add_measurement(Measurement::new(1, 0.5));
         tracker.add_measurement(Measurement::new(0, 0.5));
 
         let serialized = serde_json::to_string(&tracker).unwrap();
-        let expected = r#"{"test_model":{"log_loss":0.6931471805599453,"freq":0.0}}"#;
+        let expected = r#"{"log_loss":0.6931471805599453,"freq":0.0,"len":2}"#;
         assert_eq!(serialized, expected);
     }
 }

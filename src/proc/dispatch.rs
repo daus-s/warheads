@@ -46,13 +46,21 @@ enum Commands {
     #[command(name = "eval")]
     Evaluate {
         model_name: String,
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        args: Vec<String>,
     },
     Forecast {
         model_name: String,
         #[arg(default_value = "7")]
         days: usize,
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        args: Vec<String>,
     },
-    Tweet,
+    Tweet {
+        model_name: String,
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        args: Vec<String>,
+    },
 }
 
 #[derive(Subcommand)]
@@ -125,7 +133,7 @@ impl Dispatch {
             },
             // model prodecures
             Commands::Train { model_name, args } => {
-                let mut model = get_model_from_inventory(model_name)?;
+                let mut model = get_model_from_inventory(model_name, args)?;
 
                 let data = Chronology::new()
                     .as_training_data()
@@ -143,8 +151,16 @@ impl Dispatch {
                 Ok(())
             }
 
-            Commands::Forecast { model_name, days } => {
-                let model = get_model_from_inventory(model_name)?;
+            Commands::Forecast {
+                model_name,
+                days,
+                args,
+            } => {
+                let mut model = get_model_from_inventory(model_name, &args)?;
+
+                model
+                    .initialize()
+                    .map_err(|_| DispatchError::ModelNotTrained(model_name.to_owned()))?;
 
                 let predictions = forecast_nba(model, *days)
                     .await
@@ -158,8 +174,8 @@ impl Dispatch {
                 Ok(())
             }
 
-            Commands::Evaluate { model_name } => {
-                let model = get_model_from_inventory(model_name)?;
+            Commands::Evaluate { model_name, args } => {
+                let model = get_model_from_inventory(model_name, &args)?;
 
                 let results = model.evaluate();
 
@@ -168,20 +184,25 @@ impl Dispatch {
                 Ok(())
             }
 
-            Commands::Tweet => {
+            Commands::Tweet { model_name, args } => {
+                let model = get_model_from_inventory(model_name, &args)?;
+
                 todo!("implement tweet")
             }
         }
     }
 }
 
-fn get_model_from_inventory(model_name: &str) -> Result<Box<dyn Model>, DispatchError> {
+fn get_model_from_inventory(
+    model_name: &str,
+    args: &[String],
+) -> Result<Box<dyn Model>, DispatchError> {
     let registration = inventory::iter::<Registration>()
         .find(|r| r.model_name == model_name)
         .ok_or_else(|| DispatchError::UnknownModel(model_name.to_owned()))?;
 
     let matches = (registration.args_schema)()
-        .try_get_matches_from(vec![""].iter())
+        .try_get_matches_from(args.iter())
         .map_err(|e| DispatchError::ArgumentParseError(e))?;
 
     let model = (registration.factory)(&matches);
@@ -203,6 +224,8 @@ pub enum DispatchError {
     ChecksumSerializationError,
     #[error("{0}\n❌ failed to create predictions for upcoming NBA games. ")]
     ForecastError(ForecastError),
+    #[error("❌ model {0} is not trained. try running `warheads train {0}` ")]
+    ModelNotTrained(String),
     #[error("❌ unknown model '{0}'. ")]
     UnknownModel(String),
     #[error("{0}\n❌ failed to parse command line arguments.")]

@@ -37,6 +37,10 @@ impl Chronology {
         let mut timeline = Chronology::new();
 
         if let Err(_) = timeline.load_era(era) {
+            println!(
+                "⚠️ failed to load {} in a chronology. returning empty chronology",
+                era
+            );
             Chronology::new()
         } else {
             timeline
@@ -103,9 +107,12 @@ impl Chronology {
             )
         }
 
+        games.sort_by_key(|g| g.game_date());
+
         let mut pairs: Vec<(GameCard, GameObject)> =
             games.into_iter().map(|game| (game.card(), game)).collect();
 
+        //move this into prev loop
         for (card, game) in &mut pairs {
             card.add_away_roster(self.get_expected_roster(game.away_team_id(), game.game_id()));
             card.add_home_roster(self.get_expected_roster(game.home_team_id(), game.game_id()));
@@ -119,19 +126,44 @@ impl Chronology {
             panic!("💀 tried to run most_recent_games on an uninitialized Chronology object.")
         }
 
-        let games_for_team = self
+        let mut games_for_team = self
             .games
             .as_ref()
             .unwrap()
             .iter()
-            .filter_map(|game| {
-                if game.away_team_id() == team_id || game.home_team_id() == team_id {
-                    Some(game.clone())
-                } else {
-                    None
-                }
-            })
+            .filter(|game| game.participant(team_id))
+            .map(|x| x.clone())
             .collect::<Vec<GameObject>>();
+
+        games_for_team.sort_by_key(|g| g.game_date());
+
+        let index = games_for_team
+            .iter()
+            .position(|g| g.game_id() == game_id)
+            .unwrap_or(games_for_team.len());
+
+        //load previous season if possible and necesary
+        if index < n
+            && self
+                .era
+                .expect("era is not set in an initialized Chronology object")
+                != SeasonId::from(21946)
+        {
+            let prev_era = Chronology::from_era(self.era.unwrap().prev());
+
+            let mut prev_era_games = prev_era
+                .games
+                .as_ref()
+                .unwrap()
+                .iter()
+                .filter(|game| game.participant(team_id))
+                .map(|x| x.clone())
+                .collect::<Vec<GameObject>>();
+
+            prev_era_games.extend(games_for_team);
+
+            games_for_team = prev_era_games;
+        }
 
         let index = games_for_team
             .iter()
@@ -140,7 +172,7 @@ impl Chronology {
 
         let mut last_n_games = Vec::new();
 
-        for i in max(index as i64 - n as i64, 0) as usize..index {
+        for i in index.saturating_sub(n)..index {
             last_n_games.push(games_for_team[i].clone());
         }
 
@@ -162,6 +194,11 @@ impl Chronology {
         let mut players: HashMap<PlayerId, u8> = HashMap::new();
 
         let recent_games = self.n_most_recent_games(5, team_id, game_id);
+
+        println!(
+            "{team_id}:{:?}{game_id}",
+            recent_games.iter().map(|g| g.game_id).collect::<Vec<_>>()
+        );
 
         let mut max_roster_size = 0;
 
@@ -205,7 +242,7 @@ impl Chronology {
             .as_ref()
             .unwrap()
             .iter()
-            .filter(|game| game.had_participant(team_id))
+            .filter(|game| game.participant(team_id))
             .for_each(|game| {
                 if game.winner() == team_id {
                     wins += 1
@@ -251,8 +288,13 @@ mod test_chronology {
     #[test]
     fn test_last_n_games_early_season() {
         let chronology = Chronology::from_era(SeasonId::from((2024, RegularSeason)));
-        let expected: Vec<GameId> =
-            vec![GameId(0022400062), GameId(0022400085), GameId(0022400096)];
+        let expected: Vec<GameId> = vec![
+            GameId(0012400065),
+            GameId(0012400074),
+            GameId(0022400062),
+            GameId(0022400085),
+            GameId(0022400096),
+        ];
 
         let game = GameId(0022400111);
 
@@ -364,6 +406,7 @@ mod test_chronology {
             })
             .collect::<Vec<GameId>>();
 
+        assert!(actual.is_sorted());
         assert_eq!(actual, expected);
         assert_eq!(actual.len(), 81);
     }

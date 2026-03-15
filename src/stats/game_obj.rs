@@ -26,7 +26,7 @@ use wincode::{SchemaRead, SchemaWrite};
 pub struct GameObject {
     pub season_id: SeasonId,
 
-    pub game_date: GameDate,
+    game_date: GameDate,
 
     pub game_id: GameId,
 
@@ -180,7 +180,11 @@ impl GameObject {
         (self.season_id, self.game_id)
     }
 
-    pub fn had_participant(&self, team_id: TeamId) -> bool {
+    pub fn game_date(&self) -> GameDate {
+        self.game_date
+    }
+
+    pub fn participant(&self, team_id: TeamId) -> bool {
         self.home.team_id() == team_id || self.away.team_id() == team_id
     }
 

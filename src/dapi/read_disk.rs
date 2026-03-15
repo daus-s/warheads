@@ -114,10 +114,10 @@ mod test_read_data {
         let games = read_nba_year(2024).expect("failed to read 2024 nba season in test.");
 
         for idx in 1..games.len() {
-            let sort_statement = if games[idx].game_date == games[idx - 1].game_date {
+            let sort_statement = if games[idx].game_date() == games[idx - 1].game_date() {
                 games[idx].game_id.0 > games[idx - 1].game_id.0
             } else {
-                games[idx].game_date.0 > games[idx - 1].game_date.0
+                games[idx].game_date() > games[idx - 1].game_date()
             };
 
             assert!(sort_statement)

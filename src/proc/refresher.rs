@@ -82,7 +82,7 @@ mod test_get_daily_gamecard {
         let mut gamecards = parse_gamecards(json_response)
             .unwrap_or_else(|err| panic!("💀 failed to parse gamecards: {}", err));
 
-        gamecards.sort_by_key(|g| g.game_id());
+        gamecards.sort_by_key(|g| g.date());
 
         pretty_assertions::assert_eq!(gamecards, expected_gamecards());
     }

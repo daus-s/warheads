@@ -18,15 +18,15 @@ pub fn nba_timeline() -> Result<HashMap<GameDate, Vec<GameCard>>, NBATimelineErr
     for era in nba_lifespan_period() {
         let mut games = read_nba_season(era).map_err(|e| NBATimelineError::SeasonReadError(e))?;
 
-        games.sort_by_key(|game| game.game_id);
+        games.sort_by_key(|game| game.game_date());
 
         for game in games.iter() {
-            let date = game.game_date;
+            let date = game.game_date();
             dates.entry(date).or_insert_with(Vec::new).push(game.card());
         }
 
         for game in games {
-            let date = game.game_date;
+            let date = game.game_date();
 
             let winner = game.winning_side();
 

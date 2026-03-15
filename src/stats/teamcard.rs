@@ -62,6 +62,22 @@ impl TeamCard {
     pub fn roster(&self) -> &Vec<PlayerId> {
         &self.roster
     }
+
+    pub fn with_roster(
+        team_id: TeamId,
+        team_name: TeamName,
+        team_abbr: TeamAbbreviation,
+        record: Record,
+        roster: Vec<PlayerId>,
+    ) -> TeamCard {
+        TeamCard {
+            team_id,
+            team_name,
+            team_abbr,
+            record,
+            roster,
+        }
+    }
 }
 
 impl Display for TeamCard {

@@ -75,7 +75,11 @@ mod test_path_manager {
             "test_model".to_owned()
         }
 
-        fn predict(&mut self, _obj: &crate::stats::gamecard::GameCard) -> f64 {
+        fn initialize(&mut self) -> Result<(), ()> {
+            todo!()
+        }
+
+        fn train(&mut self, _data: &[(GameCard, GameObject)]) {
             todo!()
         }
 
@@ -83,7 +87,7 @@ mod test_path_manager {
             todo!()
         }
 
-        fn train(&mut self, _data: &[(GameCard, GameObject)]) {
+        fn predict(&mut self, _obj: &crate::stats::gamecard::GameCard) -> f64 {
             todo!()
         }
     }

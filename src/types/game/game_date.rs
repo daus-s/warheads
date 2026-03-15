@@ -10,7 +10,7 @@ use std::str::FromStr;
 
 /// `GameDate`is a `chrono::NaiveDate` wrapper that implements the necessary traits to work
 /// interchangeably in the code base.
-#[derive(Clone, Copy, Eq, PartialEq, Hash)]
+#[derive(Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub struct GameDate(pub NaiveDate);
 
 impl GameDate {

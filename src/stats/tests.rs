@@ -814,12 +814,12 @@ mod test_serialize_game_obj {
             SeasonId::from((2005, SeasonPeriod::RegularSeason))
         );
 
-        assert!(deserialized_object.had_participant(TeamId(1610612760)));
-        assert!(deserialized_object.had_participant(TeamId(1610612744)));
+        assert!(deserialized_object.participant(TeamId(1610612760)));
+        assert!(deserialized_object.participant(TeamId(1610612744)));
 
         assert_eq!(
             "2006-02-01".parse::<GameDate>().unwrap(),
-            deserialized_object.game_date
+            deserialized_object.game_date()
         );
     }
 }
