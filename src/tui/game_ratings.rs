@@ -19,11 +19,9 @@ pub struct GameRatings {
 }
 
 impl GameRatings {
-    pub fn new(
-        gamecard: &GameCard,
-        chronology: &Chronology,
-        ratings: &HashMap<PlayerId, i64>,
-    ) -> Self {
+    pub fn new(gamecard: &GameCard, ratings: &HashMap<PlayerId, i64>) -> Self {
+        let chronology = Chronology::from_era(gamecard.season());
+
         let home_expected_roster =
             chronology.get_expected_roster(gamecard.home().team_id(), gamecard.game_id());
         let away_expected_roster =

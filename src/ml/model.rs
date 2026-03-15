@@ -3,6 +3,7 @@ use crate::stats::gamecard::GameCard;
 
 pub trait Model {
     fn model_name(&self) -> String;
+    fn initialize(&mut self) -> Result<(), ()>;
 
     fn train(&mut self, data: &[(GameCard, GameObject)]);
     fn evaluate(&self) -> f64; // this could return a vec of measurements or a like structure
@@ -17,6 +18,10 @@ pub trait Model {
 impl Model for Box<dyn Model> {
     fn model_name(&self) -> String {
         (**self).model_name()
+    }
+
+    fn initialize(&mut self) -> Result<(), ()> {
+        (**self).initialize()
     }
 
     fn train(&mut self, data: &[(GameCard, GameObject)]) {

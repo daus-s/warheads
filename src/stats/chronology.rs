@@ -103,6 +103,8 @@ impl Chronology {
             )
         }
 
+        games.sort_by_key(|g| g.game_id());
+
         let mut pairs: Vec<(GameCard, GameObject)> =
             games.into_iter().map(|game| (game.card(), game)).collect();
 

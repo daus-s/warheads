@@ -34,6 +34,14 @@ impl NelderMeadEloTracker {
 }
 
 impl Model for NelderMeadEloTracker {
+    fn model_name(&self) -> String {
+        "nelder-mead elo v1".to_string()
+    }
+
+    fn initialize(&mut self) -> Result<(), ()> {
+        todo!()
+    }
+
     fn train(&mut self, games: &[(GameCard, GameObject)]) {
         let mut simplex = Simplex::from(&vec![
             Vector::from(vec![32., 400.]),
@@ -85,8 +93,12 @@ impl Model for NelderMeadEloTracker {
         );
     }
 
-    fn model_name(&self) -> String {
-        "nelder-mead elo v1".to_string()
+    fn evaluate(&self) -> f64 {
+        if !self.is_trained {
+            panic!("💀 model not trained");
+        }
+
+        self.performance
     }
 
     fn predict(&mut self, _obj: &crate::stats::gamecard::GameCard) -> f64 {
@@ -94,14 +106,6 @@ impl Model for NelderMeadEloTracker {
             panic!("💀 model not trained");
         }
         todo!()
-    }
-
-    fn evaluate(&self) -> f64 {
-        if !self.is_trained {
-            panic!("💀 model not trained");
-        }
-
-        self.performance
     }
 }
 
