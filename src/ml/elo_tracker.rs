@@ -23,8 +23,6 @@ use crate::dapi::read_disk::NBAReadError;
 
 use crate::dapi::write::write_serializable_with_directory;
 
-use crate::tui::game_ratings::GameRatings;
-use crate::tui::tui_display::TuiDisplay;
 use crate::types::{GameId, PlayerId};
 
 use std::collections::HashMap;
@@ -116,7 +114,7 @@ impl EloTracker {
     fn process_elo(&mut self, games: &[(GameCard, GameObject)]) {
         // todo: assign elo values to players on a game by game basis
         // maybe assert ordered on the basis. no frick u man
-        assert!(games.is_sorted_by_key(|g| g.0.game_id()));
+        assert!(games.is_sorted_by_key(|(c, _g)| c.date()));
 
         let mut predictions = Vec::new();
 
@@ -152,9 +150,6 @@ impl EloTracker {
 
         let init = self.initial_rating();
 
-        let game_ratings = GameRatings::new(&slip, &self.current_ratings);
-        println!("{}", game_ratings.display());
-
         // update based on what the scorecard reports (not initial gueses)
         for player in box_score.home_roster() {
             let id = player.player_id();
@@ -185,37 +180,33 @@ impl EloTracker {
             });
         }
 
-        let game_ratings = GameRatings::new(&slip, &self.current_ratings);
-
-        println!("{}", game_ratings.display());
-
         self.track_log_loss(box_score, delta);
 
-        println!(
-            "{}: {} ({}) {} {} ({}). because they were {} elo {}, their rating {} {} elo.",
-            slip.game_id(),
-            slip.home().team_abbr(),
-            home_rating,
-            if box_score.winner() == box_score.home_team_id() {
-                "beat"
-            } else {
-                "lost to"
-            },
-            slip.away().team_abbr(),
-            away_rating,
-            num::abs(delta),
-            if delta > 0.0 {
-                "favorites"
-            } else {
-                "underdogs"
-            },
-            if box_score.winner() == box_score.home_team_id() {
-                "rose"
-            } else {
-                "fell"
-            },
-            num::abs(home_step)
-        );
+        // println!(
+        //     "{}: {} ({}) {} {} ({}). because they were {} elo {}, their rating {} {} elo.",
+        //     slip.game_id(),
+        //     slip.home().team_abbr(),
+        //     home_rating,
+        //     if box_score.winner() == box_score.home_team_id() {
+        //         "beat"
+        //     } else {
+        //         "lost to"
+        //     },
+        //     slip.away().team_abbr(),
+        //     away_rating,
+        //     num::abs(delta),
+        //     if delta > 0.0 {
+        //         "favorites"
+        //     } else {
+        //         "underdogs"
+        //     },
+        //     if box_score.winner() == box_score.home_team_id() {
+        //         "rose"
+        //     } else {
+        //         "fell"
+        //     },
+        //     num::abs(home_step)
+        // );
     }
 
     fn track_log_loss(&mut self, game: &GameObject, delta: f64) {
@@ -499,7 +490,7 @@ mod test_elo_tracker {
             slip.add_home_roster(home_expected);
         }
 
-        pairs.sort_by_key(|p| p.0.game_id());
+        pairs.sort_by_key(|(card, _o)| card.date());
 
         tracker.process_elo(&pairs);
     }

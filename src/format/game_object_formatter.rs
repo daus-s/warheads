@@ -23,7 +23,7 @@ impl Display for GameObject {
             "{} @ {} {}, {} win.",
             away.team_abbr(),
             home.team_abbr(),
-            self.game_date,
+            self.game_date(),
             winner,
         )?;
         write!(f, "\n{}\n{}", home, away)

@@ -98,7 +98,7 @@ pub fn minimum_spanning_era(year: i32) -> Vec<SeasonId> {
 
     season.push(SeasonId::from((year, SeasonPeriod::RegularSeason)));
 
-    if year >= 2020 {
+    if year >= 2019 {
         season.push(SeasonId::from((year, SeasonPeriod::PlayIn)));
     }
 

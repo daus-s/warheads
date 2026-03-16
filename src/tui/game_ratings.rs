@@ -93,16 +93,16 @@ impl TuiDisplay for GameRatings {
         s.push('\n');
 
         for i in 0..num_rating_rows {
-            let home_row = match 2 * home_ratings_vec.len() - num_rating_rows {
-                x if i < x => {
+            let home_row = match 2i64 * (home_ratings_vec.len() as i64) - num_rating_rows as i64 {
+                x if (i as i64) < x => {
                     let home_rating = home_ratings_vec[i];
 
                     Some(home_rating)
                 }
                 _ => None,
             };
-            let away_row = match 2 * away_ratings_vec.len() - num_rating_rows {
-                x if i < x => {
+            let away_row = match 2i64 * (away_ratings_vec.len() as i64) - num_rating_rows as i64 {
+                x if (i as i64) < x => {
                     let away_rating = away_ratings_vec[i];
 
                     Some(away_rating)
