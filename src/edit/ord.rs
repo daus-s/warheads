@@ -56,7 +56,7 @@ mod test_edit_order {
         let edits = vec![
             // Game 1 - Team edits
             Edit {
-                game_id: GameId(1),
+                game_id: GameId(0020100001),
                 game_date: GameDate::ymd(2022, 1, 15).expect("Failed to create GameDate"),
                 season: SeasonId::from(22021),
                 player_id: None,
@@ -70,7 +70,7 @@ mod test_edit_order {
                 ]),
             },
             Edit {
-                game_id: GameId(1),
+                game_id: GameId(0020100001),
                 game_date: GameDate::ymd(2022, 1, 15).expect("Failed to create GameDate"),
                 season: SeasonId::from(22021),
                 player_id: Some(PlayerId(101)),
@@ -84,7 +84,7 @@ mod test_edit_order {
                 ]),
             },
             Edit {
-                game_id: GameId(1),
+                game_id: GameId(0020100001),
                 game_date: GameDate::ymd(2022, 1, 15).expect("Failed to create GameDate"),
                 season: SeasonId::from(22021),
                 player_id: Some(PlayerId(102)),
@@ -98,7 +98,7 @@ mod test_edit_order {
                 ]),
             },
             Edit {
-                game_id: GameId(1),
+                game_id: GameId(0020100001),
                 game_date: GameDate::ymd(2022, 1, 15).expect("Failed to create GameDate"),
                 season: SeasonId::from(22021),
                 player_id: None,
@@ -112,7 +112,7 @@ mod test_edit_order {
                 ]),
             },
             Edit {
-                game_id: GameId(1),
+                game_id: GameId(0020100001),
                 game_date: GameDate::ymd(2022, 1, 15).expect("Failed to create GameDate"),
                 season: SeasonId::from(22021),
                 player_id: Some(PlayerId(201)),
@@ -126,7 +126,7 @@ mod test_edit_order {
                 ]),
             },
             Edit {
-                game_id: GameId(1),
+                game_id: GameId(0020100001),
                 game_date: GameDate::ymd(2022, 1, 15).expect("Failed to create GameDate"),
                 season: SeasonId::from(22021),
                 player_id: Some(PlayerId(202)),
@@ -140,7 +140,7 @@ mod test_edit_order {
                 ]),
             },
             Edit {
-                game_id: GameId(2),
+                game_id: GameId(0020100002),
                 game_date: GameDate::ymd(2022, 3, 10).expect("Failed to create GameDate"),
                 season: SeasonId::from(22021),
                 player_id: None,
@@ -154,7 +154,7 @@ mod test_edit_order {
                 ]),
             },
             Edit {
-                game_id: GameId(2),
+                game_id: GameId(0020100002),
                 game_date: GameDate::ymd(2022, 3, 10).expect("Failed to create GameDate"),
                 season: SeasonId::from(22021),
                 player_id: Some(PlayerId(301)),
@@ -168,7 +168,7 @@ mod test_edit_order {
                 ]),
             },
             Edit {
-                game_id: GameId(2),
+                game_id: GameId(0020100002),
                 game_date: GameDate::ymd(2022, 3, 10).expect("Failed to create GameDate"),
                 season: SeasonId::from(22021),
                 player_id: Some(PlayerId(302)),
@@ -182,7 +182,7 @@ mod test_edit_order {
                 ]),
             },
             Edit {
-                game_id: GameId(2),
+                game_id: GameId(0020100002),
                 game_date: GameDate::ymd(2022, 3, 10).expect("Failed to create GameDate"),
                 season: SeasonId::from(22021),
                 player_id: None,
@@ -196,7 +196,7 @@ mod test_edit_order {
                 ]),
             },
             Edit {
-                game_id: GameId(2),
+                game_id: GameId(0020100002),
                 game_date: GameDate::ymd(2022, 3, 10).expect("Failed to create GameDate"),
                 season: SeasonId::from(22021),
                 player_id: Some(PlayerId(401)),
@@ -210,7 +210,7 @@ mod test_edit_order {
                 ]),
             },
             Edit {
-                game_id: GameId(2),
+                game_id: GameId(0020100002),
                 game_date: GameDate::ymd(2022, 3, 10).expect("Failed to create GameDate"),
                 season: SeasonId::from(22021),
                 player_id: Some(PlayerId(402)),
@@ -224,7 +224,7 @@ mod test_edit_order {
                 ]),
             },
             Edit {
-                game_id: GameId(3),
+                game_id: GameId(0020100003),
                 game_date: GameDate::ymd(2022, 3, 17).expect("Failed to create GameDate"),
                 season: SeasonId::from(22021),
                 player_id: None,
@@ -238,7 +238,7 @@ mod test_edit_order {
                 ]),
             },
             Edit {
-                game_id: GameId(3),
+                game_id: GameId(0020100003),
                 game_date: GameDate::ymd(2022, 3, 17).expect("Failed to create GameDate"),
                 season: SeasonId::from(22021),
                 player_id: Some(PlayerId(301)),
@@ -252,7 +252,7 @@ mod test_edit_order {
                 ]),
             },
             Edit {
-                game_id: GameId(3),
+                game_id: GameId(0020100003),
                 game_date: GameDate::ymd(2022, 3, 17).expect("Failed to create GameDate"),
                 season: SeasonId::from(22021),
                 player_id: None,
@@ -266,7 +266,7 @@ mod test_edit_order {
                 ]),
             },
             Edit {
-                game_id: GameId(3),
+                game_id: GameId(0020100003),
                 game_date: GameDate::ymd(2022, 3, 17).expect("Failed to create GameDate"),
                 season: SeasonId::from(22021),
                 player_id: Some(PlayerId(401)),
@@ -280,7 +280,7 @@ mod test_edit_order {
                 ]),
             },
             Edit {
-                game_id: GameId(4),
+                game_id: GameId(0020100004),
                 game_date: GameDate::ymd(2022, 6, 1).expect("Failed to create GameDate"),
                 season: SeasonId::from(22022),
                 player_id: None,
@@ -294,7 +294,7 @@ mod test_edit_order {
                 ]),
             },
             Edit {
-                game_id: GameId(4),
+                game_id: GameId(0020100004),
                 game_date: GameDate::ymd(2022, 6, 1).expect("Failed to create GameDate"),
                 season: SeasonId::from(22022),
                 player_id: Some(PlayerId(601)), // Player Id for the player statistics edit
@@ -308,7 +308,7 @@ mod test_edit_order {
                 ]),
             },
             Edit {
-                game_id: GameId(4),
+                game_id: GameId(0020100004),
                 game_date: GameDate::ymd(2022, 3, 30).expect("Failed to create GameDate"),
                 season: SeasonId::from(22022),
                 player_id: None,
@@ -322,7 +322,7 @@ mod test_edit_order {
                 ]),
             },
             Edit {
-                game_id: GameId(4),
+                game_id: GameId(0020100004),
                 game_date: GameDate::ymd(2022, 6, 1).expect("Failed to create GameDate"),
                 season: SeasonId::from(22022),
                 player_id: Some(PlayerId(501)), // Player Id for the player statistics edit

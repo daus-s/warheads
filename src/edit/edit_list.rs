@@ -106,7 +106,7 @@ mod test_edit_list {
     fn test_insert() {
         let edit_v = vec![
             Edit {
-                game_id: GameId(1),
+                game_id: GameId(0020100001),
                 game_date: GameDate::ymd(2022, 1, 15).expect("Failed to create GameDate"),
                 season: SeasonId::from(22021),
                 player_id: None,
@@ -120,7 +120,7 @@ mod test_edit_list {
                 ]),
             },
             Edit {
-                game_id: GameId(3),
+                game_id: GameId(0020100003),
                 game_date: GameDate::ymd(2022, 3, 17).expect("Failed to create GameDate"),
                 season: SeasonId::from(22021),
                 player_id: None,
@@ -138,7 +138,7 @@ mod test_edit_list {
         let mut edits = EditList::new(edit_v);
 
         let x = Edit {
-            game_id: GameId(2),
+            game_id: GameId(0020100002),
             game_date: GameDate::ymd(2022, 3, 10).expect("Failed to create GameDate"),
             season: SeasonId::from(22021),
             player_id: None,
