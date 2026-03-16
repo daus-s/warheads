@@ -377,7 +377,9 @@ mod test_chronology {
             })
             .collect::<Vec<GameId>>();
 
-        assert!(actual.is_sorted());
+        // removed assert because gameid is not an ordered value.
+        // while it is approximately ordered,
+        // it is not a strict ordering and cannot be relied upon.
         assert_eq!(actual, expected);
         assert_eq!(actual.len(), 81);
     }
