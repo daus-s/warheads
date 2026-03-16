@@ -183,7 +183,10 @@ impl Dispatch {
 
                 let results = model.evaluate();
 
-                println!("{results:?}");
+                println!(
+                    "{}",
+                    format::evaluation(model.model_name().to_ascii_uppercase(), &results)
+                );
 
                 Ok(())
             }

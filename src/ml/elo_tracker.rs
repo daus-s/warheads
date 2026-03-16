@@ -325,8 +325,6 @@ impl Model for EloTracker {
                     let log_loss = parsed["log_loss"].as_f64().unwrap_or(1.0);
                     let count = parsed["count"].as_u64().unwrap_or(0);
 
-                    dbg!(freq, log_loss, count); //good
-
                     let freq = (freq * count as f64).round() as u64;
 
                     let log_loss = log_loss * count as f64;
@@ -334,8 +332,6 @@ impl Model for EloTracker {
                     let axis = LogLossTracker::from_data(log_loss as f64, freq, count);
 
                     tracker.log_loss = axis;
-
-                    println!("{}", self.log_loss);
                 }
                 Err(e) => {
                     println!("{e}\n❌ Failed to parse results JSON");
