@@ -84,22 +84,14 @@ pub fn nba_checksum_file() -> PathBuf {
 pub fn records_path<M: Model>(model: &M) -> PathBuf {
     static DATA: Lazy<String> = Lazy::new(data);
 
-    PathBuf::from(format!(
-        "{}/nba/{}/records/records.csv",
-        *DATA,
-        model.model_name()
-    ))
+    PathBuf::from(format!("{}/nba/{}/records.csv", *DATA, model.model_name()))
 }
 
 /// results_path generates the path to where the model accuracy is stored.
 pub fn results_path<M: Model>(model: &M) -> PathBuf {
     static DATA: Lazy<String> = Lazy::new(data);
 
-    PathBuf::from(format!(
-        "{}/nba/{}/results/results",
-        *DATA,
-        model.model_name()
-    ))
+    PathBuf::from(format!("{}/nba/{}/results", *DATA, model.model_name()))
 }
 
 pub fn nba_prediction_file<M: Model>(model: &M, date: GameDate) -> PathBuf {

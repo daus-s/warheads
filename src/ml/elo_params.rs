@@ -6,6 +6,10 @@ pub(crate) struct EloParams {
     initial_rating: i64,
 }
 impl EloParams {
+    pub fn is_default(&self) -> bool {
+        self.k == STEP && self.f == SCALE_FACTOR && self.initial_rating == INITIAL_RATING
+    }
+
     pub(crate) fn set_scale_factor(&mut self, f: f64) {
         self.f = f;
     }

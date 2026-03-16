@@ -13,11 +13,8 @@ use crate::ml::measurement::Measurement;
 use crate::ml::model::Model;
 use crate::ml::models::registration::Registration;
 
-use crate::proc::prophet;
-
 use crate::stats::game_obj::GameObject;
 use crate::stats::gamecard::GameCard;
-use crate::stats::prediction::Prediction;
 
 use crate::dapi::read_disk::NBAReadError;
 
@@ -34,7 +31,6 @@ pub struct EloTracker {
     historical_ratings: Vec<Elo>,
     current_ratings: HashMap<PlayerId, i64>,
     log_loss: LogLossTracker,
-    predictions: Vec<Prediction>,
     params: EloParams,
 }
 
@@ -44,7 +40,6 @@ impl EloTracker {
             historical_ratings: Vec::new(),
             current_ratings: HashMap::new(),
             log_loss: LogLossTracker::new(),
-            predictions: vec![],
             params: EloParams::default(),
         }
     }
@@ -54,7 +49,6 @@ impl EloTracker {
             historical_ratings: Vec::new(),
             current_ratings: HashMap::new(),
             log_loss: LogLossTracker::new(),
-            predictions: vec![],
             params,
         }
     }
@@ -116,19 +110,11 @@ impl EloTracker {
         // maybe assert ordered on the basis. no frick u man
         assert!(games.is_sorted_by_key(|(c, _g)| c.date()));
 
-        let mut predictions = Vec::new();
-
         for (slip, box_score) in games {
             // remember there is now way to predict
             // the first event other than fiftEE-fiftEE
-            let prediction = self.predict(&slip);
-
             self.update_ratings(slip, box_score);
-
-            predictions.push(Prediction::from(slip.clone(), prediction));
         }
-
-        self.predictions.extend(predictions);
     }
 
     //todo: implement a rating share function as a parameter
@@ -233,14 +219,26 @@ impl EloTracker {
         self.log_loss.log_loss()
     }
 
+    pub(crate) fn observations(&self) -> u64 {
+        self.log_loss.observations()
+    }
+
+    pub(crate) fn crit(&self) -> f64 {
+        if self.log_loss() == 0.0 {
+            println!("❌ Cannot evaluate: log_loss is zero");
+
+            f64::NAN
+        } else {
+            self.freq() / self.log_loss()
+        }
+    }
+
     // SERIALIZATION
 
     pub fn save(&self) -> Result<(), EloTrackerError> {
         self.save_records()?;
 
         self.save_results()?;
-
-        self.save_predictions()?;
 
         Ok(())
     }
@@ -265,11 +263,6 @@ impl EloTracker {
 
         write_serializable_with_directory(results_filename, &self.log_loss)
             .map_err(|e| EloTrackerError::WriteResultsError(e))
-    }
-
-    fn save_predictions(&self) -> Result<(), EloTrackerError> {
-        prophet::write_predictions(self, &self.predictions)
-            .map_err(|e| EloTrackerError::WritePredictionError(e))
     }
 
     pub fn normalized_ratings_from_iter(&self, iter: impl Iterator<Item = PlayerId>) -> f64 {
@@ -323,7 +316,37 @@ pub enum EloTrackerError {
 
 impl Model for EloTracker {
     fn initialize(&mut self) -> Result<(), ()> {
-        let tracker = EloTracker::from_csv().map_err(|_| ())?;
+        let mut tracker = EloTracker::from_csv().map_err(|_| ())?;
+
+        match fs::read_to_string(results_path(self)) {
+            Ok(contents) => match serde_json::from_str::<serde_json::Value>(&contents) {
+                Ok(parsed) => {
+                    let freq = parsed["freq"].as_f64().unwrap_or(0.0);
+                    let log_loss = parsed["log_loss"].as_f64().unwrap_or(1.0);
+                    let count = parsed["count"].as_u64().unwrap_or(0);
+
+                    dbg!(freq, log_loss, count); //good
+
+                    let freq = (freq * count as f64).round() as u64;
+
+                    let log_loss = log_loss * count as f64;
+
+                    let axis = LogLossTracker::from_data(log_loss as f64, freq, count);
+
+                    tracker.log_loss = axis;
+
+                    println!("{}", self.log_loss);
+                }
+                Err(e) => {
+                    println!("{e}\n❌ Failed to parse results JSON");
+                    return Err(());
+                }
+            },
+            Err(e) => {
+                println!("{e}\n❌ model has not yet been trained. no results file was found for this model: {}", self.model_name());
+                return Err(());
+            }
+        };
 
         *self = tracker;
 
@@ -342,47 +365,32 @@ impl Model for EloTracker {
     }
 
     fn model_name(&self) -> String {
-        ELO_VERSION.to_string()
+        if !self.params.is_default() {
+            format!(
+                "{}(k={},f={},i={})",
+                ELO_VERSION,
+                self.params.step(),
+                self.params.scale_factor(),
+                self.params.initial_rating()
+            )
+        } else {
+            ELO_VERSION.to_string()
+        }
     }
 
-    fn evaluate(&self) -> f64 {
+    fn evaluate(&self) -> HashMap<String, f64> {
         if self.log_loss.is_empty() {
-            match fs::read_to_string(results_path(self)) {
-                Ok(contents) => match serde_json::from_str::<serde_json::Value>(&contents) {
-                    Ok(parsed) => {
-                        if let Some(metrics) = parsed.get(&self.model_name()) {
-                            let freq = metrics["freq"].as_f64().unwrap_or(0.0);
-                            let log_loss = metrics["log_loss"].as_f64().unwrap_or(1.0);
-
-                            if log_loss == 0.0 {
-                                println!("❌ Cannot evaluate: log_loss is zero");
-                                return f64::NAN;
-                            }
-                            return freq / log_loss;
-                        } else {
-                            println!("❌ Model '{}' not found in results", self.model_name());
-                        }
-                    }
-                    Err(e) => {
-                        println!("{e}\n❌ Failed to parse results JSON");
-                    }
-                },
-                Err(e) => {
-                    println!("{e}\n❌ model has not yet been trained. no results file was found for this model: {}", self.model_name());
-                }
-            }
-            return f64::NAN;
+            return HashMap::new();
         }
 
-        let f = self.log_loss.freq();
-        let logloss = self.log_loss.log_loss();
+        let map = HashMap::from([
+            ("freq".to_string(), self.freq()),
+            ("log_loss".to_string(), self.log_loss()),
+            ("count".to_string(), self.observations() as f64),
+            ("crit".to_string(), self.crit()),
+        ]);
 
-        if logloss == 0.0 {
-            println!("❌ Cannot evaluate: log_loss is zero");
-            return f64::NAN;
-        }
-
-        f / logloss
+        return map;
     }
 
     fn train(&mut self, games: &[(GameCard, GameObject)]) {

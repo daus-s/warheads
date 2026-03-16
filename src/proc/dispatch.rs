@@ -175,7 +175,11 @@ impl Dispatch {
             }
 
             Commands::Evaluate { model_name, args } => {
-                let model = get_model_from_inventory(model_name, &args)?;
+                let mut model = get_model_from_inventory(model_name, &args)?;
+
+                model
+                    .initialize()
+                    .map_err(|_| DispatchError::ModelNotTrained(model_name.to_owned()))?;
 
                 let results = model.evaluate();
 

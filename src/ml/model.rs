@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::stats::game_obj::GameObject;
 use crate::stats::gamecard::GameCard;
 
@@ -6,7 +8,7 @@ pub trait Model {
     fn initialize(&mut self) -> Result<(), ()>;
 
     fn train(&mut self, data: &[(GameCard, GameObject)]);
-    fn evaluate(&self) -> f64; // this could return a vec of measurements or a like structure
+    fn evaluate(&self) -> HashMap<String, f64>; // this could return a vec of measurements or a like structure
     fn predict(&mut self, obj: &GameCard) -> f64;
 }
 // the idea is
@@ -28,7 +30,7 @@ impl Model for Box<dyn Model> {
         (**self).train(data)
     }
 
-    fn evaluate(&self) -> f64 {
+    fn evaluate(&self) -> HashMap<String, f64> {
         (**self).evaluate()
     }
 

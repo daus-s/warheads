@@ -58,10 +58,10 @@ impl Model for NelderMeadEloTracker {
                 "{}/{}=>{}",
                 tracker.freq(),
                 tracker.log_loss(),
-                tracker.evaluate()
+                tracker.freq() / tracker.log_loss()
             );
 
-            tracker.evaluate()
+            tracker.freq() / tracker.log_loss()
         };
 
         let baseline = 0.46304378813918995;
@@ -93,12 +93,12 @@ impl Model for NelderMeadEloTracker {
         );
     }
 
-    fn evaluate(&self) -> f64 {
+    fn evaluate(&self) -> HashMap<String, f64> {
         if !self.is_trained {
             panic!("💀 model not trained");
         }
 
-        self.performance
+        todo!()
     }
 
     fn predict(&mut self, _obj: &crate::stats::gamecard::GameCard) -> f64 {

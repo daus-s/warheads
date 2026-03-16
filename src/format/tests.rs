@@ -7,6 +7,7 @@ mod test_path_manager {
     use crate::stats::gamecard::GameCard;
     use crate::types::{GameDate, GameId, SeasonId};
     use once_cell::sync::Lazy;
+    use std::collections::HashMap;
     use std::path::PathBuf;
 
     const MODEL: &'static str = "test_model";
@@ -83,7 +84,7 @@ mod test_path_manager {
             todo!()
         }
 
-        fn evaluate(&self) -> f64 {
+        fn evaluate(&self) -> HashMap<String, f64> {
             todo!()
         }
 
