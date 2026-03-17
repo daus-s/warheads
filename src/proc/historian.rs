@@ -85,8 +85,6 @@ pub async fn observe_nba() {
     }
 }
 
-/// this module contains functions for writing the history of the nba stats
-/// you can build around this function but not from it... this is the one function to start the nba into memory then iterate over elo.
 pub fn chronicle_nba() {
     for season in nba_lifespan_period() {
         if read_nba_season(season).is_err() || season.is_current_era() {

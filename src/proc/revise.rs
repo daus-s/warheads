@@ -1,11 +1,7 @@
-use std::fs;
+use crate::dapi::team_box_score::TeamBoxScore;
 
 use crate::edit::edit_list::EditList;
 use crate::edit::edit_loader::partition_edit_list;
-
-use crate::dapi::team_box_score::TeamBoxScore;
-
-use crate::format::path_manager::nba_storage_file;
 
 use crate::stats::identity::{Identifiable, Identity};
 
@@ -16,48 +12,35 @@ pub fn revise_nba_season(
     games: &mut Vec<(Identity, TeamBoxScore)>,
     edits: &EditList,
 ) -> Result<(), ()> {
-    let (mut player_corrections, mut team_corrections) = partition_edit_list(edits);
+    let (mut player_edits, mut team_edits) = partition_edit_list(edits);
 
-    player_corrections.retain(|c| c.season == era);
-    team_corrections.retain(|c| c.season == era);
+    player_edits.retain(|c| c.season == era);
+    team_edits.retain(|c| c.season == era);
 
-    //only delete if the team correction says the game shouldnt be recorded
-    for correction in team_corrections.iter() {
-        if correction.delete {
-            let id = correction.identity();
-
-            let file = nba_storage_file(id.season_id, id.game_id);
-
-            if file.exists() {
-                if let Err(e) = fs::remove_file(&file) {
-                    eprintln!(
-                        "{}\n❗ failed to remove record on disk in the file {}",
-                        e,
-                        file.display()
-                    );
-                }
-            }
-        }
-    }
+    let mut to_delete: Vec<Identity> = Vec::new();
 
     for (identity, game) in games.iter_mut() {
-        if let Some(correction) = team_corrections
-            .iter_mut()
-            .find(|c| c.identity() == *identity)
-        {
-            game.correct_identifiers(correction);
-            game.correct_box_score(correction);
+        if let Some(edit) = team_edits.iter_mut().find(|c| c.identity() == *identity) {
+            game.correct_identifiers(edit);
+            game.correct_box_score(edit);
+            if edit.delete {
+                to_delete.push(identity.clone());
+                continue;
+            }
         }
 
         for player in game.roster_mut() {
             let mut player_identity = identity.clone();
             player_identity.player_id = Some(player.player_id());
-            if let Some(correction) = player_corrections
+            if let Some(edit) = player_edits
                 .iter_mut()
                 .find(|c| c.identity() == player_identity)
             {
-                player.correct_identifiers(correction);
-                player.correct_box_score(correction);
+                player.correct_identifiers(edit);
+                player.correct_box_score(edit);
+                if edit.delete {
+                    to_delete.push(identity.clone());
+                }
             }
         }
     }

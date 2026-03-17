@@ -1,11 +1,11 @@
 #[cfg(test)]
 mod test_path_manager {
     use crate::constants::paths::data;
-    use crate::format::path_manager::{nba_prediction_file, nba_storage_file, nba_storage_path};
+    use crate::format::path_manager::{nba_prediction_file, nba_storage_path};
     use crate::ml::model::Model;
     use crate::stats::game_obj::GameObject;
     use crate::stats::gamecard::GameCard;
-    use crate::types::{GameDate, GameId, SeasonId};
+    use crate::types::{GameDate, SeasonId};
     use once_cell::sync::Lazy;
     use std::collections::HashMap;
     use std::path::PathBuf;
@@ -16,21 +16,13 @@ mod test_path_manager {
     fn test_nba_storage_path() {
         static DATA: Lazy<String> = Lazy::new(data);
 
-        let expected_file = PathBuf::from(format!(
-            "{}/nba/store/2025_26/RegularSeason/0042424343",
-            *DATA
-        ));
-        let expected_path = PathBuf::from(format!("{}/nba/store/2025_26/RegularSeason/", *DATA));
+        let expected_path = PathBuf::from(format!("{}/nba/volumes/2025_regularseason.vol", *DATA));
 
         let szn = SeasonId::from(22025);
 
-        let game_id = GameId(42424343);
-
-        let actual_file = nba_storage_file(szn, game_id);
         let actual_path = nba_storage_path(szn);
 
         assert_eq!(expected_path, actual_path);
-        assert_eq!(expected_file, actual_file);
     }
 
     #[test]

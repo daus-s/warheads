@@ -62,19 +62,19 @@ impl Display for EditLoadingError {
         match self {
             FileError(error, filename) => write!(
                 f,
-                "⚠️  failed to read file {}: {}",
+                "❌ failed to read file {}: {}",
                 filename.display(),
                 error
             ),
             ParseError(error, filename) => write!(
                 f,
-                "⚠️  failed to parse JSON in {}: {}",
+                "❌ failed to parse JSON in {}: {}",
                 filename.display(),
                 error
             ),
             DirectoryError(error) => write!(
                 f,
-                "⚠️  failed to access directory, (DirEntry's failed): {}",
+                "❌ failed to access directory, (DirEntry's failed): {}",
                 error
             ),
         }

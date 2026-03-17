@@ -1,5 +1,3 @@
-use crate::format::path_manager::nba_storage_file;
-
 use crate::stats::record::Record;
 use crate::stats::teamcard::TeamCard;
 use crate::stats::visiting::Visiting;
@@ -9,7 +7,6 @@ use crate::tui::tui_display::TuiDisplay;
 use crate::types::{GameDate, GameId, PlayerId, SeasonId};
 
 use std::fmt::Display;
-use std::path::PathBuf;
 
 use derive_builder::Builder;
 
@@ -41,15 +38,6 @@ impl GameCard {
             home,
             away,
         }
-    }
-
-    pub fn get_storage_path(&self) -> PathBuf {
-        // let era = get_era_by_date(self.date);
-        //this would lowkey smart except its not guaranteed to work on edge cases you maybe have to look else weher
-
-        let team_source_path = nba_storage_file(self.season_id, self.game_id());
-
-        team_source_path
     }
 
     pub fn home_regex(&self) -> Regex {
