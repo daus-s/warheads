@@ -89,36 +89,12 @@ impl Display for Prediction {
             }
         }
 
-        let (home_p_bar, away_p_bar) = if self.probability > 0.5 {
-            //home team gets favored green
-            //
-            (
-                format!(
-                    "{}",
-                    format::space(if home_count > 5 { home_count - 5 } else { 0 })
-                ),
-                format!(
-                    "{}",
-                    format::space(if away_count > 5 { away_count - 5 } else { 0 })
-                ),
-            )
-        } else {
-            (
-                format!(
-                    "{}",
-                    format::space(if home_count > 5 { home_count - 5 } else { 0 })
-                ),
-                format!(
-                    "{}",
-                    format::space(if away_count > 5 { away_count - 5 } else { 0 })
-                ),
-            )
-        };
+        let (home_percent, away_percent) =
+            (format!("{:.1}%", home_prob), format!("{:.1}%", away_prob));
 
         let (home_start_seq, home_end_seq, away_start_seq, away_end_seq) = if self.probability > 0.5
         {
             //home team gets favored green
-            //
             (
                 format!("\x1b[42m"),
                 format!("\x1b[0m"),
@@ -133,6 +109,22 @@ impl Display for Prediction {
                 format!("\x1b[0m"),
             )
         };
+
+        let mut indicator = format!(
+            "{}{}{}",
+            away_percent,
+            format::space(width as usize - home_percent.len() - away_percent.len()),
+            home_percent,
+        );
+
+        let idx = (width * (1f64 - self.probability)) as usize;
+
+        indicator.insert_str(0, &away_start_seq);
+        indicator.insert_str(
+            idx + away_start_seq.len(),
+            &format!("{}{}", away_end_seq, home_start_seq),
+        );
+        indicator.push_str(&home_end_seq);
 
         writeln!(
             f,
@@ -143,16 +135,9 @@ impl Display for Prediction {
         writeln!(f, "░{}░", format::space(78))?;
         writeln!(
             f,
-            "░{:^16}|{}{:.1}%{}{}{}{}{:.1}%{}|{:^16}░",
+            "░{:^16}|{}|{:^16}░",
             self.card.away().team_name().0,
-            away_start_seq,
-            away_prob,
-            away_p_bar,
-            away_end_seq,
-            home_start_seq,
-            home_p_bar,
-            home_prob,
-            home_end_seq,
+            indicator,
             self.card.home().team_name().0,
         )?;
         write!(f, "{}", format::bar(80))
