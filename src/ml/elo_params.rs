@@ -6,6 +6,22 @@ pub(crate) struct EloParams {
     initial_rating: i64,
 }
 impl EloParams {
+    pub fn is_default(&self) -> bool {
+        self.k == STEP && self.f == SCALE_FACTOR && self.initial_rating == INITIAL_RATING
+    }
+
+    pub(crate) fn set_scale_factor(&mut self, f: f64) {
+        self.f = f;
+    }
+
+    pub(crate) fn set_initial_rating(&mut self, rating: i64) {
+        self.initial_rating = rating;
+    }
+
+    pub(crate) fn set_step(&mut self, k: i64) {
+        self.k = k;
+    }
+
     pub(crate) fn scale_factor(&self) -> f64 {
         self.f
     }
@@ -40,7 +56,7 @@ impl EloParams {
 impl Default for EloParams {
     fn default() -> Self {
         Self {
-            k: K,
+            k: STEP,
             f: SCALE_FACTOR,
             initial_rating: INITIAL_RATING,
         }
@@ -49,4 +65,4 @@ impl Default for EloParams {
 
 pub const INITIAL_RATING: i64 = 3000;
 pub const SCALE_FACTOR: f64 = 400.0;
-pub const K: i64 = 32;
+pub const STEP: i64 = 32;

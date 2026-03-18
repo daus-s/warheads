@@ -322,6 +322,7 @@ mod test_season_manager {
             SeasonId::from((2018, PostSeason)),
             SeasonId::from((2019, PreSeason)),
             SeasonId::from((2019, RegularSeason)),
+            SeasonId::from((2019, PlayIn)),
             SeasonId::from((2019, PostSeason)),
             SeasonId::from((2020, PreSeason)),
             SeasonId::from((2020, RegularSeason)),

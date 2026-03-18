@@ -1,11 +1,12 @@
 use crate::dapi::player_directory::PlayerDirectory;
 use crate::dapi::season_manager::nba_lifespan_period;
 
+use crate::dapi::team_directory::TeamDirectory;
 use crate::stats::game_obj::GameObject;
 use crate::stats::gamecard::GameCard;
 use crate::stats::record::Record;
 
-use crate::storage::read_disk::{read_nba_season, NBAReadError};
+use crate::dapi::read_disk::{read_nba_season, NBAReadError};
 
 use crate::types::{GameId, PlayerId, SeasonId, TeamId};
 
@@ -19,6 +20,7 @@ pub struct Chronology {
     games: Option<Vec<GameObject>>,
     era: Option<SeasonId>,
     player_directory: PlayerDirectory,
+    team_directory: TeamDirectory,
 }
 
 impl Chronology {
@@ -27,6 +29,7 @@ impl Chronology {
             games: None,
             era: None,
             player_directory: Default::default(),
+            team_directory: Default::default(),
         }
     }
 
@@ -34,6 +37,10 @@ impl Chronology {
         let mut timeline = Chronology::new();
 
         if let Err(_) = timeline.load_era(era) {
+            println!(
+                "⚠️ failed to load {} in a chronology. returning empty chronology",
+                era
+            );
             Chronology::new()
         } else {
             timeline
@@ -45,9 +52,20 @@ impl Chronology {
             return Ok(());
         }
 
-        let season = read_nba_season(era).map_err(|e| ChronologyError::ReadSeasonError(e))?;
+        let games = read_nba_season(era).map_err(|e| ChronologyError::ReadSeasonError(e))?;
 
-        season.iter().for_each(|game| {
+        games.iter().for_each(|game| {
+            self.team_directory.insert((
+                game.away().team_id(),
+                game.away().team_abbr().clone(),
+                game.away().team_name().clone(),
+            ));
+            self.team_directory.insert((
+                game.home().team_id(),
+                game.home().team_abbr().clone(),
+                game.home().team_name().clone(),
+            ));
+
             for p in game.away_roster().iter().chain(game.home_roster().iter()) {
                 self.player_directory
                     .insert(p.player_id(), p.player_name().clone())
@@ -55,7 +73,7 @@ impl Chronology {
         });
 
         self.era = Some(era);
-        self.games = Some(season);
+        self.games = Some(games);
 
         Ok(())
     }
@@ -85,19 +103,26 @@ impl Chronology {
             games.extend(
                 self.games
                     .clone()
-                    .ok_or(ChronologyError::ChronologyMemoryError)?,
+                    .ok_or(ChronologyError::ChronologyMemoryError)?
+                    .iter_mut()
+                    .map(|game| {
+                        let mut card = game.card();
+
+                        card.add_away_roster(
+                            self.get_expected_roster(game.away_team_id(), game.game_id()),
+                        );
+                        card.add_home_roster(
+                            self.get_expected_roster(game.home_team_id(), game.game_id()),
+                        );
+
+                        (card, game.clone())
+                    }),
             )
         }
 
-        let mut pairs: Vec<(GameCard, GameObject)> =
-            games.into_iter().map(|game| (game.card(), game)).collect();
+        games.sort_by_key(|(c, _g)| c.date());
 
-        for (card, game) in &mut pairs {
-            card.add_away_ratings(self.get_expected_roster(game.away_team_id(), game.game_id()));
-            card.add_home_ratings(self.get_expected_roster(game.home_team_id(), game.game_id()));
-        }
-
-        Ok(pairs)
+        Ok(games)
     }
 
     fn n_most_recent_games(&self, n: usize, team_id: TeamId, game_id: GameId) -> Vec<GameObject> {
@@ -105,19 +130,16 @@ impl Chronology {
             panic!("💀 tried to run most_recent_games on an uninitialized Chronology object.")
         }
 
-        let games_for_team = self
+        let mut games_for_team = self
             .games
             .as_ref()
             .unwrap()
             .iter()
-            .filter_map(|game| {
-                if game.away_team_id() == team_id || game.home_team_id() == team_id {
-                    Some(game.clone())
-                } else {
-                    None
-                }
-            })
+            .filter(|game| game.participant(team_id))
+            .map(|x| x.clone())
             .collect::<Vec<GameObject>>();
+
+        games_for_team.sort_by_key(|g| g.game_date());
 
         let index = games_for_team
             .iter()
@@ -126,7 +148,7 @@ impl Chronology {
 
         let mut last_n_games = Vec::new();
 
-        for i in max(index as i64 - n as i64, 0) as usize..index {
+        for i in index.saturating_sub(n)..index {
             last_n_games.push(games_for_team[i].clone());
         }
 
@@ -191,7 +213,7 @@ impl Chronology {
             .as_ref()
             .unwrap()
             .iter()
-            .filter(|game| game.had_participant(team_id))
+            .filter(|game| game.participant(team_id))
             .for_each(|game| {
                 if game.winner() == team_id {
                     wins += 1
@@ -210,11 +232,15 @@ impl Chronology {
     pub fn player_directory(&self) -> &PlayerDirectory {
         &self.player_directory
     }
+
+    pub fn team_directory(&self) -> &TeamDirectory {
+        &self.team_directory
+    }
 }
 
 #[derive(Debug, Error)]
 pub enum ChronologyError {
-    #[error("❌ failed to read season data from storage")]
+    #[error("{0}\n❌ failed to read season data from storage")]
     ReadSeasonError(NBAReadError),
     #[error(
         "❌ chronology implementation error \n❌ couldn't access games after a successful load"
@@ -233,8 +259,13 @@ mod test_chronology {
     #[test]
     fn test_last_n_games_early_season() {
         let chronology = Chronology::from_era(SeasonId::from((2024, RegularSeason)));
-        let expected: Vec<GameId> =
-            vec![GameId(0022400062), GameId(0022400085), GameId(0022400096)];
+        let expected: Vec<GameId> = vec![
+            // GameId(0012400065),
+            // GameId(0012400074),
+            GameId(0022400062),
+            GameId(0022400085),
+            GameId(0022400096),
+        ];
 
         let game = GameId(0022400111);
 
@@ -346,6 +377,9 @@ mod test_chronology {
             })
             .collect::<Vec<GameId>>();
 
+        // removed assert because gameid is not an ordered value.
+        // while it is approximately ordered,
+        // it is not a strict ordering and cannot be relied upon.
         assert_eq!(actual, expected);
         assert_eq!(actual.len(), 81);
     }

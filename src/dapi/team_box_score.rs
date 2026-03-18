@@ -20,7 +20,7 @@ use wincode::{SchemaRead, SchemaWrite};
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, SchemaWrite, SchemaRead)]
 pub struct TeamBoxScore {
     // team identification
-    pub team_id: TeamId,
+    team_id: TeamId,
     team_abbreviation: TeamAbbreviation,
     team_name: TeamName,
 
@@ -40,12 +40,29 @@ impl TeamBoxScore {
     }
 
     pub fn card(&self) -> TeamCard {
-        TeamCard::new(
-            self.team_id,
-            self.team_name.clone(),
-            self.team_abbreviation.clone(),
-            Record { wins: 0, losses: 0 },
-        )
+        if self.roster.is_empty() {
+            TeamCard::new(
+                self.team_id,
+                self.team_name.clone(),
+                self.team_abbreviation.clone(),
+                Record { wins: 0, losses: 0 },
+            )
+        } else {
+            TeamCard::with_roster(
+                self.team_id,
+                self.team_name.clone(),
+                self.team_abbreviation.clone(),
+                Record { wins: 0, losses: 0 },
+                self.roster
+                    .iter()
+                    .map(|p| p.player_id())
+                    .collect::<Vec<_>>(),
+            )
+        }
+    }
+
+    pub fn team_id(&self) -> TeamId {
+        self.team_id
     }
 
     pub fn team_abbr(&self) -> TeamAbbreviation {

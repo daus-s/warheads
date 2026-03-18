@@ -1,41 +1,36 @@
+use clap::Arg;
+
 use thiserror::Error;
 
 use crate::format::path_manager::{records_path, results_path};
 
 use crate::ml::cdf;
 use crate::ml::elo::Elo;
-use crate::ml::elo_params::EloParams;
+use crate::ml::elo_params::{EloParams, INITIAL_RATING, SCALE_FACTOR, STEP};
 use crate::ml::elo_writer::{EloWriter, EloWriterError};
 use crate::ml::log_loss::LogLossTracker;
 use crate::ml::measurement::Measurement;
 use crate::ml::model::Model;
+use crate::ml::models::registration::Registration;
 
-use crate::proc::prophet;
-
-use crate::stats::chronology::Chronology;
 use crate::stats::game_obj::GameObject;
 use crate::stats::gamecard::GameCard;
-use crate::stats::prediction::Prediction;
-use crate::stats::visiting::Visiting;
 
-use crate::storage::read_disk::NBAReadError;
+use crate::dapi::read_disk::NBAReadError;
 
-use crate::storage::write::write_serializable_with_directory;
-use crate::tui::game_ratings::GameRatings;
-use crate::tui::tui_display::TuiDisplay;
+use crate::dapi::write::write_serializable_with_directory;
 
-use crate::types::PlayerId;
+use crate::types::{GameId, PlayerId};
 
 use std::collections::HashMap;
-use std::io;
+use std::{fs, io};
 
-const ELO_VERSION: &str = "elo v1";
+const ELO_VERSION: &str = "elo-v1";
 
 pub struct EloTracker {
     historical_ratings: Vec<Elo>,
     current_ratings: HashMap<PlayerId, i64>,
     log_loss: LogLossTracker,
-    predictions: Vec<Prediction>,
     params: EloParams,
 }
 
@@ -44,8 +39,7 @@ impl EloTracker {
         Self {
             historical_ratings: Vec::new(),
             current_ratings: HashMap::new(),
-            log_loss: LogLossTracker::model(ELO_VERSION.to_owned()),
-            predictions: vec![],
+            log_loss: LogLossTracker::new(),
             params: EloParams::default(),
         }
     }
@@ -54,29 +48,73 @@ impl EloTracker {
         Self {
             historical_ratings: Vec::new(),
             current_ratings: HashMap::new(),
-            log_loss: LogLossTracker::model(ELO_VERSION.to_owned()),
-            predictions: vec![],
+            log_loss: LogLossTracker::new(),
             params,
         }
+    }
+
+    pub fn from_csv() -> Result<Self, EloTrackerError> {
+        let mut tracker = Self::new();
+
+        let path = records_path(&tracker);
+
+        let contents = fs::read_to_string(path).map_err(|e| EloTrackerError::CSVError(e))?;
+
+        for line in contents.lines().skip(1) {
+            let fields: Vec<&str> = line.split(',').collect();
+            if fields.len() != 3 {
+                return Err(EloTrackerError::CSVError(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    format!("❌ historical entry is badly shaped: {}", line),
+                )));
+            }
+            let player_id = PlayerId(fields[0].parse::<u64>().map_err(|e| {
+                EloTrackerError::CSVError(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    format!("❌{e}\n❌ failed to read col 0 as a player id (integer)."),
+                ))
+            })?);
+            let game_id = GameId(fields[1].parse::<u64>().map_err(|e| {
+                EloTrackerError::CSVError(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    format!("❌{e}\n❌ failed to read col 1 as a game id (integer)."),
+                ))
+            })?);
+            let rating = fields[2].parse::<i64>().map_err(|e| {
+                EloTrackerError::CSVError(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    format!("❌{e}\n❌ failed to read col 2 as a rating (signed integer)."),
+                ))
+            })?;
+            tracker.historical_ratings.push(Elo {
+                game_id,
+                player_id,
+                rating,
+            });
+        }
+
+        tracker.current_ratings =
+            tracker
+                .historical_ratings
+                .iter()
+                .fold(HashMap::new(), |mut map, elo| {
+                    map.insert(elo.player_id, elo.rating);
+                    map
+                });
+
+        Ok(tracker)
     }
 
     fn process_elo(&mut self, games: &[(GameCard, GameObject)]) {
         // todo: assign elo values to players on a game by game basis
         // maybe assert ordered on the basis. no frick u man
-
-        let mut predictions = Vec::new();
+        assert!(games.is_sorted_by_key(|(c, _g)| c.date()));
 
         for (slip, box_score) in games {
             // remember there is now way to predict
             // the first event other than fiftEE-fiftEE
-            let prediction = self.predict(&slip);
-
             self.update_ratings(slip, box_score);
-
-            predictions.push(Prediction::from(slip.clone(), prediction));
         }
-
-        self.predictions.extend(predictions);
     }
 
     //todo: implement a rating share function as a parameter
@@ -98,14 +136,14 @@ impl EloTracker {
 
         let init = self.initial_rating();
 
-        //no update based on what the scorecard reports (not initial gueses)
+        // update based on what the scorecard reports (not initial gueses)
         for player in box_score.home_roster() {
             let id = player.player_id();
 
             self.current_ratings
                 .entry(id)
                 .and_modify(|rating| *rating += home_step)
-                .or_insert(init);
+                .or_insert(init + home_step);
 
             self.historical_ratings.push(Elo {
                 player_id: id,
@@ -119,7 +157,7 @@ impl EloTracker {
             self.current_ratings
                 .entry(id)
                 .and_modify(|rating| *rating += away_step)
-                .or_insert(init);
+                .or_insert(init + away_step);
 
             self.historical_ratings.push(Elo {
                 player_id: id,
@@ -130,11 +168,31 @@ impl EloTracker {
 
         self.track_log_loss(box_score, delta);
 
-        // println!("======================================================================");
-        // self.current_ratings.iter().for_each(|(player, rating)| {
-        //     println!("{}: {}", player, rating);
-        // });
-        // println!("======================================================================");
+        // println!(
+        //     "{}: {} ({}) {} {} ({}). because they were {} elo {}, their rating {} {} elo.",
+        //     slip.game_id(),
+        //     slip.home().team_abbr(),
+        //     home_rating,
+        //     if box_score.winner() == box_score.home_team_id() {
+        //         "beat"
+        //     } else {
+        //         "lost to"
+        //     },
+        //     slip.away().team_abbr(),
+        //     away_rating,
+        //     num::abs(delta),
+        //     if delta > 0.0 {
+        //         "favorites"
+        //     } else {
+        //         "underdogs"
+        //     },
+        //     if box_score.winner() == box_score.home_team_id() {
+        //         "rose"
+        //     } else {
+        //         "fell"
+        //     },
+        //     num::abs(home_step)
+        // );
     }
 
     fn track_log_loss(&mut self, game: &GameObject, delta: f64) {
@@ -161,14 +219,26 @@ impl EloTracker {
         self.log_loss.log_loss()
     }
 
+    pub(crate) fn observations(&self) -> u64 {
+        self.log_loss.observations()
+    }
+
+    pub(crate) fn crit(&self) -> f64 {
+        if self.log_loss() == 0.0 {
+            println!("❌ Cannot evaluate: log_loss is zero");
+
+            f64::NAN
+        } else {
+            self.freq() / self.log_loss()
+        }
+    }
+
     // SERIALIZATION
 
     pub fn save(&self) -> Result<(), EloTrackerError> {
         self.save_records()?;
 
         self.save_results()?;
-
-        self.save_predictions()?;
 
         Ok(())
     }
@@ -195,22 +265,15 @@ impl EloTracker {
             .map_err(|e| EloTrackerError::WriteResultsError(e))
     }
 
-    fn save_predictions(&self) -> Result<(), EloTrackerError> {
-        prophet::write_predictions(self, &self.predictions)
-            .map_err(|e| EloTrackerError::WritePredictionError(e))
-    }
-
-    //todo: implement a less safe version of this function that accepts a immutable reference to the tracker
-    //      panic the program if called incorrectly.
-    //
-    // mayeb dont add this and suffer a teensy performance hit
-    pub fn normalized_ratings_from_iter(&mut self, iter: impl Iterator<Item = PlayerId>) -> f64 {
-        let init = self.initial_rating();
-
+    pub fn normalized_ratings_from_iter(&self, iter: impl Iterator<Item = PlayerId>) -> f64 {
         let (count, sum) = iter.fold((0usize, 0i64), |acc, id| {
             (
                 acc.0 + 1,
-                acc.1 + *self.current_ratings.entry(id).or_insert(init),
+                acc.1
+                    + *self
+                        .current_ratings
+                        .get(&id)
+                        .unwrap_or(&self.initial_rating()),
             )
         });
 
@@ -220,49 +283,6 @@ impl EloTracker {
         }
 
         sum as f64 / count as f64
-    }
-
-    pub fn predict_cards(&mut self, gamecards: Vec<GameCard>) -> Vec<Prediction> {
-        let mut chronology = Chronology::new();
-        let mut predictions = Vec::new();
-
-        for mut game in gamecards.into_iter() {
-            chronology
-                .load_era(game.season())
-                .expect(&format!("💀 failed to load season_era: {}", game.season()));
-
-            let game_ratings = GameRatings::new(&game, &mut chronology, &mut self.current_ratings);
-
-            println!("{}", game_ratings.display());
-
-            chronology
-                .load_era(game.season())
-                .expect("Failed to load year from storage");
-
-            game.add_record(
-                Visiting::Home,
-                chronology.calculate_record(game.home().team_id()),
-            );
-            game.add_record(
-                Visiting::Away,
-                chronology.calculate_record(game.away().team_id()),
-            );
-
-            let home_roster = chronology.get_expected_roster(game.home().team_id(), game.game_id());
-            let away_roster = chronology.get_expected_roster(game.away().team_id(), game.game_id());
-
-            let home_rating = self.normalized_ratings_from_iter(home_roster.into_iter());
-            let away_rating = self.normalized_ratings_from_iter(away_roster.into_iter());
-
-            //that home wins
-            let prob = cdf::prob(home_rating - away_rating, self.scale_factor());
-
-            let prediction = Prediction::from(game, prob);
-
-            predictions.push(prediction);
-        }
-
-        predictions
     }
 
     fn scale_factor(&self) -> f64 {
@@ -290,9 +310,45 @@ pub enum EloTrackerError {
     WriteResultsError(io::Error),
     #[error("❌ {0}\n❌ error writing elo records to file. ")]
     WriteEloError(EloWriterError),
+    #[error("❌ {0}\n❌ failed to construct historical records from csv file. ")]
+    CSVError(io::Error),
 }
 
 impl Model for EloTracker {
+    fn initialize(&mut self) -> Result<(), ()> {
+        let mut tracker = EloTracker::from_csv().map_err(|_| ())?;
+
+        match fs::read_to_string(results_path(self)) {
+            Ok(contents) => match serde_json::from_str::<serde_json::Value>(&contents) {
+                Ok(parsed) => {
+                    let freq = parsed["freq"].as_f64().unwrap_or(0.0);
+                    let log_loss = parsed["log_loss"].as_f64().unwrap_or(1.0);
+                    let count = parsed["count"].as_u64().unwrap_or(0);
+
+                    let freq = (freq * count as f64).round() as u64;
+
+                    let log_loss = log_loss * count as f64;
+
+                    let axis = LogLossTracker::from_data(log_loss as f64, freq, count);
+
+                    tracker.log_loss = axis;
+                }
+                Err(e) => {
+                    println!("{e}\n❌ Failed to parse results JSON");
+                    return Err(());
+                }
+            },
+            Err(e) => {
+                println!("{e}\n❌ model has not yet been trained. no results file was found for this model: {}", self.model_name());
+                return Err(());
+            }
+        };
+
+        *self = tracker;
+
+        Ok(())
+    }
+
     fn predict(&mut self, card: &GameCard) -> f64 {
         let home_rating =
             self.normalized_ratings_from_iter(card.home_roster().into_iter().map(|x| *x));
@@ -305,28 +361,93 @@ impl Model for EloTracker {
     }
 
     fn model_name(&self) -> String {
-        ELO_VERSION.to_string()
+        if !self.params.is_default() {
+            format!(
+                "{}(k={},f={},i={})",
+                ELO_VERSION,
+                self.params.step(),
+                self.params.scale_factor(),
+                self.params.initial_rating()
+            )
+        } else {
+            ELO_VERSION.to_string()
+        }
     }
 
-    fn evaluate(&self) -> f64 {
+    fn evaluate(&self) -> HashMap<String, f64> {
         if self.log_loss.is_empty() {
-            panic!("💀 LogLossTracker is empty, no measurements have been recorded.")
+            return HashMap::new();
         }
 
-        let f = self.log_loss.freq();
-        let logloss = self.log_loss.log_loss();
+        let map = HashMap::from([
+            ("freq".to_string(), self.freq()),
+            ("log_loss".to_string(), self.log_loss()),
+            ("count".to_string(), self.observations() as f64),
+            ("crit".to_string(), self.crit()),
+        ]);
 
-        f / logloss
+        return map;
     }
 
     fn train(&mut self, games: &[(GameCard, GameObject)]) {
         self.process_elo(games);
+
+        if let Err(e) = self.save() {
+            println!(
+                "{e}\n❌ failed to save {} artifacts after training",
+                self.model_name()
+            );
+        }
     }
 }
 
+inventory::submit!(Registration {
+    model_name: ELO_VERSION,
+    args_schema: || clap::Command::new("elo tracker")
+        .arg(
+            Arg::new("scale-factor")
+                .long("scale-factor")
+                .value_parser(clap::value_parser!(f64))
+                .default_value("400.0")
+        )
+        .arg(
+            Arg::new("step")
+                .long("step")
+                .value_parser(clap::value_parser!(i64))
+                .default_value("32")
+        )
+        .arg(
+            Arg::new("initial-rating")
+                .long("initial-rating")
+                .value_parser(clap::value_parser!(i64))
+                .default_value("3000")
+        ),
+    factory: |args| {
+        let scale_factor = args
+            .get_one::<f64>("scale-factor")
+            .copied()
+            .unwrap_or(SCALE_FACTOR);
+
+        let step = args.get_one::<i64>("step").copied().unwrap_or(STEP);
+
+        let initial_rating = args
+            .get_one::<i64>("initial-rating")
+            .copied()
+            .unwrap_or(INITIAL_RATING);
+
+        let mut params = EloParams::default();
+
+        params.set_scale_factor(scale_factor);
+        params.set_step(step);
+        params.set_initial_rating(initial_rating);
+
+        Box::new(EloTracker::params(params))
+    },
+});
+
 #[cfg(test)]
 mod test_elo_tracker {
-    use crate::{ml::vector::Vector, types::SeasonId};
+    use crate::{ml::vector::Vector, stats::chronology::Chronology, types::SeasonId};
 
     use super::*;
 
@@ -350,7 +471,9 @@ mod test_elo_tracker {
 
     #[test]
     fn test_process_elo() {
-        let mut tracker = EloTracker::params(EloParams::new(&Vector::from(vec![64.0, 400.0])));
+        let mut tracker = EloTracker::params(EloParams::new(&Vector::from(vec![100., 1000., 0.0])));
+
+        dbg!(tracker.initial_rating());
         let chronology = Chronology::from_era(SeasonId::from(42024));
 
         let mut pairs = chronology
@@ -367,11 +490,11 @@ mod test_elo_tracker {
             let home_expected =
                 chronology.get_expected_roster(slip.home().team_id(), slip.game_id());
 
-            slip.add_away_ratings(away_expected);
-            slip.add_home_ratings(home_expected);
+            slip.add_away_roster(away_expected);
+            slip.add_home_roster(home_expected);
         }
 
-        dbg!(&pairs);
+        pairs.sort_by_key(|(card, _o)| card.date());
 
         tracker.process_elo(&pairs);
     }

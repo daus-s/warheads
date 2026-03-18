@@ -7,7 +7,6 @@ use crate::dapi::team_box_score::TeamBoxScore;
 
 use crate::format::extract::record_stat;
 use crate::format::language::recognize_stat_kind;
-use crate::format::path_manager::nba_storage_file;
 
 use crate::proc::error::ReadProcessError;
 
@@ -25,7 +24,6 @@ use serde_json::Value;
 use serde_json::Value::Null;
 
 use std::collections::HashMap;
-use std::fs;
 
 enum ProcessingResult {
     Record(Identity, NBABoxScore),
@@ -226,12 +224,6 @@ fn fields_to_team_box_score(
     };
 
     if delete {
-        let file = nba_storage_file(identity.season_id, identity.game_id);
-
-        if file.exists() {
-            let _ = fs::remove_file(&file);
-        };
-
         Ok(ProcessingResult::Delete(identity))
     } else if edit_builder.has_corrections() {
         println!(

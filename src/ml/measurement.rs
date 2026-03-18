@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 pub trait Measureable {
     fn into_measurement(&self) -> Measurement;
 }
@@ -33,10 +35,25 @@ impl Measurement {
     pub fn classification_success(&self) -> bool {
         if self.actual == 1 && self.prob > 0.5 || self.actual == 0 && self.prob < 0.5 {
             true
-        } else if self.prob == 0.5 {
-            false //dont reward not making a prediction
         } else {
             false
         }
+    }
+}
+
+impl Debug for Measurement {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "expected: {}, actual: {} => {} {}",
+            self.actual,
+            self.prob,
+            self.log_loss(),
+            if self.classification_success() {
+                "✓"
+            } else {
+                "✗"
+            }
+        )
     }
 }

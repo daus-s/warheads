@@ -8,9 +8,9 @@ impl Display for GameObject {
         let away = self.away();
         let home = self.home();
 
-        let winner = if self.winner() == away.team_id {
+        let winner = if self.winner() == away.team_id() {
             away.team_name()
-        } else if self.winner() == home.team_id {
+        } else if self.winner() == home.team_id() {
             home.team_name()
         } else {
             panic!("💀 if this error is arising check that your input box scores have opposite game result states to this function")
@@ -23,7 +23,7 @@ impl Display for GameObject {
             "{} @ {} {}, {} win.",
             away.team_abbr(),
             home.team_abbr(),
-            self.game_date,
+            self.game_date(),
             winner,
         )?;
         write!(f, "\n{}\n{}", home, away)

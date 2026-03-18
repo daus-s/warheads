@@ -56,56 +56,82 @@ impl SeasonId {
     }
 
     pub fn next(&self) -> SeasonId {
-        let next_period = match self.period {
-            PreSeason => RegularSeason,
-            RegularSeason => {
-                if self.year >= 2019 {
-                    PlayIn
+        match self.destructure() {
+            (_, SeasonPeriod::PreSeason) => SeasonId {
+                year: self.year,
+                period: SeasonPeriod::RegularSeason,
+            },
+            (year, SeasonPeriod::RegularSeason) => {
+                if year >= 2019 {
+                    SeasonId {
+                        year: self.year,
+                        period: SeasonPeriod::PlayIn,
+                    }
                 } else {
-                    PostSeason
+                    SeasonId {
+                        year: self.year,
+                        period: SeasonPeriod::PostSeason,
+                    }
                 }
             }
-            PlayIn => PostSeason,
-            PostSeason => PreSeason,
-            AllStarGame | NBACup => unimplemented!(),
-        };
-
-        let next_year = match self.period {
-            PreSeason | RegularSeason | PlayIn => self.year,
-            PostSeason => self.year + 1,
-            AllStarGame | NBACup => unimplemented!(),
-        };
-
-        SeasonId {
-            year: next_year,
-            period: next_period,
+            (_, SeasonPeriod::PlayIn) => SeasonId {
+                year: self.year,
+                period: SeasonPeriod::PostSeason,
+            },
+            (year, SeasonPeriod::PostSeason) => {
+                if year >= 2002 {
+                    SeasonId {
+                        year: self.year + 1,
+                        period: SeasonPeriod::PreSeason,
+                    }
+                } else {
+                    SeasonId {
+                        year: self.year + 1,
+                        period: SeasonPeriod::RegularSeason,
+                    }
+                }
+            }
+            _ => unimplemented!(),
         }
     }
 
     pub fn prev(&self) -> SeasonId {
-        let prev_period = match self.period {
-            PreSeason => PostSeason,
-            RegularSeason => PreSeason,
-            PlayIn => RegularSeason,
-            PostSeason => {
-                if self.year >= 2019 {
-                    PlayIn
+        match self.destructure() {
+            (_, SeasonPeriod::PreSeason) => SeasonId {
+                year: self.year - 1,
+                period: SeasonPeriod::PostSeason,
+            },
+            (year, SeasonPeriod::RegularSeason) => {
+                if year >= 2003 {
+                    SeasonId {
+                        year: self.year,
+                        period: SeasonPeriod::PreSeason,
+                    }
                 } else {
-                    RegularSeason
+                    SeasonId {
+                        year: self.year - 1,
+                        period: SeasonPeriod::PostSeason,
+                    }
                 }
             }
-            AllStarGame | NBACup => unimplemented!(),
-        };
-
-        let prev_year = match self.period {
-            PreSeason => self.year - 1,
-            PostSeason | RegularSeason | PlayIn => self.year,
-            AllStarGame | NBACup => unimplemented!(),
-        };
-
-        SeasonId {
-            year: prev_year,
-            period: prev_period,
+            (_, SeasonPeriod::PlayIn) => SeasonId {
+                year: self.year,
+                period: SeasonPeriod::RegularSeason,
+            },
+            (year, SeasonPeriod::PostSeason) => {
+                if year >= 2019 {
+                    SeasonId {
+                        year: self.year,
+                        period: SeasonPeriod::PlayIn,
+                    }
+                } else {
+                    SeasonId {
+                        year: self.year,
+                        period: SeasonPeriod::RegularSeason,
+                    }
+                }
+            }
+            _ => unimplemented!(),
         }
     }
 
@@ -226,6 +252,8 @@ impl<'de> Deserialize<'de> for SeasonId {
 
 #[cfg(test)]
 mod test_prev_next {
+    use crate::dapi::season_manager::nba_lifespan_period;
+
     use super::*;
 
     #[test]
@@ -256,9 +284,9 @@ mod test_prev_next {
 
     #[test]
     fn test_inverses() {
-        let season = SeasonId::from((2022, RegularSeason));
-
-        assert_eq!(season.prev().next(), season);
-        assert_eq!(season.next().prev(), season);
+        for era in nba_lifespan_period() {
+            assert_eq!(era.prev().next(), era);
+            assert_eq!(era.next().prev(), era);
+        }
     }
 }

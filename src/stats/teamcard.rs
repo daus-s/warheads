@@ -31,12 +31,16 @@ impl TeamCard {
         }
     }
 
+    pub fn team_id(&self) -> TeamId {
+        self.team_id
+    }
+
     pub fn team_abbr(&self) -> &TeamAbbreviation {
         &self.team_abbr
     }
 
-    pub fn team_id(&self) -> TeamId {
-        self.team_id
+    pub fn team_name(&self) -> &TeamName {
+        &self.team_name
     }
 
     pub fn add_win(&mut self) {
@@ -57,6 +61,22 @@ impl TeamCard {
 
     pub fn roster(&self) -> &Vec<PlayerId> {
         &self.roster
+    }
+
+    pub fn with_roster(
+        team_id: TeamId,
+        team_name: TeamName,
+        team_abbr: TeamAbbreviation,
+        record: Record,
+        roster: Vec<PlayerId>,
+    ) -> TeamCard {
+        TeamCard {
+            team_id,
+            team_name,
+            team_abbr,
+            record,
+            roster,
+        }
     }
 }
 

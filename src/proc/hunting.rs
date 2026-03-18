@@ -48,29 +48,31 @@ pub(crate) async fn compare_and_fetch(
     season_id: SeasonId,
     kind: NBAStatKind,
     checksums: &ChecksumMap,
-) -> u8 {
+) {
     let source_path = nba_source_path(season_id, kind);
     let checksum_path = universal_nba_source_path(season_id, kind);
 
-    let checksum = read_checksum(&source_path).expect(
-        "💀 failed to read source data file. check that the program was initialized correctly",
-    );
-    let expected_checksum = checksums.get(&checksum_path);
-
-    if !source_path.exists()
-        || expected_checksum.is_none()
-        || checksum != *expected_checksum.unwrap()
-    //this might fail on new records
-    {
+    //why would you expect this if ur looking whether something is initialized correctly??? dummy
+    //
+    if let Err(_) = read_checksum(&source_path) {
         if let Err(msg) = gather::fetch_and_save_nba_stats(season_id, kind).await {
             println!("{}", msg);
-            return 1;
         } else {
             println!("✅ successfully wrote {kind} data to file for the {season_id}");
-            return 1;
         }
-    } else {
-        println!("✅ bypassing fetching {kind} data for the {season_id}, checksums match. ");
-        return 0;
+    } else if let Ok(checksum) = read_checksum(&source_path) {
+        let expected_checksum = checksums.get(&checksum_path);
+
+        if expected_checksum.is_none() || checksum != *expected_checksum.unwrap()
+        //this might fail on new records
+        {
+            if let Err(msg) = gather::fetch_and_save_nba_stats(season_id, kind).await {
+                println!("{}", msg);
+            } else {
+                println!("✅ successfully wrote {kind} data to file for the {season_id}");
+            }
+        } else {
+            println!("✅ bypassing fetching {kind} data for the {season_id}, checksums match. ");
+        }
     }
 }

@@ -1,6 +1,13 @@
-use crate::{stats::gamecard::GameCard, types::GameDate};
+use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
+
+use crate::format;
+
+use crate::stats::gamecard::GameCard;
+
+use crate::stats::visiting::Visiting;
+use crate::types::{GameDate, Matchup};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Prediction {
@@ -31,6 +38,109 @@ impl Prediction {
     ////////////////////////////////////////////////////////////////////////////////////////
     pub fn date(&self) -> GameDate {
         self.card.date()
+    }
+}
+
+impl Display for Prediction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let matchup_string = format!(
+            "{} - ({})",
+            Matchup::from_matchup(
+                self.card.home().team_abbr().clone(),
+                self.card.away().team_abbr().clone()
+            ),
+            self.card.date()
+        );
+
+        let away_prob = (1.0 - self.probability) * 100.0;
+        let home_prob = self.probability * 100.0;
+
+        let width = 44f64;
+
+        let mut away_count = (width * away_prob / 100.0).round() as usize;
+        let mut home_count = (width * home_prob / 100.0).round() as usize;
+
+        let mut state = Visiting::Away;
+
+        while away_count + home_count > width as usize {
+            match state {
+                Visiting::Away => {
+                    away_count -= 1;
+                    state = Visiting::Home;
+                }
+                Visiting::Home => {
+                    home_count -= 1;
+                    state = Visiting::Away;
+                }
+            }
+        }
+
+        state = Visiting::Home;
+        while away_count + home_count < width as usize {
+            match state {
+                Visiting::Away => {
+                    away_count += 1;
+                    state = Visiting::Home;
+                }
+                Visiting::Home => {
+                    home_count += 1;
+                    state = Visiting::Away;
+                }
+            }
+        }
+
+        let (home_percent, away_percent) =
+            (format!("{:.1}%", home_prob), format!("{:.1}%", away_prob));
+
+        let (home_start_seq, home_end_seq, away_start_seq, away_end_seq) = if self.probability > 0.5
+        {
+            //home team gets favored green
+            (
+                format!("\x1b[42m"),
+                format!("\x1b[0m"),
+                format!("\x1b[41m"),
+                format!("\x1b[0m"),
+            )
+        } else {
+            (
+                format!("\x1b[41m"),
+                format!("\x1b[0m"),
+                format!("\x1b[42m"),
+                format!("\x1b[0m"),
+            )
+        };
+
+        let mut indicator = format!(
+            "{}{}{}",
+            away_percent,
+            format::space(width as usize - home_percent.len() - away_percent.len()),
+            home_percent,
+        );
+
+        let idx = (width * (1f64 - self.probability)) as usize;
+
+        indicator.insert_str(0, &away_start_seq);
+        indicator.insert_str(
+            idx + away_start_seq.len(),
+            &format!("{}{}", away_end_seq, home_start_seq),
+        );
+        indicator.push_str(&home_end_seq);
+
+        writeln!(
+            f,
+            "░   {}{}░",
+            matchup_string,
+            format::space(75 - matchup_string.len())
+        )?;
+        writeln!(f, "░{}░", format::space(78))?;
+        writeln!(
+            f,
+            "░{:^16}|{}|{:^16}░",
+            self.card.away().team_name().0,
+            indicator,
+            self.card.home().team_name().0,
+        )?;
+        write!(f, "{}", format::bar(80))
     }
 }
 

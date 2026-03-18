@@ -17,9 +17,7 @@ pub fn read_nba_year(year: i32) -> Result<Vec<GameObject>, NBAReadError> {
     let mut gamelog = Vec::new();
 
     for era in minimum_spanning_era(year) {
-        let dir = nba_storage_path(era);
-
-        let games = read_directory(&dir)?;
+        let games = read_nba_season(era)?;
 
         gamelog.extend(games);
     }
@@ -31,33 +29,12 @@ pub fn read_nba_year(year: i32) -> Result<Vec<GameObject>, NBAReadError> {
 
 // todo: if data is loaded in the file system load from the json files rather than the source data (ugly).
 pub fn read_nba_season(season_id: SeasonId) -> Result<Vec<GameObject>, NBAReadError> {
-    let dir = nba_storage_path(season_id);
+    let path = nba_storage_path(season_id);
 
-    let games = read_directory(&dir)?;
+    let content = fs::read(&path).map_err(|e| FileReadError(e, path.clone()))?;
 
-    Ok(games)
-}
-
-fn read_directory(path: &PathBuf) -> Result<Vec<GameObject>, NBAReadError> {
-    let files = fs::read_dir(path).map_err(|e| DirectoryError(e, path.clone()))?;
-
-    let mut games = Vec::new();
-
-    for file in files {
-        match file {
-            Ok(entry) => {
-                let s = fs::read(entry.path()).map_err(|e| FileReadError(e, path.clone()))?;
-
-                let game = wincode::deserialize::<GameObject>(&s)
-                    .map_err(|e| WincodeParseError(e, path.clone()))?;
-
-                games.push(game);
-            }
-            Err(e) => return Err(FileEntryError(e, path.clone())),
-        }
-    }
-
-    games.sort();
+    let games = wincode::deserialize::<Vec<GameObject>>(&content)
+        .map_err(|e| WincodeParseError(e, path.clone()))?;
 
     Ok(games)
 }
@@ -76,22 +53,30 @@ impl Display for NBAReadError {
             NBAReadError::DirectoryError(e, path) => {
                 write!(
                     f,
-                    "❗ {e}:\n{}\n❗ failed to read directory",
+                    "❌ {e}:\n❌ dir: {}\n❌ failed to read directory",
                     path.display()
                 )
             }
             NBAReadError::FileReadError(e, path) => {
-                write!(f, "❗  {e}:\n{}\n❗  failed to read file", path.display())
+                write!(
+                    f,
+                    "❌ {e}:\n❌ file: {}\n❌ failed to read file",
+                    path.display()
+                )
             }
             NBAReadError::WincodeParseError(e, path) => {
                 write!(
                     f,
-                    "❗  {e}:\n{}\n❗  failed to parse game file as wincode binary",
+                    "❌  {e}:\n❌ file: {}\n❌ failed to parse game file as wincode binary",
                     path.display()
                 )
             }
             NBAReadError::FileEntryError(e, path) => {
-                write!(f, "❗  {e}:\n{}\n❗  failed to get entry", path.display())
+                write!(
+                    f,
+                    "❌  {e}:\n❌ file: {}\n❌ failed to get entry",
+                    path.display()
+                )
             }
         }
     }
@@ -99,17 +84,17 @@ impl Display for NBAReadError {
 
 #[cfg(test)]
 mod test_read_data {
-    use crate::storage::read_disk::read_nba_year;
+    use crate::dapi::read_disk::read_nba_year;
 
     #[test]
     fn assert_well_ordered() {
         let games = read_nba_year(2024).expect("failed to read 2024 nba season in test.");
 
         for idx in 1..games.len() {
-            let sort_statement = if games[idx].game_date == games[idx - 1].game_date {
+            let sort_statement = if games[idx].game_date() == games[idx - 1].game_date() {
                 games[idx].game_id.0 > games[idx - 1].game_id.0
             } else {
-                games[idx].game_date.0 > games[idx - 1].game_date.0
+                games[idx].game_date() > games[idx - 1].game_date()
             };
 
             assert!(sort_statement)

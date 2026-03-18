@@ -3,8 +3,6 @@ use crate::dapi::team_box_score::TeamBoxScore;
 use crate::edit::edit_builder::EditBuilder;
 use crate::edit::edit_loader::{load_edit_list, save_edit_list, EditLoadingError};
 
-use crate::format::season::season_fmt;
-
 use crate::proc::error::ReadProcessError;
 use crate::proc::hunting::load_season_from_source;
 use crate::proc::revise::revise_nba_season;
@@ -12,25 +10,24 @@ use crate::proc::revise::revise_nba_season;
 use crate::stats::game_obj::GameObject;
 use crate::stats::identity::Identity;
 
+use crate::dapi::store_disk::{save_nba_games, SaveGameError};
 use crate::stats::stat_column::StatColumn;
-use crate::storage::store_disk::{save_nba_game, SaveGameError};
 
 use crate::types::{GameId, SeasonId};
 
-use indicatif::{ProgressBar, ProgressStyle};
 use thiserror::Error;
 
 use std::collections::HashMap;
 
 #[derive(Error, Debug)]
 pub enum InscriptionError {
-    #[error("❌ {0}\n❌ edit file failed serialization. ")]
+    #[error("{0}\n❌ edit file failed serialization. ")]
     LoadEditListError(EditLoadingError),
-    #[error("❌ {0}\n❌ Save Game Error")]
+    #[error("{0}\n❌ Save Game Error")]
     FileError(ReadProcessError),
     #[error("❌ failed to revise NBA games.")]
     RevisionError,
-    #[error("❌ failed to save NBA games.")]
+    #[error("{0}\n❌ failed to save NBA games.")]
     SerializeGameError(SaveGameError),
     #[error("❌ failed to save edit list.")]
     SaveEditListError,
@@ -97,31 +94,8 @@ fn save_game_object(season: Vec<GameObject>) -> Result<(), SaveGameError> {
         return Ok(());
     }
 
-    let szn = season[0].season().year();
+    save_nba_games(&season)?;
 
-    let pb = ProgressBar::new(num_games as u64);
-
-    // todo: add status like (loading, parsing, correcting, compiling, saving)
-
-    pb.set_style(
-        ProgressStyle::default_bar()
-            .template("{msg} {bar:40} | {pos}/{len} [{eta}]")
-            .unwrap()
-            .progress_chars("#>-"),
-    );
-
-    pb.set_message(format!(
-        "saving box scores for the {} season. ",
-        season_fmt(szn)
-    ));
-
-    for game in &season {
-        save_nba_game(game)?;
-
-        pb.inc(1);
-    }
-
-    pb.finish_with_message(format!("saved {} season.", season_fmt(szn)));
     Ok(())
 }
 

@@ -44,6 +44,17 @@ impl SeasonPeriod {
             SeasonPeriod::AllStarGame => 30_000,
         }
     }
+
+    pub fn from_offset(offset: i32) -> SeasonPeriod {
+        match offset {
+            10_000 => SeasonPeriod::PreSeason,
+            20_000 => SeasonPeriod::RegularSeason,
+            40_000 => SeasonPeriod::PostSeason,
+            50_000 => SeasonPeriod::PlayIn,
+            30_000 => SeasonPeriod::AllStarGame,
+            _ => panic!("💀 invalid season period offset: {}", offset),
+        }
+    }
 }
 impl Display for SeasonPeriod {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -87,7 +98,7 @@ pub fn minimum_spanning_era(year: i32) -> Vec<SeasonId> {
 
     season.push(SeasonId::from((year, SeasonPeriod::RegularSeason)));
 
-    if year >= 2020 {
+    if year >= 2019 {
         season.push(SeasonId::from((year, SeasonPeriod::PlayIn)));
     }
 

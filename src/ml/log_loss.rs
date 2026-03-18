@@ -5,52 +5,51 @@ use serde::Serialize;
 use crate::ml::measurement::{Measureable, Measurement};
 
 pub struct LogLossTracker {
-    model_name: String,
-    measurements: Vec<Measurement>,
+    log_loss: f64,
+    freq: u64,
+    count: u64,
 }
 
 impl LogLossTracker {
     pub fn log_loss(&self) -> f64 {
-        let count = self.measurements.len();
+        let count = self.count;
         if count == 0 {
-            0.0
+            f64::NAN
         } else {
-            self.measurements
-                .iter()
-                .fold(0.0, |acc, m| acc + m.log_loss())
-                / count as f64
+            self.log_loss / self.count as f64
         }
     }
 
     /// return the frequency of the models performance based on whether its naive? classification
     /// would create the best prediction.
     pub fn freq(&self) -> f64 {
-        let mut successes = 0;
+        self.freq as f64 / self.count as f64
+    }
 
-        for measurement in &self.measurements {
-            if measurement.classification_success() {
-                successes += 1;
-            }
-        }
-        successes as f64 / self.measurements.len() as f64
+    pub fn observations(&self) -> u64 {
+        self.count
     }
 
     pub fn new() -> Self {
         LogLossTracker {
-            model_name: format!(""),
-            measurements: Vec::new(),
+            log_loss: 0f64,
+            freq: 0,
+            count: 0,
         }
     }
 
-    pub fn model(model_name: String) -> Self {
+    pub fn from_data(log_loss: f64, freq: u64, count: u64) -> Self {
         LogLossTracker {
-            model_name,
-            measurements: Vec::new(),
+            log_loss,
+            freq,
+            count,
         }
     }
 
     pub fn add_measurement(&mut self, m: Measurement) {
-        self.measurements.push(m);
+        self.log_loss += m.log_loss();
+        self.freq += m.classification_success() as u64;
+        self.count += 1;
     }
 
     pub fn add_measurable(&mut self, event: &Box<dyn Measureable>) {
@@ -58,7 +57,7 @@ impl LogLossTracker {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.measurements.is_empty()
+        self.count == 0
     }
 }
 
@@ -66,10 +65,10 @@ impl Display for LogLossTracker {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{} {{ log_loss: {}, freq: {} }}",
-            self.model_name,
+            "log_loss: {}\nfreq: {}\ncount: {}",
             self.log_loss(),
-            self.freq()
+            self.freq(),
+            self.count
         )
     }
 }
@@ -81,14 +80,12 @@ impl Serialize for LogLossTracker {
     {
         use serde::ser::SerializeMap;
 
-        let mut map = serializer.serialize_map(Some(1))?;
+        let mut map = serializer.serialize_map(Some(3))?;
 
-        let value = serde_json::json!({
-            "log_loss": self.log_loss(),
-            "freq": self.freq()
-        });
+        map.serialize_entry("log_loss", &self.log_loss())?;
+        map.serialize_entry("freq", &self.freq())?;
+        map.serialize_entry("count", &self.count)?;
 
-        map.serialize_entry(&self.model_name, &value)?;
         map.end()
     }
 }
@@ -99,12 +96,12 @@ mod serialize_log_loss {
 
     #[test]
     fn test_serialize_log_loss() {
-        let mut tracker = LogLossTracker::model("test_model".to_string());
+        let mut tracker = LogLossTracker::new();
         tracker.add_measurement(Measurement::new(1, 0.5));
         tracker.add_measurement(Measurement::new(0, 0.5));
 
         let serialized = serde_json::to_string(&tracker).unwrap();
-        let expected = r#"{"test_model":{"log_loss":0.6931471805599453,"freq":0.0}}"#;
+        let expected = r#"{"log_loss":0.6931471805599453,"freq":0.0,"count":2}"#;
         assert_eq!(serialized, expected);
     }
 }

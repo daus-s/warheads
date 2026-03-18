@@ -26,7 +26,7 @@ use wincode::{SchemaRead, SchemaWrite};
 pub struct GameObject {
     pub season_id: SeasonId,
 
-    pub game_date: GameDate,
+    game_date: GameDate,
 
     pub game_id: GameId,
 
@@ -180,14 +180,18 @@ impl GameObject {
         (self.season_id, self.game_id)
     }
 
-    pub fn had_participant(&self, team_id: TeamId) -> bool {
-        self.home.team_id == team_id || self.away.team_id == team_id
+    pub fn game_date(&self) -> GameDate {
+        self.game_date
+    }
+
+    pub fn participant(&self, team_id: TeamId) -> bool {
+        self.home.team_id() == team_id || self.away.team_id() == team_id
     }
 
     pub fn winning_side(&self) -> Visiting {
         match self.winner() {
-            team_id if team_id == self.home.team_id => Visiting::Home,
-            team_id if team_id == self.away.team_id => Visiting::Away,
+            team_id if team_id == self.home.team_id() => Visiting::Home,
+            team_id if team_id == self.away.team_id() => Visiting::Away,
             _ => panic!("💀 if this error is arising check that your input box scores have opposite field states to this function"),
         }
     }
@@ -199,9 +203,9 @@ impl GameObject {
         assert_ne!(home.wl(), away.wl());
 
         if *home.wl() == Win && *away.wl() == Loss {
-            self.home.team_id
+            self.home.team_id()
         } else if *away.wl() == Win && *home.wl() == Loss {
-            self.away.team_id
+            self.away.team_id()
         } else {
             panic!("💀 if this error is arising check that your input box scores have opposite game result states to this function")
         }
@@ -216,11 +220,11 @@ impl GameObject {
     }
 
     pub fn home_team_id(&self) -> TeamId {
-        self.home.team_id
+        self.home.team_id()
     }
 
     pub fn away_team_id(&self) -> TeamId {
-        self.away.team_id
+        self.away.team_id()
     }
 
     pub fn home_roster(&self) -> &Vec<PlayerBoxScore> {
