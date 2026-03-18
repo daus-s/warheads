@@ -17,9 +17,7 @@ pub fn read_nba_year(year: i32) -> Result<Vec<GameObject>, NBAReadError> {
     let mut gamelog = Vec::new();
 
     for era in minimum_spanning_era(year) {
-        let dir = nba_storage_path(era);
-
-        let games = read_directory(&dir)?;
+        let games = read_nba_season(era)?;
 
         gamelog.extend(games);
     }
@@ -31,33 +29,12 @@ pub fn read_nba_year(year: i32) -> Result<Vec<GameObject>, NBAReadError> {
 
 // todo: if data is loaded in the file system load from the json files rather than the source data (ugly).
 pub fn read_nba_season(season_id: SeasonId) -> Result<Vec<GameObject>, NBAReadError> {
-    let dir = nba_storage_path(season_id);
+    let path = nba_storage_path(season_id);
 
-    let games = read_directory(&dir)?;
+    let content = fs::read(&path).map_err(|e| FileReadError(e, path.clone()))?;
 
-    Ok(games)
-}
-
-fn read_directory(path: &PathBuf) -> Result<Vec<GameObject>, NBAReadError> {
-    let files = fs::read_dir(path).map_err(|e| DirectoryError(e, path.clone()))?;
-
-    let mut games = Vec::new();
-
-    for file in files {
-        match file {
-            Ok(entry) => {
-                let s = fs::read(entry.path()).map_err(|e| FileReadError(e, path.clone()))?;
-
-                let game = wincode::deserialize::<GameObject>(&s)
-                    .map_err(|e| WincodeParseError(e, path.clone()))?;
-
-                games.push(game);
-            }
-            Err(e) => return Err(FileEntryError(e, path.clone())),
-        }
-    }
-
-    games.sort();
+    let games = wincode::deserialize::<Vec<GameObject>>(&content)
+        .map_err(|e| WincodeParseError(e, path.clone()))?;
 
     Ok(games)
 }
