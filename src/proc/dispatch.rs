@@ -56,11 +56,6 @@ enum Commands {
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
         args: Vec<String>,
     },
-    Tweet {
-        model_name: String,
-        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
-        args: Vec<String>,
-    },
 }
 
 #[derive(Subcommand)]
@@ -189,12 +184,6 @@ impl Dispatch {
                 );
 
                 Ok(())
-            }
-
-            Commands::Tweet { model_name, args } => {
-                let model = get_model_from_inventory(model_name, &args)?;
-
-                todo!("implement tweet")
             }
         }
     }
