@@ -69,7 +69,7 @@ impl EditBuilder {
     }
 
     pub fn build(&self) -> Option<Edit> {
-        if self.edit.corrections.iter().any(|(_, val)| val.is_null()) {
+        if self.edit.corrections.iter().any(|(_, val)| val.is_null()) && !self.edit.delete {
             None
         } else {
             Some(self.edit.clone())
@@ -89,9 +89,10 @@ impl EditBuilder {
 
         println!("{}", display_string);
 
-        //if the correctionbuilder is provided as deleting it is from a source that needs to delete the data so we should not check again.
         if self.edit.delete {
             println!("🗑️ deleting {}", self.edit.identity());
+
+            return;
         } else {
             let delete = prompt_and_delete(&confirmation);
 
@@ -99,6 +100,8 @@ impl EditBuilder {
 
             if delete {
                 println!("🗑️ deleting {}", self.edit.identity());
+
+                return;
             }
         }
 
