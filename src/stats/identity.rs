@@ -193,12 +193,12 @@ impl Display for Identity {
         match self.player_id {
             Some(id) => write!(
                 f,
-                "player_id: {}\nteam: {}\nyear: {}\ngame: {}",
+                "player_id: {}\tteam: {}\tyear: {}\tgame: {}",
                 id, self.team_abbr, self.season_id, self.game_id
             ),
             None => write!(
                 f,
-                "team: {}\nyear: {}\ngame: {}",
+                "team: {}\tyear: {}\tgame: {}",
                 self.team_abbr, self.season_id, self.game_id
             ),
         }
