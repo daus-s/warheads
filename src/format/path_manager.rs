@@ -74,6 +74,12 @@ pub fn nba_checksum_file() -> PathBuf {
 //// Model Paths ///////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////
 
+pub fn model_dir<M: Model>(model: &M) -> PathBuf {
+    static DATA: Lazy<String> = Lazy::new(data);
+
+    PathBuf::from(format!("{}/nba/{}", *DATA, model.model_name()))
+}
+
 pub fn records_path<M: Model>(model: &M) -> PathBuf {
     static DATA: Lazy<String> = Lazy::new(data);
 

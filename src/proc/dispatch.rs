@@ -197,8 +197,11 @@ fn get_model_from_inventory(
         .find(|r| r.model_name == model_name)
         .ok_or_else(|| DispatchError::UnknownModel(model_name.to_owned()))?;
 
+    let mut full_args = vec![model_name.to_string()];
+    full_args.extend_from_slice(args);
+
     let matches = (registration.args_schema)()
-        .try_get_matches_from(args.iter())
+        .try_get_matches_from(full_args.iter())
         .map_err(|e| DispatchError::ArgumentParseError(e))?;
 
     let model = (registration.factory)(&matches);
