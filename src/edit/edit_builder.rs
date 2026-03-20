@@ -91,6 +91,8 @@ impl EditBuilder {
 
         if self.edit.delete {
             println!("🗑️ deleting {}", self.edit.identity());
+
+            return;
         } else {
             let delete = prompt_and_delete(&confirmation);
 
