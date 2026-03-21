@@ -2,9 +2,9 @@ use std::collections::HashMap;
 
 use clap::Arg;
 
-use crate::ml::elo_params::EloParams;
-use crate::ml::elo_tracker::EloTracker;
+use crate::ml::elo::elo_params::EloParams;
 use crate::ml::model::Model;
+use crate::ml::models::elo_models::elo_tracker::EloTracker;
 use crate::ml::models::registration::Registration;
 use crate::ml::nelder_mead::nelder_mead;
 use crate::ml::simplex::Simplex;

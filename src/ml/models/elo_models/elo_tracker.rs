@@ -4,10 +4,11 @@ use thiserror::Error;
 
 use crate::format::path_manager::{records_path, results_path};
 
+use crate::ml::elo::elo_params::{EloParams, INITIAL_RATING, SCALE_FACTOR, STEP};
+use crate::ml::elo::elo_writer::{EloWriter, EloWriterError};
+
 use crate::ml::cdf;
 use crate::ml::elo::Elo;
-use crate::ml::elo_params::{EloParams, INITIAL_RATING, SCALE_FACTOR, STEP};
-use crate::ml::elo_writer::{EloWriter, EloWriterError};
 use crate::ml::log_loss::LogLossTracker;
 use crate::ml::measurement::Measurement;
 use crate::ml::model::Model;
