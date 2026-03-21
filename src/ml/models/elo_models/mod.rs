@@ -1,3 +1,4 @@
+pub mod elo_tracker;
 pub mod lin_reg_winshare;
 pub mod naive_winshare;
 pub mod nelder_mead_elo;

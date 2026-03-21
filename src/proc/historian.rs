@@ -7,8 +7,8 @@ use crate::edit::edit_list::EditList;
 use crate::edit::edit_loader::load_edit_list;
 use crate::format::path_manager::nba_checksum_file;
 
-use crate::ml::elo_tracker::EloTracker;
 use crate::ml::model::Model;
+use crate::ml::models::elo_models::elo_tracker::EloTracker;
 
 use crate::proc::gather::fetch_and_save_nba_stats;
 use crate::proc::hunting::compare_and_fetch;
