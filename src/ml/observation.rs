@@ -1,15 +1,11 @@
 use std::fmt::Debug;
 
-pub trait Measureable {
-    fn into_measurement(&self) -> Measurement;
-}
-
-pub struct Measurement {
+pub struct Observation {
     actual: u8, //assert 0 or 1
     prob: f64,
 }
 
-impl Measurement {
+impl Observation {
     pub fn new(actual: u8, prob: f64) -> Self {
         assert!(
             actual == 0 || actual == 1,
@@ -22,7 +18,7 @@ impl Measurement {
             prob
         );
 
-        Measurement { actual, prob }
+        Observation { actual, prob }
     }
 
     // L = = -(y⋅ln*(p))+(1-y⋅ln*(1-p))
@@ -41,7 +37,7 @@ impl Measurement {
     }
 }
 
-impl Debug for Measurement {
+impl Debug for Observation {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,

@@ -10,9 +10,9 @@ use crate::ml::elo::elo_writer::{EloWriter, EloWriterError};
 use crate::ml::cdf;
 use crate::ml::elo::Elo;
 use crate::ml::log_loss::LogLossTracker;
-use crate::ml::measurement::Measurement;
 use crate::ml::model::Model;
 use crate::ml::models::registration::Registration;
+use crate::ml::observation::Observation;
 
 use crate::stats::game_obj::GameObject;
 use crate::stats::gamecard::GameCard;
@@ -207,9 +207,9 @@ impl EloTracker {
             panic!("💀  game doesnt have a winner that participated in the game.");
         };
 
-        let m = Measurement::new(a, p);
+        let obs = Observation::new(a, p);
 
-        self.log_loss.add_measurement(m);
+        self.log_loss.add_observation(obs);
     }
 
     pub(crate) fn freq(&self) -> f64 {

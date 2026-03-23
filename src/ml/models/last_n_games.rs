@@ -8,9 +8,9 @@ use wincode::{SchemaRead, SchemaWrite};
 use crate::format::path_manager::{model_dir, records_path, results_path};
 
 use crate::ml::log_loss::LogLossTracker;
-use crate::ml::measurement::Measurement;
 use crate::ml::model::Model;
 use crate::ml::models::registration::Registration;
+use crate::ml::observation::Observation;
 
 use crate::stats::gamecard::GameCard;
 
@@ -159,7 +159,7 @@ impl Model for LastNGames {
             let home_result = game.home().box_score().wl(); //record relative to home team
             let away_result = game.away().box_score().wl(); //record relative to away team
 
-            let m = Measurement::new(
+            let obs = Observation::new(
                 if home_result == &GameResult::Win {
                     1
                 } else {
@@ -168,7 +168,7 @@ impl Model for LastNGames {
                 conditioned_probability(prob_home, prob_away),
             );
 
-            self.ll.add_measurement(m);
+            self.ll.add_observation(obs);
 
             self.map
                 .entry(game.home_team_id())
