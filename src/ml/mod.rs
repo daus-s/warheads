@@ -1,7 +1,9 @@
 pub mod cdf;
 pub mod cost;
 pub mod elo;
+pub mod linear_regression;
 pub mod log_loss;
+pub mod logisitic_regression;
 pub mod model;
 pub mod models;
 pub mod nelder_mead;

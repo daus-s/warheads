@@ -50,6 +50,20 @@ impl Vector {
     pub fn norm(&self) -> f64 {
         self.vec.iter().map(|x| x.powi(2)).sum::<f64>().sqrt()
     }
+
+    pub fn dot(&self, params: &Vector) -> f64 {
+        assert_eq!(
+            self.dim, params.dim,
+            "💀 vectors must have the same dimension. Cannot compute dot product of a {}-d vector and a {}-d vector",
+            self.dim, params.dim
+        );
+
+        self.vec
+            .iter()
+            .zip(params.vec.iter())
+            .map(|(x, y)| x * y)
+            .sum()
+    }
 }
 
 pub fn midpoint(v1: &Vector, v2: &Vector) -> Vector {
@@ -116,7 +130,7 @@ impl Add for &Vector {
     fn add(self, rhs: Self) -> Self::Output {
         assert_eq!(
             self.dim, rhs.dim,
-            "Vectors must have the same dimension. Cannot add a {}-d vector and a {}-d vector",
+            "💀 vectors must have the same dimension. Cannot add a {}-d vector and a {}-d vector",
             rhs.dim, self.dim
         );
 
@@ -136,7 +150,7 @@ impl AddAssign<&Vector> for Vector {
     fn add_assign(&mut self, rhs: &Self) {
         assert_eq!(
             self.dim, rhs.dim,
-            "Vectors must have the same dimension. Cannot add {}-d vector to a {}-d vector",
+            "💀 vectors must have the same dimension. Cannot add {}-d vector to a {}-d vector",
             rhs.dim, self.dim
         );
 
@@ -152,7 +166,7 @@ impl Sub for &Vector {
     fn sub(self, rhs: Self) -> Self::Output {
         assert_eq!(
             self.dim, rhs.dim,
-            "Vectors must have the same dimension. Cannot subtract a {}-d vector and a {}-d vector",
+            "💀 vectors must have the same dimension. Cannot subtract a {}-d vector and a {}-d vector",
             rhs.dim, self.dim
         );
 
@@ -172,7 +186,7 @@ impl SubAssign<&Vector> for Vector {
     fn sub_assign(&mut self, rhs: &Self) {
         assert_eq!(
             self.dim, rhs.dim,
-            "Vectors must have the same dimension. Cannot subtract a {}-d vector from a {}-d vector",
+            "💀 vectors must have the same dimension. Cannot subtract a {}-d vector from a {}-d vector",
             rhs.dim, self.dim
         );
 
