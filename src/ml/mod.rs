@@ -1,6 +1,7 @@
 pub mod cdf;
 pub mod cost;
 pub mod elo;
+pub mod gradient_descent;
 pub mod linear_regression;
 pub mod log_loss;
 pub mod logisitic_regression;

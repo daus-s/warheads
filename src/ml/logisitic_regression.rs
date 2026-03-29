@@ -1,4 +1,4 @@
-use crate::ml::vector::Vector;
+use crate::ml::{gradient_descent::GradientDescent, vector::Vector};
 
 pub struct LogisticRegression {
     params: Vector,
@@ -14,6 +14,12 @@ impl LogisticRegression {
         let z = x.dot(&self.params) + self.bias;
 
         1.0 / (1.0 + f64::exp(-z))
+    }
+}
+
+impl GradientDescent for LogisticRegression {
+    fn gradient_descent(&mut self) {
+        todo!()
     }
 }
 
