@@ -1,3 +1,5 @@
+use crate::ml::vector::Vector;
+
 pub trait Cost {
-    fn cost(&self) -> f64;
+    fn cost(&self, x: Vector) -> f64;
 }

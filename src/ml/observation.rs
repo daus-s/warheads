@@ -1,5 +1,6 @@
 use std::fmt::Debug;
 
+#[derive(Debug)]
 pub struct Observation {
     actual: u8, //assert 0 or 1
     prob: f64,
@@ -21,35 +22,11 @@ impl Observation {
         Observation { actual, prob }
     }
 
-    // L = = -(y⋅ln*(p))+(1-y⋅ln*(1-p))
-    pub fn log_loss(&self) -> f64 {
-        -1f64
-            * (self.actual as f64 * self.prob.ln()
-                + (1f64 - self.actual as f64) * (1f64 - self.prob).ln())
+    pub fn actual(&self) -> u8 {
+        self.actual
     }
 
-    pub fn classification_success(&self) -> bool {
-        if self.actual == 1 && self.prob > 0.5 || self.actual == 0 && self.prob < 0.5 {
-            true
-        } else {
-            false
-        }
-    }
-}
-
-impl Debug for Observation {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "expected: {}, actual: {} => {} {}",
-            self.actual,
-            self.prob,
-            self.log_loss(),
-            if self.classification_success() {
-                "✓"
-            } else {
-                "✗"
-            }
-        )
+    pub fn prob(&self) -> f64 {
+        self.prob
     }
 }

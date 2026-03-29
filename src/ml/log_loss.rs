@@ -12,8 +12,7 @@ pub struct LogLossTracker {
 
 impl LogLossTracker {
     pub fn log_loss(&self) -> f64 {
-        let count = self.count;
-        if count == 0 {
+        if self.count == 0 {
             f64::NAN
         } else {
             self.log_loss / self.count as f64
@@ -47,14 +46,24 @@ impl LogLossTracker {
     }
 
     pub fn add_observation(&mut self, o: Observation) {
-        self.log_loss += o.log_loss();
-        self.freq += o.classification_success() as u64;
+        self.log_loss += cross_entropy_loss(&o);
+        self.freq += classification_success(&o);
         self.count += 1;
     }
 
     pub fn is_empty(&self) -> bool {
         self.count == 0
     }
+}
+
+fn cross_entropy_loss(observation: &Observation) -> f64 {
+    -1f64
+        * (observation.actual() as f64 * observation.prob().ln()
+            + (1f64 - observation.actual() as f64) * (1f64 - observation.prob()).ln())
+}
+
+fn classification_success(observation: &Observation) -> u64 {
+    (observation.actual() == (observation.prob() >= 0.5) as u8) as u64
 }
 
 impl Display for LogLossTracker {
