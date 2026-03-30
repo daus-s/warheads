@@ -1,3 +1,5 @@
+use std::ops::Mul;
+
 use super::vector::Vector;
 
 #[derive(Default, Clone, Debug)]
@@ -52,6 +54,27 @@ impl Matrix {
             cols: self.data.len(),
             rows: self.cols,
         }
+    }
+}
+
+impl Mul for Matrix {
+    type Output = Matrix;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        assert_eq!(self.cols, rhs.rows, "💀 matrix dimensions do not match.");
+
+        //multiply m x n by n x p => m x p matrix
+        let mut matrix = Vec::with_capacity(self.rows);
+
+        for row in 0..self.rows {
+            let mut new_row = Vec::with_capacity(rhs.cols);
+
+            for col in 0..rhs.cols {
+                new_row[col] = self.data[row];
+            }
+            matrix.push(Vector::from(new_row));
+        }
+        todo!()
     }
 }
 
