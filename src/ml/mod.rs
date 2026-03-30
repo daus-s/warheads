@@ -5,6 +5,7 @@ pub mod gradient_descent;
 pub mod linear_regression;
 pub mod log_loss;
 pub mod logisitic_regression;
+pub mod matrix;
 pub mod model;
 pub mod models;
 pub mod nelder_mead;

@@ -1,5 +1,5 @@
 use std::fmt::Display;
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Index, Mul, MulAssign, Sub, SubAssign};
 
 // ok im gonna have to COOOOK
 #[derive(Debug, Clone)]
@@ -63,6 +63,14 @@ impl Vector {
             .zip(params.vec.iter())
             .map(|(x, y)| x * y)
             .sum()
+    }
+}
+
+impl Index<usize> for Vector {
+    type Output = f64;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.vec[index]
     }
 }
 
