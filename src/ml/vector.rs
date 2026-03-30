@@ -146,6 +146,16 @@ impl Add for &Vector {
     }
 }
 
+// Vector Subtraction (element-wise)
+
+impl Add for Vector {
+    type Output = Vector;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        &self + &rhs
+    }
+}
+
 impl AddAssign<&Vector> for Vector {
     fn add_assign(&mut self, rhs: &Self) {
         assert_eq!(
@@ -159,6 +169,14 @@ impl AddAssign<&Vector> for Vector {
         }
     }
 }
+
+impl AddAssign for Vector {
+    fn add_assign(&mut self, rhs: Self) {
+        *self += &rhs
+    }
+}
+
+// Vector Subtraction (element-wise)
 
 impl Sub for &Vector {
     type Output = Vector;
@@ -182,6 +200,14 @@ impl Sub for &Vector {
     }
 }
 
+impl Sub for Vector {
+    type Output = Vector;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        &self - &rhs
+    }
+}
+
 impl SubAssign<&Vector> for Vector {
     fn sub_assign(&mut self, rhs: &Self) {
         assert_eq!(
@@ -196,7 +222,12 @@ impl SubAssign<&Vector> for Vector {
     }
 }
 
-// Scalar Multiplication and Division
+impl SubAssign for Vector {
+    fn sub_assign(&mut self, rhs: Self) {
+        *self -= &rhs
+    }
+}
+// Scalar Division
 
 impl Div<f64> for &Vector {
     type Output = Vector;
@@ -214,6 +245,14 @@ impl Div<f64> for &Vector {
     }
 }
 
+impl Div<f64> for Vector {
+    type Output = Vector;
+
+    fn div(self, scalar: f64) -> Self::Output {
+        &self / scalar
+    }
+}
+
 impl DivAssign<f64> for Vector {
     fn div_assign(&mut self, scalar: f64) {
         for val in self.vec.iter_mut() {
@@ -221,6 +260,8 @@ impl DivAssign<f64> for Vector {
         }
     }
 }
+
+// Scalar Multiplication
 
 impl Mul<f64> for &Vector {
     type Output = Vector;
@@ -236,6 +277,14 @@ impl Mul<f64> for &Vector {
             vec: result,
             dim: self.dim,
         }
+    }
+}
+
+impl Mul<f64> for Vector {
+    type Output = Vector;
+
+    fn mul(self, scalar: f64) -> Self::Output {
+        &self * scalar
     }
 }
 

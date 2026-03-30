@@ -1,5 +1,7 @@
-use crate::ml::{gradient_descent::GradientDescent, vector::Vector};
+use crate::ml::gradient_descent::GradientDescent;
+use crate::ml::vector::Vector;
 
+/// binary logistic regression model implementation
 pub struct LogisticRegression {
     params: Vector,
     bias: f64,
@@ -18,8 +20,21 @@ impl LogisticRegression {
 }
 
 impl GradientDescent for LogisticRegression {
-    fn gradient_descent(&mut self) {
-        todo!()
+    #[allow(non_snake_case)]
+    fn gradient_descent(&mut self, data: &[(Vector, u8)], learning_rate: f64) {
+        for (input, output) in data {
+            let p = self.predict(input);
+
+            let y = *output as f64;
+
+            let diff = p - y;
+
+            let dLdW = input * diff * learning_rate;
+            let dLdB = diff * learning_rate;
+
+            self.params -= dLdW;
+            self.bias -= dLdB;
+        }
     }
 }
 
