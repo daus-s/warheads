@@ -63,7 +63,7 @@ fn cross_entropy_loss(observation: &Observation) -> f64 {
 }
 
 fn classification_success(observation: &Observation) -> u64 {
-    (observation.actual() == (observation.prob() >= 0.5) as u8) as u64
+    ((observation.actual() as f64 - observation.prob()).abs() < 0.5) as u64
 }
 
 impl Display for LogLossTracker {

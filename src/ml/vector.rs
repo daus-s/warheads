@@ -375,4 +375,28 @@ mod test_vector {
 
         assert_eq!(v1, Vector::from(vec![2.0, 4.0, 6.0]));
     }
+
+    #[test]
+    fn test_dot_product() {
+        let v1 = Vector::from(vec![2.0, 3.0]);
+        let v2 = Vector::from(vec![5.0, 7.0]);
+
+        assert_eq!(v1.dot(&v2), 31f64);
+    }
+
+    #[test]
+    fn test_empty_dot_product() {
+        let v1 = Vector::from(vec![]);
+        let v2 = Vector::from(vec![]);
+
+        assert_eq!(v1.dot(&v2), 0f64);
+    }
+
+    #[test]
+    fn test_dot_product_1d() {
+        let v1 = Vector::from(vec![1.0]);
+        let v2 = Vector::from(vec![1.0]);
+
+        assert_eq!(v1.dot(&v2), 1.0);
+    }
 }

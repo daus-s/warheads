@@ -1,4 +1,5 @@
-use std::{fmt::Display, ops::Mul};
+use std::fmt::{Debug, Display};
+use std::ops::{Index, Mul};
 
 use super::vector::Vector;
 
@@ -57,6 +58,14 @@ impl Matrix {
     }
 }
 
+impl Index<usize> for Matrix {
+    type Output = Vector;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.data[index]
+    }
+}
+
 impl Mul for Matrix {
     type Output = Matrix;
 
@@ -70,7 +79,13 @@ impl Mul for Matrix {
             let mut new_row = vec![0.0; rhs.cols];
 
             for col in 0..rhs.cols {
-                new_row[col] += self.data[row][col] * rhs.data[col][row];
+                let mut sum = 0.0;
+
+                for row2 in 0..rhs.rows {
+                    sum += self[row][row2] * rhs[row2][col]
+                }
+
+                new_row[col] = sum;
             }
             matrix.push(Vector::from(new_row));
         }
@@ -185,7 +200,7 @@ mod tests {
         assert_eq!(c.rows, 2);
         assert_eq!(c.cols, 2);
         assert_eq!(c.index(0, 0), -16.0);
-        assert_eq!(c.index(0, 1), 4.0);
+        assert_eq!(c.index(0, 1), -4.0);
         assert_eq!(c.index(1, 0), 16.0);
         assert_eq!(c.index(1, 1), 38.0);
     }
