@@ -32,8 +32,8 @@ impl GradientDescent for LogisticRegression {
             let dLdW = input * diff * learning_rate;
             let dLdB = diff * learning_rate;
 
-            self.params -= dbg!(dLdW);
-            self.bias -= dbg!(dLdB);
+            self.params -= dLdW;
+            self.bias -= dLdB;
         }
     }
 }

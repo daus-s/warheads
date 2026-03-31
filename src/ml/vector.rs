@@ -16,6 +16,10 @@ impl Vector {
         }
     }
 
+    pub fn iter(&self) -> impl Iterator<Item = f64> + '_ {
+        self.vec.iter().copied()
+    }
+
     pub fn dim(&self) -> usize {
         self.dim
     }
