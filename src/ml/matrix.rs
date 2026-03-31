@@ -89,13 +89,30 @@ impl Display for Matrix {
             return write!(f, "[]");
         }
 
-        fn fmt_val(v: f64) -> String {
-            if v.abs() >= 1e4 {
-                format!("{:.3e}", v)
-            } else if v != 0.0 && v.abs() < 1e-3 {
-                format!("{:.2e}", v)
+        fn fmt_val(f: f64) -> String {
+            if f.abs() >= 1e4 {
+                if f.abs() >= 1e10 {
+                    format!("{:.3e}", f)
+                } else {
+                    format!("{:.4e}", f)
+                }
+            } else if f != 0.0 && f.abs() < 1e-3 {
+                if f.abs() < 1e-9 {
+                    format!("{:.2e}", f)
+                } else {
+                    format!("{:.3e}", f)
+                }
             } else {
-                format!("{:.5}", v)
+                let f1 = (f * 1_000_000.0).round() / 1_000_000f64;
+
+                let real = format!("{}", f1);
+                let decimal = format!("{:.1}", f1);
+
+                if decimal.len() > real.len() {
+                    decimal
+                } else {
+                    real
+                }
             }
         }
 
@@ -179,8 +196,8 @@ mod tests {
 
         pretty_assertions::assert_eq!(
             format!("{}", matrix),
-            "┌ 1.23e-4  2.34568 ┐\n\
-             └ 3.45679  4.56789 ┘"
+            "┌ 1.234e-4  2.345679 ┐\n\
+             └ 3.456789   4.56789 ┘"
         );
     }
 
@@ -194,9 +211,20 @@ mod tests {
 
         pretty_assertions::assert_eq!(
             format!("{}", matrix),
-            "┌ 1.23457  2.34568 ┐\n\
-             │ 6.768e5  0.00694 │\n\
-             └ 3.45679  4.56789 ┘"
+            "┌ 1.234568  2.345679 ┐\n\
+             │ 6.7677e5  0.006942 │\n\
+             └ 3.456789   4.56789 ┘"
+        );
+    }
+
+    #[test]
+    fn test_display_short() {
+        let matrix = Matrix::new(&[&[1.0, 2.0], &[3.0, 4.0]]);
+
+        pretty_assertions::assert_eq!(
+            format!("{}", matrix),
+            "┌ 1.0  2.0 ┐\n\
+             └ 3.0  4.0 ┘"
         );
     }
 }
