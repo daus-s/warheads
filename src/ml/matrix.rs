@@ -206,6 +206,17 @@ mod tests {
     }
 
     #[test]
+    fn test_multiply_square_col() {
+        let a = Matrix::new(&[&[3.0, 1.0], &[2.0, 7.0]]);
+        let b = Matrix::new(&[&[1.0], &[4.0]]);
+        let c = a * b;
+        assert_eq!(c.rows, 2);
+        assert_eq!(c.cols, 1);
+        assert_eq!(c.index(0, 0), 7.0);
+        assert_eq!(c.index(1, 0), 30.0);
+    }
+
+    #[test]
     fn test_display() {
         let matrix = Matrix::new(&[&[0.0001234, 2.3456789], &[3.456789, 4.56789]]);
 
