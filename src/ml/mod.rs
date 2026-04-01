@@ -12,5 +12,4 @@ pub mod nelder_mead;
 pub mod observation;
 mod simplex;
 mod tests;
-mod training_set;
 mod vector;

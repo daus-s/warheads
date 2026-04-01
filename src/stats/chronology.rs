@@ -1,18 +1,20 @@
 use crate::dapi::player_directory::PlayerDirectory;
+use crate::dapi::read_disk::{read_nba_season, NBAReadError};
 use crate::dapi::season_manager::nba_lifespan_period;
-
 use crate::dapi::team_directory::TeamDirectory;
+
+use crate::stats::box_score::BoxScore;
 use crate::stats::game_obj::GameObject;
 use crate::stats::gamecard::GameCard;
+use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::record::Record;
-
-use crate::dapi::read_disk::{read_nba_season, NBAReadError};
 
 use crate::types::{GameId, PlayerId, SeasonId, TeamId};
 
 use std::cmp::max;
 use std::collections::HashMap;
 
+use rand::RngExt;
 use thiserror::Error;
 
 /// an efficient way to query through historical games
@@ -123,6 +125,80 @@ impl Chronology {
         games.sort_by_key(|(c, _g)| c.date());
 
         Ok(games)
+    }
+
+    pub fn as_regression_data(
+        mut self,
+        kind: NBAStatKind,
+        split: f64,
+    ) -> Result<(Vec<BoxScore>, Vec<BoxScore>), ChronologyError> {
+        assert!(0f64 < split && split < 1f64, "💀 as_regression_data requires a fractional split size greater than 0 and less than 1 (0.7 is recommended). expected: split ∈(0,1)\treceived: {}", split);
+
+        let mut test_data = Vec::new();
+        let mut training_data = Vec::new();
+
+        let mut box_scores = Vec::new();
+
+        for era in nba_lifespan_period() {
+            if let Err(e) = self.load_era(era) {
+                return Err(e);
+            }
+
+            let era_games = self
+                .games()
+                .as_ref()
+                .ok_or(ChronologyError::ChronologyMemoryError)?;
+
+            for game in era_games {
+                match kind {
+                    NBAStatKind::Team => {
+                        box_scores.push(game.away().box_score().clone());
+                        box_scores.push(game.home().box_score().clone());
+                    }
+                    NBAStatKind::Player => {
+                        for player in game.away_roster() {
+                            box_scores.push(player.box_score().clone());
+                        }
+                        for player in game.home_roster() {
+                            box_scores.push(player.box_score().clone());
+                        }
+                    }
+                    NBAStatKind::LineUp => unimplemented!(),
+                }
+            }
+        }
+
+        let records = box_scores.len();
+
+        let mut rng = rand::rng();
+
+        for box_score in box_scores {
+            let r: f64 = rng.random_range(0f64..1f64);
+
+            if r > split {
+                test_data.push(box_score)
+            } else {
+                training_data.push(box_score)
+            }
+        }
+
+        while training_data.len() < (records as f64 * split).round() as usize {
+            if let Some(item) = test_data.pop() {
+                training_data.push(item);
+            } else {
+                break;
+            }
+        }
+
+        while training_data.len() > (records as f64 * split).round() as usize {
+            if let Some(item) = training_data.pop() {
+                test_data.push(item);
+            } else {
+                break;
+            }
+        }
+
+        Ok((training_data, test_data))
     }
 
     fn n_most_recent_games(&self, n: usize, team_id: TeamId, game_id: GameId) -> Vec<GameObject> {
@@ -425,5 +501,16 @@ mod test_chronology {
             "successfully loaded chronology as training data in time: {}ms",
             elapsed.as_millis()
         );
+    }
+
+    #[test]
+    fn test_regression_data() {
+        let chrono = Chronology::new();
+
+        let (training, test) = chrono
+            .as_regression_data(NBAStatKind::Team, 0.7)
+            .expect("failed to load regression data from chronology");
+
+        dbg!(test);
     }
 }
