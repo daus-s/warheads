@@ -3,6 +3,7 @@ use crate::types::PlayerName;
 
 use std::collections::HashMap;
 
+#[derive(Debug, Clone)]
 pub struct PlayerDirectory {
     map: HashMap<PlayerId, PlayerName>,
 }

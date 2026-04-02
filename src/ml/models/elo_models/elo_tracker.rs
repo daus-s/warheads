@@ -10,10 +10,11 @@ use crate::ml::elo::elo_writer::{EloWriter, EloWriterError};
 use crate::ml::cdf;
 use crate::ml::elo::Elo;
 use crate::ml::log_loss::LogLossTracker;
-use crate::ml::model::Model;
+use crate::ml::model::{Model, TrainingError};
 use crate::ml::models::registration::Registration;
 use crate::ml::observation::Observation;
 
+use crate::stats::chronology::Chronology;
 use crate::stats::game_obj::GameObject;
 use crate::stats::gamecard::GameCard;
 
@@ -390,15 +391,14 @@ impl Model for EloTracker {
         return map;
     }
 
-    fn train(&mut self, games: &[(GameCard, GameObject)]) {
-        self.process_elo(games);
+    fn train(&mut self, chrono: Chronology) -> Result<(), TrainingError> {
+        let games = chrono
+            .as_training_data()
+            .map_err(|e| TrainingError::VolumeLoadingError(e))?;
 
-        if let Err(e) = self.save() {
-            println!(
-                "{e}\n❌ failed to save {} artifacts after training",
-                self.model_name()
-            );
-        }
+        self.process_elo(&games);
+
+        self.save().map_err(|e| TrainingError::EloSaveError(e))
     }
 }
 

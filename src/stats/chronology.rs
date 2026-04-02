@@ -18,6 +18,7 @@ use rand::RngExt;
 use thiserror::Error;
 
 /// an efficient way to query through historical games
+#[derive(Debug, Clone)]
 pub struct Chronology {
     games: Option<Vec<GameObject>>,
     era: Option<SeasonId>,

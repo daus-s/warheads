@@ -121,13 +121,9 @@ impl Dispatch {
             Commands::Train { model_name, args } => {
                 let mut model = get_model_from_inventory(model_name, args)?;
 
-                let data = Chronology::new()
-                    .as_training_data()
-                    .map_err(|e| DispatchError::HistoryError(e))?;
-
                 let start = Instant::now();
 
-                model.train(&data);
+                model.train(Chronology::new());
 
                 println!(
                     "✅ successfully trained {} in {}ms",

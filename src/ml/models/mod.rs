@@ -4,7 +4,7 @@ pub use elo_models::*;
 
 //algorithms
 pub mod last_n_games;
-pub mod logistic_performance;
+pub mod sigmachad;
 
 //infra
 pub mod registration;

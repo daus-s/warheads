@@ -1,23 +1,19 @@
-use crate::ml::model::Model;
+use crate::ml::model;
 
-pub struct LogisiticPerformance {}
+use crate::stats::chronology::Chronology;
 
-impl Model for LogisiticPerformance {
+pub struct SigmaChadModel {}
+
+impl model::Model for SigmaChadModel {
     fn model_name(&self) -> String {
-        "log-model v1".to_owned()
+        "sigma v1".to_owned()
     }
 
     fn initialize(&mut self) -> Result<(), ()> {
         todo!()
     }
 
-    fn train(
-        &mut self,
-        data: &[(
-            crate::stats::gamecard::GameCard,
-            crate::stats::game_obj::GameObject,
-        )],
-    ) {
+    fn train(&mut self, chrono: Chronology) -> Result<(), model::TrainingError> {
         todo!()
     }
 
