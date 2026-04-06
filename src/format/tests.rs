@@ -4,8 +4,6 @@ mod test_path_manager {
     use crate::format::path_manager::{nba_prediction_file, nba_storage_path};
     use crate::ml::model::{Model, TrainingError};
     use crate::stats::chronology::Chronology;
-    use crate::stats::game_obj::GameObject;
-    use crate::stats::gamecard::GameCard;
     use crate::types::{GameDate, SeasonId};
     use once_cell::sync::Lazy;
     use std::collections::HashMap;

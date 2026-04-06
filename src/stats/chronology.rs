@@ -3,7 +3,8 @@ use crate::dapi::read_disk::{read_nba_season, NBAReadError};
 use crate::dapi::season_manager::nba_lifespan_period;
 use crate::dapi::team_directory::TeamDirectory;
 
-use crate::stats::box_score::BoxScore;
+use crate::ml::vector::Vector;
+
 use crate::stats::game_obj::GameObject;
 use crate::stats::gamecard::GameCard;
 use crate::stats::nba_kind::NBAStatKind;
@@ -132,7 +133,7 @@ impl Chronology {
         mut self,
         kind: NBAStatKind,
         split: f64,
-    ) -> Result<(Vec<BoxScore>, Vec<BoxScore>), ChronologyError> {
+    ) -> Result<(Vec<Vector>, Vec<Vector>), ChronologyError> {
         assert!(0f64 < split && split < 1f64, "💀 as_regression_data requires a fractional split size greater than 0 and less than 1 (0.7 is recommended). expected: split ∈(0,1)\treceived: {}", split);
 
         let mut test_data = Vec::new();
@@ -177,9 +178,9 @@ impl Chronology {
             let r: f64 = rng.random_range(0f64..1f64);
 
             if r > split {
-                test_data.push(box_score)
+                test_data.push(box_score.into())
             } else {
-                training_data.push(box_score)
+                training_data.push(box_score.into())
             }
         }
 
@@ -512,6 +513,38 @@ mod test_chronology {
             .as_regression_data(NBAStatKind::Team, 0.7)
             .expect("failed to load regression data from chronology");
 
-        dbg!(test);
+        let record_count = training.len() + test.len();
+
+        assert!(
+            training.len() > (record_count as f64 * 0.7).round() as usize - 1
+                && training.len() < (record_count as f64 * 0.7).round() as usize + 1,
+            "length of training data is not equal to split ratio.  training={}/{record_count}, expected {} < n < {}",
+            training.len(),
+            (record_count as f64 * 0.7).round() as usize - 1,
+            (record_count as f64 * 0.7).round() as usize + 1
+        );
+
+        println!(
+            "training={}/{record_count}, expected {} < n < {}",
+            training.len(),
+            (record_count as f64 * 0.7).round() as usize - 1,
+            (record_count as f64 * 0.7).round() as usize + 1
+        );
+
+        assert!(
+            test.len() > (record_count as f64 * 0.3).round() as usize - 1
+                && test.len() < (record_count as f64 * 0.3).round() as usize + 1,
+            "length of test data is not equal to split ratio.  test={}/{record_count}, expected {} < n < {}",
+            test.len(),
+            (record_count as f64 * 0.3).round() as usize - 1,
+            (record_count as f64 * 0.3).round() as usize + 1
+        );
+
+        println!(
+            "test={}/{record_count}, expected {} < n < {}",
+            test.len(),
+            (record_count as f64 * 0.3).round() as usize - 1,
+            (record_count as f64 * 0.3).round() as usize + 1
+        );
     }
 }

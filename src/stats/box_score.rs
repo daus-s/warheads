@@ -1,5 +1,6 @@
 use crate::format::box_score_formatter::format_statistical_box_score;
-use crate::stats::schema::Schema;
+use crate::ml::vector::Vector;
+use crate::stats::nba_schema::NBASchema;
 use crate::stats::stat_column::StatColumn;
 use crate::types::{
     Assists, Blocks, DefensiveRebounds, FantasyPoints, FieldGoalAttempts, FieldGoalMakes,
@@ -45,14 +46,8 @@ pub struct BoxScore {
     plus_minus: PlusMinus,
 }
 
-impl Display for BoxScore {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        format_statistical_box_score(f, self)
-    }
-}
-
 impl BoxScore {
-    pub fn schema(&self) -> Schema {
+    fn schema(&self) -> NBASchema {
         todo!()
     }
 
@@ -421,5 +416,43 @@ impl BoxScore {
     }
     pub fn plus_minus(&self) -> &PlusMinus {
         &self.plus_minus
+    }
+}
+
+impl Display for BoxScore {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        format_statistical_box_score(f, self)
+    }
+}
+
+impl From<BoxScore> for Vector {
+    fn from(boxscore: BoxScore) -> Self {
+        //match on schema
+        let vec = vec![
+            boxscore.min().0 as f64,                     // 0
+            boxscore.fgm().0 as f64,                     // 1
+            boxscore.fga().0.unwrap_or(0) as f64,        // 2
+            boxscore.fg3m().0.unwrap_or(0) as f64,       // 3
+            boxscore.fg3a().0.unwrap_or(0) as f64,       // 4
+            boxscore.ftm().0 as f64,                     // 5
+            boxscore.fta().0.unwrap_or(0) as f64,        // 6
+            boxscore.oreb().0.unwrap_or(0) as f64,       // 7
+            boxscore.dreb().0.unwrap_or(0) as f64,       // 8
+            boxscore.reb().0.unwrap_or(0) as f64,        // 9
+            boxscore.ast().0.unwrap_or(0) as f64,        // 10
+            boxscore.stl().0.unwrap_or(0) as f64,        // 11
+            boxscore.blk().0.unwrap_or(0) as f64,        // 12
+            boxscore.tov().0.unwrap_or(0) as f64,        // 13
+            boxscore.pf().0 as f64,                      // 14
+            boxscore.pts().0 as f64,                     // 15
+            boxscore.plus_minus().0.unwrap_or(0) as f64, // 16
+            match boxscore.wl() {
+                GameResult::Win => 1.0,
+                GameResult::Loss => 0.0,
+                GameResult::Draw => 0.5,
+            },
+        ];
+
+        Vector::from(vec)
     }
 }

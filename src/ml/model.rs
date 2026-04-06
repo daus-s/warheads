@@ -4,7 +4,7 @@ use std::io;
 use thiserror::Error;
 
 use crate::ml::models::elo_tracker::EloTrackerError;
-use crate::proc::error;
+
 use crate::stats::chronology::{Chronology, ChronologyError};
 use crate::stats::gamecard::GameCard;
 
@@ -31,7 +31,7 @@ pub enum TrainingError {
     WincodeSerializationError(wincode::WriteError),
     #[error("❌ {0}\n❌ failed to serialize model artifact")]
     JsonSerializationError(serde_json::Error),
-    #[error("❌ {0}\n❌ failed to save model artifact to file:")]
+    #[error("❌ {0}\n❌ failed to save model artifact to file")]
     ArtifactSaveError(io::Error),
     #[error("{0}\n❌ failed to save elo artifacts after training")]
     EloSaveError(EloTrackerError),

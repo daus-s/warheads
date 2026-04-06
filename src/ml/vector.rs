@@ -5,14 +5,12 @@ use std::ops::{Add, AddAssign, Div, DivAssign, Index, Mul, MulAssign, Sub, SubAs
 #[derive(Debug, Clone)]
 pub struct Vector {
     vec: Vec<f64>,
-    dim: usize,
 }
 
 impl Vector {
     pub fn origin(dim: usize) -> Self {
         Self {
             vec: vec![0.0f64; dim],
-            dim,
         }
     }
 
@@ -20,33 +18,37 @@ impl Vector {
         self.vec.iter().copied()
     }
 
+    pub fn slice(&mut self, idx: usize) -> f64 {
+        self.vec.remove(idx)
+    }
+
     pub fn dim(&self) -> usize {
-        self.dim
+        self.vec.len()
     }
 
     pub fn x(&self) -> f64 {
         assert!(
-            self.dim >= 1,
+            self.dim() >= 1,
             "💀 vector is {}-dimensional and tried to access 1st dimension.",
-            self.dim
+            self.dim()
         );
         self.vec[0]
     }
 
     pub fn y(&self) -> f64 {
         assert!(
-            self.dim >= 2,
+            self.dim() >= 2,
             "💀 vector is {}-dimensional and tried to access 2nd dimension.",
-            self.dim
+            self.dim()
         );
         self.vec[1]
     }
 
     pub fn z(&self) -> f64 {
         assert!(
-            self.dim >= 3,
+            self.dim() >= 3,
             "💀 vector is {}-dimensional and tried to access 2nd dimension.",
-            self.dim
+            self.dim()
         );
         self.vec[2]
     }
@@ -57,9 +59,9 @@ impl Vector {
 
     pub fn dot(&self, params: &Vector) -> f64 {
         assert_eq!(
-            self.dim, params.dim,
+            self.dim(), params.dim(),
             "💀 vectors must have the same dimension. Cannot compute dot product of a {}-d vector and a {}-d vector",
-            self.dim, params.dim
+            self.dim(), params.dim()
         );
 
         self.vec
@@ -89,10 +91,7 @@ pub fn midpoint(v1: &Vector, v2: &Vector) -> Vector {
 
 impl From<Vec<f64>> for Vector {
     fn from(vec: Vec<f64>) -> Self {
-        Self {
-            dim: vec.len(),
-            vec,
-        }
+        Self { vec }
     }
 }
 
@@ -100,7 +99,6 @@ impl From<&Vector> for Vector {
     fn from(vector: &Vector) -> Self {
         Self {
             vec: vector.vec.clone(),
-            dim: vector.dim,
         }
     }
 }
@@ -141,9 +139,11 @@ impl Add for &Vector {
 
     fn add(self, rhs: Self) -> Self::Output {
         assert_eq!(
-            self.dim, rhs.dim,
+            self.dim(),
+            rhs.dim(),
             "💀 vectors must have the same dimension. Cannot add a {}-d vector and a {}-d vector",
-            rhs.dim, self.dim
+            rhs.dim(),
+            self.dim()
         );
 
         let mut result = self.vec.clone();
@@ -151,10 +151,7 @@ impl Add for &Vector {
             result[i] += val;
         }
 
-        Vector {
-            vec: result,
-            dim: self.dim,
-        }
+        Vector { vec: result }
     }
 }
 
@@ -171,9 +168,11 @@ impl Add for Vector {
 impl AddAssign<&Vector> for Vector {
     fn add_assign(&mut self, rhs: &Self) {
         assert_eq!(
-            self.dim, rhs.dim,
+            self.dim(),
+            rhs.dim(),
             "💀 vectors must have the same dimension. Cannot add {}-d vector to a {}-d vector",
-            rhs.dim, self.dim
+            rhs.dim(),
+            self.dim()
         );
 
         for (i, &val) in rhs.vec.iter().enumerate() {
@@ -195,9 +194,9 @@ impl Sub for &Vector {
 
     fn sub(self, rhs: Self) -> Self::Output {
         assert_eq!(
-            self.dim, rhs.dim,
+            self.dim(), rhs.dim(),
             "💀 vectors must have the same dimension. Cannot subtract a {}-d vector and a {}-d vector",
-            rhs.dim, self.dim
+            rhs.dim(), self.dim()
         );
 
         let mut result = self.vec.clone();
@@ -205,10 +204,7 @@ impl Sub for &Vector {
             result[i] -= val;
         }
 
-        Vector {
-            vec: result,
-            dim: self.dim,
-        }
+        Vector { vec: result }
     }
 }
 
@@ -223,9 +219,9 @@ impl Sub for Vector {
 impl SubAssign<&Vector> for Vector {
     fn sub_assign(&mut self, rhs: &Self) {
         assert_eq!(
-            self.dim, rhs.dim,
+            self.dim(), rhs.dim(),
             "💀 vectors must have the same dimension. Cannot subtract a {}-d vector from a {}-d vector",
-            rhs.dim, self.dim
+            rhs.dim(), self.dim()
         );
 
         for (i, &val) in rhs.vec.iter().enumerate() {
@@ -250,10 +246,7 @@ impl Div<f64> for &Vector {
             *val /= scalar;
         }
 
-        Vector {
-            vec: result,
-            dim: self.dim,
-        }
+        Vector { vec: result }
     }
 }
 
@@ -285,10 +278,7 @@ impl Mul<f64> for &Vector {
             *val *= scalar;
         }
 
-        Vector {
-            vec: result,
-            dim: self.dim,
-        }
+        Vector { vec: result }
     }
 }
 

@@ -11,8 +11,6 @@ use crate::ml::simplex::Simplex;
 use crate::ml::vector::Vector;
 
 use crate::stats::chronology::Chronology;
-use crate::stats::game_obj::GameObject;
-use crate::stats::gamecard::GameCard;
 
 /// this elo algorithm is optimized on (k, f) pairs,
 /// the algorithm also uses a initial rating of 0 for symmetry.
@@ -53,16 +51,19 @@ impl Model for NelderMeadEloTracker {
         let cost = |v: &Vector| -> f64 {
             let mut tracker = EloTracker::params(EloParams::new(v));
 
-            tracker.train(chrono.clone());
+            match tracker.train(chrono.clone()) {
+                Ok(_) => {
+                    println!(
+                        "{}/{}=>{}",
+                        tracker.freq(),
+                        tracker.log_loss(),
+                        tracker.freq() / tracker.log_loss()
+                    );
 
-            println!(
-                "{}/{}=>{}",
-                tracker.freq(),
-                tracker.log_loss(),
-                tracker.freq() / tracker.log_loss()
-            );
-
-            tracker.freq() / tracker.log_loss()
+                    tracker.freq() / tracker.log_loss()
+                }
+                Err(_) => f64::NAN,
+            }
         };
 
         let baseline = 0.46304378813918995;
@@ -122,7 +123,7 @@ mod test_nelder_mead_elo {
     fn get_optimal_params() {
         let mut tracker = NelderMeadEloTracker::new();
 
-        tracker.train(Chronology::new());
+        let _ = tracker.train(Chronology::new());
 
         assert!(tracker.performance > 0.46304378813918995 * 0.7);
     }

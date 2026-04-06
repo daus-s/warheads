@@ -2,11 +2,11 @@ use crate::ml::gradient_descent::GradientDescent;
 use crate::ml::vector::Vector;
 
 /// binary logistic regression model implementation
+#[derive(Debug, Clone)]
 pub struct LogisticRegression {
     params: Vector,
     bias: f64,
 }
-
 impl LogisticRegression {
     pub fn new(params: Vector, bias: f64) -> Self {
         Self { params, bias }
@@ -16,6 +16,14 @@ impl LogisticRegression {
         let z = x.dot(&self.params) + self.bias;
 
         1.0 / (1.0 + f64::exp(-z))
+    }
+
+    pub fn params(&self) -> &Vector {
+        &self.params
+    }
+
+    pub fn bias(&self) -> f64 {
+        self.bias
     }
 }
 

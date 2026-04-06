@@ -17,8 +17,8 @@ use crate::proc::rip;
 use crate::proc::rip::ProcessingResult;
 
 use crate::stats::identity::Identity;
+use crate::stats::nba_boxscore::NBABoxScore::{self, Player, Team};
 use crate::stats::nba_kind::NBAStatKind;
-use crate::stats::nba_stat::NBABoxScore::{self, Player, Team};
 
 use crate::types::SeasonId;
 

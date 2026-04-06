@@ -10,6 +10,6 @@ pub mod model;
 pub mod models;
 pub mod nelder_mead;
 pub mod observation;
-mod simplex;
+pub mod simplex;
 mod tests;
-mod vector;
+pub mod vector;
