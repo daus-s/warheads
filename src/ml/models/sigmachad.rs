@@ -43,6 +43,13 @@ impl model::Model for SigmaChadModel {
             .as_regression_data(NBAStatKind::Team, 0.7)
             .map_err(|e| TrainingError::VolumeLoadingError(e))?;
 
+        // cannot faithfully restore values while non recorded stats are unnaccounted
+        let mut averages = Vector::origin(16);
+        for box_score in training_data.iter().chain(testing_data.iter()) {
+            averages += box_score;
+        }
+        //implement schemas first ===================================================
+
         let training_data: Vec<(Vector, u8)> = training_data
             .into_iter()
             .map(|mut vec| {
@@ -59,8 +66,10 @@ impl model::Model for SigmaChadModel {
 
         let mut tracker = LogLossTracker::new();
 
-        testing_data.into_iter().for_each(|vec| {
-            let outcome = vec[18] as u8;
+        testing_data.into_iter().for_each(|mut vec| {
+            let wl = vec[17] as u8;
+            let _ignore_plus_minus = vec.slice(16);
+
             let vec: Vector = vec.into();
 
             dbg!(&vec);
@@ -69,7 +78,7 @@ impl model::Model for SigmaChadModel {
 
             let prob = self.model.predict(&vec);
 
-            let obs = Observation::new(outcome, prob);
+            let obs = Observation::new(wl, prob);
 
             tracker.add_observation(obs);
         });

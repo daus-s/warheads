@@ -25,13 +25,25 @@ mod tests {
     use std::collections::HashMap;
 
     use crate::{
-        dapi::season_manager::{nba_lifespan, nba_lifespan_period},
-        stats::{chronology::Chronology, season_period::minimum_spanning_era},
+        dapi::season_manager::nba_lifespan_period,
+        stats::{chronology::Chronology, season_period::SeasonPeriod},
     };
 
     #[test]
     fn calculate_schema_from_year() {
         let mut chrono = Chronology::new();
+        let columns = vec![
+            "min", "fgm", "fga", "fg3m", "fg3a", "ftm", "fta", "oreb", "dreb", "reb", "ast", "stl",
+            "blk", "tov", "pf", "pts", "+-",
+        ];
+        let col_width = 5;
+        println!(
+            "+------+{}+",
+            (0..columns.len())
+                .map(|_| "-".repeat(col_width))
+                .collect::<Vec<_>>()
+                .join("+")
+        );
         for era in nba_lifespan_period() {
             chrono.load_era(era).expect("failed to load chronology");
             let games = chrono.games().as_ref().unwrap();
@@ -59,43 +71,70 @@ mod tests {
                 schema_map.entry(k).and_modify(|v| *v += 1).or_insert(1);
             }
 
-            let columns = vec![
-                "min", "fgm", "fga", "fg3m", "fg3a", "ftm", "fta", "oreb", "dreb", "reb", "ast",
-                "stl", "blk", "tov", "pf", "pts", "+-",
-            ];
+            let season_id = era;
+            let schema_count: isize = (schema_map.len() + 2) as isize;
+            let mid_row = schema_count / 2;
 
-            let col_width = 5;
             println!(
-                "{}",
+                "|      |{}",
                 columns
                     .iter()
-                    .map(|col| format!("{:^width$}", col, width = col_width))
+                    .map(|col| format!("{:^width$}|", col, width = col_width))
                     .collect::<Vec<_>>()
-                    .join("|")
+                    .join("")
             );
 
             println!(
-                "{}",
+                "|{}|{}+",
+                if mid_row - 2 == -1 {
+                    format!("{:^6}", era.year())
+                } else {
+                    "      ".to_string()
+                },
                 (0..columns.len())
                     .map(|_| "-".repeat(col_width))
                     .collect::<Vec<_>>()
                     .join("+")
             );
 
-            for (schema, count) in schema_map {
+            for (idx, (schema, _count)) in schema_map.iter().enumerate() {
+                let idx = idx as isize;
+
+                let prefix = if idx == mid_row - 2 {
+                    format!("|{:^6}|", season_id.year())
+                } else if idx == mid_row - 1 {
+                    match season_id.period() {
+                        SeasonPeriod::PreSeason => format!("|{:^6}|", "PRE"),
+                        SeasonPeriod::RegularSeason => format!("|{:^6}|", "REG"),
+                        SeasonPeriod::NBACup => format!("|{:^6}|", "CUP"),
+                        SeasonPeriod::PlayIn => format!("|{:^6}|", "IST"),
+                        SeasonPeriod::PostSeason => format!("|{:^6}|", "POST"),
+                        SeasonPeriod::AllStarGame => format!("|{:^6}|", "ASG"),
+                    }
+                } else {
+                    "|      |".to_string()
+                };
                 println!(
-                    "{}",
+                    "{}{}",
+                    prefix,
                     columns
                         .iter()
                         .enumerate()
                         .map(|(i, _)| {
                             let marker = if (schema >> i) & 1 == 1 { "✓" } else { "✗" };
-                            format!("{:^width$}", marker, width = col_width)
+                            format!("{:^width$}|", marker, width = col_width)
                         })
                         .collect::<Vec<_>>()
-                        .join("|")
+                        .join("")
                 );
             }
+            println!(
+                "+------+{}+",
+                (0..columns.len())
+                    .map(|_| "-".repeat(col_width))
+                    .collect::<Vec<_>>()
+                    .join("+")
+            );
         }
     }
 }
