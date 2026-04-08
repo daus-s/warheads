@@ -1,6 +1,6 @@
 use crate::format::box_score_formatter::format_statistical_box_score;
 use crate::ml::vector::Vector;
-use crate::stats::nba_schema::NBASchema;
+use crate::stats::nba_schema::*;
 use crate::stats::stat_column::StatColumn;
 use crate::types::{
     Assists, Blocks, DefensiveRebounds, FantasyPoints, FieldGoalAttempts, FieldGoalMakes,
@@ -18,6 +18,7 @@ pub struct BoxScore {
     wl: GameResult,
 
     min: Minutes,
+
     fgm: FieldGoalMakes,
     fga: FieldGoalAttempts,
 
@@ -47,8 +48,32 @@ pub struct BoxScore {
 }
 
 impl BoxScore {
+    fn fingerprint(&self) -> u32 {
+        let k: u32 = 0
+                | (1 << MIN_BIT)  // min (always present)
+                | (1 << FGM_BIT)  // fgm (always present)
+                | (if self.fga().0.is_some() { 1 } else { 0 } << FGA_BIT)
+                | (if self.fg3m().0.is_some() { 1 } else { 0 } << FG3M_BIT)
+                | (if self.fg3a().0.is_some() { 1 } else { 0 } << FG3A_BIT)
+                | (1 << FTM_BIT)  // ftm (always present)
+                | (if self.fta().0.is_some() { 1 } else { 0 } << FTA_BIT)
+                | (if self.oreb().0.is_some() { 1 } else { 0 } << OREB_BIT)
+                | (if self.dreb().0.is_some() { 1 } else { 0 } << DREB_BIT)
+                | (if self.reb().0.is_some() { 1 } else { 0 } << REB_BIT)
+                | (if self.ast().0.is_some() { 1 } else { 0 } << AST_BIT)
+                | (if self.stl().0.is_some() { 1 } else { 0 } << STL_BIT)
+                | (if self.blk().0.is_some() { 1 } else { 0 } << BLK_BIT)
+                | (if self.tov().0.is_some() { 1 } else { 0 } << TOV_BIT)
+                | (1 << PF_BIT)  // pf (always present)
+                | (1 << PTS_BIT)  // pts (always present)
+                | (if self.plus_minus().0.is_some() { 1 } else { 0 } << PLUS_MINUS_BIT)
+                | 1 << WL_BIT;
+
+        k
+    }
+
     fn schema(&self) -> NBASchema {
-        todo!()
+        self.fingerprint().into()
     }
 
     /// document this function and test please
@@ -454,5 +479,28 @@ impl From<BoxScore> for Vector {
         ];
 
         Vector::from(vec)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{dapi::season_manager::nba_lifespan_period, stats::chronology::Chronology};
+
+    #[test]
+    fn test_boxscore_schemas() {
+        for era in nba_lifespan_period() {
+            let mut chrono = Chronology::new();
+
+            chrono.load_era(era).expect("failed to load games in test");
+
+            let games = chrono
+                .games()
+                .as_ref()
+                .expect("failed to load games in test");
+
+            for game in games {
+                println!("{:?}", game.home().box_score().schema())
+            }
+        }
     }
 }

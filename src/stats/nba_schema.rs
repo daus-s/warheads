@@ -1,21 +1,63 @@
+pub(super) const MIN_BIT: u32 = 0;
+pub(super) const FGM_BIT: u32 = 1;
+pub(super) const FGA_BIT: u32 = 2;
+pub(super) const FG3M_BIT: u32 = 3;
+pub(super) const FG3A_BIT: u32 = 4;
+pub(super) const FTM_BIT: u32 = 5;
+pub(super) const FTA_BIT: u32 = 6;
+pub(super) const OREB_BIT: u32 = 7;
+pub(super) const DREB_BIT: u32 = 8;
+pub(super) const REB_BIT: u32 = 9;
+pub(super) const AST_BIT: u32 = 10;
+pub(super) const STL_BIT: u32 = 11;
+pub(super) const BLK_BIT: u32 = 12;
+pub(super) const TOV_BIT: u32 = 13;
+pub(super) const PF_BIT: u32 = 14;
+pub(super) const PTS_BIT: u32 = 15;
+pub(super) const PLUS_MINUS_BIT: u32 = 16;
+pub(super) const WL_BIT: u32 = 17;
+
+pub const INITIAL_NBA_SCHEMA: u32 = (1 << MIN_BIT)
+    | (1 << FGM_BIT)
+    | (1 << FGA_BIT)
+    | (1 << FTM_BIT)
+    | (1 << FTA_BIT)
+    | (1 << REB_BIT)
+    | (1 << PF_BIT)
+    | (1 << PTS_BIT);
+
+pub const INITIAL_NBA_NO_FGA: u32 = INITIAL_NBA_SCHEMA - (1 << FGA_BIT);
+
+pub const INITIAL_NBA_NO_FTA: u32 = INITIAL_NBA_SCHEMA - (1 << FTA_BIT);
+
+pub const INITIAL_NBA_NO_ATT: u32 = INITIAL_NBA_SCHEMA - (1 << FGA_BIT) - (1 << FTA_BIT);
+
 /// # Schema
 /// this enum defines the type of data provided as different eras of nba have yielded different recorded
 /// schemas. (e.g. early NBA stats only included points, pfs and makes but not attempts.)
+#[derive(Debug, Clone)]
 pub(super) enum NBASchema {
-    EarlyNBA(),      //46-?
-    Pre3PtEra(),     //79-
-    PlayByPlayEra(), //96-present
+    //1946
+    InitialNBASchema,
+    InitialMinusFGA,
+    InitialMinusFTA,
+    InitialMinusATT,
+    //1947
+    EarlyNBASansFGA,
+    EarlyNBASansFTA,
+    EarlyNBASansFGAFTA,
+    Pre3PtEra,     //79-
+    PlayByPlayEra, //96-present
 }
 
-impl From<i64> for NBASchema {
-    fn from(year: i64) -> Self {
-        assert!(
-            1946 < year && year < 2046,
-            "💀 cannot assign stat schema to years not included in NBA history got: {year}"
-        );
-
-        match year {
-            _ => todo!(),
+impl From<u32> for NBASchema {
+    fn from(value: u32) -> Self {
+        match value {
+            INITIAL_NBA_SCHEMA => Self::InitialNBASchema,
+            INITIAL_NBA_NO_FGA => Self::InitialMinusFGA,
+            INITIAL_NBA_NO_FTA => Self::InitialMinusFTA,
+            INITIAL_NBA_NO_ATT => Self::InitialMinusATT,
+            x => panic!("💀 unknown variant for NBA schema: {:014b}", x),
         }
     }
 }
