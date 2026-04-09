@@ -19,7 +19,7 @@ use crate::stats::nba_kind::NBAStatKind;
 
 inventory::submit!(Registration {
     model_name: SIGMA_VERSION,
-    args_schema: || clap::Command::new("logisitic regression over team performance"),
+    args_schema: || clap::Command::new("logistic regression over team performance"),
     factory: |_| { Box::new(SigmaChadModel::new()) },
 });
 
@@ -134,6 +134,8 @@ impl SigmaChadModel {
                     13 => "tov",
                     14 => "pf",
                     15 => "pts",
+                    16 => "+-",
+                    17 => "wl",
                     _ => unimplemented!("💀 unknown field"),
                 }
                 .to_owned(),

@@ -80,7 +80,7 @@ mod tests {
         ];
         let col_width = 5;
         println!(
-            "+------+{}+",
+            "+------+{}+-----+",
             (0..columns.len())
                 .map(|_| "-".repeat(col_width))
                 .collect::<Vec<_>>()
@@ -109,7 +109,8 @@ mod tests {
                         | (if boxscore.tov().0.is_some() { 1 } else { 0 } << 13)
                         | (1 << 14)  // pf (always present)
                         | (1 << 15)  // pts (always present)
-                        | (if boxscore.plus_minus().0.is_some() { 1 } else { 0 } << 16);
+                        | (if boxscore.plus_minus().0.is_some() { 1 } else { 0 } << 16)
+                        | (1 << 17); // wl (always present)
                 schema_map.entry(k).and_modify(|v| *v += 1).or_insert(1);
             }
 
@@ -118,7 +119,7 @@ mod tests {
             let mid_row = schema_count / 2;
 
             println!(
-                "|      |{}",
+                "|      |{}  ct |",
                 columns
                     .iter()
                     .map(|col| format!("{:^width$}|", col, width = col_width))
@@ -127,7 +128,7 @@ mod tests {
             );
 
             println!(
-                "|{}|{}+",
+                "|{}|{}+-----+",
                 if mid_row - 2 == -1 {
                     format!("{:^6}", era.year())
                 } else {
@@ -139,7 +140,11 @@ mod tests {
                     .join("+")
             );
 
-            for (idx, (schema, _count)) in schema_map.iter().enumerate() {
+            let mut sorted_schemas: Vec<_> = schema_map.into_iter().collect();
+            sorted_schemas.sort_by_key(|(_, count)| std::cmp::Reverse(*count));
+
+            for (idx, (schema, count)) in sorted_schemas.iter().enumerate() {
+                // can i order in count
                 let idx = idx as isize;
 
                 let prefix = if idx == mid_row - 2 {
@@ -157,7 +162,7 @@ mod tests {
                     "|      |".to_string()
                 };
                 println!(
-                    "{}{}",
+                    "{}{}{:^width$}|",
                     prefix,
                     columns
                         .iter()
@@ -167,11 +172,13 @@ mod tests {
                             format!("{:^width$}|", marker, width = col_width)
                         })
                         .collect::<Vec<_>>()
-                        .join("")
+                        .join(""),
+                    format!("{}", count),
+                    width = col_width
                 );
             }
             println!(
-                "+------+{}+",
+                "+------+{}+-----+",
                 (0..columns.len())
                     .map(|_| "-".repeat(col_width))
                     .collect::<Vec<_>>()

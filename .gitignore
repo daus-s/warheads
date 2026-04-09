@@ -27,3 +27,7 @@ store/
 .DS_Store
 
 .schema
+
+#ignore schema output files
+schema.txt
+schemas.txt
