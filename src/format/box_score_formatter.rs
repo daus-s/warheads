@@ -103,25 +103,30 @@ pub fn format_statistical_box_score(
         f,
         " fgs: {:>3}/{:<3} ",
         box_score.fgm().0,
-        box_score.fga().0.unwrap_or(0)
+        box_score.fga().0.map_or("-".to_string(), |v| v.to_string())
     )?;
     write!(
         f,
         " 3ps: {:>3}/{:<3} ",
-        box_score.fg3m().0.unwrap_or(0),
-        box_score.fg3a().0.unwrap_or(0)
+        box_score
+            .fg3m()
+            .0
+            .map_or("-".to_string(), |v| v.to_string()),
+        box_score
+            .fg3a()
+            .0
+            .map_or("-".to_string(), |v| v.to_string())
     )?;
     write!(
         f,
         " ft: {:>3}/{:<3} ",
         box_score.ftm().0,
-        box_score.fta().0.unwrap_or(0)
+        box_score.fta().0.map_or("-".to_string(), |v| v.to_string())
     )?;
-
     write!(
         f,
         " ast: {:>width$} ",
-        box_score.ast().0.unwrap_or(0),
+        box_score.ast().0.map_or("-".to_string(), |v| v.to_string()),
         width = COL_AST - 5
     )?;
     write!(
@@ -129,27 +134,33 @@ pub fn format_statistical_box_score(
         " {:<COL_REB$} ",
         format_args!(
             "reb: {:>3} (oreb: {:>2}, dreb: {:>2})",
-            box_score.reb().0.unwrap_or(0),
-            box_score.oreb().0.unwrap_or(0),
-            box_score.dreb().0.unwrap_or(0)
+            box_score.reb().0.map_or("-".to_string(), |v| v.to_string()),
+            box_score
+                .oreb()
+                .0
+                .map_or("-".to_string(), |v| v.to_string()),
+            box_score
+                .dreb()
+                .0
+                .map_or("-".to_string(), |v| v.to_string())
         )
     )?;
     write!(
         f,
         " stl: {:>width$} ",
-        box_score.stl().0.unwrap_or(0),
+        box_score.stl().0.map_or("-".to_string(), |v| v.to_string()),
         width = COL_STL - 5
     )?;
     write!(
         f,
         " blk: {:>width$} ",
-        box_score.blk().0.unwrap_or(0),
+        box_score.blk().0.map_or("-".to_string(), |v| v.to_string()),
         width = COL_BLK - 5
     )?;
     write!(
         f,
         " tov: {:>width$} ",
-        box_score.tov().0.unwrap_or(0),
+        box_score.tov().0.map_or("-".to_string(), |v| v.to_string()),
         width = COL_TOV - 5
     )?;
     Ok(())

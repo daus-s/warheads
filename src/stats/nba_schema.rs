@@ -22,15 +22,22 @@ pub const INITIAL_NBA_SCHEMA: u32 = (1 << MIN_BIT)
     | (1 << FGA_BIT)
     | (1 << FTM_BIT)
     | (1 << FTA_BIT)
-    | (1 << REB_BIT)
     | (1 << PF_BIT)
-    | (1 << PTS_BIT);
+    | (1 << PTS_BIT)
+    | (1 << PLUS_MINUS_BIT)
+    | (1 << WL_BIT);
 
 pub const INITIAL_NBA_NO_FGA: u32 = INITIAL_NBA_SCHEMA - (1 << FGA_BIT);
 
 pub const INITIAL_NBA_NO_FTA: u32 = INITIAL_NBA_SCHEMA - (1 << FTA_BIT);
 
 pub const INITIAL_NBA_NO_ATT: u32 = INITIAL_NBA_SCHEMA - (1 << FGA_BIT) - (1 << FTA_BIT);
+
+pub const EARLY_NBA_SCHEMA: u32 = INITIAL_NBA_SCHEMA | (1 << AST_BIT);
+
+pub const EARLY_NBA_NO_FGA: u32 = EARLY_NBA_SCHEMA - (1 << FGA_BIT);
+
+pub const EARLY_NBA_NO_FTA: u32 = EARLY_NBA_SCHEMA - (1 << FTA_BIT);
 
 /// # Schema
 /// this enum defines the type of data provided as different eras of nba have yielded different recorded
@@ -43,9 +50,9 @@ pub(super) enum NBASchema {
     InitialMinusFTA,
     InitialMinusATT,
     //1947
-    EarlyNBASansFGA,
-    EarlyNBASansFTA,
-    EarlyNBASansFGAFTA,
+    EarlyNBASchema,
+    EarlyNBAMinusFTA,
+    EarlyNBAMinusFGA,
     Pre3PtEra,     //79-
     PlayByPlayEra, //96-present
 }
@@ -57,6 +64,9 @@ impl From<u32> for NBASchema {
             INITIAL_NBA_NO_FGA => Self::InitialMinusFGA,
             INITIAL_NBA_NO_FTA => Self::InitialMinusFTA,
             INITIAL_NBA_NO_ATT => Self::InitialMinusATT,
+            EARLY_NBA_SCHEMA => Self::EarlyNBASchema,
+            EARLY_NBA_NO_FTA => Self::EarlyNBAMinusFTA,
+            EARLY_NBA_NO_FGA => Self::EarlyNBAMinusFGA,
             x => panic!("💀 unknown variant for NBA schema: {:014b}", x),
         }
     }
@@ -76,7 +86,7 @@ mod tests {
         let mut chrono = Chronology::new();
         let columns = vec![
             "min", "fgm", "fga", "fg3m", "fg3a", "ftm", "fta", "oreb", "dreb", "reb", "ast", "stl",
-            "blk", "tov", "pf", "pts", "+-",
+            "blk", "tov", "pf", "pts", "+-", "wl",
         ];
         let col_width = 5;
         println!(

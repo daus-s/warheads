@@ -499,7 +499,10 @@ mod tests {
                 .expect("failed to load games in test");
 
             for game in games {
-                println!("{:?}", game.home().box_score().schema())
+                println!("{game}");
+                // print!("{}: {}", game.season(), game.game_id());
+                // print!("{}", game.home().box_score(),);
+                println!("({:?})", game.home().box_score().schema())
             }
         }
     }
