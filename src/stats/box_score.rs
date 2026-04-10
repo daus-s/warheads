@@ -49,27 +49,26 @@ pub struct BoxScore {
 
 impl BoxScore {
     fn fingerprint(&self) -> u32 {
-        let k: u32 = 0
-                | (1 << MIN_BIT)  // min (always present)
-                | (1 << FGM_BIT)  // fgm (always present)
-                | (if self.fga().0.is_some() { 1 } else { 0 } << FGA_BIT)
-                | (if self.fg3m().0.is_some() { 1 } else { 0 } << FG3M_BIT)
-                | (if self.fg3a().0.is_some() { 1 } else { 0 } << FG3A_BIT)
-                | (1 << FTM_BIT)  // ftm (always present)
-                | (if self.fta().0.is_some() { 1 } else { 0 } << FTA_BIT)
-                | (if self.oreb().0.is_some() { 1 } else { 0 } << OREB_BIT)
-                | (if self.dreb().0.is_some() { 1 } else { 0 } << DREB_BIT)
-                | (if self.reb().0.is_some() { 1 } else { 0 } << REB_BIT)
-                | (if self.ast().0.is_some() { 1 } else { 0 } << AST_BIT)
-                | (if self.stl().0.is_some() { 1 } else { 0 } << STL_BIT)
-                | (if self.blk().0.is_some() { 1 } else { 0 } << BLK_BIT)
-                | (if self.tov().0.is_some() { 1 } else { 0 } << TOV_BIT)
-                | (1 << PF_BIT)  // pf (always present)
-                | (1 << PTS_BIT)  // pts (always present)
-                | (if self.plus_minus().0.is_some() { 1 } else { 0 } << PLUS_MINUS_BIT)
-                | 1 << WL_BIT;
+        let bit = |present: bool, pos: u32| if present { 1 << pos } else { 0 };
 
-        k
+        bit(true, MIN_BIT)
+            | bit(true, FGM_BIT)
+            | bit(self.fga().0.is_some(), FGA_BIT)
+            | bit(self.fg3m().0.is_some(), FG3M_BIT)
+            | bit(self.fg3a().0.is_some(), FG3A_BIT)
+            | bit(true, FTM_BIT)
+            | bit(self.fta().0.is_some(), FTA_BIT)
+            | bit(self.oreb().0.is_some(), OREB_BIT)
+            | bit(self.dreb().0.is_some(), DREB_BIT)
+            | bit(self.reb().0.is_some(), REB_BIT)
+            | bit(self.ast().0.is_some(), AST_BIT)
+            | bit(self.stl().0.is_some(), STL_BIT)
+            | bit(self.blk().0.is_some(), BLK_BIT)
+            | bit(self.tov().0.is_some(), TOV_BIT)
+            | bit(true, PF_BIT)
+            | bit(true, PTS_BIT)
+            | bit(self.plus_minus().0.is_some(), PLUS_MINUS_BIT)
+            | bit(true, WL_BIT)
     }
 
     fn schema(&self) -> NBASchema {
@@ -500,8 +499,6 @@ mod tests {
 
             for game in games {
                 println!("{game}");
-                // print!("{}: {}", game.season(), game.game_id());
-                // print!("{}", game.home().box_score(),);
                 println!("({:?})", game.home().box_score().schema())
             }
         }
