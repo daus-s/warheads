@@ -39,10 +39,31 @@ pub const EARLY_NBA_NO_FGA: u32 = EARLY_NBA_SCHEMA - (1 << FGA_BIT);
 
 pub const EARLY_NBA_NO_FTA: u32 = EARLY_NBA_SCHEMA - (1 << FTA_BIT);
 
+pub const MODERN_NBA_SCHEMA: u32 = 0
+    | (1 << MIN_BIT)
+    | (1 << FGM_BIT)
+    | (1 << FGA_BIT)
+    | (1 << FG3M_BIT)
+    | (1 << FG3A_BIT)
+    | (1 << FTM_BIT)
+    | (1 << FTA_BIT)
+    | (1 << OREB_BIT)
+    | (1 << DREB_BIT)
+    | (1 << REB_BIT)
+    | (1 << AST_BIT)
+    | (1 << STL_BIT)
+    | (1 << BLK_BIT)
+    | (1 << TOV_BIT)
+    | (1 << PF_BIT)
+    | (1 << PTS_BIT)
+    | (1 << PLUS_MINUS_BIT)
+    | (1 << WL_BIT);
+
 /// # Schema
 /// this enum defines the type of data provided as different eras of nba have yielded different recorded
 /// schemas. (e.g. early NBA stats only included points, pfs and makes but not attempts.)
-#[derive(Debug, Clone)]
+#[allow(dead_code)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub(super) enum NBASchema {
     //1946
     InitialNBASchema,
@@ -53,21 +74,24 @@ pub(super) enum NBASchema {
     EarlyNBASchema,
     EarlyNBAMinusFTA,
     EarlyNBAMinusFGA,
-    Pre3PtEra,     //79-
-    PlayByPlayEra, //96-present
+    Pre3PtEra,       //79-
+    ModernNBASchema, //96-present
 }
 
-impl From<u32> for NBASchema {
-    fn from(value: u32) -> Self {
+impl TryFrom<u32> for NBASchema {
+    type Error = String;
+
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
         match value {
-            INITIAL_NBA_SCHEMA => Self::InitialNBASchema,
-            INITIAL_NBA_NO_FGA => Self::InitialMinusFGA,
-            INITIAL_NBA_NO_FTA => Self::InitialMinusFTA,
-            INITIAL_NBA_NO_ATT => Self::InitialMinusATT,
-            EARLY_NBA_SCHEMA => Self::EarlyNBASchema,
-            EARLY_NBA_NO_FTA => Self::EarlyNBAMinusFTA,
-            EARLY_NBA_NO_FGA => Self::EarlyNBAMinusFGA,
-            x => panic!("💀 unknown variant for NBA schema: {:014b}", x),
+            INITIAL_NBA_SCHEMA => Ok(Self::InitialNBASchema),
+            INITIAL_NBA_NO_FGA => Ok(Self::InitialMinusFGA),
+            INITIAL_NBA_NO_FTA => Ok(Self::InitialMinusFTA),
+            INITIAL_NBA_NO_ATT => Ok(Self::InitialMinusATT),
+            EARLY_NBA_SCHEMA => Ok(Self::EarlyNBASchema),
+            EARLY_NBA_NO_FTA => Ok(Self::EarlyNBAMinusFTA),
+            EARLY_NBA_NO_FGA => Ok(Self::EarlyNBAMinusFGA),
+            MODERN_NBA_SCHEMA => Ok(Self::ModernNBASchema),
+            x => Err(format!("❌ unknown variant for NBA schema: {:014b}", x)),
         }
     }
 }

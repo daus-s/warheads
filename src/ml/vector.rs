@@ -70,6 +70,21 @@ impl Vector {
             .map(|(x, y)| x * y)
             .sum()
     }
+
+    pub fn element_wise_multiplication(&self, other: &Vector) -> Vector {
+        assert_eq!(
+            self.dim(), other.dim(),
+            "💀 vectors must have the same dimension. Cannot compute element-wise multiplication of a {}-d vector and a {}-d vector",
+            self.dim(), other.dim()
+        );
+        Vector::from(
+            self.vec
+                .iter()
+                .zip(other.vec.iter())
+                .map(|(x, y)| x * y)
+                .collect::<Vec<_>>(),
+        )
+    }
 }
 
 impl Index<usize> for Vector {
@@ -388,5 +403,14 @@ mod test_vector {
         let v2 = Vector::from(vec![1.0]);
 
         assert_eq!(v1.dot(&v2), 1.0);
+    }
+
+    #[test]
+    fn test_element_wise_multiplication() {
+        let v1 = Vector::from(vec![1.0, 2.0, 3.0]);
+        let v2 = Vector::from(vec![4.0, 5.0, 6.0]);
+        let v3 = v1.element_wise_multiplication(&v2);
+
+        assert_eq!(v3, Vector::from(vec![4.0, 10.0, 18.0]));
     }
 }

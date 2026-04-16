@@ -8,6 +8,7 @@ use crate::ml::vector::Vector;
 use crate::stats::game_obj::GameObject;
 use crate::stats::gamecard::GameCard;
 use crate::stats::nba_kind::NBAStatKind;
+use crate::stats::nba_schema::NBASchema;
 use crate::stats::record::Record;
 
 use crate::types::{GameId, PlayerId, SeasonId, TeamId};
@@ -154,15 +155,29 @@ impl Chronology {
             for game in era_games {
                 match kind {
                     NBAStatKind::Team => {
-                        box_scores.push(game.away().box_score().clone());
-                        box_scores.push(game.home().box_score().clone());
+                        let away_box = game.away().box_score();
+                        if away_box.schema() == Some(NBASchema::ModernNBASchema) {
+                            box_scores.push(away_box.clone());
+                        }
+
+                        let home_box = game.home().box_score();
+                        if home_box.schema() == Some(NBASchema::ModernNBASchema) {
+                            box_scores.push(home_box.clone());
+                        }
                     }
                     NBAStatKind::Player => {
                         for player in game.away_roster() {
-                            box_scores.push(player.box_score().clone());
+                            let away_player_box = player.box_score();
+                            if away_player_box.schema() == Some(NBASchema::ModernNBASchema) {
+                                box_scores.push(away_player_box.clone());
+                            }
                         }
+
                         for player in game.home_roster() {
-                            box_scores.push(player.box_score().clone());
+                            let home_player_box = player.box_score();
+                            if home_player_box.schema() == Some(NBASchema::ModernNBASchema) {
+                                box_scores.push(home_player_box.clone());
+                            }
                         }
                     }
                     NBAStatKind::LineUp => unimplemented!(),

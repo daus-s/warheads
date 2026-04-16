@@ -2,6 +2,8 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 use std::fs;
 
+use serde_json::Value;
+
 use crate::dapi::write::write_serializable_with_directory;
 
 use crate::format::path_manager::{self, results_path};
@@ -15,6 +17,7 @@ use crate::ml::observation::Observation;
 use crate::ml::vector::Vector;
 
 use crate::stats::chronology::Chronology;
+use crate::stats::gamecard::GameCard;
 use crate::stats::nba_kind::NBAStatKind;
 
 inventory::submit!(Registration {
@@ -43,20 +46,26 @@ impl model::Model for SigmaChadModel {
             .as_regression_data(NBAStatKind::Team, 0.7)
             .map_err(|e| TrainingError::VolumeLoadingError(e))?;
 
-        // cannot faithfully restore values while non recorded stats are unnaccounted
-        let mut averages = Vector::origin(16);
+        let mut sums = Vector::origin(18); //this will included ignored features
+        let mut n = 0;
+
         for box_score in training_data.iter().chain(testing_data.iter()) {
-            averages += box_score;
+            sums += box_score;
+            n += 1;
         }
-        //implement schemas first ===================================================
+
+        let averages = sums / n as f64;
 
         let training_data: Vec<(Vector, u8)> = training_data
             .into_iter()
             .map(|mut vec| {
-                //result
-                let wl = vec.slice(17) as u8;
+                // normalize the vector by the average of each feature
+                let inv: Vector = averages.iter().map(|x| 1f64 / x).collect::<Vec<_>>().into();
+                vec = vec.element_wise_multiplication(&inv);
 
+                let wl = vec.slice(17) as u8;
                 let _ignore_plus_minus = vec.slice(16);
+                let _ignore_minutes = vec.slice(0);
 
                 (vec, wl)
             })
@@ -67,14 +76,16 @@ impl model::Model for SigmaChadModel {
         let mut tracker = LogLossTracker::new();
 
         testing_data.into_iter().for_each(|mut vec| {
-            let wl = vec[17] as u8;
+            let inv: Vector = averages.iter().map(|x| 1f64 / x).collect::<Vec<_>>().into();
+            vec = vec.element_wise_multiplication(&inv);
+
+            let wl = vec.slice(17) as u8;
             let _ignore_plus_minus = vec.slice(16);
+            let _ignore_minutes = vec.slice(0);
+
+            vec /= n as f64;
 
             let vec: Vector = vec.into();
-
-            dbg!(&vec);
-
-            println!("{:?}", self.named_model());
 
             let prob = self.model.predict(&vec);
 
@@ -83,24 +94,25 @@ impl model::Model for SigmaChadModel {
             tracker.add_observation(obs);
         });
 
-        let mut model_path = path_manager::model_dir(self);
-
-        model_path.push("model.md");
-
-        fs::write(model_path, format!("{:?}", self.named_model()))
-            .map_err(|e| TrainingError::ArtifactSaveError(e))?;
-
-        write_serializable_with_directory(results_path(self), &tracker)
-            .map_err(|e| TrainingError::ArtifactSaveError(e))?;
+        self.save(&tracker)?;
 
         Ok(())
     }
 
-    fn evaluate(&self) -> std::collections::HashMap<String, f64> {
-        todo!()
+    fn evaluate(&self) -> HashMap<String, f64> {
+        if let Ok(file) = fs::read_to_string(results_path(self)) {
+            if let Ok(json) = serde_json::from_str::<HashMap<Value, Value>>(&file) {
+                return json
+                    .into_iter()
+                    .map(|(k, v)| (k.as_str().unwrap().to_string(), v.as_f64().unwrap()))
+                    .collect();
+            }
+        }
+
+        return HashMap::new();
     }
 
-    fn predict(&mut self, obj: &crate::stats::gamecard::GameCard) -> f64 {
+    fn predict(&mut self, _obj: &GameCard) -> f64 {
         todo!()
     }
 }
@@ -108,7 +120,7 @@ impl model::Model for SigmaChadModel {
 impl SigmaChadModel {
     fn new() -> Self {
         Self {
-            model: LogisticRegression::new(Vector::origin(16), 0.0),
+            model: LogisticRegression::new(Vector::origin(15), 0.0),
         }
     }
 
@@ -118,24 +130,21 @@ impl SigmaChadModel {
         for (order, weight) in self.model.params().iter().enumerate() {
             map.insert(
                 match order {
-                    0 => "min",
-                    1 => "fgm",
-                    2 => "fga",
-                    3 => "fg3m",
-                    4 => "fg3a",
-                    5 => "ftm",
-                    6 => "fta",
-                    7 => "oreb",
-                    8 => "dreb",
-                    9 => "reb",
-                    10 => "ast",
-                    11 => "stl",
-                    12 => "blk",
-                    13 => "tov",
-                    14 => "pf",
-                    15 => "pts",
-                    16 => "+-",
-                    17 => "wl",
+                    0 => "fgm",
+                    1 => "fga",
+                    2 => "fg3m",
+                    3 => "fg3a",
+                    4 => "ftm",
+                    5 => "fta",
+                    6 => "oreb",
+                    7 => "dreb",
+                    8 => "reb",
+                    9 => "ast",
+                    10 => "stl",
+                    11 => "blk",
+                    12 => "tov",
+                    13 => "pf",
+                    14 => "pts",
                     _ => unimplemented!("💀 unknown field"),
                 }
                 .to_owned(),
@@ -143,9 +152,24 @@ impl SigmaChadModel {
             );
         }
 
-        map.insert(String::from("bias"), (16, self.model.bias()));
+        map.insert(String::from("bias"), (15, self.model.bias()));
 
         NamedLog::new(map)
+    }
+
+    fn save(&self, tracker: &LogLossTracker) -> Result<(), TrainingError> {
+        let mut model_path = path_manager::model_dir(self);
+
+        let _ = fs::create_dir_all(&model_path);
+        model_path.push("model.md");
+
+        let model_file = model_path;
+
+        fs::write(model_file, format!("{:?}", self.named_model()))
+            .map_err(|e| TrainingError::ArtifactSaveError(e))?;
+
+        write_serializable_with_directory(results_path(self), &tracker)
+            .map_err(|e| TrainingError::ArtifactSaveError(e))
     }
 }
 
@@ -161,7 +185,7 @@ impl Debug for NamedLog {
             ordered.sort_by_key(|(_, (i, _))| *i);
 
             ordered.iter().for_each(|(xi, (i, w))| {
-                if *i != 17 {
+                if *i != 15 {
                     s.push_str(&format!("&+{xi}\\cdot{w} \\\\"))
                 };
             });
@@ -196,28 +220,27 @@ impl NamedLog {
 fn test_named_logistic_regression() {
     let mut map = HashMap::new();
 
-    map.insert("min".into(), (0, -2.131780970172711));
-    map.insert("fgm".into(), (1, 8.095358160092806));
-    map.insert("fga".into(), (2, -73.77097150047216));
-    map.insert("fg3m".into(), (3, 17.617562463279555));
-    map.insert("fg3a".into(), (4, -4.5088904598934105));
-    map.insert("ftm".into(), (5, 2.994567420702568));
-    map.insert("fta".into(), (6, -29.97773132492458));
-    map.insert("oreb".into(), (7, 22.61070800894604));
-    map.insert("dreb".into(), (8, 20.067750601939657));
-    map.insert("reb".into(), (9, 54.99805066857796));
-    map.insert("ast".into(), (10, 6.62138372957267));
-    map.insert("stl".into(), (11, 73.57472609372095));
-    map.insert("blk".into(), (12, 19.11615264640488));
-    map.insert("tov".into(), (13, -70.36496252867897));
-    map.insert("pf".into(), (14, -18.798908308026324));
-    map.insert("pts".into(), (15, 37.788566871548454));
-    map.insert("bias".into(), (16, -8.139505434305125));
+    map.insert("fgm".into(), (0, 8.095358160092806));
+    map.insert("fga".into(), (1, -73.77097150047216));
+    map.insert("fg3m".into(), (2, 17.617562463279555));
+    map.insert("fg3a".into(), (3, -4.5088904598934105));
+    map.insert("ftm".into(), (4, 2.994567420702568));
+    map.insert("fta".into(), (5, -29.97773132492458));
+    map.insert("oreb".into(), (6, 22.61070800894604));
+    map.insert("dreb".into(), (7, 20.067750601939657));
+    map.insert("reb".into(), (8, 54.99805066857796));
+    map.insert("ast".into(), (9, 6.62138372957267));
+    map.insert("stl".into(), (10, 73.57472609372095));
+    map.insert("blk".into(), (11, 19.11615264640488));
+    map.insert("tov".into(), (12, -70.36496252867897));
+    map.insert("pf".into(), (13, -18.798908308026324));
+    map.insert("pts".into(), (14, 37.788566871548454));
+    map.insert("bias".into(), (15, -8.139505434305125));
     //insert the rest of the columns based on this order
 
     let log = NamedLog::new(map);
 
-    let expected = "$P_w=\\frac{1}{1+e^{-z}}$\nwhere\n$$\\\\ z=\\begin{aligned}\\\\&+min\\cdot-2.131780970172711 \\\\&+fgm\\cdot8.095358160092806 \\\\&+fga\\cdot-73.77097150047216 \\\\&+fg3m\\cdot17.617562463279555 \\\\&+fg3a\\cdot-4.5088904598934105 \\\\&+ftm\\cdot2.994567420702568 \\\\&+fta\\cdot-29.97773132492458 \\\\&+oreb\\cdot22.61070800894604 \\\\&+dreb\\cdot20.067750601939657 \\\\&+reb\\cdot54.99805066857796 \\\\&+ast\\cdot6.62138372957267 \\\\&+stl\\cdot73.57472609372095 \\\\&+blk\\cdot19.11615264640488 \\\\&+tov\\cdot-70.36496252867897 \\\\&+pf\\cdot-18.798908308026324 \\\\&+pts\\cdot37.788566871548454 \\\\&+bias\\cdot-8.139505434305125 \\\\&+-8.139505434305125\\end{aligned}$$";
+    let expected = "$P_w=\\frac{1}{1+e^{-z}}$\nwhere\n$$\\\\ z=\\begin{aligned}\\\\&+fgm\\cdot8.095358160092806 \\\\&+fga\\cdot-73.77097150047216 \\\\&+fg3m\\cdot17.617562463279555 \\\\&+fg3a\\cdot-4.5088904598934105 \\\\&+ftm\\cdot2.994567420702568 \\\\&+fta\\cdot-29.97773132492458 \\\\&+oreb\\cdot22.61070800894604 \\\\&+dreb\\cdot20.067750601939657 \\\\&+reb\\cdot54.99805066857796 \\\\&+ast\\cdot6.62138372957267 \\\\&+stl\\cdot73.57472609372095 \\\\&+blk\\cdot19.11615264640488 \\\\&+tov\\cdot-70.36496252867897 \\\\&+pf\\cdot-18.798908308026324 \\\\&+pts\\cdot37.788566871548454 \\\\&+-8.139505434305125\\end{aligned}$$";
 
     println!("{:?}", log);
 

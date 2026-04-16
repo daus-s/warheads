@@ -71,8 +71,11 @@ impl BoxScore {
             | bit(true, WL_BIT)
     }
 
-    fn schema(&self) -> NBASchema {
-        self.fingerprint().into()
+    pub(super) fn schema(&self) -> Option<NBASchema> {
+        match self.fingerprint().try_into() {
+            Ok(x) => Some(x),
+            Err(_) => None,
+        }
     }
 
     /// document this function and test please
