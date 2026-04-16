@@ -83,8 +83,6 @@ impl model::Model for SigmaChadModel {
             let _ignore_plus_minus = vec.slice(16);
             let _ignore_minutes = vec.slice(0);
 
-            vec /= n as f64;
-
             let vec: Vector = vec.into();
 
             let prob = self.model.predict(&vec);
