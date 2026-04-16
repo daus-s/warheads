@@ -43,7 +43,7 @@ impl model::Model for SigmaChadModel {
 
     fn train(&mut self, chrono: Chronology) -> Result<(), model::TrainingError> {
         let (training_data, testing_data) = chrono
-            .as_regression_data(NBAStatKind::Team, 0.7)
+            .as_pure_regression_data(NBAStatKind::Team, 0.7)
             .map_err(|e| TrainingError::VolumeLoadingError(e))?;
 
         let mut sums = Vector::origin(18); //this will included ignored features

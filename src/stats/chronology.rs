@@ -130,7 +130,7 @@ impl Chronology {
         Ok(games)
     }
 
-    pub fn as_regression_data(
+    pub fn as_pure_regression_data(
         mut self,
         kind: NBAStatKind,
         split: f64,
@@ -525,8 +525,8 @@ mod test_chronology {
         let chrono = Chronology::new();
 
         let (training, test) = chrono
-            .as_regression_data(NBAStatKind::Team, 0.7)
-            .expect("failed to load regression data from chronology");
+            .as_pure_regression_data(NBAStatKind::Team, 0.7)
+            .expect("failed to load modern era regression data from chronology");
 
         let record_count = training.len() + test.len();
 
