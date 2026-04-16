@@ -346,6 +346,7 @@ mod test_season_manager {
             SeasonId::from((2024, PostSeason)),
             SeasonId::from((2025, PreSeason)),
             SeasonId::from((2025, RegularSeason)),
+            SeasonId::from((2025, PlayIn)),
         ];
 
         let actual = nba_lifespan_period();
