@@ -2,9 +2,8 @@
 mod test_path_manager {
     use crate::constants::paths::data;
     use crate::format::path_manager::{nba_prediction_file, nba_storage_path};
-    use crate::ml::model::Model;
-    use crate::stats::game_obj::GameObject;
-    use crate::stats::gamecard::GameCard;
+    use crate::ml::model::{Model, TrainingError};
+    use crate::stats::chronology::Chronology;
     use crate::types::{GameDate, SeasonId};
     use once_cell::sync::Lazy;
     use std::collections::HashMap;
@@ -72,7 +71,7 @@ mod test_path_manager {
             todo!()
         }
 
-        fn train(&mut self, _data: &[(GameCard, GameObject)]) {
+        fn train(&mut self, _data: Chronology) -> Result<(), TrainingError> {
             todo!()
         }
 

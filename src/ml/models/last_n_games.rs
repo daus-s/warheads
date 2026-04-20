@@ -8,10 +8,11 @@ use wincode::{SchemaRead, SchemaWrite};
 use crate::format::path_manager::{model_dir, records_path, results_path};
 
 use crate::ml::log_loss::LogLossTracker;
-use crate::ml::measurement::Measurement;
-use crate::ml::model::Model;
+use crate::ml::model::{Model, TrainingError};
 use crate::ml::models::registration::Registration;
+use crate::ml::observation::Observation;
 
+use crate::stats::chronology::Chronology;
 use crate::stats::gamecard::GameCard;
 
 use crate::types::{GameResult, TeamId};
@@ -38,28 +39,26 @@ impl LastNGames {
         }
     }
 
-    pub fn save(&self) {
+    pub fn save(&self) -> Result<(), TrainingError> {
         fs::create_dir_all(model_dir(self)).ok();
 
-        // save records
-        if let Ok(record_contents) = wincode::serialize(&self.map) {
-            if let Err(e) = fs::write(records_path(self), &record_contents) {
-                println!("❌ {e}\n❌ failed to save records map to file for last_n_games model. you will not be able to load this model from file.")
-            };
-        } else if let Err(e) = wincode::serialize(&self.map) {
-            println!("❌ {e}\n❌️ failed to serialize records map for last_n_games model. you will not be able to load this model from file.");
+        let records_result = wincode::serialize(&self.map);
+        let results_result = serde_json::to_string(&self.evaluate());
+
+        if let Err(e) = records_result {
+            return Err(TrainingError::WincodeSerializationError(e));
+        }
+        if let Err(e) = fs::write(records_path(self), &records_result.unwrap()) {
+            println!("❌ {e}\n❌ failed to save records map to file for last_n_games model. you will not be able to load this model from file.");
         }
 
-        //save results
-        if let Ok(result_contents) = serde_json::to_string(&self.evaluate()) {
-            if let Err(e) = fs::write(results_path(self), &result_contents) {
-                println!(
-                    "❌ {e}\n❌ failed to save model performance to file for last_n_games model. this model cannot be evaluated from file.",
-                )
-            };
-        } else if let Err(e) = serde_json::to_string(&self.evaluate()) {
-            println!("❌ {e}\n❌️ failed to serialize results for last_n_games model. you will not be able to evaluate this model from file.");
+        if let Err(e) = results_result {
+            return Err(TrainingError::JsonSerializationError(e));
         }
+        if let Err(e) = fs::write(results_path(self), &results_result.unwrap()) {
+            println!("❌ {e}\n❌ failed to save model performance to file for last_n_games model. this model cannot be evaluated from file.");
+        }
+        Ok(())
     }
 
     //mutable incase we need to insert a new team entry to map
@@ -87,12 +86,6 @@ impl LastNGames {
                 .len() as f64;
 
         let rolling_avg = rolling_count / games_measured;
-
-        // println!("{team_id}: {}-{} ({})",
-        //     rolling_count,
-        //     self.map.get(&team_id).expect(&format!("💀 could not find team record in (team, record) mapping after insertion. team_id: {}", team_id)).len() as u64 - rolling_count as u64,
-        //     rolling_avg
-        // );
 
         if rolling_avg != 0. {
             return rolling_avg;
@@ -145,13 +138,11 @@ impl Model for LastNGames {
         todo!()
     }
 
-    fn train(
-        &mut self,
-        data: &[(
-            crate::stats::gamecard::GameCard,
-            crate::stats::game_obj::GameObject,
-        )],
-    ) {
+    fn train(&mut self, chrono: Chronology) -> Result<(), TrainingError> {
+        let data = chrono
+            .as_training_data()
+            .map_err(|e| TrainingError::VolumeLoadingError(e))?;
+
         for (_card, game) in data {
             let prob_home = self.rolling_avg(game.home_team_id());
             let prob_away = self.rolling_avg(game.away_team_id());
@@ -159,7 +150,7 @@ impl Model for LastNGames {
             let home_result = game.home().box_score().wl(); //record relative to home team
             let away_result = game.away().box_score().wl(); //record relative to away team
 
-            let m = Measurement::new(
+            let obs = Observation::new(
                 if home_result == &GameResult::Win {
                     1
                 } else {
@@ -168,7 +159,7 @@ impl Model for LastNGames {
                 conditioned_probability(prob_home, prob_away),
             );
 
-            self.ll.add_measurement(m);
+            self.ll.add_observation(obs);
 
             self.map
                 .entry(game.home_team_id())
@@ -180,7 +171,7 @@ impl Model for LastNGames {
                 .insert(*away_result);
         }
 
-        self.save();
+        self.save()
     }
 
     fn evaluate(&self) -> std::collections::HashMap<String, f64> {

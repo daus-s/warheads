@@ -10,7 +10,7 @@ use crate::checksum::generate::generate_checksums;
 use crate::format;
 use crate::format::path_manager::nba_checksum_file;
 
-use crate::ml::model::Model;
+use crate::ml::model::{Model, TrainingError};
 use crate::ml::models::registration::Registration;
 
 use crate::proc::forecast::{forecast_nba, ForecastError};
@@ -121,13 +121,11 @@ impl Dispatch {
             Commands::Train { model_name, args } => {
                 let mut model = get_model_from_inventory(model_name, args)?;
 
-                let data = Chronology::new()
-                    .as_training_data()
-                    .map_err(|e| DispatchError::HistoryError(e))?;
-
                 let start = Instant::now();
 
-                model.train(&data);
+                model
+                    .train(Chronology::new())
+                    .map_err(|e| DispatchError::ModelTrainingError(e))?;
 
                 println!(
                     "✅ successfully trained {} in {}ms",
@@ -214,6 +212,8 @@ pub enum DispatchError {
     ChecksumSerializationError,
     #[error("{0}\n❌ failed to create predictions for upcoming NBA games. ")]
     ForecastError(ForecastError),
+    #[error("{0}\n❌ failed to train model ")]
+    ModelTrainingError(TrainingError),
     #[error("❌ model {0} is not trained. try running `warheads train {0}` ")]
     ModelNotTrained(String),
     #[error("❌ unknown model '{0}'. ")]

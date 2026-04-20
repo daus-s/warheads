@@ -2,6 +2,7 @@ use crate::types::{TeamAbbreviation, TeamId, TeamName};
 
 type Assoc = (TeamId, TeamAbbreviation, TeamName);
 
+#[derive(Debug, Clone)]
 pub struct TeamDirectory {
     teams: Vec<Assoc>,
 }

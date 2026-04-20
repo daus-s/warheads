@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use serde::Serialize;
 
-use crate::ml::measurement::{Measureable, Measurement};
+use crate::ml::observation::Observation;
 
 pub struct LogLossTracker {
     log_loss: f64,
@@ -12,8 +12,7 @@ pub struct LogLossTracker {
 
 impl LogLossTracker {
     pub fn log_loss(&self) -> f64 {
-        let count = self.count;
-        if count == 0 {
+        if self.count == 0 {
             f64::NAN
         } else {
             self.log_loss / self.count as f64
@@ -46,19 +45,25 @@ impl LogLossTracker {
         }
     }
 
-    pub fn add_measurement(&mut self, m: Measurement) {
-        self.log_loss += m.log_loss();
-        self.freq += m.classification_success() as u64;
+    pub fn add_observation(&mut self, o: Observation) {
+        self.log_loss += cross_entropy_loss(&o);
+        self.freq += classification_success(&o);
         self.count += 1;
-    }
-
-    pub fn add_measurable(&mut self, event: &Box<dyn Measureable>) {
-        self.add_measurement(event.into_measurement());
     }
 
     pub fn is_empty(&self) -> bool {
         self.count == 0
     }
+}
+
+fn cross_entropy_loss(observation: &Observation) -> f64 {
+    -1f64
+        * (observation.actual() as f64 * observation.prob().ln()
+            + (1f64 - observation.actual() as f64) * (1f64 - observation.prob()).ln())
+}
+
+fn classification_success(observation: &Observation) -> u64 {
+    ((observation.actual() as f64 - observation.prob()).abs() < 0.5) as u64
 }
 
 impl Display for LogLossTracker {
@@ -97,8 +102,8 @@ mod serialize_log_loss {
     #[test]
     fn test_serialize_log_loss() {
         let mut tracker = LogLossTracker::new();
-        tracker.add_measurement(Measurement::new(1, 0.5));
-        tracker.add_measurement(Measurement::new(0, 0.5));
+        tracker.add_observation(Observation::new(1, 0.5));
+        tracker.add_observation(Observation::new(0, 0.5));
 
         let serialized = serde_json::to_string(&tracker).unwrap();
         let expected = r#"{"log_loss":0.6931471805599453,"freq":0.0,"count":2}"#;

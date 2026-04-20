@@ -3,15 +3,14 @@ use std::collections::HashMap;
 use clap::Arg;
 
 use crate::ml::elo::elo_params::EloParams;
-use crate::ml::model::Model;
+use crate::ml::model::{Model, TrainingError};
 use crate::ml::models::elo_models::elo_tracker::EloTracker;
 use crate::ml::models::registration::Registration;
 use crate::ml::nelder_mead::nelder_mead;
 use crate::ml::simplex::Simplex;
 use crate::ml::vector::Vector;
 
-use crate::stats::game_obj::GameObject;
-use crate::stats::gamecard::GameCard;
+use crate::stats::chronology::Chronology;
 
 /// this elo algorithm is optimized on (k, f) pairs,
 /// the algorithm also uses a initial rating of 0 for symmetry.
@@ -42,7 +41,7 @@ impl Model for NelderMeadEloTracker {
         todo!()
     }
 
-    fn train(&mut self, games: &[(GameCard, GameObject)]) {
+    fn train(&mut self, chrono: Chronology) -> Result<(), TrainingError> {
         let mut simplex = Simplex::from(&vec![
             Vector::from(vec![32., 400.]),
             Vector::from(vec![24., 400.]),
@@ -52,16 +51,19 @@ impl Model for NelderMeadEloTracker {
         let cost = |v: &Vector| -> f64 {
             let mut tracker = EloTracker::params(EloParams::new(v));
 
-            tracker.train(games);
+            match tracker.train(chrono.clone()) {
+                Ok(_) => {
+                    println!(
+                        "{}/{}=>{}",
+                        tracker.freq(),
+                        tracker.log_loss(),
+                        tracker.freq() / tracker.log_loss()
+                    );
 
-            println!(
-                "{}/{}=>{}",
-                tracker.freq(),
-                tracker.log_loss(),
-                tracker.freq() / tracker.log_loss()
-            );
-
-            tracker.freq() / tracker.log_loss()
+                    tracker.freq() / tracker.log_loss()
+                }
+                Err(_) => f64::NAN,
+            }
         };
 
         let baseline = 0.46304378813918995;
@@ -91,6 +93,8 @@ impl Model for NelderMeadEloTracker {
             self.params.x(),
             self.params.y()
         );
+
+        Ok(())
     }
 
     fn evaluate(&self) -> HashMap<String, f64> {
@@ -119,11 +123,7 @@ mod test_nelder_mead_elo {
     fn get_optimal_params() {
         let mut tracker = NelderMeadEloTracker::new();
 
-        let training_data = Chronology::new()
-            .as_training_data()
-            .expect("failed to load data when testing nelder-mead-elo algorithm");
-
-        tracker.train(&training_data);
+        let _ = tracker.train(Chronology::new());
 
         assert!(tracker.performance > 0.46304378813918995 * 0.7);
     }

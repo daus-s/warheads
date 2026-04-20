@@ -1,21 +1,26 @@
 use crate::dapi::player_directory::PlayerDirectory;
+use crate::dapi::read_disk::{read_nba_season, NBAReadError};
 use crate::dapi::season_manager::nba_lifespan_period;
-
 use crate::dapi::team_directory::TeamDirectory;
+
+use crate::ml::vector::Vector;
+
 use crate::stats::game_obj::GameObject;
 use crate::stats::gamecard::GameCard;
+use crate::stats::nba_kind::NBAStatKind;
+use crate::stats::nba_schema::NBASchema;
 use crate::stats::record::Record;
-
-use crate::dapi::read_disk::{read_nba_season, NBAReadError};
 
 use crate::types::{GameId, PlayerId, SeasonId, TeamId};
 
 use std::cmp::max;
 use std::collections::HashMap;
 
+use rand::RngExt;
 use thiserror::Error;
 
 /// an efficient way to query through historical games
+#[derive(Debug, Clone)]
 pub struct Chronology {
     games: Option<Vec<GameObject>>,
     era: Option<SeasonId>,
@@ -123,6 +128,94 @@ impl Chronology {
         games.sort_by_key(|(c, _g)| c.date());
 
         Ok(games)
+    }
+
+    pub fn as_pure_regression_data(
+        mut self,
+        kind: NBAStatKind,
+        split: f64,
+    ) -> Result<(Vec<Vector>, Vec<Vector>), ChronologyError> {
+        assert!(0f64 < split && split < 1f64, "💀 as_regression_data requires a fractional split size greater than 0 and less than 1 (0.7 is recommended). expected: split ∈(0,1)\treceived: {}", split);
+
+        let mut test_data = Vec::new();
+        let mut training_data = Vec::new();
+
+        let mut box_scores = Vec::new();
+
+        for era in nba_lifespan_period() {
+            if let Err(e) = self.load_era(era) {
+                return Err(e);
+            }
+
+            let era_games = self
+                .games()
+                .as_ref()
+                .ok_or(ChronologyError::ChronologyMemoryError)?;
+
+            for game in era_games {
+                match kind {
+                    NBAStatKind::Team => {
+                        let away_box = game.away().box_score();
+                        if away_box.schema() == Some(NBASchema::ModernNBASchema) {
+                            box_scores.push(away_box.clone());
+                        }
+
+                        let home_box = game.home().box_score();
+                        if home_box.schema() == Some(NBASchema::ModernNBASchema) {
+                            box_scores.push(home_box.clone());
+                        }
+                    }
+                    NBAStatKind::Player => {
+                        for player in game.away_roster() {
+                            let away_player_box = player.box_score();
+                            if away_player_box.schema() == Some(NBASchema::ModernNBASchema) {
+                                box_scores.push(away_player_box.clone());
+                            }
+                        }
+
+                        for player in game.home_roster() {
+                            let home_player_box = player.box_score();
+                            if home_player_box.schema() == Some(NBASchema::ModernNBASchema) {
+                                box_scores.push(home_player_box.clone());
+                            }
+                        }
+                    }
+                    NBAStatKind::LineUp => unimplemented!(),
+                }
+            }
+        }
+
+        let records = box_scores.len();
+
+        let mut rng = rand::rng();
+
+        for box_score in box_scores {
+            let r: f64 = rng.random_range(0f64..1f64);
+
+            if r > split {
+                test_data.push(box_score.into())
+            } else {
+                training_data.push(box_score.into())
+            }
+        }
+
+        while training_data.len() < (records as f64 * split).round() as usize {
+            if let Some(item) = test_data.pop() {
+                training_data.push(item);
+            } else {
+                break;
+            }
+        }
+
+        while training_data.len() > (records as f64 * split).round() as usize {
+            if let Some(item) = training_data.pop() {
+                test_data.push(item);
+            } else {
+                break;
+            }
+        }
+
+        Ok((training_data, test_data))
     }
 
     fn n_most_recent_games(&self, n: usize, team_id: TeamId, game_id: GameId) -> Vec<GameObject> {
@@ -424,6 +517,49 @@ mod test_chronology {
         println!(
             "successfully loaded chronology as training data in time: {}ms",
             elapsed.as_millis()
+        );
+    }
+
+    #[test]
+    fn test_regression_data() {
+        let chrono = Chronology::new();
+
+        let (training, test) = chrono
+            .as_pure_regression_data(NBAStatKind::Team, 0.7)
+            .expect("failed to load modern era regression data from chronology");
+
+        let record_count = training.len() + test.len();
+
+        assert!(
+            training.len() > (record_count as f64 * 0.7).round() as usize - 1
+                && training.len() < (record_count as f64 * 0.7).round() as usize + 1,
+            "length of training data is not equal to split ratio.  training={}/{record_count}, expected {} < n < {}",
+            training.len(),
+            (record_count as f64 * 0.7).round() as usize - 1,
+            (record_count as f64 * 0.7).round() as usize + 1
+        );
+
+        println!(
+            "training={}/{record_count}, expected {} < n < {}",
+            training.len(),
+            (record_count as f64 * 0.7).round() as usize - 1,
+            (record_count as f64 * 0.7).round() as usize + 1
+        );
+
+        assert!(
+            test.len() > (record_count as f64 * 0.3).round() as usize - 1
+                && test.len() < (record_count as f64 * 0.3).round() as usize + 1,
+            "length of test data is not equal to split ratio.  test={}/{record_count}, expected {} < n < {}",
+            test.len(),
+            (record_count as f64 * 0.3).round() as usize - 1,
+            (record_count as f64 * 0.3).round() as usize + 1
+        );
+
+        println!(
+            "test={}/{record_count}, expected {} < n < {}",
+            test.len(),
+            (record_count as f64 * 0.3).round() as usize - 1,
+            (record_count as f64 * 0.3).round() as usize + 1
         );
     }
 }

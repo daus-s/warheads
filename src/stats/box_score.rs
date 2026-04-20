@@ -1,5 +1,6 @@
 use crate::format::box_score_formatter::format_statistical_box_score;
-use crate::stats::schema::Schema;
+use crate::ml::vector::Vector;
+use crate::stats::nba_schema::*;
 use crate::stats::stat_column::StatColumn;
 use crate::types::{
     Assists, Blocks, DefensiveRebounds, FantasyPoints, FieldGoalAttempts, FieldGoalMakes,
@@ -17,6 +18,7 @@ pub struct BoxScore {
     wl: GameResult,
 
     min: Minutes,
+
     fgm: FieldGoalMakes,
     fga: FieldGoalAttempts,
 
@@ -45,15 +47,35 @@ pub struct BoxScore {
     plus_minus: PlusMinus,
 }
 
-impl Display for BoxScore {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        format_statistical_box_score(f, self)
-    }
-}
-
 impl BoxScore {
-    pub fn schema(&self) -> Schema {
-        todo!()
+    fn fingerprint(&self) -> u32 {
+        let bit = |present: bool, pos: u32| if present { 1 << pos } else { 0 };
+
+        bit(true, MIN_BIT)
+            | bit(true, FGM_BIT)
+            | bit(self.fga().0.is_some(), FGA_BIT)
+            | bit(self.fg3m().0.is_some(), FG3M_BIT)
+            | bit(self.fg3a().0.is_some(), FG3A_BIT)
+            | bit(true, FTM_BIT)
+            | bit(self.fta().0.is_some(), FTA_BIT)
+            | bit(self.oreb().0.is_some(), OREB_BIT)
+            | bit(self.dreb().0.is_some(), DREB_BIT)
+            | bit(self.reb().0.is_some(), REB_BIT)
+            | bit(self.ast().0.is_some(), AST_BIT)
+            | bit(self.stl().0.is_some(), STL_BIT)
+            | bit(self.blk().0.is_some(), BLK_BIT)
+            | bit(self.tov().0.is_some(), TOV_BIT)
+            | bit(true, PF_BIT)
+            | bit(true, PTS_BIT)
+            | bit(self.plus_minus().0.is_some(), PLUS_MINUS_BIT)
+            | bit(true, WL_BIT)
+    }
+
+    pub(super) fn schema(&self) -> Option<NBASchema> {
+        match self.fingerprint().try_into() {
+            Ok(x) => Some(x),
+            Err(_) => None,
+        }
     }
 
     /// document this function and test please
@@ -421,5 +443,67 @@ impl BoxScore {
     }
     pub fn plus_minus(&self) -> &PlusMinus {
         &self.plus_minus
+    }
+}
+
+impl Display for BoxScore {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        format_statistical_box_score(f, self)
+    }
+}
+
+impl From<BoxScore> for Vector {
+    fn from(boxscore: BoxScore) -> Self {
+        //match on schema
+        let vec = vec![
+            boxscore.min().0 as f64,                     // 0
+            boxscore.fgm().0 as f64,                     // 1
+            boxscore.fga().0.unwrap_or(0) as f64,        // 2
+            boxscore.fg3m().0.unwrap_or(0) as f64,       // 3
+            boxscore.fg3a().0.unwrap_or(0) as f64,       // 4
+            boxscore.ftm().0 as f64,                     // 5
+            boxscore.fta().0.unwrap_or(0) as f64,        // 6
+            boxscore.oreb().0.unwrap_or(0) as f64,       // 7
+            boxscore.dreb().0.unwrap_or(0) as f64,       // 8
+            boxscore.reb().0.unwrap_or(0) as f64,        // 9
+            boxscore.ast().0.unwrap_or(0) as f64,        // 10
+            boxscore.stl().0.unwrap_or(0) as f64,        // 11
+            boxscore.blk().0.unwrap_or(0) as f64,        // 12
+            boxscore.tov().0.unwrap_or(0) as f64,        // 13
+            boxscore.pf().0 as f64,                      // 14
+            boxscore.pts().0 as f64,                     // 15
+            boxscore.plus_minus().0.unwrap_or(0) as f64, // 16
+            match boxscore.wl() {
+                GameResult::Win => 1.0,
+                GameResult::Loss => 0.0,
+                GameResult::Draw => 0.5,
+            },
+        ];
+
+        Vector::from(vec)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{dapi::season_manager::nba_lifespan_period, stats::chronology::Chronology};
+
+    #[test]
+    fn test_boxscore_schemas() {
+        for era in nba_lifespan_period() {
+            let mut chrono = Chronology::new();
+
+            chrono.load_era(era).expect("failed to load games in test");
+
+            let games = chrono
+                .games()
+                .as_ref()
+                .expect("failed to load games in test");
+
+            for game in games {
+                println!("{game}");
+                println!("({:?})", game.home().box_score().schema())
+            }
+        }
     }
 }

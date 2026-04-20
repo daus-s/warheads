@@ -1,54 +1,97 @@
 use std::fmt::Display;
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Index, Mul, MulAssign, Sub, SubAssign};
 
 // ok im gonna have to COOOOK
 #[derive(Debug, Clone)]
 pub struct Vector {
     vec: Vec<f64>,
-    dim: usize,
 }
 
 impl Vector {
     pub fn origin(dim: usize) -> Self {
         Self {
             vec: vec![0.0f64; dim],
-            dim,
         }
     }
 
+    pub fn iter(&self) -> impl Iterator<Item = f64> + '_ {
+        self.vec.iter().copied()
+    }
+
+    pub fn slice(&mut self, idx: usize) -> f64 {
+        self.vec.remove(idx)
+    }
+
     pub fn dim(&self) -> usize {
-        self.dim
+        self.vec.len()
     }
 
     pub fn x(&self) -> f64 {
         assert!(
-            self.dim >= 1,
+            self.dim() >= 1,
             "💀 vector is {}-dimensional and tried to access 1st dimension.",
-            self.dim
+            self.dim()
         );
         self.vec[0]
     }
 
     pub fn y(&self) -> f64 {
         assert!(
-            self.dim >= 2,
+            self.dim() >= 2,
             "💀 vector is {}-dimensional and tried to access 2nd dimension.",
-            self.dim
+            self.dim()
         );
         self.vec[1]
     }
 
     pub fn z(&self) -> f64 {
         assert!(
-            self.dim >= 3,
+            self.dim() >= 3,
             "💀 vector is {}-dimensional and tried to access 2nd dimension.",
-            self.dim
+            self.dim()
         );
         self.vec[2]
     }
 
     pub fn norm(&self) -> f64 {
         self.vec.iter().map(|x| x.powi(2)).sum::<f64>().sqrt()
+    }
+
+    pub fn dot(&self, params: &Vector) -> f64 {
+        assert_eq!(
+            self.dim(), params.dim(),
+            "💀 vectors must have the same dimension. Cannot compute dot product of a {}-d vector and a {}-d vector",
+            self.dim(), params.dim()
+        );
+
+        self.vec
+            .iter()
+            .zip(params.vec.iter())
+            .map(|(x, y)| x * y)
+            .sum()
+    }
+
+    pub fn element_wise_multiplication(&self, other: &Vector) -> Vector {
+        assert_eq!(
+            self.dim(), other.dim(),
+            "💀 vectors must have the same dimension. Cannot compute element-wise multiplication of a {}-d vector and a {}-d vector",
+            self.dim(), other.dim()
+        );
+        Vector::from(
+            self.vec
+                .iter()
+                .zip(other.vec.iter())
+                .map(|(x, y)| x * y)
+                .collect::<Vec<_>>(),
+        )
+    }
+}
+
+impl Index<usize> for Vector {
+    type Output = f64;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.vec[index]
     }
 }
 
@@ -63,10 +106,7 @@ pub fn midpoint(v1: &Vector, v2: &Vector) -> Vector {
 
 impl From<Vec<f64>> for Vector {
     fn from(vec: Vec<f64>) -> Self {
-        Self {
-            dim: vec.len(),
-            vec,
-        }
+        Self { vec }
     }
 }
 
@@ -74,7 +114,6 @@ impl From<&Vector> for Vector {
     fn from(vector: &Vector) -> Self {
         Self {
             vec: vector.vec.clone(),
-            dim: vector.dim,
         }
     }
 }
@@ -115,9 +154,11 @@ impl Add for &Vector {
 
     fn add(self, rhs: Self) -> Self::Output {
         assert_eq!(
-            self.dim, rhs.dim,
-            "Vectors must have the same dimension. Cannot add a {}-d vector and a {}-d vector",
-            rhs.dim, self.dim
+            self.dim(),
+            rhs.dim(),
+            "💀 vectors must have the same dimension. Cannot add a {}-d vector and a {}-d vector",
+            rhs.dim(),
+            self.dim()
         );
 
         let mut result = self.vec.clone();
@@ -125,19 +166,28 @@ impl Add for &Vector {
             result[i] += val;
         }
 
-        Vector {
-            vec: result,
-            dim: self.dim,
-        }
+        Vector { vec: result }
+    }
+}
+
+// Vector Subtraction (element-wise)
+
+impl Add for Vector {
+    type Output = Vector;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        &self + &rhs
     }
 }
 
 impl AddAssign<&Vector> for Vector {
     fn add_assign(&mut self, rhs: &Self) {
         assert_eq!(
-            self.dim, rhs.dim,
-            "Vectors must have the same dimension. Cannot add {}-d vector to a {}-d vector",
-            rhs.dim, self.dim
+            self.dim(),
+            rhs.dim(),
+            "💀 vectors must have the same dimension. Cannot add {}-d vector to a {}-d vector",
+            rhs.dim(),
+            self.dim()
         );
 
         for (i, &val) in rhs.vec.iter().enumerate() {
@@ -146,14 +196,22 @@ impl AddAssign<&Vector> for Vector {
     }
 }
 
+impl AddAssign for Vector {
+    fn add_assign(&mut self, rhs: Self) {
+        *self += &rhs
+    }
+}
+
+// Vector Subtraction (element-wise)
+
 impl Sub for &Vector {
     type Output = Vector;
 
     fn sub(self, rhs: Self) -> Self::Output {
         assert_eq!(
-            self.dim, rhs.dim,
-            "Vectors must have the same dimension. Cannot subtract a {}-d vector and a {}-d vector",
-            rhs.dim, self.dim
+            self.dim(), rhs.dim(),
+            "💀 vectors must have the same dimension. Cannot subtract a {}-d vector and a {}-d vector",
+            rhs.dim(), self.dim()
         );
 
         let mut result = self.vec.clone();
@@ -161,19 +219,24 @@ impl Sub for &Vector {
             result[i] -= val;
         }
 
-        Vector {
-            vec: result,
-            dim: self.dim,
-        }
+        Vector { vec: result }
+    }
+}
+
+impl Sub for Vector {
+    type Output = Vector;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        &self - &rhs
     }
 }
 
 impl SubAssign<&Vector> for Vector {
     fn sub_assign(&mut self, rhs: &Self) {
         assert_eq!(
-            self.dim, rhs.dim,
-            "Vectors must have the same dimension. Cannot subtract a {}-d vector from a {}-d vector",
-            rhs.dim, self.dim
+            self.dim(), rhs.dim(),
+            "💀 vectors must have the same dimension. Cannot subtract a {}-d vector from a {}-d vector",
+            rhs.dim(), self.dim()
         );
 
         for (i, &val) in rhs.vec.iter().enumerate() {
@@ -182,7 +245,12 @@ impl SubAssign<&Vector> for Vector {
     }
 }
 
-// Scalar Multiplication and Division
+impl SubAssign for Vector {
+    fn sub_assign(&mut self, rhs: Self) {
+        *self -= &rhs
+    }
+}
+// Scalar Division
 
 impl Div<f64> for &Vector {
     type Output = Vector;
@@ -193,10 +261,15 @@ impl Div<f64> for &Vector {
             *val /= scalar;
         }
 
-        Vector {
-            vec: result,
-            dim: self.dim,
-        }
+        Vector { vec: result }
+    }
+}
+
+impl Div<f64> for Vector {
+    type Output = Vector;
+
+    fn div(self, scalar: f64) -> Self::Output {
+        &self / scalar
     }
 }
 
@@ -208,6 +281,8 @@ impl DivAssign<f64> for Vector {
     }
 }
 
+// Scalar Multiplication
+
 impl Mul<f64> for &Vector {
     type Output = Vector;
 
@@ -218,10 +293,15 @@ impl Mul<f64> for &Vector {
             *val *= scalar;
         }
 
-        Vector {
-            vec: result,
-            dim: self.dim,
-        }
+        Vector { vec: result }
+    }
+}
+
+impl Mul<f64> for Vector {
+    type Output = Vector;
+
+    fn mul(self, scalar: f64) -> Self::Output {
+        &self * scalar
     }
 }
 
@@ -299,5 +379,38 @@ mod test_vector {
         v1 *= 2.0;
 
         assert_eq!(v1, Vector::from(vec![2.0, 4.0, 6.0]));
+    }
+
+    #[test]
+    fn test_dot_product() {
+        let v1 = Vector::from(vec![2.0, 3.0]);
+        let v2 = Vector::from(vec![5.0, 7.0]);
+
+        assert_eq!(v1.dot(&v2), 31f64);
+    }
+
+    #[test]
+    fn test_empty_dot_product() {
+        let v1 = Vector::from(vec![]);
+        let v2 = Vector::from(vec![]);
+
+        assert_eq!(v1.dot(&v2), 0f64);
+    }
+
+    #[test]
+    fn test_dot_product_1d() {
+        let v1 = Vector::from(vec![1.0]);
+        let v2 = Vector::from(vec![1.0]);
+
+        assert_eq!(v1.dot(&v2), 1.0);
+    }
+
+    #[test]
+    fn test_element_wise_multiplication() {
+        let v1 = Vector::from(vec![1.0, 2.0, 3.0]);
+        let v2 = Vector::from(vec![4.0, 5.0, 6.0]);
+        let v3 = v1.element_wise_multiplication(&v2);
+
+        assert_eq!(v3, Vector::from(vec![4.0, 10.0, 18.0]));
     }
 }
