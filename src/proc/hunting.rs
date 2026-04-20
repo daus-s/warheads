@@ -1,18 +1,12 @@
 use crate::checksum::checksum_map::ChecksumMap;
 use crate::checksum::read_checksum::read_checksum;
 
-use crate::dapi::team_box_score::TeamBoxScore;
-
-use crate::edit::edit_list::EditList;
-use crate::edit::edit_loader::{load_edit_list, save_edit_list};
+use crate::dapi::write::write_serializable_with_directory;
 
 use crate::format::path_manager::{nba_source_path, universal_nba_source_path};
 
-use crate::proc::error::ReadProcessError;
-use crate::proc::gather;
-use crate::proc::gather::{load_player_games_from_source, load_team_games_from_source};
+use crate::proc::query;
 
-use crate::stats::identity::Identity;
 use crate::stats::nba_kind::NBAStatKind;
 
 use crate::types::SeasonId;
@@ -22,24 +16,30 @@ use crate::types::SeasonId;
     this shit is NOT easy for me f*ck
 */
 
-//change to result
-pub fn load_season_from_source(
-    era: SeasonId,
-) -> Result<Vec<(Identity, TeamBoxScore)>, ReadProcessError> {
-    let mut edit_list: EditList = load_edit_list().unwrap_or_default();
+pub async fn fetch_and_save_nba_stats(season: SeasonId, stat: NBAStatKind) -> Result<(), String> {
+    let file_path = nba_source_path(season, stat);
 
-    let mut team_games_vec = Vec::new();
+    let (year, _period) = season.destructure();
 
-    let player_games_of_period = load_player_games_from_source(era, &mut edit_list)?;
-
-    let team_games_of_period =
-        load_team_games_from_source(era, player_games_of_period, &mut edit_list)?;
-
-    save_edit_list(&edit_list).map_err(|_| ReadProcessError::SerializeEditError)?;
-
-    team_games_vec.extend(team_games_of_period);
-
-    Ok(team_games_vec)
+    match query::nba_history_json(season, stat).await {
+        Ok(response_data) => match write_serializable_with_directory(&file_path, &response_data) {
+            Ok(_) => {
+                println!(
+                    "✅ successfully saved nba stats for {} season at file: {:?}",
+                    season, &file_path
+                );
+                Ok(())
+            }
+            Err(e) => Err(format!(
+                "❌ error saving nba stats for {} season at file {:?}: {}",
+                season, &file_path, e
+            )),
+        },
+        Err(e) => Err(format!(
+            "❌ failed to fetch {} stats for {} season: {:?}",
+            year, stat, e
+        )),
+    }
 }
 
 /// Compare the checksums of a NBA data source file and if it matches the expected checksum we can bypass refetching from
@@ -55,7 +55,7 @@ pub(crate) async fn compare_and_fetch(
     //why would you expect this if ur looking whether something is initialized correctly??? dummy
     //
     if let Err(_) = read_checksum(&source_path) {
-        if let Err(msg) = gather::fetch_and_save_nba_stats(season_id, kind).await {
+        if let Err(msg) = fetch_and_save_nba_stats(season_id, kind).await {
             println!("{}", msg);
         } else {
             println!("✅ successfully wrote {kind} data to file for the {season_id}");
@@ -66,7 +66,7 @@ pub(crate) async fn compare_and_fetch(
         if expected_checksum.is_none() || checksum != *expected_checksum.unwrap()
         //this might fail on new records
         {
-            if let Err(msg) = gather::fetch_and_save_nba_stats(season_id, kind).await {
+            if let Err(msg) = fetch_and_save_nba_stats(season_id, kind).await {
                 println!("{}", msg);
             } else {
                 println!("✅ successfully wrote {kind} data to file for the {season_id}");

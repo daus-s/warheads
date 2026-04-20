@@ -4,7 +4,7 @@ use crate::dapi::season_manager::get_current_era;
 
 use crate::format::parse::parse_gamecards;
 
-use crate::proc::gather::fetch_and_save_nba_stats;
+use crate::proc::hunting::fetch_and_save_nba_stats;
 use crate::proc::query::{get_gamecard_json, NBAQueryError};
 
 use crate::stats::gamecard::GameCard;

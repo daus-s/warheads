@@ -25,67 +25,13 @@ use serde_json::Value::Null;
 
 use std::collections::HashMap;
 
-enum ProcessingResult {
+pub(super) enum ProcessingResult {
     Record(Identity, NBABoxScore),
     Edit(EditBuilder),
     Delete(Identity),
 }
 
-// TODO: implement the return as a result marking complete failure vs just needing to
-// return corrections.
-pub fn generate_nba_games_from_data(
-    headers: Vec<String>,
-    rows: Vec<Value>,
-    edits: &mut EditList,
-) -> Result<Vec<(Identity, NBABoxScore)>, ReadProcessError> {
-    let mut games = Vec::new();
-
-    let mut results = season(rows.clone(), headers.clone(), edits)?;
-
-    let mut incompletions = 0;
-
-    for result in results.iter_mut() {
-        match result {
-            ProcessingResult::Record(identity, boxscore) => {
-                games.push((identity.to_owned(), boxscore.to_owned()))
-            },
-            ProcessingResult::Edit(edit_builder) => {
-                if edit_builder.date().is_today() {
-                    println!("⏳ game is live. omitting stats.")
-                } else {
-                    edit_builder.prompt(); //starts the tui prompter
-
-                    let edit = edit_builder.build().ok_or(ReadProcessError::BuildEditError)?;
-
-                    edits.insert(edit);
-
-                    incompletions += 1;
-                }
-            },
-            ProcessingResult::Delete(ident) => match ident.team_or_player() {
-                Team => println!(
-                    "🗑️ deleting team record for {} game: {}. all associated player records will be ignored",
-                    ident.team_abbr(),
-                    ident.game_id
-                ),
-                Player => println!(
-                    "🗑️ deleting player record for id: {} game: {}. the respective game object will not be affected though stat totals may not be consistent.",
-                    ident.player_id.unwrap(),
-                    ident.game_id
-                ),
-                LineUp => unimplemented!(),
-            },
-        }
-    }
-
-    if incompletions > 0 {
-        generate_nba_games_from_data(headers, rows, edits)
-    } else {
-        Ok(games)
-    }
-}
-
-fn season(
+pub(super) fn season(
     rows: Vec<Value>,
     headers: Vec<String>,
     edits: &EditList,

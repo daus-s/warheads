@@ -1,24 +1,45 @@
 use std::fs::File;
 use std::io::Read;
 
+use serde_json::Value;
+
 use crate::dapi::player_box_score::PlayerBoxScore;
 use crate::dapi::team_box_score::TeamBoxScore;
 
 use crate::edit::edit_list::EditList;
+
+use crate::edit::edit_loader::{load_edit_list, save_edit_list};
 use crate::format::parse::parse_season;
 use crate::format::path_manager::nba_source_path;
 
 use crate::proc::error::ReadProcessError;
-use crate::proc::query;
-use crate::proc::rip::generate_nba_games_from_data;
+use crate::proc::rip;
+use crate::proc::rip::ProcessingResult;
 
 use crate::stats::identity::Identity;
 use crate::stats::nba_kind::NBAStatKind;
-use crate::stats::nba_stat::NBABoxScore::{Player, Team};
-
-use crate::dapi::write::write_serializable_with_directory;
+use crate::stats::nba_stat::NBABoxScore::{self, Player, Team};
 
 use crate::types::SeasonId;
+
+pub fn load_season_from_source(
+    era: SeasonId,
+) -> Result<Vec<(Identity, TeamBoxScore)>, ReadProcessError> {
+    let mut edit_list: EditList = load_edit_list().unwrap_or_default();
+
+    let mut team_games_vec = Vec::new();
+
+    let player_games_of_period = load_player_games_from_source(era, &mut edit_list)?;
+
+    let team_games_of_period =
+        load_team_games_from_source(era, player_games_of_period, &mut edit_list)?;
+
+    save_edit_list(&edit_list).map_err(|_| ReadProcessError::SerializeEditError)?;
+
+    team_games_vec.extend(team_games_of_period);
+
+    Ok(team_games_vec)
+}
 
 pub fn load_player_games_from_source(
     season_id: SeasonId,
@@ -38,7 +59,7 @@ pub fn load_player_games_from_source(
     let (rows, headers) =
         parse_season(json).map_err(|e| ReadProcessError::ObjectStructureError(e))?;
 
-    Ok(generate_nba_games_from_data(headers, rows, edit_list)?
+    Ok(generate_nba_games_from_source(headers, rows, edit_list)?
         .into_iter()
         .filter_map(|(id, stat)| match stat {
             Player(box_score) => Some((id, box_score)),
@@ -67,7 +88,7 @@ pub fn load_team_games_from_source(
         parse_season(json).map_err(|e| ReadProcessError::ObjectStructureError(e))?;
 
     let mut games: Vec<(Identity, TeamBoxScore)> =
-        generate_nba_games_from_data(headers, rows, edit_list)?
+        generate_nba_games_from_source(headers, rows, edit_list)?
             .into_iter()
             .filter_map(|(id, stat)| match stat {
                 Team(t) => Some((id, t)),
@@ -86,28 +107,54 @@ pub fn load_team_games_from_source(
     Ok(games)
 }
 
-pub async fn fetch_and_save_nba_stats(season: SeasonId, stat: NBAStatKind) -> Result<(), String> {
-    let file_path = nba_source_path(season, stat);
+fn generate_nba_games_from_source(
+    headers: Vec<String>,
+    rows: Vec<Value>,
+    edits: &mut EditList,
+) -> Result<Vec<(Identity, NBABoxScore)>, ReadProcessError> {
+    let mut games = Vec::new();
 
-    let (year, _period) = season.destructure();
+    let mut results = rip::season(rows.clone(), headers.clone(), edits)?;
 
-    match query::nba_history_json(season, stat).await {
-        Ok(response_data) => match write_serializable_with_directory(&file_path, &response_data) {
-            Ok(_) => {
-                println!(
-                    "✅ successfully saved nba stats for {} season at file: {:?}",
-                    season, &file_path
-                );
-                Ok(())
-            }
-            Err(e) => Err(format!(
-                "❌ error saving nba stats for {} season at file {:?}: {}",
-                season, &file_path, e
-            )),
-        },
-        Err(e) => Err(format!(
-            "❌ failed to fetch {} stats for {} season: {:?}",
-            year, stat, e
-        )),
+    let mut incompletions = 0;
+
+    for result in results.iter_mut() {
+        match result {
+            ProcessingResult::Record(identity, boxscore) => {
+                games.push((identity.to_owned(), boxscore.to_owned()))
+            },
+            ProcessingResult::Edit(edit_builder) => {
+                if edit_builder.date().is_today() {
+                    println!("⏳ game is live. omitting stats.")
+                } else {
+                    edit_builder.prompt(); //starts the tui prompter
+
+                    let edit = edit_builder.build().ok_or(ReadProcessError::BuildEditError)?;
+
+                    edits.insert(edit);
+
+                    incompletions += 1;
+                }
+            },
+            ProcessingResult::Delete(ident) => match ident.team_or_player() {
+                NBAStatKind::Team => println!(
+                    "🗑️ deleting team record for {} game: {}. all associated player records will be ignored",
+                    ident.team_abbr(),
+                    ident.game_id
+                ),
+                NBAStatKind::Player => println!(
+                    "🗑️ deleting player record for id: {} game: {}. the respective game object will not be affected though stat totals may not be consistent.",
+                    ident.player_id.unwrap(),
+                    ident.game_id
+                ),
+                NBAStatKind::LineUp => unimplemented!(),
+            },
+        }
+    }
+
+    if incompletions > 0 {
+        generate_nba_games_from_source(headers, rows, edits)
+    } else {
+        Ok(games)
     }
 }

@@ -10,8 +10,8 @@ use crate::format::path_manager::nba_checksum_file;
 use crate::ml::model::Model;
 use crate::ml::models::elo_models::elo_tracker::EloTracker;
 
-use crate::proc::gather::fetch_and_save_nba_stats;
 use crate::proc::hunting::compare_and_fetch;
+use crate::proc::hunting::fetch_and_save_nba_stats;
 use crate::proc::query::nba_annotation_file;
 use crate::proc::store::inscribe;
 

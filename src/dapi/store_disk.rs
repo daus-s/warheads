@@ -2,14 +2,14 @@ use crate::format::path_manager::nba_storage_path;
 
 use crate::stats::game_obj::GameObject;
 
+use crate::types::SeasonId;
+
 use std::fmt::Display;
 use std::fs;
 use thiserror::Error;
 
-use SaveGameError::{CreateDirectoryError, FileWriteError, WincodeSerializationError};
-
-pub fn save_nba_games(games: &[GameObject]) -> Result<(), SaveGameError> {
-    let season_id = games[0].season();
+pub fn save_nba_games(season_id: SeasonId, games: &[GameObject]) -> Result<(), SaveGameError> {
+    use SaveGameError::{CreateDirectoryError, FileWriteError, WincodeSerializationError};
 
     let contents = wincode::serialize(&games).map_err(|e| WincodeSerializationError(e))?;
 

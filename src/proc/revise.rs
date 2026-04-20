@@ -45,5 +45,7 @@ pub fn revise_nba_season(
         }
     }
 
+    games.retain(|g| !to_delete.contains(&g.0));
+
     Ok(())
 }
