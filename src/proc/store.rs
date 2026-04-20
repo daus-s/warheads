@@ -4,7 +4,7 @@ use crate::edit::edit_builder::EditBuilder;
 use crate::edit::edit_loader::{load_edit_list, save_edit_list, EditLoadingError};
 
 use crate::proc::error::ReadProcessError;
-use crate::proc::hunting::load_season_from_source;
+use crate::proc::gather::load_season_from_source;
 use crate::proc::revise::revise_nba_season;
 
 use crate::stats::game_obj::GameObject;
@@ -57,9 +57,9 @@ pub fn inscribe(era: SeasonId) -> Result<(), InscriptionError> {
                 let game_id = edit_builder.game_id();
 
                 // look in already-loaded edits for the sibling with same game_id, different team
-                if let Some(resolved) = edits.find_sibling(game_id, edit_builder.team_abbr()) {
-                    if resolved.corrects(&StatColumn::MATCHUP) {
-                        let matchup = resolved.inverse_matchup_as_value().unwrap();
+                if let Some(sibling) = edits.find_sibling(game_id, edit_builder.team_abbr()) {
+                    if sibling.corrects(&StatColumn::MATCHUP) {
+                        let matchup = sibling.inverse_matchup_as_value().unwrap();
 
                         edit_builder.add_missing_field(StatColumn::MATCHUP, matchup);
 
@@ -83,20 +83,10 @@ pub fn inscribe(era: SeasonId) -> Result<(), InscriptionError> {
 
             inscribe(era)
         }
-        Ok(games) => save_game_object(games).map_err(|e| InscriptionError::SerializeGameError(e)),
+        Ok(games) => {
+            save_nba_games(era, &games).map_err(|e| InscriptionError::SerializeGameError(e))
+        }
     }
-}
-
-fn save_game_object(season: Vec<GameObject>) -> Result<(), SaveGameError> {
-    let num_games = season.len();
-
-    if num_games == 0 {
-        return Ok(());
-    }
-
-    save_nba_games(&season)?;
-
-    Ok(())
 }
 
 pub(crate) type TeamGame = (Identity, TeamBoxScore);

@@ -84,16 +84,7 @@ impl Dispatch {
             // data procedures
             Commands::Init => initialize().await,
 
-            Commands::Sync => match update_source_data().await {
-                Ok(_) => {
-                    println!("✅ successfully updated source data.");
-                    Ok(())
-                }
-                Err(_) => {
-                    println!("❌ failed to update source data.");
-                    Err(DispatchError::SourceDataError)
-                }
-            },
+            Commands::Sync => update_local_files().await,
 
             Commands::Checksums { action } => match action {
                 ChecksumCommand::Verify => {
@@ -236,5 +227,17 @@ async fn initialize() -> Result<(), DispatchError> {
     annotate_nba().await;
     chronicle_nba();
     println!("✅ successfully initialized NBA data in warheads directory.");
+    Ok(())
+}
+
+async fn update_local_files() -> Result<(), DispatchError> {
+    let _ = update_source_data()
+        .await
+        .map_err(|_| DispatchError::SourceDataError)?;
+    println!("✅ successfully updated source data.");
+
+    let _ = chronicle_nba();
+    println!("✅ NBA volumes created successfully.");
+
     Ok(())
 }
