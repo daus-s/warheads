@@ -59,11 +59,11 @@ pub fn nba_lifespan_period() -> Vec<SeasonId> {
             seasons.push(SeasonId::from((prev_year, PreSeason)));
             seasons.push(SeasonId::from((prev_year, RegularSeason)));
             match day {
-                1..=14 => {}
-                15..=17 => {
+                1..=11 => {}
+                12..=16 => {
                     seasons.push(SeasonId::from((prev_year, PlayIn)));
                 }
-                18..=30 => {
+                17..=30 => {
                     seasons.push(SeasonId::from((prev_year, PlayIn)));
                     seasons.push(SeasonId::from((prev_year, PostSeason)));
                 }
@@ -88,14 +88,14 @@ pub fn nba_lifespan_period() -> Vec<SeasonId> {
             seasons.push(SeasonId::from((prev_year, PlayIn)));
             seasons.push(SeasonId::from((prev_year, PostSeason)));
             match day {
-                1..=20 => {
+                1..=19 => {
                     seasons.push(SeasonId::from((curr_year, PreSeason)));
                 }
-                21..=31 => {
+                20..=31 => {
                     seasons.push(SeasonId::from((curr_year, PreSeason)));
                     seasons.push(SeasonId::from((curr_year, RegularSeason)));
                 }
-                _ => unreachable!("💀 31 days in April."),
+                _ => unreachable!("💀 31 days in October."),
             }
         }
         11..=12 => {
