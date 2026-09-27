@@ -5,6 +5,7 @@ use crate::dapi::team_directory::TeamDirectory;
 
 use crate::ml::vector::Vector;
 
+use crate::stats::appearances::Appearances;
 use crate::stats::game_obj::GameObject;
 use crate::stats::gamecard::GameCard;
 use crate::stats::nba_kind::NBAStatKind;
@@ -99,6 +100,7 @@ impl Chronology {
 
     pub fn as_training_data(mut self) -> Result<Vec<(GameCard, GameObject)>, ChronologyError> {
         let mut games = Vec::new();
+        let mut appearances = Appearances::new();
 
         for era in nba_lifespan_period() {
             if let Err(e) = self.load_era(era) {
@@ -113,12 +115,16 @@ impl Chronology {
                     .map(|game| {
                         let mut card = game.card();
 
-                        card.add_away_roster(
-                            self.get_expected_roster(game.away_team_id(), game.game_id()),
-                        );
-                        card.add_home_roster(
-                            self.get_expected_roster(game.home_team_id(), game.game_id()),
-                        );
+                        let home_id = card.home().team_id();
+                        let away_id = card.away().team_id();
+
+                        let home_roster = appearances.get_expected_roster(home_id);
+                        let away_roster = appearances.get_expected_roster(away_id);
+
+                        card.add_away_roster(away_roster);
+                        card.add_home_roster(home_roster);
+
+                        appearances.record_appearances(game);
 
                         (card, game.clone())
                     }),

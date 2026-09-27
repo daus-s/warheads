@@ -1,3 +1,4 @@
+pub mod appearances;
 pub mod box_score;
 pub mod chronology;
 pub mod domain;
