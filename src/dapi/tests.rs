@@ -2,7 +2,7 @@
 mod test_urls {
     use crate::format::url_format::UrlFormatter;
     use crate::stats::nba_kind::NBAStatKind::{Player, Team};
-    use crate::stats::season_period::SeasonPeriod::{PlayIn, PostSeason, PreSeason, RegularSeason};
+    use crate::stats::season_phase::Phase::{PlayIn, PostSeason, PreSeason, RegularSeason};
     use crate::types::SeasonId;
 
     #[test]

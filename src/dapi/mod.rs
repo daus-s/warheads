@@ -9,7 +9,6 @@ pub mod stat_builder;
 pub mod store_disk;
 pub mod team_box_score;
 pub mod team_directory;
-mod test_season_manager;
 mod tests;
 pub mod timeline;
 pub mod timeline_manager;

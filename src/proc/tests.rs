@@ -4,13 +4,13 @@ mod test_injest {
     use crate::proc::query::make_nba_history_request;
 
     use crate::stats::nba_kind::NBAStatKind;
-    use crate::stats::season_period::SeasonPeriod;
+    use crate::stats::season_phase::Phase;
 
     use crate::types::{GameDate, SeasonId};
 
     #[tokio::test]
     async fn test_download() {
-        let season = SeasonId::from((2024, SeasonPeriod::PostSeason));
+        let season = SeasonId::from((2024, Phase::PostSeason));
         // test request info
         // url: https://www.nba.com/stats/teams/boxscores?Season=2024-25&SeasonType=Playoffs&DateFrom=04%2F26%2F2025&DateTo=04%2F30%2F2025
 

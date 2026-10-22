@@ -150,7 +150,7 @@ mod tests {
 
     use super::*;
 
-    use crate::stats::season_period::SeasonPeriod;
+    use crate::stats::season_phase::Phase;
     use crate::stats::{prediction::Prediction, record::Record, teamcard::TeamCard};
     use crate::types::{GameDate, GameId, SeasonId, TeamAbbreviation, TeamId, TeamName};
 
@@ -174,7 +174,7 @@ mod tests {
 
         let card = GameCard::new(
             GameId::from("0000000001"),
-            SeasonId::from((2023, SeasonPeriod::RegularSeason)),
+            SeasonId::from((2023, Phase::RegularSeason)),
             GameDate::from_str("2023-12-01").unwrap(),
             home.clone(),
             away.clone(),

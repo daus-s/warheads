@@ -1,7 +1,7 @@
 use crate::dapi::season_manager::get_current_era;
 use crate::format::season::season_fmt;
-use crate::stats::season_period::SeasonPeriod;
-use crate::stats::season_period::SeasonPeriod::{
+use crate::stats::season_phase::Phase;
+use crate::stats::season_phase::Phase::{
     AllStarGame, NBACup, PlayIn, PostSeason, PreSeason, RegularSeason,
 };
 use serde::de;
@@ -39,15 +39,15 @@ use wincode::{SchemaRead, SchemaWrite};
 #[derive(Clone, Debug, Copy, PartialEq, Eq, PartialOrd, Hash, SchemaRead, SchemaWrite)]
 pub struct SeasonId {
     year: i32,
-    period: SeasonPeriod,
+    period: Phase,
 }
 
 impl SeasonId {
-    pub fn period(&self) -> SeasonPeriod {
+    pub fn period(&self) -> Phase {
         self.period
     }
 
-    pub fn destructure(&self) -> (i32, SeasonPeriod) {
+    pub fn destructure(&self) -> (i32, Phase) {
         (self.year(), self.period())
     }
 
@@ -57,37 +57,37 @@ impl SeasonId {
 
     pub fn next(&self) -> SeasonId {
         match self.destructure() {
-            (_, SeasonPeriod::PreSeason) => SeasonId {
+            (_, Phase::PreSeason) => SeasonId {
                 year: self.year,
-                period: SeasonPeriod::RegularSeason,
+                period: Phase::RegularSeason,
             },
-            (year, SeasonPeriod::RegularSeason) => {
+            (year, Phase::RegularSeason) => {
                 if year >= 2019 {
                     SeasonId {
                         year: self.year,
-                        period: SeasonPeriod::PlayIn,
+                        period: Phase::PlayIn,
                     }
                 } else {
                     SeasonId {
                         year: self.year,
-                        period: SeasonPeriod::PostSeason,
+                        period: Phase::PostSeason,
                     }
                 }
             }
-            (_, SeasonPeriod::PlayIn) => SeasonId {
+            (_, Phase::PlayIn) => SeasonId {
                 year: self.year,
-                period: SeasonPeriod::PostSeason,
+                period: Phase::PostSeason,
             },
-            (year, SeasonPeriod::PostSeason) => {
+            (year, Phase::PostSeason) => {
                 if year >= 2002 {
                     SeasonId {
                         year: self.year + 1,
-                        period: SeasonPeriod::PreSeason,
+                        period: Phase::PreSeason,
                     }
                 } else {
                     SeasonId {
                         year: self.year + 1,
-                        period: SeasonPeriod::RegularSeason,
+                        period: Phase::RegularSeason,
                     }
                 }
             }
@@ -97,37 +97,37 @@ impl SeasonId {
 
     pub fn prev(&self) -> SeasonId {
         match self.destructure() {
-            (_, SeasonPeriod::PreSeason) => SeasonId {
+            (_, Phase::PreSeason) => SeasonId {
                 year: self.year - 1,
-                period: SeasonPeriod::PostSeason,
+                period: Phase::PostSeason,
             },
-            (year, SeasonPeriod::RegularSeason) => {
+            (year, Phase::RegularSeason) => {
                 if year >= 2003 {
                     SeasonId {
                         year: self.year,
-                        period: SeasonPeriod::PreSeason,
+                        period: Phase::PreSeason,
                     }
                 } else {
                     SeasonId {
                         year: self.year - 1,
-                        period: SeasonPeriod::PostSeason,
+                        period: Phase::PostSeason,
                     }
                 }
             }
-            (_, SeasonPeriod::PlayIn) => SeasonId {
+            (_, Phase::PlayIn) => SeasonId {
                 year: self.year,
-                period: SeasonPeriod::RegularSeason,
+                period: Phase::RegularSeason,
             },
-            (year, SeasonPeriod::PostSeason) => {
+            (year, Phase::PostSeason) => {
                 if year >= 2019 {
                     SeasonId {
                         year: self.year,
-                        period: SeasonPeriod::PlayIn,
+                        period: Phase::PlayIn,
                     }
                 } else {
                     SeasonId {
                         year: self.year,
-                        period: SeasonPeriod::RegularSeason,
+                        period: Phase::RegularSeason,
                     }
                 }
             }
@@ -192,8 +192,8 @@ impl TryFrom<&Value> for SeasonId {
     }
 }
 
-impl From<(i32, SeasonPeriod)> for SeasonId {
-    fn from(value: (i32, SeasonPeriod)) -> Self {
+impl From<(i32, Phase)> for SeasonId {
+    fn from(value: (i32, Phase)) -> Self {
         let (year, period) = value;
 
         SeasonId { year, period }

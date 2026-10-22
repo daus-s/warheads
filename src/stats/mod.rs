@@ -14,7 +14,7 @@ pub mod nba_kind;
 pub mod nba_schema;
 pub mod prediction;
 pub mod record;
-pub mod season_period;
+pub mod season_phase;
 pub mod serde_enum;
 pub mod shooting;
 pub mod stat_column;
