@@ -4,7 +4,7 @@ use wincode::{SchemaRead, SchemaWrite};
 
 use std::fmt::{Debug, Display, Formatter};
 
-use crate::stats::season_period::SeasonPeriod;
+use crate::stats::season_phase::Phase;
 
 /// ## GameId
 ///
@@ -26,10 +26,10 @@ use crate::stats::season_period::SeasonPeriod;
 pub struct GameId(pub u64);
 
 impl GameId {
-    fn basis(&self) -> (i32, SeasonPeriod, u32) {
+    fn basis(&self) -> (i32, Phase, u32) {
         //ex:0022501229
 
-        let period = SeasonPeriod::from_offset(((self.0 / 10_000_000) * 10_000) as i32);
+        let period = Phase::from_offset(((self.0 / 10_000_000) * 10_000) as i32);
         let truncated = self.0 % 10_000_000;
         let mut year = (truncated / 100_000) as i64;
 
@@ -108,11 +108,11 @@ impl PartialOrd for GameId {
 fn test_basis() {
     assert_eq!(
         GameId(0022501229).basis(),
-        (2025, SeasonPeriod::RegularSeason, 1229)
+        (2025, Phase::RegularSeason, 1229)
     );
 
     assert_eq!(
         GameId(0045900321).basis(),
-        (1959, SeasonPeriod::PostSeason, 321)
+        (1959, Phase::PostSeason, 321)
     );
 }

@@ -2,7 +2,7 @@ use crate::format::path_manager::nba_source_path;
 use crate::stats::domain::Domain;
 use crate::stats::nba_kind::NBAStatKind;
 use crate::stats::nba_kind::NBAStatKind::{Player, Team};
-use crate::stats::season_period::minimum_spanning_era;
+use crate::stats::season_phase::season_phases;
 use crate::types::SeasonId;
 use serde_json::Value;
 use std::collections::HashMap;
@@ -57,7 +57,7 @@ impl Archive for PathBuf {
 }
 
 pub fn domain_archive_pairs(year: i32) -> HashMap<Domain, PathBuf> {
-    let eras = minimum_spanning_era(year);
+    let eras = season_phases(year);
 
     let mut dap: HashMap<Domain, PathBuf> = HashMap::new();
 
@@ -70,7 +70,7 @@ pub fn domain_archive_pairs(year: i32) -> HashMap<Domain, PathBuf> {
 }
 
 pub fn typed_domain_archive_pairs(year: i32, kind: NBAStatKind) -> HashMap<Domain, PathBuf> {
-    let eras = minimum_spanning_era(year);
+    let eras = season_phases(year);
 
     let mut dap: HashMap<Domain, PathBuf> = HashMap::new();
 

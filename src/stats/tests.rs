@@ -231,7 +231,7 @@ mod test_column_indices {
 #[cfg(test)]
 mod test_serialize_game_obj {
     use crate::stats::game_obj::GameObject;
-    use crate::stats::season_period::SeasonPeriod;
+    use crate::stats::season_phase::Phase;
     use crate::types::{GameDate, SeasonId, TeamId};
 
     #[test]
@@ -811,7 +811,7 @@ mod test_serialize_game_obj {
 
         assert_eq!(
             deserialized_object.season(),
-            SeasonId::from((2005, SeasonPeriod::RegularSeason))
+            SeasonId::from((2005, Phase::RegularSeason))
         );
 
         assert!(deserialized_object.participant(TeamId(1610612760)));

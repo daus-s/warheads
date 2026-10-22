@@ -2,7 +2,7 @@ use crate::format::path_manager::nba_storage_path;
 
 use crate::stats::game_obj::GameObject;
 
-use crate::stats::season_period::minimum_spanning_era;
+use crate::stats::season_phase::season_phases;
 use crate::types::SeasonId;
 
 use NBAReadError::*;
@@ -16,7 +16,7 @@ use thiserror::Error;
 pub fn read_nba_year(year: i32) -> Result<Vec<GameObject>, NBAReadError> {
     let mut gamelog = Vec::new();
 
-    for era in minimum_spanning_era(year) {
+    for era in season_phases(year) {
         let games = read_nba_season(era)?;
 
         gamelog.extend(games);

@@ -353,7 +353,7 @@ mod test_chronology {
 
     use super::*;
 
-    use crate::stats::season_period::SeasonPeriod::*;
+    use crate::stats::season_phase::Phase::*;
 
     #[test]
     fn test_last_n_games_early_season() {
