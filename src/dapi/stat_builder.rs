@@ -1,3 +1,4 @@
+use chrono::NaiveDate;
 use serde_json::Value;
 
 use crate::dapi::from_value::FromValue;
@@ -8,7 +9,7 @@ use crate::stats::types::BoolInt;
 
 use crate::types::{
     Assists, Blocks, DefensiveRebounds, FantasyPoints, FieldGoalAttempts, FieldGoalMakes,
-    FieldGoalPercentage, FreeThrowAttempts, FreeThrowMakes, FreeThrowPercentage, GameDate, GameId,
+    FieldGoalPercentage, FreeThrowAttempts, FreeThrowMakes, FreeThrowPercentage, GameId,
     GameResult, Matchup, Minutes, OffensiveRebounds, PersonalFouls, PlayerId, PlayerName,
     PlusMinus, Points, Rebounds, SeasonId, Steals, TeamAbbreviation, TeamId, TeamName,
     ThreePointAttempts, ThreePointMakes, ThreePointPercentage, Turnovers,
@@ -69,7 +70,7 @@ impl FromValue for Value {
         }
     }
 
-    fn game_date(&self) -> Result<GameDate, StatColumn> {
+    fn game_date(&self) -> Result<NaiveDate, StatColumn> {
         match self.as_str() {
             Some(s) => match s.parse() {
                 Ok(date) => Ok(date),

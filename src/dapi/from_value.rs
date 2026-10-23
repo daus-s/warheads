@@ -3,6 +3,7 @@ use crate::stats::stat_column::StatColumn;
 use crate::stats::stat_column::StatColumn::*;
 use crate::stats::types::BoolInt;
 use crate::types::*;
+use chrono::NaiveDate;
 use serde_json::{Number, Value};
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -126,7 +127,7 @@ impl FromValue for HashMap<StatColumn, Value> {
         }
     }
 
-    fn game_date(&self) -> Result<GameDate, StatColumn> {
+    fn game_date(&self) -> Result<NaiveDate, StatColumn> {
         let value = match self.get(&GAME_DATE) {
             Some(x) => x,
             None => {
@@ -134,14 +135,14 @@ impl FromValue for HashMap<StatColumn, Value> {
             }
         };
 
-        let d = match value_to_date(value) {
+        let date = match value_to_date(value) {
             Some(x) => x,
             None => {
                 return Err(GAME_DATE);
             }
         };
 
-        Ok(GameDate(d))
+        Ok(date)
     }
 
     fn matchup(&self) -> Result<Matchup, StatColumn> {
@@ -603,7 +604,7 @@ pub trait FromValue {
     fn team_abbreviation(&self) -> Result<TeamAbbreviation, StatColumn>; //identity
     fn team_name(&self) -> Result<TeamName, StatColumn>;
     fn game_id(&self) -> Result<GameId, StatColumn>; //identity
-    fn game_date(&self) -> Result<GameDate, StatColumn>;
+    fn game_date(&self) -> Result<NaiveDate, StatColumn>;
     fn matchup(&self) -> Result<Matchup, StatColumn>;
     fn game_result(&self) -> Result<GameResult, StatColumn>;
     fn minutes(&self) -> Result<Minutes, StatColumn>;

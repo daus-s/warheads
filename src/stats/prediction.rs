@@ -1,5 +1,6 @@
 use std::fmt::Display;
 
+use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
 use crate::format;
@@ -7,7 +8,7 @@ use crate::format;
 use crate::stats::gamecard::GameCard;
 
 use crate::stats::visiting::Visiting;
-use crate::types::{GameDate, Matchup};
+use crate::types::Matchup;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Prediction {
@@ -36,7 +37,7 @@ impl Prediction {
     ////////////////////////////////////////////////////////////////////////////////////////
     //// accessors /////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////
-    pub fn date(&self) -> GameDate {
+    pub fn date(&self) -> NaiveDate {
         self.card.date()
     }
 }
@@ -148,11 +149,13 @@ impl Display for Prediction {
 mod tests {
     use std::str::FromStr;
 
+    use chrono::NaiveDate;
+
     use super::*;
 
     use crate::stats::season_phase::Phase;
     use crate::stats::{prediction::Prediction, record::Record, teamcard::TeamCard};
-    use crate::types::{GameDate, GameId, SeasonId, TeamAbbreviation, TeamId, TeamName};
+    use crate::types::{GameId, SeasonId, TeamAbbreviation, TeamId, TeamName};
 
     #[test]
     fn test_serialize() {
@@ -175,7 +178,7 @@ mod tests {
         let card = GameCard::new(
             GameId::from("0000000001"),
             SeasonId::from((2023, Phase::RegularSeason)),
-            GameDate::from_str("2023-12-01").unwrap(),
+            "2023-12-01".parse::<NaiveDate>().unwrap(),
             home.clone(),
             away.clone(),
         );

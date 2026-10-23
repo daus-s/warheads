@@ -93,12 +93,13 @@ impl Default for EditList {
 mod test_edit_list {
     use std::{collections::HashMap, str::FromStr};
 
-    use serde_json::Value;
+    use chrono::NaiveDate;
+use serde_json::Value;
 
     use crate::edit::edit_loader::{load_edit_list, save_edit_list};
     use crate::stats::stat_column::StatColumn;
 
-    use crate::types::{GameDate, GameId, SeasonId, TeamAbbreviation, TeamId};
+    use crate::types::{GameId, SeasonId, TeamAbbreviation, TeamId};
 
     use super::*;
 
@@ -107,7 +108,7 @@ mod test_edit_list {
         let edit_v = vec![
             Edit {
                 game_id: GameId(0020100001),
-                game_date: GameDate::ymd(2022, 1, 15).expect("Failed to create GameDate"),
+                game_date: NaiveDate::from_ymd_opt(2022, 1, 15).expect("Failed to create GameDate"),
                 season: SeasonId::from(22021),
                 player_id: None,
                 team_id: TeamId(1),
@@ -121,7 +122,7 @@ mod test_edit_list {
             },
             Edit {
                 game_id: GameId(0020100003),
-                game_date: GameDate::ymd(2022, 3, 17).expect("Failed to create GameDate"),
+                game_date: NaiveDate::from_ymd_opt(2022, 3, 17).expect("Failed to create GameDate"),
                 season: SeasonId::from(22021),
                 player_id: None,
                 team_id: TeamId(3),
@@ -139,7 +140,7 @@ mod test_edit_list {
 
         let x = Edit {
             game_id: GameId(0020100002),
-            game_date: GameDate::ymd(2022, 3, 10).expect("Failed to create GameDate"),
+            game_date: NaiveDate::from_ymd_opt(2022, 3, 10).expect("Failed to create GameDate"),
             season: SeasonId::from(22021),
             player_id: None,
             team_id: TeamId(3),

@@ -6,6 +6,7 @@ use serde_json::Value;
 use crate::dapi::player_box_score::PlayerBoxScore;
 use crate::dapi::team_box_score::TeamBoxScore;
 
+use crate::dapi::timeline_manager::is_today;
 use crate::edit::edit_list::EditList;
 
 use crate::edit::edit_loader::{load_edit_list, save_edit_list};
@@ -124,7 +125,7 @@ fn generate_nba_games_from_source(
                 games.push((identity.to_owned(), boxscore.to_owned()))
             },
             ProcessingResult::Edit(edit_builder) => {
-                if edit_builder.date().is_today() {
+                if is_today(*edit_builder.date()) {
                     println!("⏳ game is live. omitting stats.")
                 } else {
                     edit_builder.prompt(); //starts the tui prompter

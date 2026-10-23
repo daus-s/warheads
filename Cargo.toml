@@ -1,6 +1,6 @@
 [package]
 name = "warheads"
-version = "0.1.0"
+version = "0.2.1"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -12,6 +12,7 @@ serde = { version = "1.0.217", features = ["derive"] }
 once_cell = "1.20.2"
 derivative = "2.2.0"
 chrono = { version = "0.4.41", features = ["serde"] }
+chrono-tz = "0.10.4"
 derive_builder = "0.20.2"
 reqwest = { version = "0.12.12", features = ["json", "gzip", "brotli"] }
 indicatif = "0.17.11"
