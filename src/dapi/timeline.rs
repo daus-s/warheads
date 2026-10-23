@@ -1,3 +1,4 @@
+use chrono::NaiveDate;
 use thiserror::Error;
 
 use crate::dapi::season_manager::nba_lifespan_period;
@@ -7,14 +8,12 @@ use crate::stats::visiting::Visiting;
 
 use crate::dapi::read_disk::{read_nba_season, NBAReadError};
 
-use crate::types::GameDate;
-
 use std::collections::HashMap;
 
 /// sequence_nba creates an in memory timeline of all games in NBA history based on already saved games
-pub fn nba_timeline() -> Result<HashMap<GameDate, Vec<GameCard>>, NBATimelineError> {
+pub fn nba_timeline() -> Result<HashMap<NaiveDate, Vec<GameCard>>, NBATimelineError> {
     // create chronological timeline of all game events
-    let mut dates = HashMap::<GameDate, Vec<GameCard>>::new();
+    let mut dates = HashMap::<NaiveDate, Vec<GameCard>>::new();
     for era in nba_lifespan_period() {
         let mut games = read_nba_season(era).map_err(|e| NBATimelineError::SeasonReadError(e))?;
 

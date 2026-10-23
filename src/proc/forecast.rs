@@ -1,3 +1,6 @@
+use chrono::Utc;
+use chrono_tz::US::Pacific;
+
 use thiserror::Error;
 
 use crate::dapi::season_manager::get_current_era;
@@ -11,8 +14,6 @@ use crate::proc::query::{get_gamecard_json, NBAQueryError};
 use crate::stats::chronology::Chronology;
 use crate::stats::gamecard::GameCard;
 use crate::stats::prediction::Prediction;
-
-use crate::types::GameDate;
 
 pub(crate) async fn forecast_nba(
     mut model: impl Model,
@@ -45,7 +46,7 @@ pub(crate) async fn forecast_nba(
 
 async fn get_upcoming_games(n: usize) -> Result<Vec<GameCard>, ForecastError> {
     // Forecast NBA games
-    let today = GameDate::today();
+    let today = Utc::now().with_timezone(&Pacific).date_naive();
 
     let mut upcoming_games = Vec::new();
     // find upcoming games todo: optionally, set this to run until the end of the regular season.

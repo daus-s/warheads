@@ -4,10 +4,11 @@ use crate::stats::visiting::Visiting;
 
 use crate::tui::tui_display::TuiDisplay;
 
-use crate::types::{GameDate, GameId, PlayerId, SeasonId};
+use crate::types::{GameId, PlayerId, SeasonId};
 
 use std::fmt::Display;
 
+use chrono::NaiveDate;
 use derive_builder::Builder;
 
 use regex::Regex;
@@ -18,7 +19,7 @@ use serde::{Deserialize, Serialize};
 pub struct GameCard {
     game_id: GameId,
     season_id: SeasonId,
-    date: GameDate,
+    date: NaiveDate,
     home: TeamCard,
     away: TeamCard,
 }
@@ -27,7 +28,7 @@ impl GameCard {
     pub fn new(
         game_id: GameId,
         season_id: SeasonId,
-        date: GameDate,
+        date: NaiveDate,
         home: TeamCard,
         away: TeamCard,
     ) -> Self {
@@ -64,7 +65,7 @@ impl GameCard {
         re
     }
 
-    pub fn date(&self) -> GameDate {
+    pub fn date(&self) -> NaiveDate {
         self.date
     }
 

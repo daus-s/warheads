@@ -1,10 +1,12 @@
-use crate::types::{GameDate, Matchup, PlayerName, TeamName};
+use chrono::NaiveDate;
+
+use crate::types::{Matchup, PlayerName, TeamName};
 use std::fmt::{Display, Formatter};
 
 #[derive(Clone, Debug)]
 pub struct GameDisplay {
     matchup: Matchup,
-    date: GameDate,
+    date: NaiveDate,
 
     /// ## player_name
     ///
@@ -25,7 +27,7 @@ pub struct GameDisplay {
 impl GameDisplay {
     pub fn new(
         matchup: Matchup,
-        date: GameDate,
+        date: NaiveDate,
         player_name: Option<PlayerName>,
         team_name: TeamName,
     ) -> Self {

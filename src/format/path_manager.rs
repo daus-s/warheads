@@ -7,8 +7,9 @@ use crate::ml::model::Model;
 
 use crate::stats::nba_kind::NBAStatKind;
 
-use crate::types::{GameDate, SeasonId};
+use crate::types::SeasonId;
 
+use chrono::NaiveDate;
 use once_cell::sync::Lazy;
 use std::path::PathBuf;
 
@@ -93,8 +94,8 @@ pub fn results_path<M: Model>(model: &M) -> PathBuf {
     PathBuf::from(format!("{}/nba/{}/results.json", *DATA, model.model_name()))
 }
 
-pub fn nba_prediction_file<M: Model>(model: &M, date: GameDate) -> PathBuf {
-    let d = date.to_filename();
+pub fn nba_prediction_file<M: Model>(model: &M, date: NaiveDate) -> PathBuf {
+    let d = date.format("%Y_%m_%d").to_string();
 
     let mut path = PathBuf::from(format!("{}/nba/{}/predictions", *DATA, model.model_name()));
 

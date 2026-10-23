@@ -12,7 +12,6 @@ use crate::tui::prompter::prompt_and_select;
 use crate::tui::prompter::prompt_and_validate;
 use crate::tui::prompter::prompt_with_options;
 
-use crate::types::GameDate;
 use crate::types::GameId;
 use crate::types::GameResult;
 use crate::types::Matchup;
@@ -39,7 +38,7 @@ impl EditBuilder {
         player_id: Option<PlayerId>,
         team_id: TeamId,
         team_abbr: TeamAbbreviation,
-        game_date: GameDate,
+        game_date: NaiveDate,
     ) -> Self {
         EditBuilder {
             edit: Edit {
@@ -233,7 +232,7 @@ impl EditBuilder {
         &self.edit
     }
 
-    pub fn date(&self) -> &GameDate {
+    pub fn date(&self) -> &NaiveDate {
         &self.edit.game_date
     }
 

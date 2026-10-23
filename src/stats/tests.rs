@@ -230,9 +230,11 @@ mod test_column_indices {
 
 #[cfg(test)]
 mod test_serialize_game_obj {
-    use crate::stats::game_obj::GameObject;
+    use chrono::NaiveDate;
+
+use crate::stats::game_obj::GameObject;
     use crate::stats::season_phase::Phase;
-    use crate::types::{GameDate, SeasonId, TeamId};
+    use crate::types::{SeasonId, TeamId};
 
     #[test]
     fn test_deserialize_game_obj() {
@@ -818,7 +820,7 @@ mod test_serialize_game_obj {
         assert!(deserialized_object.participant(TeamId(1610612744)));
 
         assert_eq!(
-            "2006-02-01".parse::<GameDate>().unwrap(),
+            "2006-02-01".parse::<NaiveDate>().unwrap(),
             deserialized_object.game_date()
         );
     }

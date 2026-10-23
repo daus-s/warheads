@@ -4,7 +4,8 @@ mod test_path_manager {
     use crate::format::path_manager::{nba_prediction_file, nba_storage_path};
     use crate::ml::model::{Model, TrainingError};
     use crate::stats::chronology::Chronology;
-    use crate::types::{GameDate, SeasonId};
+    use crate::types::SeasonId;
+    use chrono::NaiveDate;
     use once_cell::sync::Lazy;
     use std::collections::HashMap;
     use std::path::PathBuf;
@@ -31,7 +32,8 @@ mod test_path_manager {
         let expected_file =
             PathBuf::from(format!("{}/nba/{}/predictions/2025_04_30", *DATA, MODEL));
 
-        let actual_file = nba_prediction_file(&TestModel, GameDate::ymd(2025, 4, 30).unwrap());
+        let actual_file =
+            nba_prediction_file(&TestModel, NaiveDate::from_ymd_opt(2025, 4, 30).unwrap());
 
         assert_eq!(expected_file, actual_file);
     }
@@ -43,7 +45,8 @@ mod test_path_manager {
         let expected_file =
             PathBuf::from(format!("{}/nba/{}/predictions/2025_04_09", *DATA, MODEL));
 
-        let actual_file = nba_prediction_file(&TestModel, GameDate::ymd(2025, 4, 9).unwrap());
+        let actual_file =
+            nba_prediction_file(&TestModel, NaiveDate::from_ymd_opt(2025, 4, 9).unwrap());
 
         assert_eq!(expected_file, actual_file);
     }
@@ -55,7 +58,8 @@ mod test_path_manager {
         let expected_file =
             PathBuf::from(format!("{}/nba/{}/predictions/2025_01_09", *DATA, MODEL));
 
-        let actual_file = nba_prediction_file(&TestModel, GameDate::ymd(2025, 1, 9).unwrap());
+        let actual_file =
+            nba_prediction_file(&TestModel, NaiveDate::from_ymd_opt(2025, 1, 9).unwrap());
 
         assert_eq!(expected_file, actual_file);
     }

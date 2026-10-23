@@ -5,7 +5,7 @@ pub mod season_id;
 pub use season_id::SeasonId;
 
 pub mod game;
-pub use game::{GameDate, GameId, GameResult};
+pub use game::{GameId, GameResult};
 
 pub mod matchup;
 pub use matchup::Matchup;

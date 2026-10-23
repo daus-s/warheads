@@ -4,7 +4,7 @@ use crate::stats::domain::Domain;
 use crate::stats::game_data::GameData;
 use crate::stats::nba_kind::NBAStatKind::{self, Player, Team};
 
-use crate::types::{GameDate, GameId, PlayerId, SeasonId, TeamAbbreviation, TeamId};
+use crate::types::{GameId, PlayerId, SeasonId, TeamAbbreviation, TeamId};
 
 use chrono::NaiveDate;
 use serde::Serialize;
@@ -37,7 +37,7 @@ pub struct Identity {
 
     pub game_id: GameId,
 
-    pub game_date: GameDate,
+    pub game_date: NaiveDate,
 }
 
 impl Identity {
@@ -110,7 +110,7 @@ impl Identifiable for String {
                     team_id: TeamId(tid),
                     team_abbr: TeamAbbreviation(tab),
                     game_id: GameId::from(gid),
-                    game_date: GameDate(date),
+                    game_date: date,
                 }
             }
             [season_id, team_id, team_abbr, _team_name, game_id, game_date, _matchup, _wl, _min, _fgm, _fga, _fg_pct, _fg3m, _fg3a, _fg3_pct, _ftm, _fta, _ft_pct, _oreb, _dreb, _reb, _ast, _stl, _blk, _tov, _pf, _pts, _plus_minus, _video_available] =>
@@ -135,7 +135,7 @@ impl Identifiable for String {
                     team_id: TeamId(tid),
                     team_abbr: TeamAbbreviation(tab),
                     game_id: GameId::from(gid),
-                    game_date: GameDate(date),
+                    game_date: date,
                 }
             }
             _ => panic!(
@@ -163,10 +163,8 @@ impl Identifiable for Value {
                     team_id: TeamId(team_id.as_u64().expect("💀 expect team id to be a u64")),
                     team_abbr: TeamAbbreviation(team_abbr.to_string()),
                     game_id: GameId::from(game_id.to_owned()),
-                    game_date: GameDate(
-                        NaiveDate::parse_from_str(&*game_date, "%Y-%m-%d")
-                            .expect("💀 failed to parse game date as an chrono::NaiveDate. "),
-                    ),
+                    game_date: NaiveDate::parse_from_str(&*game_date, "%Y-%m-%d")
+                        .expect("💀 failed to parse game date as an chrono::NaiveDate. "),
                 }
             }
             [szn, Number(team_id), Value::String(team_abbr), _, Value::String(game_id), Value::String(game_date), _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _] => {
@@ -176,10 +174,8 @@ impl Identifiable for Value {
                     player_id: None,
                     team_id: TeamId(team_id.as_u64().expect("💀 expect team id to be a u64")),
                     team_abbr: TeamAbbreviation(team_abbr.to_string()),
-                    game_date: GameDate(
-                        NaiveDate::parse_from_str(&*game_date, "%Y-%m-%d")
-                            .expect("💀 failed to parse game date as an chrono::NaiveDate. "),
-                    ),
+                    game_date: NaiveDate::parse_from_str(&*game_date, "%Y-%m-%d")
+                        .expect("💀 failed to parse game date as an chrono::NaiveDate. "),
                     game_id: GameId::from(game_id.to_owned()),
                 }
             }

@@ -9,6 +9,7 @@ pub mod space;
 pub use space::*;
 pub mod evaluation;
 pub use evaluation::evaluation;
+pub mod days_from_ce;
 pub mod percent;
 pub mod stat_path_formatter;
 mod tests;

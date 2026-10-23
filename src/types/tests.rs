@@ -4,10 +4,10 @@ mod test_serde_type_support {
     use crate::types::fantasy_points::FantasyFormatter;
     use crate::types::{
         Assists, Blocks, DefensiveRebounds, FantasyPoints, FieldGoalAttempts, FieldGoalMakes,
-        FieldGoalPercentage, FreeThrowAttempts, FreeThrowMakes, GameDate, GameId, GameResult,
-        Minutes, OffensiveRebounds, PersonalFouls, PlayerId, PlayerName, PlusMinus, Points,
-        Rebounds, SeasonId, Steals, TeamAbbreviation, TeamId, TeamName, ThreePointAttempts,
-        ThreePointMakes, ThreePointPercentage, Turnovers,
+        FieldGoalPercentage, FreeThrowAttempts, FreeThrowMakes, GameId, GameResult, Minutes,
+        OffensiveRebounds, PersonalFouls, PlayerId, PlayerName, PlusMinus, Points, Rebounds,
+        SeasonId, Steals, TeamAbbreviation, TeamId, TeamName, ThreePointAttempts, ThreePointMakes,
+        ThreePointPercentage, Turnovers,
     };
     use chrono::NaiveDate;
     use serde::Serialize;
@@ -144,9 +144,9 @@ mod test_serde_type_support {
 
     #[test]
     fn test_serialize_game_date() {
-        let assists = GameDate(NaiveDate::from_ymd_opt(2000, 2, 5).unwrap());
+        let date = NaiveDate::from_ymd_opt(2000, 2, 5).unwrap();
 
-        let json_str = serde_json::to_string(&assists).expect("couldn't serialize game date. ");
+        let json_str = serde_json::to_string(&date).expect("couldn't serialize game date. ");
 
         assert_eq!(json_str, "\"2000-02-05\"")
     }

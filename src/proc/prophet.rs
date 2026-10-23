@@ -1,3 +1,5 @@
+use chrono::NaiveDate;
+
 use crate::format::path_manager::nba_prediction_file;
 
 use crate::ml::model::Model;
@@ -5,8 +7,6 @@ use crate::ml::model::Model;
 use crate::stats::prediction::Prediction;
 
 use crate::dapi::write::write_serializable_with_directory;
-
-use crate::types::GameDate;
 
 use std::collections::HashMap;
 use std::io;
@@ -16,7 +16,7 @@ pub fn write_predictions<M: Model>(
     model: &M,
     predictions: &Vec<Prediction>,
 ) -> Result<(), io::Error> {
-    let mut date_map = HashMap::<GameDate, Vec<Prediction>>::new();
+    let mut date_map = HashMap::<NaiveDate, Vec<Prediction>>::new();
 
     for prediction in predictions {
         date_map

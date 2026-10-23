@@ -2,8 +2,9 @@
 mod correct_columns {
     use crate::edit::edit::Edit;
     use crate::stats::stat_column::StatColumn;
-    use crate::types::{GameDate, GameId, PlayerId, SeasonId, TeamAbbreviation, TeamId};
-    use serde_json::json;
+    use crate::types::{GameId, PlayerId, SeasonId, TeamAbbreviation, TeamId};
+    use chrono::NaiveDate;
+use serde_json::json;
     use std::collections::HashMap;
 
     #[test]
@@ -362,7 +363,7 @@ mod correct_columns {
     fn sample_correction() -> Edit {
         Edit {
             game_id: GameId(123),
-            game_date: GameDate(Default::default()),
+            game_date: NaiveDate::default(),
             season: SeasonId::from(20024),
             player_id: Some(PlayerId(23)),
             team_id: TeamId(151),
