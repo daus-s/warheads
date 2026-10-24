@@ -2,15 +2,9 @@ use crate::checksum::sign::sign_nba;
 
 use crate::dapi::season_manager::get_current_era;
 
-use crate::format::parse::parse_gamecards;
-
 use crate::proc::hunting::fetch_and_save_nba_stats;
-use crate::proc::query::{get_gamecard_json, NBAQueryError};
 
-use crate::stats::gamecard::GameCard;
 use crate::stats::nba_kind::NBAStatKind;
-
-use crate::types::GameDate;
 
 /// check whether todays gamecards have been completed and if not query and update the source data.
 ///
@@ -18,6 +12,7 @@ use crate::types::GameDate;
 /// `true` if the source data was updated, `false` otherwise.
 pub(crate) async fn update_source_data() -> Result<(), ()> {
     let current_era = get_current_era();
+    dbg!(current_era);
 
     match fetch_and_save_nba_stats(current_era, NBAStatKind::Player).await {
         Ok(_) => println!("✅ updated player source data for the {}", current_era),
@@ -43,39 +38,25 @@ pub(crate) async fn update_source_data() -> Result<(), ()> {
     Ok(())
 }
 
-// game schedule tracker
-pub async fn get_daily_gamecard() -> Result<Vec<GameCard>, NBAQueryError> {
-    let response = get_gamecard_json(GameDate::today()).await?;
-
-    let gamecards =
-        parse_gamecards(response).map_err(|e| NBAQueryError::ObjectStructureError(e))?;
-
-    Ok(gamecards)
-}
-
 #[cfg(test)]
 mod test_get_daily_gamecard {
 
     use chrono::NaiveDate;
 
+    use crate::format::parse::parse_gamecards;
+    use crate::proc::query::get_gamecard_json;
+
+    use crate::stats::gamecard::GameCard;
     use crate::stats::record::Record;
     use crate::stats::teamcard::TeamCard;
-    use crate::types::{GameDate, GameId, SeasonId, TeamAbbreviation, TeamId, TeamName};
 
-    use super::*;
-
-    #[tokio::test]
-    async fn test_get_daily_gamecard() {
-        let response = get_daily_gamecard().await;
-
-        assert!(response.is_ok());
-    }
+    use crate::types::{GameId, SeasonId, TeamAbbreviation, TeamId, TeamName};
 
     #[tokio::test]
     async fn test_setdate_gamecards() {
         let setdate = NaiveDate::from_ymd_opt(2025, 10, 21).unwrap();
 
-        let json_response = get_gamecard_json(GameDate::from(setdate))
+        let json_response = get_gamecard_json(setdate)
             .await
             .unwrap_or_else(|err| panic!("💀 failed to get daily gamecard: {}", err));
 

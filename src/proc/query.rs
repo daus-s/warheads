@@ -6,9 +6,11 @@ use crate::format::parse;
 
 use crate::stats::nba_kind::NBAStatKind;
 
-use crate::types::{GameDate, SeasonId};
+use crate::types::SeasonId;
 
 use std::fmt::Debug;
+
+use chrono::NaiveDate;
 
 use reqwest::{Client, Response};
 
@@ -46,8 +48,8 @@ pub async fn nba_history_json(
 pub(crate) async fn make_nba_history_request(
     season: SeasonId,
     kind: NBAStatKind,
-    from: Option<GameDate>,
-    to: Option<GameDate>,
+    from: Option<NaiveDate>,
+    to: Option<NaiveDate>,
 ) -> Result<Response, NBAQueryError> {
     let client = Client::new();
 
@@ -64,8 +66,8 @@ pub(crate) async fn make_nba_history_request(
 fn build_nba_history_url(
     season: SeasonId,
     kind: NBAStatKind,
-    from: Option<GameDate>,
-    to: Option<GameDate>,
+    from: Option<NaiveDate>,
+    to: Option<NaiveDate>,
 ) -> String {
     format!(
         "\
@@ -86,7 +88,7 @@ fn build_nba_history_url(
 
 /// GAMECARD
 
-pub async fn get_gamecard_json(date: GameDate) -> Result<Value, NBAQueryError> {
+pub async fn get_gamecard_json(date: NaiveDate) -> Result<Value, NBAQueryError> {
     let response = make_nba_gamecard_request(date).await?;
 
     let json = response
@@ -97,7 +99,7 @@ pub async fn get_gamecard_json(date: GameDate) -> Result<Value, NBAQueryError> {
     Ok(json)
 }
 
-async fn make_nba_gamecard_request(date: GameDate) -> Result<Response, NBAQueryError> {
+async fn make_nba_gamecard_request(date: NaiveDate) -> Result<Response, NBAQueryError> {
     let client = Client::builder()
         .gzip(true)
         .brotli(true)
@@ -114,10 +116,10 @@ async fn make_nba_gamecard_request(date: GameDate) -> Result<Response, NBAQueryE
         .map_err(|e| NBAQueryError::RequestError(e))
 }
 
-fn build_nba_gamecard_url(date: GameDate) -> String {
+fn build_nba_gamecard_url(date: NaiveDate) -> String {
     format!(
         "https://core-api.nba.com/cp/api/v1.9/feeds/gamecardfeed?gamedate={}&platform=web",
-        date
+        date.format("%m/%d/%Y")
     )
 }
 
@@ -186,9 +188,16 @@ mod test_queries {
         assert!(response.status().is_success());
     }
 
+    #[test]
+    fn test_build_nba_gamecard_url() {
+        let date = NaiveDate::from_ymd_opt(2025, 10, 21).unwrap();
+
+        assert_eq!("https://core-api.nba.com/cp/api/v1.9/feeds/gamecardfeed?gamedate=10/21/2025&platform=web", build_nba_gamecard_url(date))
+    }
+
     #[tokio::test]
     async fn test_gamecard_query() {
-        let response = make_nba_gamecard_request(GameDate::from("10/21/2025"))
+        let response = make_nba_gamecard_request(NaiveDate::from_ymd_opt(2025, 10, 21).unwrap())
             .await
             .expect("💀 failed to fetch nba timeline records. ");
 

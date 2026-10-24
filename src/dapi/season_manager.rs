@@ -1,148 +1,70 @@
 use std::ops::Range;
 
-use chrono::Local;
+use chrono::{Local, NaiveDate, Datelike};
 
 use crate::constants::constants::BEGINNING;
 
-use crate::stats::season_period::{minimum_spanning_era, SeasonPeriod::*};
+use crate::stats::season_phase::{Phase::{self, *}, season_phases};
 
 use crate::format::parse::{destructure_dt, DestructuredDateTime};
-use crate::types::{GameDate, SeasonId};
+use crate::types::SeasonId;
 
 pub fn nba_lifespan() -> Range<i32> {
-    let DestructuredDateTime {
-        year: curr_year,
-        month,
-        day,
-    } = destructure_dt(Local::now());
+    let DestructuredDateTime { year, month, day } = destructure_dt(Local::now());
+    let seasonal_depression = if month > 8 || month == 8 && day >= 14 { 1 } else { 0 };
+    BEGINNING..year + seasonal_depression
+}
 
-    let seasonal_depression = if month > 8 || month == 8 && day >= 14 {
-        1
-    } else {
-        0
-    }; // august14th
+const PHASES: [(Phase, u32, u32, u32); 4] = [
+    (PreSeason, 10, 1, 0),
+    (RegularSeason, 10, 20, 0),
+    (PlayIn, 4, 13, 1),
+    (PostSeason, 4, 17, 1)
+];
 
-    BEGINNING..curr_year + seasonal_depression
+
+fn recent_phases(date: NaiveDate) -> impl Iterator<Item=(NaiveDate, SeasonId)> {
+    let y = date.year();
+    (y..=y+1).flat_map(|szn_yr| {
+        let phases = season_phases(szn_yr);
+        PHASES.iter().map(move |(phase, m, d, off)| {
+            (
+            NaiveDate::from_ymd_opt(szn_yr + *off as i32, *m, *d).unwrap()
+            ,
+            SeasonId::from((szn_yr + *off as i32, *phase))
+            )
+        })
+        .filter(move |(_date, id)| phases.contains(&id))
+    })
 }
 
 // this is approximate and is not actually synchronized with the NBA calendar.
 // (currently set to match 2025-26 schedule)
+fn nba_lifespan_at(date: NaiveDate) -> Vec<SeasonId> {
+    let y = date.year();
+
+    let mut phases: Vec<SeasonId> = (BEGINNING..y).flat_map(season_phases).collect();
+
+    let mut recent: Vec<(NaiveDate, SeasonId)> = recent_phases(date).filter(|(d, _)| date >= *d).collect();
+    recent.sort_by_key(|(date, _id)| *date);
+
+    phases.extend(recent.into_iter().map(|(_date, id)| id));
+
+    phases
+}
+
 pub fn nba_lifespan_period() -> Vec<SeasonId> {
-    let DestructuredDateTime {
-        year: curr_year,
-        month,
-        day,
-    } = destructure_dt(Local::now());
+    let today = chrono::Utc::now().date_naive();
 
-    let mut seasons = Vec::new();
-
-    for year in BEGINNING..(curr_year - 1) {
-        seasons.extend(minimum_spanning_era(year))
-    }
-
-    let prev_year = curr_year - 1;
-
-    match month {
-        1 => {
-            seasons.push(SeasonId::from((prev_year, PreSeason)));
-            seasons.push(SeasonId::from((prev_year, RegularSeason)));
-        }
-        2 => {
-            seasons.push(SeasonId::from((prev_year, PreSeason)));
-            seasons.push(SeasonId::from((prev_year, RegularSeason)));
-        }
-        3 => {
-            seasons.push(SeasonId::from((prev_year, PreSeason)));
-            seasons.push(SeasonId::from((prev_year, RegularSeason)));
-        }
-        4 => {
-            seasons.push(SeasonId::from((prev_year, PreSeason)));
-            seasons.push(SeasonId::from((prev_year, RegularSeason)));
-            match day {
-                1..=11 => {}
-                12..=16 => {
-                    seasons.push(SeasonId::from((prev_year, PlayIn)));
-                }
-                17..=30 => {
-                    seasons.push(SeasonId::from((prev_year, PlayIn)));
-                    seasons.push(SeasonId::from((prev_year, PostSeason)));
-                }
-                _ => unreachable!("💀 30 days in April"),
-            }
-        }
-        5 => {
-            seasons.push(SeasonId::from((prev_year, PreSeason)));
-            seasons.push(SeasonId::from((prev_year, RegularSeason)));
-            seasons.push(SeasonId::from((prev_year, PlayIn)));
-            seasons.push(SeasonId::from((prev_year, PostSeason)));
-        }
-        6..=9 => {
-            seasons.push(SeasonId::from((prev_year, PreSeason)));
-            seasons.push(SeasonId::from((prev_year, RegularSeason)));
-            seasons.push(SeasonId::from((prev_year, PlayIn)));
-            seasons.push(SeasonId::from((prev_year, PostSeason)));
-        }
-        10 => {
-            seasons.push(SeasonId::from((prev_year, PreSeason)));
-            seasons.push(SeasonId::from((prev_year, RegularSeason)));
-            seasons.push(SeasonId::from((prev_year, PlayIn)));
-            seasons.push(SeasonId::from((prev_year, PostSeason)));
-            match day {
-                1..=19 => {
-                    seasons.push(SeasonId::from((curr_year, PreSeason)));
-                }
-                20..=31 => {
-                    seasons.push(SeasonId::from((curr_year, PreSeason)));
-                    seasons.push(SeasonId::from((curr_year, RegularSeason)));
-                }
-                _ => unreachable!("💀 31 days in October."),
-            }
-        }
-        11..=12 => {
-            seasons.push(SeasonId::from((prev_year, PreSeason)));
-            seasons.push(SeasonId::from((prev_year, RegularSeason)));
-            seasons.push(SeasonId::from((prev_year, PlayIn)));
-            seasons.push(SeasonId::from((prev_year, PostSeason)));
-            seasons.push(SeasonId::from((curr_year, PreSeason)));
-            seasons.push(SeasonId::from((curr_year, RegularSeason)));
-        }
-        _ => unreachable!(""),
-    };
-
-    seasons
+    nba_lifespan_at(today)
 }
 
 pub fn get_current_era() -> SeasonId {
-    let today = GameDate::today();
+    let today = chrono::Utc::now().date_naive();
 
-    get_era_by_date(today)
+    recent_phases(today).filter(|(date, _id)| today >= *date).max_by_key(|(date, _id)| *date).unwrap().1
 }
 
-pub fn get_era_by_date(date: GameDate) -> SeasonId {
-    let (year, month, day) = date.destructure();
-
-    let prev_year = year - 1;
-
-    match month {
-        1 => SeasonId::from((prev_year, RegularSeason)),
-        2 => SeasonId::from((prev_year, RegularSeason)),
-        3 => SeasonId::from((prev_year, RegularSeason)),
-        4 => match day {
-            1..=14 => SeasonId::from((prev_year, RegularSeason)),
-            15..=17 => SeasonId::from((prev_year, PlayIn)),
-            18..=30 => SeasonId::from((prev_year, PostSeason)),
-            _ => unreachable!("💀 30 days in April"),
-        },
-        5..=9 => SeasonId::from((prev_year, PostSeason)),
-        10 => match day {
-            1..=20 => SeasonId::from((year, PreSeason)),
-            21..=31 => SeasonId::from((year, RegularSeason)),
-            _ => unreachable!("💀 31 days in October."),
-        },
-        11..=12 => SeasonId::from((year, RegularSeason)),
-        _ => unreachable!("💀 12 months in a year."),
-    }
-}
 
 #[cfg(test)]
 mod test_season_manager {
@@ -350,7 +272,7 @@ mod test_season_manager {
             SeasonId::from((2025, PostSeason)),
         ];
 
-        let actual = nba_lifespan_period();
+        let actual = nba_lifespan_at(NaiveDate::from_ymd_opt(2026, 8, 14).unwrap());
 
         assert_eq!(expected, actual);
     }

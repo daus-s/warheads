@@ -14,8 +14,9 @@ use crate::stats::nba_kind::NBAStatKind::{LineUp, Player, Team};
 use crate::stats::stat_column::{player_column_index, team_column_index, StatColumn};
 use crate::stats::statify::StatPair;
 
-use crate::types::{GameDate, GameId, Matchup, PlayerId, SeasonId, TeamAbbreviation, TeamId};
+use crate::types::{GameId, Matchup, PlayerId, SeasonId, TeamAbbreviation, TeamId};
 
+use chrono::NaiveDate;
 use serde_json::Value;
 
 use serde::{Deserialize, Serialize};
@@ -29,7 +30,7 @@ use std::path::Path;
 pub struct Edit {
     pub game_id: GameId,
 
-    pub game_date: GameDate,
+    pub game_date: NaiveDate,
 
     pub season: SeasonId,
 

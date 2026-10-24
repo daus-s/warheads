@@ -5,7 +5,9 @@ use crate::edit::edit_builder::EditBuilder;
 use crate::dapi::player_box_score::PlayerBoxScore;
 use crate::dapi::team_box_score::TeamBoxScore;
 
+use crate::format::days_from_ce::DaysFromCE;
 use crate::format::game_object_formatter::GameIdentity;
+
 use crate::stats::game_display::GameDisplay;
 use crate::stats::gamecard::GameCard;
 use crate::stats::identity::Identity;
@@ -14,8 +16,9 @@ use crate::stats::visiting::Visiting;
 
 use crate::types::matchup::home_and_away;
 use crate::types::GameResult::{Loss, Win};
-use crate::types::{GameDate, GameId, Matchup, SeasonId, TeamId};
+use crate::types::{GameId, Matchup, SeasonId, TeamId};
 
+use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
 use serde_json::Value::Null;
@@ -26,7 +29,8 @@ use wincode::{SchemaRead, SchemaWrite};
 pub struct GameObject {
     pub season_id: SeasonId,
 
-    game_date: GameDate,
+    #[wincode(with = "DaysFromCE")]
+    game_date: NaiveDate,
 
     pub game_id: GameId,
 
@@ -136,7 +140,7 @@ impl GameObject {
     /// - `matchup` & `abbr`: checks that both teams are in the matchup and opposites
     pub fn create(
         season_id: SeasonId,
-        game_date: GameDate,
+        game_date: NaiveDate,
         game_id: GameId,
         team1: TeamBoxScore,
         team2: TeamBoxScore,
@@ -146,7 +150,7 @@ impl GameObject {
             (Visiting::Home, Visiting::Away) => {
                 GameObject {
                     season_id,
-                    game_date,
+                    game_date: game_date,
                     game_id,
                     home: team1,
                     away: team2,
@@ -156,7 +160,7 @@ impl GameObject {
             (Visiting::Away, Visiting::Home) => {
                 GameObject {
                     season_id,
-                    game_date,
+                    game_date: game_date,
                     game_id,
                     home: team2,
                     away: team1,
@@ -180,7 +184,7 @@ impl GameObject {
         (self.season_id, self.game_id)
     }
 
-    pub fn game_date(&self) -> GameDate {
+    pub fn game_date(&self) -> NaiveDate {
         self.game_date
     }
 
@@ -290,8 +294,7 @@ impl GameObject {
 impl Ord for GameObject {
     fn cmp(&self, other: &Self) -> Ordering {
         self.game_date
-            .timestamp()
-            .cmp(&other.game_date.timestamp())
+            .cmp(&other.game_date)
             .then_with(|| self.game_id.cmp(&other.game_id))
     }
 }

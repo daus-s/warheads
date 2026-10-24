@@ -102,7 +102,7 @@ mod tests {
 
     use crate::{
         dapi::season_manager::nba_lifespan_period,
-        stats::{chronology::Chronology, season_period::SeasonPeriod},
+        stats::{chronology::Chronology, season_phase::Phase},
     };
 
     #[test]
@@ -185,12 +185,12 @@ mod tests {
                     format!("|{:^6}|", season_id.year())
                 } else if idx == mid_row - 1 {
                     match season_id.period() {
-                        SeasonPeriod::PreSeason => format!("|{:^6}|", "PRE"),
-                        SeasonPeriod::RegularSeason => format!("|{:^6}|", "REG"),
-                        SeasonPeriod::NBACup => format!("|{:^6}|", "CUP"),
-                        SeasonPeriod::PlayIn => format!("|{:^6}|", "IST"),
-                        SeasonPeriod::PostSeason => format!("|{:^6}|", "POST"),
-                        SeasonPeriod::AllStarGame => format!("|{:^6}|", "ASG"),
+                        Phase::PreSeason => format!("|{:^6}|", "PRE"),
+                        Phase::RegularSeason => format!("|{:^6}|", "REG"),
+                        Phase::NBACup => format!("|{:^6}|", "CUP"),
+                        Phase::PlayIn => format!("|{:^6}|", "IST"),
+                        Phase::PostSeason => format!("|{:^6}|", "POST"),
+                        Phase::AllStarGame => format!("|{:^6}|", "ASG"),
                     }
                 } else {
                     "|      |".to_string()

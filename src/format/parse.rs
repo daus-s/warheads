@@ -2,7 +2,7 @@ use crate::dapi::from_value::FromValue;
 use crate::format::extract::{get_result_set, get_rows, headers};
 use crate::stats::gamecard::{GameCard, GameCardBuilder};
 use crate::stats::record::Record;
-use crate::stats::season_period::SeasonPeriod;
+use crate::stats::season_phase::Phase;
 use crate::stats::teamcard::TeamCard;
 use crate::types::SeasonId;
 
@@ -125,7 +125,7 @@ fn parse_card(value: &Value) -> Option<GameCard> {
     let season_type = card.get("seasonType")?.as_str()?;
 
     let year = season_year.split('-').next()?.parse::<i32>().ok()?;
-    let season_period = season_type.parse::<SeasonPeriod>().ok()?;
+    let season_period = season_type.parse::<Phase>().ok()?;
 
     let season_id = SeasonId::from((year, season_period));
 
