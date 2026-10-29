@@ -12,7 +12,6 @@ use crate::stats::nba_kind::NBAStatKind;
 /// `true` if the source data was updated, `false` otherwise.
 pub(crate) async fn update_source_data() -> Result<(), ()> {
     let current_era = get_current_era();
-    dbg!(current_era);
 
     match fetch_and_save_nba_stats(current_era, NBAStatKind::Player).await {
         Ok(_) => println!("✅ updated player source data for the {}", current_era),
