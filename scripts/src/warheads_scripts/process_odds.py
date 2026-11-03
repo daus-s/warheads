@@ -1,8 +1,13 @@
 import json
+import os
 import statistics
+import sys
 from datetime import datetime
 
 import pandas as pd
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class BettingData:
@@ -38,14 +43,17 @@ class BettingData:
         )
 
 
-def main(args):
+def main():
+    DIR = os.environ["SRC"]
+    args = sys.argv
+
     try:
         date = datetime.strptime(args[1], "%Y-%m-%d").date()
     except (IndexError, ValueError):
         print("couldnt parse args[1] as a date. must be in format YYYY-mm-dd")
         sys.exit(1)
 
-    src = f"/home/daus/Documents/warheads/data/nba/oddsportal/nba_odds_{date}.json"
+    src = f"/{DIR}/data/nba/oddsportal/nba_odds_{date}.json"
 
     try:
         with open(src, "r") as f:
@@ -53,7 +61,6 @@ def main(args):
     except OSError as e:
         print(f"could not open file for date: {date}\ncause: {e}")
         sys.exit(1)
-
     odds = parse_odds(data)
 
     export_odds_to_csv(odds)
@@ -97,6 +104,10 @@ def parse_odds(data):
                         else:
                             print("team named in outcome is not a participant")
 
+        if len(spreads_home) == 0 or len(h2h_away) == 0 or len(overunders) == 0:
+            print("betting lines not yet determined by selected books.")
+            print(f"game: {away} @ {home} ({date})")
+            continue
         spread = statistics.median(spreads_home)
         assert spread == -1 * statistics.median(spreads_away)
         home_dec = statistics.median(h2h_home)
@@ -142,9 +153,3 @@ def export_odds_to_csv(odds):
     combined["date"] = combined["date"].dt.date
 
     combined.to_csv(dst, index=False)
-
-
-if __name__ == "__main__":
-    import sys
-
-    main(sys.argv)
