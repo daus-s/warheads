@@ -19,21 +19,18 @@ def main():
     today = datetime.now(PT).date()
 
     path = f"{DIR}/data/nba/oddsportal/nba_odds_{today}.json"
-    print(path)
     # check if data is present so as to not burn credits
     try:
         with open(path, "r") as f:
             json.load(f)
         cont = False
-    except (json.JSONDecodeError, PermissionError, FileNotFoundError) as e:
-        print(e)
+    except (json.JSONDecodeError, PermissionError, FileNotFoundError):
         cont = True
 
     if not cont:
         print("data already exists")
         sys.exit(0)
 
-    input()
     r = requests.get(
         "https://api.the-odds-api.com/v4/sports/basketball_nba/odds",
         params={

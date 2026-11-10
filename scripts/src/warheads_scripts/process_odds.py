@@ -3,11 +3,14 @@ import os
 import statistics
 import sys
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 from dotenv import load_dotenv
 
 load_dotenv()
+
+DIR = os.environ["SRC"]
 
 
 class BettingData:
@@ -44,7 +47,7 @@ class BettingData:
 
 
 def main():
-    DIR = os.environ["SRC"]
+
     args = sys.argv
 
     try:
@@ -71,7 +74,11 @@ def parse_odds(data):
     game_odds = []
 
     for game in data:
-        date = datetime.fromisoformat(game["commence_time"]).date()
+        date = (
+            datetime.fromisoformat(game["commence_time"])
+            .astimezone(ZoneInfo("America/Los_Angeles"))
+            .date()
+        )
         home = game["home_team"]
         away = game["away_team"]
         spreads_home = []
@@ -130,7 +137,7 @@ def parse_odds(data):
 
 
 def export_odds_to_csv(odds):
-    dst = "/home/daus/Documents/warheads/data/nba/odds/fetched_odds.csv"
+    dst = f"{DIR}/data/nba/odds/fetched_odds.csv"
 
     old = pd.read_csv(dst)
     old["date"] = pd.to_datetime(old["date"], format="%Y-%m-%d").dt.date
@@ -152,4 +159,5 @@ def export_odds_to_csv(odds):
     combined.sort_values("date", inplace=True)
     combined["date"] = combined["date"].dt.date
 
+    print(f"saving new odds to: {dst}")
     combined.to_csv(dst, index=False)
