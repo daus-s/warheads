@@ -1,77 +1,106 @@
+﻿# warheads
 
-# warheads
-### v0.2.0
+### v0.2.1
+
 #### Daus Carmichael
 
-
 ## Overview
-The Warheads prediction engine is a sports analytics engine that combines multiple sources of data to optimize the profitability of betting strategies. The initial analyses of the NBA is performed with a standard team-wise Elo rating procession. The early NBA is used to "seed" the ratings. This means that as current players enter the league, their impact and rating will be adjusted accordingly based on the current state of the league. The `elo-v1` algorithm performs moderately well, beating the random guess model and achieving a accuracy of 62%. This procession was optimized using the Nelder-Mead optimization technique to find the most responsive and performant scale factor and step values. 
 
-Secondary algorithms are used to improve the accuracy and confidence of the models. This includes a win-share algorithm based on the logistic model akin to the WAR equation in baseball. This model was trained on data from the 1984 postseason (when recorded stats were standardized), through the current season. It can successfully classify a boxscore as a winning or losing statline 81% of the time with an impressive cross-entropy score of 0.42. This equation is used to generate the contribution each player provided (or is expected to provide for a future game). 
+The Warheads prediction engine is a sports analytics engine that combines multiple sources of data to optimize the profitability of betting strategies. The initial analyses of the NBA is performed with a standard team-wise Elo rating procession. The early NBA is used to "seed" the ratings. This means that as current players enter the league, their impact and rating will be adjusted accordingly based on the current state of the league. The `elo-v1` algorithm performs moderately well, beating the random guess model and achieving a accuracy of 62%. This procession was optimized using the Nelder-Mead optimization technique to find the most responsive and performant scale factor and step values.
+
+Secondary algorithms are used to improve the accuracy and confidence of the models. This includes a win-share algorithm based on the logistic model akin to the WAR equation in baseball. This model was trained on data from the 1984 postseason (when recorded stats were standardized), through the current season. It can successfully classify a boxscore as a winning or losing statline 81% of the time with an impressive cross-entropy score of 0.42. This equation is used to generate the contribution each player provided (or is expected to provide for a future game).
 
 The main feature of the WARHeads library is the `Model` trait. There are 5 methods required by the implementation. Their signatures are:
+
 ```
 fn model_name(&self) -> String;
 fn initialize(&mut self) -> Result<(), ()>;
 fn train(&mut self, data: Chronology) -> Result<(), TrainingError>;
 fn evaluate(&self) -> HashMap<String, f64>;
 fn predict(&mut self, obj: &GameCard) -> f64;
-``` 
-For more information see the [developing models](#developing-models) section. Users can define their own models using the flexible and efficient data access provided by `Chronology`. 
+```
 
-WARHeads remains in constant development and new features and imrpovements will be added once stabilized.  
+For more information see the [developing models](#developing-models) section. Users can define their own models using the flexible and efficient data access provided by `Chronology`.
+
+WARHeads remains in constant development and new features and imrpovements will be added once stabilized.
 
 ## Highlights
+
 - easy to use machine learning framework for NBA analytics
 - optimization methods/techniques including nelder-mead, gradient descent, and closed form solution to linear regression
 - **62% accuracy and a log loss of 0.640**
 - **nelder mead optimization of `k` and `s` parameters**
 
 ## Usage
-this section will go over cover how to run the provided models and generate predictions for upcoming . 
+
+this section will go over cover how to run the provided models and generate predictions for upcoming .
 The executable can be created in whichever directory is preferred and can be invoked as:
+
 ```
 user$ ./warheads <COMMAND> <OPTIONAL_ARGS>
 ```
-by default when compiled with cargo the executable can be found in the `target` directory.  
+
+by default when compiled with cargo the executable can be found in the `target` directory.
 
 ### Commands
-| Command | Arguments | Syntax |Network| Description
-| --- | --- | --- | :---: |---|
-| Initialize | `None` | `warheads init` | ✅ | Initializes the local file system sourcing data from NBA.com.
-| Synchronize | `None` | `warheads sync` | ✅ | Fetches and chronicles live data from NBA.com
-| Checksum | `fingerprint` `verify` | `warheads checksum verify` | ❌ | Generates or verifies checksums of local source data. Used to eliminate redundant network calls to NBA.com
- | Train | `<MODEL_NAME>`	|`warheads train <MODEL_NAME> -- [options]`| ❌ |Train a model as defined in the trait implementation.
- | Evaluate | `<MODEL_NAME>` | `warheads eval <MODEL_NAME>` | ❌ | Return a map of metrics and values used to measure the performance of the model. Defined in Model implementation
-  | Forecast | `<MODEL_NAME>`, `--days=N` | `warheads eval <MODEL_NAME>` | ❌ | Return the predictions for the next $N$ games with a text based UI. 
-  | Help | `None` | `warheads` or `warheads help` | ❌ | Provides a help menu describing the commands provided by the WARHeads executable.
- 
 
+| Command     | Arguments                  | Syntax                                     | Network | Description                                                                                                      |
+| ----------- | -------------------------- | ------------------------------------------ | :-----: | ---------------------------------------------------------------------------------------------------------------- |
+| Initialize  | `None`                     | `warheads init`                            |   ✅    | Initializes the local file system sourcing data from NBA.com.                                                    |
+| Synchronize | `None`                     | `warheads sync`                            |   ✅    | Fetches and chronicles live data from NBA.com                                                                    |
+| Checksum    | `fingerprint` `verify`     | `warheads checksum verify`                 |   ❌    | Generates or verifies checksums of local source data. Used to eliminate redundant network calls to NBA.com       |
+| Train       | `<MODEL_NAME>`             | `warheads train <MODEL_NAME> -- [options]` |   ❌    | Train a model as defined in the trait implementation.                                                            |
+| Evaluate    | `<MODEL_NAME>`             | `warheads eval <MODEL_NAME>`               |   ❌    | Return a map of metrics and values used to measure the performance of the model. Defined in Model implementation |
+| Forecast    | `<MODEL_NAME>`, `--days=N` | `warheads eval <MODEL_NAME>`               |   ❌    | Return the predictions for the next $N$ games with a text based UI.                                              |
+| Help        | `None`                     | `warheads` or `warheads help`              |   ❌    | Provides a help menu describing the commands provided by the WARHeads executable.                                |
 
+### Supporting Scripts
+
+Many of WARHeads tasks are data drive, from the collection of live NBA game data, to the estimation of market lines for games. While the NBA game data is managed by the primary WARHeads executable, betting data is fetched separately. The scripts available are:
+
+- `whs-fetch`: fetches currently available betting lines from relevant sports books via [the Odds API](https://the-odds-api.com), requires an API Key for the service.
+- `whs-parse` - convert the Odds API formatted JSON file to the default betting line CSV.
+- `whs-export`- Combine all gathered odds and create a timeline of bets in the file `~/warheads/odds/historic_odds.csv` This file is also managed by the WARHeads executable.
+
+#### Configuration
+
+These scripts rely on a `.env` file. This file should be placed at`~/.config/warheads/.env` for the environment variables, `SRC` and `ODDS_API_KEY`. `SRC` is the absolute path of the root of (This is to be changed with a proper build and install). The latter can be obtained through [the Odds API](https://the-odds-api.com). This key is only necessary for `whs-fetch`, the other two scripts rely only upon `SRC`.
+
+#### Dependencies
+
+To run the scripts `uv` is required. The scripts can be run as follows. Work is being done to make these available as pure command-line instructions, i.e. `whs-script` instead of `uv run whs-script`.
+
+| Script       | Command                         |
+| ------------ | ------------------------------- |
+| `whs-fetch`  | `uv run whs-fetch`              |
+| `whs-parse`  | `uv run whs-parse <YYYY-mm-dd>` |
+| `whs-export` | `uv run whs-export`             |
 
 ### Developing Models
 
 ### Dependencies
- 
- - `cargo 1.92` (tested/developed on 1.92.0)
- - Network access: in order to fetch historical data and the upcoming schedule certain commands require network access (`init`,`sync`,`forecast`). See [Usage](#usage) for more info.
 
- ### Steps
- 1. **Clone the repo**
- 
- ```
- git clone git@github.com:daus-s/warheads.git
- ```
- 
+- `cargo 1.97.1` (tested/developed on 1.97.1)
+- Network access: in order to fetch historical data and the upcoming schedule certain commands require network access (`init`,`sync`,`forecast`). See [Usage](#usage) for more info.
+
+### Steps
+
+1.  **Clone the repo**
+
+```
+git clone git@github.com:daus-s/warheads.git
+```
+
 2.  **download and install corrections**
-The records provided by the NBA API are unfortunately incomplete and certain records cannot be converted into `GameObjects`. The cause can be a missing field such as personal fouls (PF), no recorded play time (MIN) or missing field goal or free throw attempts. (FTM, FTA). For certain columns there are default ways to handle incomplete records (e.g. defaulting missing personal fouls to 0). For other columns, such as points, manual completions are required and can be completed using the provided interface. (Users are automatically prompted during volume creation)
-Default corrections are updated and posted as needed and the corrections through the 2026 playoffs are up-to-date and all boxscores can be transformed into `GameObjects`. While the program does run, the data cleanliness and completeness can be improved. Future additions to the provided list of corrections are always welcome. 
- 
-3. **Add headers.json file**
+    The records provided by the NBA API are unfortunately incomplete and certain records cannot be converted into `GameObjects`. The cause can be a missing field such as personal fouls (PF), no recorded play time (MIN) or missing field goal or free throw attempts. (FTM, FTA). For certain columns there are default ways to handle incomplete records (e.g. defaulting missing personal fouls to 0). For other columns, such as points, manual completions are required and can be completed using the provided interface. (Users are automatically prompted during volume creation)
+    Default corrections are updated and posted as needed and the corrections through the 2026 playoffs are up-to-date and all boxscores can be transformed into `GameObjects`. While the program does run, the data cleanliness and completeness can be improved. Future additions to the provided list of corrections are always welcome.
+
+3.  **Add headers.json file**
 
 Create a header json file in the main project directory with at least these 3 fields. More may be required for different features, but 'User-Agent', 'x-postal-code', and 'Ocp-Apim-Subscription-Key' are always required. The last fields value is left as a exercise to the reader.
 
 An example `headers.json` file should look like:
+
 ```
 {
 	'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:143.0) Gecko/20100101 Firefox/143.0',
@@ -79,13 +108,13 @@ An example `headers.json` file should look like:
 	'Ocp-Apim-Subscription-Key': 'XXXXXX_HEX_CODE_KEY_XXXXXX',
 }
 ```
-4. **Train and test custom models**
-Once the previous steps are completed, you will be able to train and test models through warheads. An example workflow is included below as well as a demo of the command-line interface. 
 
+4. **Train and test custom models**
+   Once the previous steps are completed, you will be able to train and test models through warheads. An example workflow is included below as well as a demo of the command-line interface.
 
 ## Future (and Current) Developments
-WARHeads remains under development and as new features are added this document will be updated to reflect the updates.  
 
+WARHeads remains under development and as new features are added this document will be updated to reflect the updates.
 
 - improved models and predictions
 - increased scope of predictions including player props, game over under and spreads
