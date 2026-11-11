@@ -2,12 +2,12 @@ import os
 from datetime import datetime
 
 import pandas as pd
-from dotenv import load_dotenv
 
 import odds
 import teams
+from warheads_env import whs_env
 
-load_dotenv()
+whs_env()
 
 
 # module to aggregate multiple source of historical NBA odds together

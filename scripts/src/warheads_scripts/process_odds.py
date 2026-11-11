@@ -6,9 +6,11 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 import pandas as pd
-from dotenv import load_dotenv
 
-load_dotenv()
+from warheads_env import whs_env
+
+whs_env()
+
 
 DIR = os.environ["SRC"]
 

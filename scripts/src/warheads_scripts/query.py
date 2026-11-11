@@ -5,9 +5,10 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 import requests
-from dotenv import load_dotenv
 
-load_dotenv()
+from warheads_env import whs_env
+
+whs_env()
 
 
 def main():
